@@ -22,6 +22,14 @@
 		"troopjs/store/base",
 		"troopjs/store/local",
 		"troopjs/store/session",
+		"troopjs-jquery/action",
+		"troopjs-jquery/deferred",
+		"troopjs-jquery/destroy",
+		"troopjs-jquery/dimensions",
+		"troopjs-jquery/hashchange",
+		"troopjs-jquery/weave",
+		"troopjs-jquery/wire",
+		"template"
 	],
 
 	"out": "../dist/troopjs-bundle-minimal.js"
