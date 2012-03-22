@@ -2,7 +2,6 @@
 	"baseUrl": "../src/",
 	"paths" : {
 		"config": "empty:",
-		"json" : "lib/jsonjs/json2",
 		"jquery" : "empty:",
 		"compose" : "empty:",
 		"deferred" : "lib/troopjs-jquery/src/deferred",
