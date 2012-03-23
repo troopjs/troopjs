@@ -1,9 +1,6 @@
 [submodule "src/lib/requirejs"]
 	path = src/lib/requirejs
 	url = git@github.com:troopjs/requirejs.git
-[submodule "src/lib/jquery"]
-	path = src/lib/jquery
-	url = git@github.com:troopjs/jquery.git
 [submodule "src/lib/troopjs"]
 	path = src/lib/troopjs
 	url = git@github.com:troopjs/troopjs.git
