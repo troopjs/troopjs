@@ -1,9 +1,4 @@
-all: maxi mini
+all: troopjs-bundle
 
-mini: mini.js
-	node lib/rjs/dist/r.js -o mini.js
-	node lib/rjs/dist/r.js -o mini.js out=../dist/troopjs-bundle-mini.js optimize=none
-
-maxi: maxi.js
-	node lib/rjs/dist/r.js -o maxi.js
-	node lib/rjs/dist/r.js -o maxi.js out=../dist/troopjs-bundle-maxi.js optimize=none
+troopjs-bundle: troopjs-bundle.js
+	node lib/rjs/dist/r.js -o troopjs-bundle.js optimize=none
