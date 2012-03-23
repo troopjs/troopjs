@@ -3,7 +3,7 @@
 	"paths" : {
 		"config": "empty:",
 		"jquery" : "empty:",
-		"compose" : "empty:",
+		"compose" : "lib/composejs/compose",
 		"deferred" : "lib/troopjs-jquery/src/deferred",
 		"text" : "lib/requirejs/text",
 		"template" : "lib/troopjs-requirejs/src/template",
