@@ -31,5 +31,5 @@
 		"template"
 	],
 
-	"out": "../dist/troopjs-bundle-maximal.js"
+	"out": "../dist/troopjs-bundle-maxi.js"
 })
