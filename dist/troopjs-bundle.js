@@ -299,7 +299,7 @@ define('compose',[], function(){
  * The base trait provides functionality for instance counting
  * and a default 'toString' method.
  */
-define('troopjs/component/base',[ "compose", "config" ], function ComponentModule(Compose, config) {
+define('troopjs-core/component/base',[ "compose", "config" ], function ComponentModule(Compose, config) {
 	var COUNT = 0;
 
 	return Compose(function Component() {
@@ -338,7 +338,7 @@ define('deferred',[ "jquery" ], function DeferredModule($) {
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs/pubsub/topic',[ "../component/base" ], function TopicModule(Component) {
+define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule(Component) {
 	var ARRAY = Array;
 
 	return Component.extend(function Topic(topic, publisher, parent) {
@@ -401,7 +401,7 @@ define('troopjs/pubsub/topic',[ "../component/base" ], function TopicModule(Comp
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
+define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
 	var UNDEFINED = undefined;
 	var RECURSIVE = "\/" + "**";
 
@@ -657,7 +657,7 @@ define('troopjs/pubsub/hub',[ "compose", "../component/base", "./topic" ], funct
  * The gadget trait provides convenient access to common application
  * logic such as pubsub* and ajax
  */
-define('troopjs/component/gadget',[ "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Component, hub, Topic, Deferred) {
+define('troopjs-core/component/gadget',[ "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Component, hub, Topic, Deferred) {
 	var PUBLISH = hub.publish;
 	var SUBSCRIBE = hub.subscribe;
 	var UNSUBSCRIBE = hub.unsubscribe;
@@ -723,7 +723,7 @@ define('troopjs/component/gadget',[ "./base", "../pubsub/hub", "../pubsub/topic"
 /**
  * The widget trait provides common UI related logic
  */
-define('troopjs/component/widget',[ "./gadget", "jquery" ], function WidgetModule(Gadget, $) {
+define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function WidgetModule(Gadget, $) {
 	var UNDEFINED = undefined;
 	var FUNCTION = Function;
 	var SLICE = Array.prototype.slice;
@@ -931,7 +931,7 @@ define('troopjs/component/widget',[ "./gadget", "jquery" ], function WidgetModul
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs/remote/ajax',[ "compose", "../component/base", "../pubsub/topic", "../pubsub/hub", "jquery" ], function AjaxModule(Compose, Component, Topic, hub, $) {
+define('troopjs-core/remote/ajax',[ "compose", "../component/base", "../pubsub/topic", "../pubsub/hub", "jquery" ], function AjaxModule(Compose, Component, Topic, hub, $) {
 
 	function request(topic, settings, deferred) {
 		$.extend(true, settings, {
@@ -956,7 +956,7 @@ define('troopjs/remote/ajax',[ "compose", "../component/base", "../pubsub/topic"
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
+define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
 	return Gadget.extend({
 		set : Compose.required,
 		get : Compose.required,
@@ -969,7 +969,7 @@ define('troopjs/store/base',[ "compose", "../component/gadget" ], function Store
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
+define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
 
 	// Grab local storage
 	var STORAGE = window.localStorage;
@@ -1023,7 +1023,7 @@ define('troopjs/store/local',[ "compose", "./base" ], function StoreLocalModule(
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
+define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
 
 	// Grab session storage
 	var STORAGE = window.sessionStorage;
@@ -1691,7 +1691,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-jquery/wire',[ "jquery", "troopjs/pubsub/hub" ], function WireModule($, hub) {
+define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function WireModule($, hub) {
 	var UNSHIFT = Array.prototype.unshift;
 	var FUNCTION = Function;
 	var UNDEFINED = undefined;
