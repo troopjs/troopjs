@@ -1707,7 +1707,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 	var UNWIRE = "unwire";
 	var BEFORE_WIRE = "beforeWire";
 	var BEFORE_UNWIRE = "beforeUnwire";
-	var PROXIES = "proxies";
+	var PROXIES = "$proxies";
 
 	function $EventProxy(topic, widget, handler) {
 		return function $eventProxy() {
@@ -1725,7 +1725,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 			var value;
 			var matches;
 			var topic;
-			var proxies;
+			var $proxies;
 			var beforeWire;
 
 			// Is there a before wire
@@ -1743,7 +1743,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 			}
 
 			// Make sure we have proxies
-			proxies = widget[PROXIES] = PROXIES in widget
+			$proxies = widget[PROXIES] = PROXIES in widget
 				? widget[PROXIES]
 				: {};
 
@@ -1766,7 +1766,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 
 					case DOM:
 						// Replace value with a scoped proxy and store in proxies
-						proxies[topic] = value = $EventProxy(topic, widget, value);
+						$proxies[topic] = value = $EventProxy(topic, widget, value);
 
 						// Either ONE or BIND element
 						$(element)[matches[2] === ONE ? ONE : BIND](topic, widget, value);
@@ -1781,7 +1781,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 		return $(this).each(function elementIterator(index, element) {
 			var key = UNDEFINED;
 			var matches;
-			var proxies;
+			var $proxies;
 			var topic;
 			var beforeUnwire;
 
@@ -1800,7 +1800,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 			}
 
 			// Make sure we have proxies
-			proxies = widget[PROXIES] = PROXIES in widget
+			$proxies = widget[PROXIES] = PROXIES in widget
 				? widget[PROXIES]
 				: {};
 
@@ -1820,7 +1820,7 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 
 					case DOM:
 						// Unbind from element (note we're unbinding the proxy)
-						$(element).unbind(topic, proxies[topic]);
+						$(element).unbind(topic, $proxies[topic]);
 						break;
 					}
 				}
