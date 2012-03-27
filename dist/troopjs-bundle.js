@@ -784,9 +784,9 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function Widget
 		return render;
 	}
 
-	return Gadget.extend(function Widget(element, displayName) {
+	return Gadget.extend(function Widget($element, displayName) {
 		var self = this;
-		self[$ELEMENT] = $(element);
+		self[$ELEMENT] = $element;
 
 		if (displayName !== undefined) {
 			self[DISPLAYNAME] = displayName;
@@ -1604,7 +1604,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 
 							// Instantiate widgets that support it
 							if (widget instanceof FUNCTION) {
-								widget = new widget(element, name);
+								widget = new widget($element, name);
 							}
 							// Otherwise, look for an init method
 							else if (widget.init instanceof FUNCTION) {
