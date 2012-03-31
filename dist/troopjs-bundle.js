@@ -697,20 +697,6 @@ define('troopjs-core/component/gadget',[ "./base", "../pubsub/hub", "../pubsub/t
 			UNSUBSCRIBE.apply(hub, arguments);
 
 			return self;
-		},
-
-		/**
-		 * Dispatches call to ajax module
-		 * @param setting (Object or URL) Ajax settings
-		 * @param deferred (Deferred)
-		 * @returns self
-		 */
-		ajax : function ajax(setting, deferred) {
-			var self = this;
-
-			self.publish(new Topic("app/ajax", self), setting, deferred);
-
-			return self;
 		}
 	});
 });
@@ -927,26 +913,68 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function Widget
 });
 
 /*!
+ * TroopJS util/merge module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/merge',[],function MergeModule() {
+	var ARRAY = Array;
+	var OBJECT = Object;
+
+	return function merge(source) {
+		var target = this;
+		var key = null;
+		var i;
+		var iMax;
+		var value;
+		var constructor;
+
+		for (i = 0, iMax = arguments.length; i < iMax; i++) {
+			source = arguments[i];
+
+			for (key in source) {
+				value = source[key];
+				constructor = value.constructor;
+	
+				if (!(key in target)) {
+					target[key] = value;
+				}
+				else if (constructor === ARRAY) {
+					target[key] = target[key].concat(value);
+				}
+				else if (constructor === OBJECT) {
+					merge.call(target[key], value);
+				}
+				else {
+					target[key] = value;
+				}
+			}
+		}
+
+		return target;
+	};
+});
+/*!
  * TroopJS remote/ajax module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/remote/ajax',[ "compose", "../component/base", "../pubsub/topic", "../pubsub/hub", "jquery" ], function AjaxModule(Compose, Component, Topic, hub, $) {
+define('troopjs-core/remote/ajax',[ "compose", "../component/gadget", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Compose, Gadget, Topic, $, merge) {
 
 	function request(topic, settings, deferred) {
-		$.extend(true, settings, {
-			"headers": {
-				"x-my-request": new Date().getTime(),
-				"x-my-component": topic.constructor === Topic ? topic.trace() : topic
-			}
-		});
-
 		// Request
-		$.ajax(settings).then(deferred.resolve, deferred.reject);
+		$.ajax(merge.call({
+			"headers": {
+				"x-request-id": new Date().getTime(),
+				"x-components": topic.constructor === Topic ? topic.trace() : topic
+			}
+		}, settings)).then(deferred.resolve, deferred.reject);
 	}
 
-	return Compose.create(Component, function Ajax() {
-		hub.subscribe("hub/ajax", this, request);
+	return Compose.create(Gadget, function Ajax() {
+		var self = this;
+
+		self.subscribe("hub/ajax", self, request);
 	}, {
 		displayName : "remote/ajax"
 	});
@@ -1072,6 +1100,385 @@ define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessi
 		}
 	});
 });
+/**
+ * @license RequireJS text 1.0.7 Copyright (c) 2010-2011, The Dojo Foundation All Rights Reserved.
+ * Available via the MIT or new BSD license.
+ * see: http://github.com/jrburke/requirejs for details
+ */
+/*jslint regexp: false, nomen: false, plusplus: false, strict: false */
+/*global require: false, XMLHttpRequest: false, ActiveXObject: false,
+  define: false, window: false, process: false, Packages: false,
+  java: false, location: false */
+
+(function () {
+    var progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
+        xmlRegExp = /^\s*<\?xml(\s)+version=[\'\"](\d)*.(\d)*[\'\"](\s)*\?>/im,
+        bodyRegExp = /<body[^>]*>\s*([\s\S]+)\s*<\/body>/im,
+        hasLocation = typeof location !== 'undefined' && location.href,
+        defaultProtocol = hasLocation && location.protocol && location.protocol.replace(/\:/, ''),
+        defaultHostName = hasLocation && location.hostname,
+        defaultPort = hasLocation && (location.port || undefined),
+        buildMap = [];
+
+    define('text',[],function () {
+        var text, get, fs;
+
+        if (typeof window !== "undefined" && window.navigator && window.document) {
+            get = function (url, callback) {
+                var xhr = text.createXhr();
+                xhr.open('GET', url, true);
+                xhr.onreadystatechange = function (evt) {
+                    //Do not explicitly handle errors, those should be
+                    //visible via console output in the browser.
+                    if (xhr.readyState === 4) {
+                        callback(xhr.responseText);
+                    }
+                };
+                xhr.send(null);
+            };
+        } else if (typeof process !== "undefined" &&
+                 process.versions &&
+                 !!process.versions.node) {
+            //Using special require.nodeRequire, something added by r.js.
+            fs = require.nodeRequire('fs');
+
+            get = function (url, callback) {
+                var file = fs.readFileSync(url, 'utf8');
+                //Remove BOM (Byte Mark Order) from utf8 files if it is there.
+                if (file.indexOf('\uFEFF') === 0) {
+                    file = file.substring(1);
+                }
+                callback(file);
+            };
+        } else if (typeof Packages !== 'undefined') {
+            //Why Java, why is this so awkward?
+            get = function (url, callback) {
+                var encoding = "utf-8",
+                    file = new java.io.File(url),
+                    lineSeparator = java.lang.System.getProperty("line.separator"),
+                    input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding)),
+                    stringBuffer, line,
+                    content = '';
+                try {
+                    stringBuffer = new java.lang.StringBuffer();
+                    line = input.readLine();
+
+                    // Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
+                    // http://www.unicode.org/faq/utf_bom.html
+
+                    // Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
+                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
+                    if (line && line.length() && line.charAt(0) === 0xfeff) {
+                        // Eat the BOM, since we've already found the encoding on this file,
+                        // and we plan to concatenating this buffer with others; the BOM should
+                        // only appear at the top of a file.
+                        line = line.substring(1);
+                    }
+
+                    stringBuffer.append(line);
+
+                    while ((line = input.readLine()) !== null) {
+                        stringBuffer.append(lineSeparator);
+                        stringBuffer.append(line);
+                    }
+                    //Make sure we return a JavaScript string and not a Java string.
+                    content = String(stringBuffer.toString()); //String
+                } finally {
+                    input.close();
+                }
+                callback(content);
+            };
+        }
+
+        text = {
+            version: '1.0.7',
+
+            strip: function (content) {
+                //Strips <?xml ...?> declarations so that external SVG and XML
+                //documents can be added to a document without worry. Also, if the string
+                //is an HTML document, only the part inside the body tag is returned.
+                if (content) {
+                    content = content.replace(xmlRegExp, "");
+                    var matches = content.match(bodyRegExp);
+                    if (matches) {
+                        content = matches[1];
+                    }
+                } else {
+                    content = "";
+                }
+                return content;
+            },
+
+            jsEscape: function (content) {
+                return content.replace(/(['\\])/g, '\\$1')
+                    .replace(/[\f]/g, "\\f")
+                    .replace(/[\b]/g, "\\b")
+                    .replace(/[\n]/g, "\\n")
+                    .replace(/[\t]/g, "\\t")
+                    .replace(/[\r]/g, "\\r");
+            },
+
+            createXhr: function () {
+                //Would love to dump the ActiveX crap in here. Need IE 6 to die first.
+                var xhr, i, progId;
+                if (typeof XMLHttpRequest !== "undefined") {
+                    return new XMLHttpRequest();
+                } else {
+                    for (i = 0; i < 3; i++) {
+                        progId = progIds[i];
+                        try {
+                            xhr = new ActiveXObject(progId);
+                        } catch (e) {}
+
+                        if (xhr) {
+                            progIds = [progId];  // so faster next time
+                            break;
+                        }
+                    }
+                }
+
+                if (!xhr) {
+                    throw new Error("createXhr(): XMLHttpRequest not available");
+                }
+
+                return xhr;
+            },
+
+            get: get,
+
+            /**
+             * Parses a resource name into its component parts. Resource names
+             * look like: module/name.ext!strip, where the !strip part is
+             * optional.
+             * @param {String} name the resource name
+             * @returns {Object} with properties "moduleName", "ext" and "strip"
+             * where strip is a boolean.
+             */
+            parseName: function (name) {
+                var strip = false, index = name.indexOf("."),
+                    modName = name.substring(0, index),
+                    ext = name.substring(index + 1, name.length);
+
+                index = ext.indexOf("!");
+                if (index !== -1) {
+                    //Pull off the strip arg.
+                    strip = ext.substring(index + 1, ext.length);
+                    strip = strip === "strip";
+                    ext = ext.substring(0, index);
+                }
+
+                return {
+                    moduleName: modName,
+                    ext: ext,
+                    strip: strip
+                };
+            },
+
+            xdRegExp: /^((\w+)\:)?\/\/([^\/\\]+)/,
+
+            /**
+             * Is an URL on another domain. Only works for browser use, returns
+             * false in non-browser environments. Only used to know if an
+             * optimized .js version of a text resource should be loaded
+             * instead.
+             * @param {String} url
+             * @returns Boolean
+             */
+            useXhr: function (url, protocol, hostname, port) {
+                var match = text.xdRegExp.exec(url),
+                    uProtocol, uHostName, uPort;
+                if (!match) {
+                    return true;
+                }
+                uProtocol = match[2];
+                uHostName = match[3];
+
+                uHostName = uHostName.split(':');
+                uPort = uHostName[1];
+                uHostName = uHostName[0];
+
+                return (!uProtocol || uProtocol === protocol) &&
+                       (!uHostName || uHostName === hostname) &&
+                       ((!uPort && !uHostName) || uPort === port);
+            },
+
+            finishLoad: function (name, strip, content, onLoad, config) {
+                content = strip ? text.strip(content) : content;
+                if (config.isBuild) {
+                    buildMap[name] = content;
+                }
+                onLoad(content);
+            },
+
+            load: function (name, req, onLoad, config) {
+                //Name has format: some.module.filext!strip
+                //The strip part is optional.
+                //if strip is present, then that means only get the string contents
+                //inside a body tag in an HTML string. For XML/SVG content it means
+                //removing the <?xml ...?> declarations so the content can be inserted
+                //into the current doc without problems.
+
+                // Do not bother with the work if a build and text will
+                // not be inlined.
+                if (config.isBuild && !config.inlineText) {
+                    onLoad();
+                    return;
+                }
+
+                var parsed = text.parseName(name),
+                    nonStripName = parsed.moduleName + '.' + parsed.ext,
+                    url = req.toUrl(nonStripName),
+                    useXhr = (config && config.text && config.text.useXhr) ||
+                             text.useXhr;
+
+                //Load the text. Use XHR if possible and in a browser.
+                if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
+                    text.get(url, function (content) {
+                        text.finishLoad(name, parsed.strip, content, onLoad, config);
+                    });
+                } else {
+                    //Need to fetch the resource across domains. Assume
+                    //the resource has been optimized into a JS module. Fetch
+                    //by the module name + extension, but do not include the
+                    //!strip part to avoid file system issues.
+                    req([nonStripName], function (content) {
+                        text.finishLoad(parsed.moduleName + '.' + parsed.ext,
+                                        parsed.strip, content, onLoad, config);
+                    });
+                }
+            },
+
+            write: function (pluginName, moduleName, write, config) {
+                if (moduleName in buildMap) {
+                    var content = text.jsEscape(buildMap[moduleName]);
+                    write.asModule(pluginName + "!" + moduleName,
+                                   "define(function () { return '" +
+                                       content +
+                                   "';});\n");
+                }
+            },
+
+            writeFile: function (pluginName, moduleName, req, write, config) {
+                var parsed = text.parseName(moduleName),
+                    nonStripName = parsed.moduleName + '.' + parsed.ext,
+                    //Use a '.js' file name so that it indicates it is a
+                    //script that can be loaded across domains.
+                    fileName = req.toUrl(parsed.moduleName + '.' +
+                                         parsed.ext) + '.js';
+
+                //Leverage own load() method to load plugin value, but only
+                //write out values that do not have the strip argument,
+                //to avoid any potential issues with ! in file names.
+                text.load(nonStripName, req, function (value) {
+                    //Use own write() method to construct full module value.
+                    //But need to create shell that translates writeFile's
+                    //write() to the right interface.
+                    var textWrite = function (contents) {
+                        return write(fileName, contents);
+                    };
+                    textWrite.asModule = function (moduleName, contents) {
+                        return write.asModule(moduleName, fileName, contents);
+                    };
+
+                    text.write(pluginName, nonStripName, textWrite, config);
+                }, config);
+            }
+        };
+
+        return text;
+    });
+}());
+
+/*!
+ * TroopJS RequireJS template plug-in
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+/**
+ * This plugin provides a template loader and compiler.
+ */
+define('template',[ "text" ], function TemplateModule(text) {
+	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
+	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
+	var RE_TOKENS = /<%(\d+)%>/gm;
+	var RE_REPLACE = /(["\n\t\r])/gm;
+	var RE_CLEAN = /o \+= "";| \+ ""/gm;
+	var EMPTY = "";
+	var REPLACE = {
+		"\"" : "\\\"",
+		"\n" : "\\n",
+		"\t" : "\\t",
+		"\r" : "\\r"
+	};
+
+	var buildMap = {};
+
+	/**
+	 * Compiles template
+	 * 
+	 * @param body Template body
+	 * @returns {Function}
+	 */
+	function compile(body) {
+		var blocks = [];
+		var length = 0;
+
+		function blocksTokens(original, prefix, block) {
+			blocks[length] = prefix
+				? "\" +" + block + "+ \""
+				: "\";" + block + "o += \"";
+			return "<%" + String(length++) + "%>";
+		}
+
+		function tokensBlocks(original, token) {
+			return blocks[token];
+		}
+
+		function replace(original, token) {
+			return REPLACE[token] || token;
+		}
+
+		return new Function("data", ("var o; o = \""
+		// Sanitize body before we start templating
+		+ body.replace(RE_SANITIZE, "")
+
+		// Replace script blocks with tokens
+		.replace(RE_BLOCK, blocksTokens)
+
+		// Replace unwanted tokens
+		.replace(RE_REPLACE, replace)
+
+		// Replace tokens with script blocks
+		.replace(RE_TOKENS, tokensBlocks)
+
+		+ "\"; return o;")
+
+		// Clean
+		.replace(RE_CLEAN, EMPTY));
+	}
+
+	return {
+		load : function(name, req, load, config) {
+			text.load(name, req, function(value) {
+				// Compile template and store in buildMap
+				var template = buildMap[name] = compile(value);
+
+				// Set display name for debugging
+				template.displayName = name;
+
+				// Pass template to load
+				load(template);
+			}, config);
+		},
+
+		write : function(pluginName, moduleName, write, config) {
+			if (moduleName in buildMap) {
+				write.asModule(pluginName + "!" + moduleName, "define(function () { return " + buildMap[moduleName].toString().replace(RE_SANITIZE, EMPTY) + ";});\n");
+			}
+		}
+	};
+});
+
 /*!
  * TroopJS jQuery action plug-in
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
@@ -1826,384 +2233,5 @@ define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function W
 				}
 			}
 		});
-	};
-});
-
-/**
- * @license RequireJS text 1.0.7 Copyright (c) 2010-2011, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
-/*jslint regexp: false, nomen: false, plusplus: false, strict: false */
-/*global require: false, XMLHttpRequest: false, ActiveXObject: false,
-  define: false, window: false, process: false, Packages: false,
-  java: false, location: false */
-
-(function () {
-    var progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-        xmlRegExp = /^\s*<\?xml(\s)+version=[\'\"](\d)*.(\d)*[\'\"](\s)*\?>/im,
-        bodyRegExp = /<body[^>]*>\s*([\s\S]+)\s*<\/body>/im,
-        hasLocation = typeof location !== 'undefined' && location.href,
-        defaultProtocol = hasLocation && location.protocol && location.protocol.replace(/\:/, ''),
-        defaultHostName = hasLocation && location.hostname,
-        defaultPort = hasLocation && (location.port || undefined),
-        buildMap = [];
-
-    define('text',[],function () {
-        var text, get, fs;
-
-        if (typeof window !== "undefined" && window.navigator && window.document) {
-            get = function (url, callback) {
-                var xhr = text.createXhr();
-                xhr.open('GET', url, true);
-                xhr.onreadystatechange = function (evt) {
-                    //Do not explicitly handle errors, those should be
-                    //visible via console output in the browser.
-                    if (xhr.readyState === 4) {
-                        callback(xhr.responseText);
-                    }
-                };
-                xhr.send(null);
-            };
-        } else if (typeof process !== "undefined" &&
-                 process.versions &&
-                 !!process.versions.node) {
-            //Using special require.nodeRequire, something added by r.js.
-            fs = require.nodeRequire('fs');
-
-            get = function (url, callback) {
-                var file = fs.readFileSync(url, 'utf8');
-                //Remove BOM (Byte Mark Order) from utf8 files if it is there.
-                if (file.indexOf('\uFEFF') === 0) {
-                    file = file.substring(1);
-                }
-                callback(file);
-            };
-        } else if (typeof Packages !== 'undefined') {
-            //Why Java, why is this so awkward?
-            get = function (url, callback) {
-                var encoding = "utf-8",
-                    file = new java.io.File(url),
-                    lineSeparator = java.lang.System.getProperty("line.separator"),
-                    input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding)),
-                    stringBuffer, line,
-                    content = '';
-                try {
-                    stringBuffer = new java.lang.StringBuffer();
-                    line = input.readLine();
-
-                    // Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
-                    // http://www.unicode.org/faq/utf_bom.html
-
-                    // Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
-                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
-                    if (line && line.length() && line.charAt(0) === 0xfeff) {
-                        // Eat the BOM, since we've already found the encoding on this file,
-                        // and we plan to concatenating this buffer with others; the BOM should
-                        // only appear at the top of a file.
-                        line = line.substring(1);
-                    }
-
-                    stringBuffer.append(line);
-
-                    while ((line = input.readLine()) !== null) {
-                        stringBuffer.append(lineSeparator);
-                        stringBuffer.append(line);
-                    }
-                    //Make sure we return a JavaScript string and not a Java string.
-                    content = String(stringBuffer.toString()); //String
-                } finally {
-                    input.close();
-                }
-                callback(content);
-            };
-        }
-
-        text = {
-            version: '1.0.7',
-
-            strip: function (content) {
-                //Strips <?xml ...?> declarations so that external SVG and XML
-                //documents can be added to a document without worry. Also, if the string
-                //is an HTML document, only the part inside the body tag is returned.
-                if (content) {
-                    content = content.replace(xmlRegExp, "");
-                    var matches = content.match(bodyRegExp);
-                    if (matches) {
-                        content = matches[1];
-                    }
-                } else {
-                    content = "";
-                }
-                return content;
-            },
-
-            jsEscape: function (content) {
-                return content.replace(/(['\\])/g, '\\$1')
-                    .replace(/[\f]/g, "\\f")
-                    .replace(/[\b]/g, "\\b")
-                    .replace(/[\n]/g, "\\n")
-                    .replace(/[\t]/g, "\\t")
-                    .replace(/[\r]/g, "\\r");
-            },
-
-            createXhr: function () {
-                //Would love to dump the ActiveX crap in here. Need IE 6 to die first.
-                var xhr, i, progId;
-                if (typeof XMLHttpRequest !== "undefined") {
-                    return new XMLHttpRequest();
-                } else {
-                    for (i = 0; i < 3; i++) {
-                        progId = progIds[i];
-                        try {
-                            xhr = new ActiveXObject(progId);
-                        } catch (e) {}
-
-                        if (xhr) {
-                            progIds = [progId];  // so faster next time
-                            break;
-                        }
-                    }
-                }
-
-                if (!xhr) {
-                    throw new Error("createXhr(): XMLHttpRequest not available");
-                }
-
-                return xhr;
-            },
-
-            get: get,
-
-            /**
-             * Parses a resource name into its component parts. Resource names
-             * look like: module/name.ext!strip, where the !strip part is
-             * optional.
-             * @param {String} name the resource name
-             * @returns {Object} with properties "moduleName", "ext" and "strip"
-             * where strip is a boolean.
-             */
-            parseName: function (name) {
-                var strip = false, index = name.indexOf("."),
-                    modName = name.substring(0, index),
-                    ext = name.substring(index + 1, name.length);
-
-                index = ext.indexOf("!");
-                if (index !== -1) {
-                    //Pull off the strip arg.
-                    strip = ext.substring(index + 1, ext.length);
-                    strip = strip === "strip";
-                    ext = ext.substring(0, index);
-                }
-
-                return {
-                    moduleName: modName,
-                    ext: ext,
-                    strip: strip
-                };
-            },
-
-            xdRegExp: /^((\w+)\:)?\/\/([^\/\\]+)/,
-
-            /**
-             * Is an URL on another domain. Only works for browser use, returns
-             * false in non-browser environments. Only used to know if an
-             * optimized .js version of a text resource should be loaded
-             * instead.
-             * @param {String} url
-             * @returns Boolean
-             */
-            useXhr: function (url, protocol, hostname, port) {
-                var match = text.xdRegExp.exec(url),
-                    uProtocol, uHostName, uPort;
-                if (!match) {
-                    return true;
-                }
-                uProtocol = match[2];
-                uHostName = match[3];
-
-                uHostName = uHostName.split(':');
-                uPort = uHostName[1];
-                uHostName = uHostName[0];
-
-                return (!uProtocol || uProtocol === protocol) &&
-                       (!uHostName || uHostName === hostname) &&
-                       ((!uPort && !uHostName) || uPort === port);
-            },
-
-            finishLoad: function (name, strip, content, onLoad, config) {
-                content = strip ? text.strip(content) : content;
-                if (config.isBuild) {
-                    buildMap[name] = content;
-                }
-                onLoad(content);
-            },
-
-            load: function (name, req, onLoad, config) {
-                //Name has format: some.module.filext!strip
-                //The strip part is optional.
-                //if strip is present, then that means only get the string contents
-                //inside a body tag in an HTML string. For XML/SVG content it means
-                //removing the <?xml ...?> declarations so the content can be inserted
-                //into the current doc without problems.
-
-                // Do not bother with the work if a build and text will
-                // not be inlined.
-                if (config.isBuild && !config.inlineText) {
-                    onLoad();
-                    return;
-                }
-
-                var parsed = text.parseName(name),
-                    nonStripName = parsed.moduleName + '.' + parsed.ext,
-                    url = req.toUrl(nonStripName),
-                    useXhr = (config && config.text && config.text.useXhr) ||
-                             text.useXhr;
-
-                //Load the text. Use XHR if possible and in a browser.
-                if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
-                    text.get(url, function (content) {
-                        text.finishLoad(name, parsed.strip, content, onLoad, config);
-                    });
-                } else {
-                    //Need to fetch the resource across domains. Assume
-                    //the resource has been optimized into a JS module. Fetch
-                    //by the module name + extension, but do not include the
-                    //!strip part to avoid file system issues.
-                    req([nonStripName], function (content) {
-                        text.finishLoad(parsed.moduleName + '.' + parsed.ext,
-                                        parsed.strip, content, onLoad, config);
-                    });
-                }
-            },
-
-            write: function (pluginName, moduleName, write, config) {
-                if (moduleName in buildMap) {
-                    var content = text.jsEscape(buildMap[moduleName]);
-                    write.asModule(pluginName + "!" + moduleName,
-                                   "define(function () { return '" +
-                                       content +
-                                   "';});\n");
-                }
-            },
-
-            writeFile: function (pluginName, moduleName, req, write, config) {
-                var parsed = text.parseName(moduleName),
-                    nonStripName = parsed.moduleName + '.' + parsed.ext,
-                    //Use a '.js' file name so that it indicates it is a
-                    //script that can be loaded across domains.
-                    fileName = req.toUrl(parsed.moduleName + '.' +
-                                         parsed.ext) + '.js';
-
-                //Leverage own load() method to load plugin value, but only
-                //write out values that do not have the strip argument,
-                //to avoid any potential issues with ! in file names.
-                text.load(nonStripName, req, function (value) {
-                    //Use own write() method to construct full module value.
-                    //But need to create shell that translates writeFile's
-                    //write() to the right interface.
-                    var textWrite = function (contents) {
-                        return write(fileName, contents);
-                    };
-                    textWrite.asModule = function (moduleName, contents) {
-                        return write.asModule(moduleName, fileName, contents);
-                    };
-
-                    text.write(pluginName, nonStripName, textWrite, config);
-                }, config);
-            }
-        };
-
-        return text;
-    });
-}());
-
-/*!
- * TroopJS RequireJS template plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-/**
- * This plugin provides a template loader and compiler.
- */
-define('template',[ "text" ], function TemplateModule(text) {
-	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
-	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
-	var RE_TOKENS = /<%(\d+)%>/gm;
-	var RE_REPLACE = /(["\n\t\r])/gm;
-	var RE_CLEAN = /o \+= "";| \+ ""/gm;
-	var EMPTY = "";
-	var REPLACE = {
-		"\"" : "\\\"",
-		"\n" : "\\n",
-		"\t" : "\\t",
-		"\r" : "\\r"
-	};
-
-	var buildMap = {};
-
-	/**
-	 * Compiles template
-	 * 
-	 * @param body Template body
-	 * @returns {Function}
-	 */
-	function compile(body) {
-		var blocks = [];
-		var length = 0;
-
-		function blocksTokens(original, prefix, block) {
-			blocks[length] = prefix
-				? "\" +" + block + "+ \""
-				: "\";" + block + "o += \"";
-			return "<%" + String(length++) + "%>";
-		}
-
-		function tokensBlocks(original, token) {
-			return blocks[token];
-		}
-
-		function replace(original, token) {
-			return REPLACE[token] || token;
-		}
-
-		return new Function("data", ("var o; o = \""
-		// Sanitize body before we start templating
-		+ body.replace(RE_SANITIZE, "")
-
-		// Replace script blocks with tokens
-		.replace(RE_BLOCK, blocksTokens)
-
-		// Replace unwanted tokens
-		.replace(RE_REPLACE, replace)
-
-		// Replace tokens with script blocks
-		.replace(RE_TOKENS, tokensBlocks)
-
-		+ "\"; return o;")
-
-		// Clean
-		.replace(RE_CLEAN, EMPTY));
-	}
-
-	return {
-		load : function(name, req, load, config) {
-			text.load(name, req, function(value) {
-				// Compile template and store in buildMap
-				var template = buildMap[name] = compile(value);
-
-				// Set display name for debugging
-				template.displayName = name;
-
-				// Pass template to load
-				load(template);
-			}, config);
-		},
-
-		write : function(pluginName, moduleName, write, config) {
-			if (moduleName in buildMap) {
-				write.asModule(pluginName + "!" + moduleName, "define(function () { return " + buildMap[moduleName].toString().replace(RE_SANITIZE, EMPTY) + ";});\n");
-			}
-		}
 	};
 });
