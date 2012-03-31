@@ -1,25 +1,64 @@
+SRC=../src
 DIST := ../dist
+R := lib/rjs/dist/r.js
 
-all: js
+# Core services
+TROOPJS-CORE := troopjs-core/component/gadget \
+	troopjs-core/component/widget \
+	troopjs-core/pubsub/hub \
+	troopjs-core/pubsub/topic \
+	troopjs-core/remote/ajax \
+	troopjs-core/store/local \
+	troopjs-core/store/session \
+	template
+
+# jQuery plugins
+TROOPJS-JQUERY := troopjs-jquery/action \
+	troopjs-jquery/destroy \
+	troopjs-jquery/dimensions \
+	troopjs-jquery/hashchange \
+	troopjs-jquery/weave \
+	troopjs-jquery/wire
+
+#  All modules
+INCLUDE := $(TROOPJS-CORE) $(TROOPJS-JQUERY)
+
+# A literal comma
+comma :=,
+
+# A literal space
+space :=
+space +=
+
+# Joins elements of the list in arg 2 with the given separator
+#   1. Element separator
+#   2. The list
+join-with = $(subst $(space),$1,$(strip $2))
+
+all: prepare js
 
 clean:
 	@@echo "Removing" $(DIST)
 	@@rm -rf $(DIST)
 
-js:
+prepare:
+	@@echo "Creating" $(DIST)
+	@@mkdir -p $(DIST)
+
+js: prepare
 	@@echo "Compiling JS"
-	@@node lib/rjs/dist/r.js -o \
-		out=../dist/troopjs-bundle.js \
-		baseUrl=../src/ \
+	@@node $(R) -o \
+		out=$(DIST)/troopjs-bundle.js \
+		baseUrl=$(SRC) \
+		paths.jquery=empty: \
 		paths.compose=lib/composejs/compose \
 		paths.config=empty: \
-		paths.deferred=lib/troopjs-jquery/src/deferred \
-		paths.jquery=empty: \
-		paths.template=lib/troopjs-requirejs/src/template \
-		paths.text=lib/requirejs/text \
 		paths.troopjs-core=lib/troopjs-core/src \
 		paths.troopjs-jquery=lib/troopjs-jquery/src \
-		include=troopjs-core/component/base,troopjs-core/component/gadget,troopjs-core/component/widget,troopjs-core/pubsub/hub,troopjs-core/pubsub/topic,troopjs-core/remote/ajax,troopjs-core/store/base,troopjs-core/store/local,troopjs-core/store/session,troopjs-jquery/action,troopjs-jquery/deferred,troopjs-jquery/destroy,troopjs-jquery/dimensions,troopjs-jquery/hashchange,troopjs-jquery/weave,troopjs-jquery/wire,template \
+		paths.text=lib/requirejs/text \
+		paths.template=lib/troopjs-requirejs/src/template \
+		paths.deferred=lib/troopjs-jquery/src/deferred \
+		include=$(call join-with,$(comma),$(INCLUDE)) \
 		optimize=none
 
 .PHONY: all clean
