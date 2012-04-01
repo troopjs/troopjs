@@ -1493,11 +1493,11 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 	var TRUE = "true";
 	var ORIGINALEVENT = "originalEvent";
 	var RE_ACTION = /^([\w\d\s_\-\/]+)(?:\.([\w\.]+))?(?:\((.*)\))?$/;
-	var RE_SEPARATOR = /[\s,]+/;
+	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_DOT = /\.+/;
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
-	var RE_BOOLEAN = /^false|true$/;
+	var RE_BOOLEAN = /^false|true$/i;
 
 	/**
 	 * Namespace iterator
@@ -1586,18 +1586,22 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 		}
 
 		// Split args by separator (if there were args)
-		var argv = args !== UNDEFINED ? args.split(RE_SEPARATOR) : [];
+		var argv = args !== UNDEFINED
+			? args.split(RE_SEPARATOR)
+			: [];
 
 		// Iterate argv to determine arg type
-		$.each(argv, function argsIterator(i, key) {
-			if (key in $data) {
-				argv[i] = $data[key];
-			} else if (RE_STRING.test(key)) {
-				argv[i] = key.slice(1, -1);
-			} else if (RE_DIGIT.test(key)) {
-				argv[i] = Number(key);
-			} else if (RE_BOOLEAN.test(key)) {
-				argv[i] = key === TRUE;
+		$.each(argv, function argsIterator(i, value) {
+			if (value in $data) {
+				argv[i] = $data[value];
+			} else if (RE_STRING.test(value)) {
+				argv[i] = value.slice(1, -1);
+			} else if (RE_DIGIT.test(value)) {
+				argv[i] = Number(value);
+			} else if (RE_BOOLEAN.test(value)) {
+				argv[i] = value === TRUE;
+			} else {
+				argv[i] = UNDEFINED;
 			}
 		});
 
@@ -1959,7 +1963,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var UNDEFINED = undefined;
 	var NULL = null;
-	var EMPTY = "";
+	var TRUE = true;
 	var FUNCTION = Function;
 	var ARRAY = Array;
 	var JOIN = ARRAY.prototype.join;
@@ -1971,8 +1975,11 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var WIDGET_UNWEAVE = "widget/" + UNWEAVE;
 	var DATA_WEAVE = "data-" + WEAVE;
 	var DATA_WOVEN = "data-" + WOVEN;
-	var RE_SEPARATOR = /[\s,]+/;
-	var RE_CLEAN = /@\d+/g;
+	var RE_WEAVE = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
+	var RE_SEPARATOR = /\s*,\s*/;
+	var RE_STRING = /^(["']).*\1$/;
+	var RE_DIGIT = /^\d+$/;
+	var RE_BOOLEAN = /^false|true$/i;
 
 	$.fn[WEAVE] = function weave(deferred) {
 		var required = [];
@@ -1981,41 +1988,71 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 
 		$elements.each(function elementIterator(index, element) {
 			var $element = $(element);
-			var weave = $element.attr(DATA_WEAVE) || EMPTY;
-			var widgets = weave.split(RE_SEPARATOR);
+			var $data = $element.data();
+			var weave = $element.attr(DATA_WEAVE) || "";
+			var widgets = [];
 			var mark = i;
-			var j;
-			var jMax;
+			var j = 0;
+			var matches;
 
 			$element
-				// Store widgets array on element
+				// Store DATA_WEAVE attribute as WEAVE
+				.data(WEAVE, weave)
+				// Store widgets array as WOVEN
 				.data(WOVEN, widgets)
-				// Make sure to remove data-weave (so we don't try processing this again)
+				// Make sure to remove DATA_WEAVE (so we don't try processing this again)
 				.removeAttr(DATA_WEAVE);
 
 			// Iterate widgets
-			for (j = 0, jMax = widgets.length; j < jMax; j++) {
+			while ((matches = RE_WEAVE.exec(weave)) !== NULL) {
 				// Add deferred to required array
-				required[i++] = $.Deferred(function deferedRequire(dfd) {
-					// Store position as 'j' will not be available during require
-					var position = j;
-					var name = widgets[position];
+				required[i] = $.Deferred(function deferedRequire(dfd) {
+					// Store prefixed values as they will not be available during require
+					var _j = j;
+					var _matches = matches;
+
+					// Get widget name
+					var name = _matches[1];
+
+					// Get widget args
+					var args = _matches[2];
 
 					try {
 						// Require widget
 						require([ name ], function required(widget) {
-							// If we don'e exist, we can't wire, fail fast
-							if (widget === NULL || widget === UNDEFINED) {
-								throw new Error("no widget");
+							var k;
+							var kMax;
+							var value;
+
+							// Get widget arguments (if any)
+							var argv = args !== UNDEFINED
+								? args.split(RE_SEPARATOR)
+								: [];
+
+							// Iterate argv to set typed values
+							for (k = 0, kMax = argv.length; k < kMax; k++) {
+								value = argv[k];
+
+								if (value in $data) {
+									argv[k] = $data[value];
+								} else if (RE_STRING.test(value)) {
+									argv[k] = value.slice(1, -1);
+								} else if (RE_DIGIT.test(value)) {
+									argv[k] = Number(value);
+								} else if (RE_BOOLEAN.test(value)) {
+									argv[k] = value === TRUE;
+								} else {
+									argv[k] = UNDEFINED;
+								}
 							}
 
 							// Instantiate widgets that support it
 							if (widget instanceof FUNCTION) {
-								widget = new widget($element, name);
+								widget = new widget($element, name, argv);
 							}
 							// Otherwise, look for an init method
 							else if (widget.init instanceof FUNCTION) {
-								widget.init(element, name);
+								widget.init($element, name, argv);
 							}
 
 							$element
@@ -2024,21 +2061,19 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 								// Trigger weave
 								.triggerHandler(WIDGET_WEAVE, [ widget ]);
 
-							// Replace position with instantiated widget
-							widgets[position] = widget;
-
-							// Resolve with widget
-							dfd.resolve(widget);
+							// Store widgets[_j] and resolve with widget instance
+							dfd.resolve(widgets[_j] = widget);
 						});
 					}
 					catch (e) {
-						// Replace position with UNDEFINED
-						widgets[position] = UNDEFINED;
-
-						// Resolve with original name
-						dfd.resolve(name);
+						// Reset widgets[_j] and resolve with UNDEFINED
+						dfd.resolve(widgets[_j] = UNDEFINED);
 					}
 				});
+
+				// Step i, j
+				i++;
+				j++;
 			}
 
 			// Slice out widgets woven for this element
@@ -2060,16 +2095,14 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		return $(this)
 			.each(function elementIterator(index, element) {
 				var $element = $(element);
-				var widgets = $elemen.data(WOVEN);
+				var widgets = $element.data(WOVEN);
 				var widget;
 
-				// Quick return if there are no widgets
-				if (!widgets instanceof ARRAY) {
-					return;
-				}
-
-				// Make sure to remove weave data
-				$element.removeData(WOVEN);
+				$element
+					// Remove WOVEN data
+					.removeData(WOVEN)
+					// Remove DATA_WOVEN attribute
+					.removeAttr(DATA_WOVEN);
 
 				// Somewhat safe(r) iterator over widgets
 				while (widget = widgets.shift()) {
@@ -2084,13 +2117,13 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 					// Unwire
 					$element.unwire(widget);
 				}
-			})
-			// Copy data-woven attribute to data-weave
-			.attr(DATA_WEAVE, function attrIterator(index, attr) {
-				return $(this).attr(DATA_WOVEN).replace(RE_CLEAN, EMPTY);
-			})
-			// Remove data-woven attribute
-			.removeAttr(DATA_WOVEN);
+
+				$element
+					// Copy woven data to data-weave attribute
+					.attr(DATA_WEAVE, $element.data(WEAVE))
+					// Remove data fore WEAVE
+					.removeData(DATA_WEAVE);
+			});
 	};
 });
 /*!
