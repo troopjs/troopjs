@@ -1964,9 +1964,9 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var UNDEFINED = undefined;
 	var NULL = null;
 	var TRUE = true;
-	var FUNCTION = Function;
-	var ARRAY = Array;
-	var JOIN = ARRAY.prototype.join;
+	var ARRAY_PROTO = Array.prototype;
+	var JOIN = ARRAY_PROTO.join;
+	var PUSH = ARRAY_PROTO.push;
 	var WHEN = $.when;
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
@@ -1980,6 +1980,16 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
 	var RE_BOOLEAN = /^false|true$/i;
+
+	function construct(constructor, args) {
+		function F() {
+			return constructor.apply(this, args);
+		}
+
+		F.prototype = constructor.prototype;
+
+		return new F();
+	}
 
 	$.fn[WEAVE] = function weave(deferred) {
 		var required = [];
@@ -2003,7 +2013,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 				// Make sure to remove DATA_WEAVE (so we don't try processing this again)
 				.removeAttr(DATA_WEAVE);
 
-			// Iterate widgets
+			// Iterate widgets (while the rexep matches)
 			while ((matches = RE_WEAVE.exec(weave)) !== NULL) {
 				// Add deferred to required array
 				required[i] = $.Deferred(function deferedRequire(dfd) {
@@ -2023,36 +2033,39 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 							var k;
 							var kMax;
 							var value;
+							var argv;
 
-							// Get widget arguments (if any)
-							var argv = args !== UNDEFINED
-								? args.split(RE_SEPARATOR)
-								: [];
+							// If we we're not able to match args we can do a simple instantiation
+							if (args === UNDEFINED) {
+								widget = new widget($element, name);
+							}
+							// Otherwise, complicated
+							else {
+								// Store $element and name as first two arguments
+								argv = [ $element, name ];
 
-							// Iterate argv to set typed values
-							for (k = 0, kMax = argv.length; k < kMax; k++) {
-								value = argv[k];
+								// Append widget arguments
+								PUSH.apply(argv, args.split(RE_SEPARATOR));
 
-								if (value in $data) {
-									argv[k] = $data[value];
-								} else if (RE_STRING.test(value)) {
-									argv[k] = value.slice(1, -1);
-								} else if (RE_DIGIT.test(value)) {
-									argv[k] = Number(value);
-								} else if (RE_BOOLEAN.test(value)) {
-									argv[k] = value === TRUE;
-								} else {
-									argv[k] = UNDEFINED;
+								// Iterate to set typed values
+								for (k = 2, kMax = argv.length; k < kMax; k++) {
+									value = argv[k];
+
+									if (value in $data) {
+										argv[k] = $data[value];
+									} else if (RE_STRING.test(value)) {
+										argv[k] = value.slice(1, -1);
+									} else if (RE_DIGIT.test(value)) {
+										argv[k] = Number(value);
+									} else if (RE_BOOLEAN.test(value)) {
+										argv[k] = value === TRUE;
+									} else {
+										argv[k] = UNDEFINED;
+									}
 								}
-							}
 
-							// Instantiate widgets that support it
-							if (widget instanceof FUNCTION) {
-								widget = new widget($element, name, argv);
-							}
-							// Otherwise, look for an init method
-							else if (widget.init instanceof FUNCTION) {
-								widget.init($element, name, argv);
+								// Construct widget
+								widget = new construct(widget, argv);
 							}
 
 							$element
