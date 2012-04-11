@@ -17,8 +17,7 @@ TROOPJS-JQUERY := troopjs-jquery/action \
 	troopjs-jquery/destroy \
 	troopjs-jquery/dimensions \
 	troopjs-jquery/hashchange \
-	troopjs-jquery/weave \
-	troopjs-jquery/wire
+	troopjs-jquery/weave
 
 #  All modules
 INCLUDE := $(TROOPJS-CORE) $(TROOPJS-JQUERY)

@@ -296,8 +296,8 @@ define('compose',[], function(){
  * Released under the MIT license.
  */
 /**
- * The base trait provides functionality for instance counting
- * and a default 'toString' method.
+ * The base trait provides functionality for instance counting,
+ * configuration and a default 'toString' method.
  */
 define('troopjs-core/component/base',[ "compose", "config" ], function ComponentModule(Compose, config) {
 	var COUNT = 0;
@@ -310,9 +310,6 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 		 */
 		config : config,
 
-		// Require compositions to provide a displayName
-		displayName : Compose.required,
-
 		/**
 		 * Generates string representation of this object
 		 * @returns Combination displayName and instanceCount
@@ -320,7 +317,7 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 		toString : function toString() {
 			var self = this;
 
-			return self.displayName + "@" + self.instanceCount;
+			return (self.displayName || "component") + "@" + self.instanceCount;
 		}
 	});
 });
@@ -657,12 +654,143 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
  * The gadget trait provides convenient access to common application
  * logic such as pubsub* and ajax
  */
-define('troopjs-core/component/gadget',[ "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Component, hub, Topic, Deferred) {
+define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Compose, Component, hub, Topic, Deferred) {
+	var NULL = null;
+	var BUILD = "build";
+	var DESTROY = "destroy";
+	var RE_SCAN = new RegExp("^(" + [BUILD, DESTROY].join("|") + ")/.+");
+	var RE_HUB = /^hub\/.+/;
 	var PUBLISH = hub.publish;
 	var SUBSCRIBE = hub.subscribe;
 	var UNSUBSCRIBE = hub.unsubscribe;
 
-	return Component.extend({
+	return Component.extend(function Gadget() {
+		var self = this;
+		var builder = NULL;
+		var destructor = NULL;
+		var subscriptions = new Array();
+
+		Compose.call(self, {
+			/**
+			 * Iterates builders and executes them in reverse order
+			 * @returns self
+			 */
+			build : function build() {
+				var key = NULL;
+				var value;
+				var matches;
+				var current;
+
+				// Loop over each property in component
+				for (key in self) {
+					// Get matches
+					matches = RE_SCAN.exec(key);
+
+					// Make sure we have matches
+					match: if (matches !== NULL) {
+						// Get value
+						value = self[key];
+
+						switch (matches[1]) {
+						case BUILD:
+							// Update next
+							value.next = builder;
+							// Update current
+							builder = value;
+							break;
+
+						case DESTROY:
+							// Update next
+							value.next = destructor;
+							// Update current
+							destructor = value;
+							break;
+
+						default:
+							break match;
+						}
+
+						// Update topic
+						value.topic = key;
+
+						// Remove value from self
+						delete self[key];
+					}
+				}
+
+				// Set current
+				current = builder;
+
+				while (current !== NULL) {
+					current.call(self);
+
+					current = current.next;
+				}
+
+				return self;
+			},
+
+			/**
+			 * Iterates destructors and executes them in reverse order
+			 * @returns self
+			 */
+			destroy : function iterator() {
+				var current = destructor;
+
+				while (current !== NULL) {
+					current.call(self);
+
+					current = current.next;
+				}
+
+				return self;
+			},
+
+			/**
+			 * Builder for hub subscriptions
+			 * @returns self
+			 */
+			"build/hub" : function build() {
+				var key = NULL;
+				var value;
+
+				// Loop over each property in gadget
+				for (key in self) {
+					// Match signature in key
+					if (RE_HUB.test(key)) {
+						// Get value
+						value = self[key];
+
+						// Subscribe
+						hub.subscribe(new Topic(key, self), self, value);
+
+						// Store in subscriptions
+						subscriptions[subscriptions.length] = [key, value];
+
+						// Remove value from self
+						delete self[key];
+					}
+				}
+
+				return self;
+			},
+
+			/**
+			 * Destructor for hub subscriptions
+			 * @returns self
+			 */
+			"destroy/hub": function destroy() {
+				var subscription;
+
+				// Loop over subscriptions
+				while (subscription = subscriptions.shift()) {
+					hub.unsubscribe(subscription[0], subscription[1]);
+				}
+
+				return self;
+			},
+		});
+	}, {
 		/**
 		 * Calls hub.publish in self context
 		 * @returns self
@@ -709,21 +837,45 @@ define('troopjs-core/component/gadget',[ "./base", "../pubsub/hub", "../pubsub/t
 /**
  * The widget trait provides common UI related logic
  */
-define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function WidgetModule(Gadget, $) {
-	var UNDEFINED = undefined;
+define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery" ], function WidgetModule(Compose, Gadget, $) {
+	var NULL = null;
 	var FUNCTION = Function;
-	var SLICE = Array.prototype.slice;
+	var ARRAY_PROTO = Array.prototype;
+	var SLICE = ARRAY_PROTO.slice;
+	var UNSHIFT = ARRAY_PROTO.unshift;
+	var RE = /^dom(?::(\w+))?\/([^\.]+(?:\.(.+))?)/;
 	var REFRESH = "widget/refresh";
 	var $ELEMENT = "$element";
-	var DISPLAYNAME = "displayName";
+	var ONE = "one";
+	var BIND = "bind";
 	var ATTR_WEAVE = "[data-weave]";
 	var ATTR_WOVEN = "[data-woven]";
 
 	/**
+	 * Creates a proxy of the inner method 'handlerProxy' with the 'topic', 'widget' and handler parameters set
+	 * @param topic event topic
+	 * @param widget target widget
+	 * @param handler target handler
+	 * @returns {Function} proxied handler
+	 */
+	function eventProxy(topic, widget, handler) {
+		/**
+		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
+		 * @returns result of proxied hanlder invocation
+		 */
+		return function handlerProxy() {
+			// Add topic to front of arguments
+			UNSHIFT.call(arguments, topic);
+
+			// Apply with shifted arguments to handler
+			return handler.apply(widget, arguments);
+		};
+	}
+
+	/**
 	 * Creates a proxy of the inner method 'render' with the 'op' parameter set
-	 * 
 	 * @param op name of jQuery method call
-	 * @returns proxied render
+	 * @returns {Function} proxied render
 	 */
 	function renderProxy(op) {
 		/**
@@ -772,17 +924,61 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function Widget
 
 	return Gadget.extend(function Widget($element, displayName) {
 		var self = this;
-		self[$ELEMENT] = $element;
+		var $proxies = new Array();
 
-		if (displayName !== undefined) {
-			self[DISPLAYNAME] = displayName;
-		}
+		// Extend self
+		Compose.call(self, {
+			"build/dom" : function build() {
+				var key = NULL;
+				var value;
+				var matches;
+				var topic;
+
+				// Loop over each property in widget
+				for (key in self) {
+					// Match signature in key
+					matches = RE.exec(key);
+
+					if (matches !== NULL) {
+						// Get topic
+						topic = matches[2];
+
+						// Replace value with a scoped proxy
+						value = eventProxy(topic, self, self[key]);
+
+						// Either ONE or BIND element
+						$element[matches[2] === ONE ? ONE : BIND](topic, self, value);
+
+						// Store in $proxies
+						$proxies[$proxies.length] = [topic, value];
+
+						// Remove value from self
+						delete self[key];
+					}
+				}
+
+				return self;
+			},
+
+			/**
+			 * Destructor for dom events
+			 * @returns self
+			 */
+			"destroy/dom" : function destroy() {
+				var $proxy;
+
+				// Loop over subscriptions
+				while ($proxy = $proxies.shift()) {
+					$element.unbind($proxy[0], $proxy[1]);
+				}
+
+				return self;
+			},
+
+			"$element" : $element,
+			"displayName" : displayName || "component/widget"
+		});
 	}, {
-		/**
-		 * Default display name
-		 */
-		displayName: "component/widget",
-
 		/**
 		 * Weaves all children of $element
 		 * @param $element (jQuery) Element to weave
@@ -812,9 +1008,11 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function Widget
 		 * @returns self
 		 */
 		trigger : function trigger($event) {
-			$element.trigger($event, SLICE.call(arguments, 1));
+			var self = this;
 
-			return this;
+			self[$ELEMENT].trigger($event, SLICE.call(arguments, 1));
+
+			return self;
 		},
 
 		/**
@@ -893,21 +1091,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery" ], function Widget
 		 * Generic destroy handler.
 		 */
 		"dom/destroy" : function onDestroy(topic, $event) {
-			var self = this;
-			var destructor = self.destructor;
-			var result = UNDEFINED;
-
-			// Check if we have a destructor, then call it
-			if (destructor instanceof FUNCTION) {
-				result = destructor.call(self);
-			}
-
-			// If the destructor does not return false, unweave
-			if (result !== false) {
-				self.unweave(self[$ELEMENT]);
-			}
-
-			return result;
+			return this.destroy();
 		}
 	});
 });
@@ -961,22 +1145,21 @@ define('troopjs-core/util/merge',[],function MergeModule() {
  */
 define('troopjs-core/remote/ajax',[ "compose", "../component/gadget", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Compose, Gadget, Topic, $, merge) {
 
-	function request(topic, settings, deferred) {
-		// Request
-		$.ajax(merge.call({
-			"headers": {
-				"x-request-id": new Date().getTime(),
-				"x-components": topic.constructor === Topic ? topic.trace() : topic
-			}
-		}, settings)).then(deferred.resolve, deferred.reject);
-	}
-
 	return Compose.create(Gadget, function Ajax() {
-		var self = this;
-
-		self.subscribe("hub/ajax", self, request);
+		// Build
+		this.build();
 	}, {
-		displayName : "remote/ajax"
+		displayName : "remote/ajax",
+
+		"hub/ajax" : function request(topic, settings, deferred) {
+			// Request
+			$.ajax(merge.call({
+				"headers": {
+					"x-request-id": new Date().getTime(),
+					"x-components": topic.constructor === Topic ? topic.trace() : topic
+				}
+			}, settings)).then(deferred.resolve, deferred.reject);
+		}
 	});
 });
 /*!
@@ -1964,15 +2147,13 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var UNDEFINED = undefined;
 	var NULL = null;
 	var TRUE = true;
-	var ARRAY_PROTO = Array.prototype;
+	var ARRAY = Array;
+	var ARRAY_PROTO = ARRAY.prototype;
 	var JOIN = ARRAY_PROTO.join;
-	var PUSH = ARRAY_PROTO.push;
 	var WHEN = $.when;
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
 	var WOVEN = "woven";
-	var WIDGET_WEAVE = "widget/" + WEAVE;
-	var WIDGET_UNWEAVE = "widget/" + UNWEAVE;
 	var DATA_WEAVE = "data-" + WEAVE;
 	var DATA_WOVEN = "data-" + WOVEN;
 	var RE_WEAVE = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
@@ -1981,20 +2162,16 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var RE_DIGIT = /^\d+$/;
 	var RE_BOOLEAN = /^false|true$/i;
 
-	function construct(constructor, args) {
-		function F() {
-			return constructor.apply(this, args);
-		}
-
-		F.prototype = constructor.prototype;
-
-		return new F();
-	}
-
-	$.fn[WEAVE] = function weave(deferred) {
+	$.fn[WEAVE] = function weave(/* arg, arg, arg, */ deferred) {
 		var required = [];
 		var i = 0;
 		var $elements = $(this);
+
+		// Make arguments into a real array
+		var argx  = ARRAY.apply(ARRAY_PROTO, arguments);
+
+		// Update deferred to the last argument
+		deferred = argx.pop();
 
 		$elements.each(function elementIterator(index, element) {
 			var $element = $(element);
@@ -2031,48 +2208,49 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 						// Require widget
 						require([ name ], function required(widget) {
 							var k;
+							var l;
 							var kMax;
 							var value;
-							var argv;
 
-							// If we we're not able to match args we can do a simple instantiation
-							if (args === UNDEFINED) {
-								widget = new widget($element, name);
+							// Set initial argv
+							var argv = [ $element, name ];
+
+							// Copy values from argx to argv
+							for (k = 0, kMax = argx.length, l = argv.length; k < kMax; k++, l++) {
+								argv[l] = arg[k];
 							}
-							// Otherwise, complicated
-							else {
-								// Store $element and name as first two arguments
-								argv = [ $element, name ];
 
-								// Append widget arguments
-								PUSH.apply(argv, args.split(RE_SEPARATOR));
+							// Any widget arguments
+							if (args !== UNDEFINED) {
+								// Convert args to array
+								args = args.split(RE_SEPARATOR);
 
-								// Iterate to set typed values
-								for (k = 2, kMax = argv.length; k < kMax; k++) {
-									value = argv[k];
+								// Iterate to 'cast' values
+								for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
+									// Get value
+									value = args[k];
 
 									if (value in $data) {
-										argv[k] = $data[value];
+										argv[l] = $data[value];
 									} else if (RE_STRING.test(value)) {
-										argv[k] = value.slice(1, -1);
+										argv[l] = value.slice(1, -1);
 									} else if (RE_DIGIT.test(value)) {
-										argv[k] = Number(value);
+										argv[l] = Number(value);
 									} else if (RE_BOOLEAN.test(value)) {
-										argv[k] = value === TRUE;
+										argv[l] = value === TRUE;
 									} else {
-										argv[k] = UNDEFINED;
+										argv[l] = UNDEFINED;
 									}
 								}
-
-								// Construct widget
-								widget = new construct(widget, argv);
 							}
 
-							$element
-								// Wire widget (widget)
-								.wire(widget)
-								// Trigger weave
-								.triggerHandler(WIDGET_WEAVE, [ widget ]);
+							// Simple or complex instantiation
+							widget = l === 2
+								? widget($element, name)
+								: widget.apply(widget, argv);
+
+							// Build
+							widget.build();
 
 							// Store widgets[_j] and resolve with widget instance
 							dfd.resolve(widgets[_j] = widget);
@@ -2124,11 +2302,8 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 						continue;
 					}
 
-					// Trigger unweave
-					$element.triggerHandler(WIDGET_UNWEAVE, [ widget ]);
-
-					// Unwire
-					$element.unwire(widget);
+					// Destroy
+					widget.destroy();
 				}
 
 				$element
@@ -2137,147 +2312,5 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 					// Remove data fore WEAVE
 					.removeData(DATA_WEAVE);
 			});
-	};
-});
-/*!
- * TroopJS jQuery wire plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-jquery/wire',[ "jquery", "troopjs-core/pubsub/hub" ], function WireModule($, hub) {
-	var UNSHIFT = Array.prototype.unshift;
-	var FUNCTION = Function;
-	var UNDEFINED = undefined;
-	var NULL = null;
-	var FALSE = false;
-
-	var RE_WIRE = /^(hub|dom)(?::(\w+))?\/([^\.]+(?:\.(.+))?)/;
-	var HUB = "hub";
-	var DOM = "dom";
-	var ONE = "one";
-	var BIND = "bind";
-	var WIRE = "wire";
-	var UNWIRE = "unwire";
-	var BEFORE_WIRE = "beforeWire";
-	var BEFORE_UNWIRE = "beforeUnwire";
-	var PROXIES = "$proxies";
-
-	function $EventProxy(topic, widget, handler) {
-		return function $eventProxy() {
-			// Add topic to front of arguments
-			UNSHIFT.call(arguments, topic);
-
-			// Apply with shifted arguments to handler
-			return handler.apply(widget, arguments);
-		};
-	}
-
-	$.fn[WIRE] = function wire(widget) {
-		return $(this).each(function elementIterator(index, element) {
-			var key = UNDEFINED;
-			var value;
-			var matches;
-			var topic;
-			var $proxies;
-			var beforeWire;
-
-			// Is there a before wire
-			if (BEFORE_WIRE in widget) {
-				// Get handle to beforeWire
-				beforeWire = widget[BEFORE_WIRE];
-
-				// Is beforeWire a function
-				if (beforeWire instanceof FUNCTION) {
-					// If beforeWire returns FALSE we should break
-					if (beforeWire.call(widget, element) === FALSE) {
-						return FALSE;
-					}
-				}
-			}
-
-			// Make sure we have proxies
-			$proxies = widget[PROXIES] = PROXIES in widget
-				? widget[PROXIES]
-				: {};
-
-			// Loop over each property in widget
-			for (key in widget) {
-				value = widget[key];
-
-				// Match wire signature in key
-				matches = RE_WIRE.exec(key);
-
-				if (matches !== NULL) {
-					// get topic
-					topic = matches[3];
-
-					switch (matches[1]) {
-					case HUB:
-						// Subscribe to topic
-						hub.subscribe(topic, widget, value);
-						break;
-
-					case DOM:
-						// Replace value with a scoped proxy and store in proxies
-						$proxies[topic] = value = $EventProxy(topic, widget, value);
-
-						// Either ONE or BIND element
-						$(element)[matches[2] === ONE ? ONE : BIND](topic, widget, value);
-						break;
-					}
-				}
-			}
-		});
-	};
-
-	$.fn[UNWIRE] = function unwire(widget) {
-		return $(this).each(function elementIterator(index, element) {
-			var key = UNDEFINED;
-			var matches;
-			var $proxies;
-			var topic;
-			var beforeUnwire;
-
-			// Is there a before wire
-			if (BEFORE_UNWIRE in widget) {
-				// Get handle to beforeWire
-				beforeUnwire = widget[BEFORE_UNWIRE];
-
-				// Is beforeUnwire a function
-				if (beforeUnwire instanceof FUNCTION) {
-					// If beforeUnwire returns FALSE we should break
-					if (beforeUnwire.call(widget, element) === FALSE) {
-						return FALSE;
-					}
-				}
-			}
-
-			// Make sure we have proxies
-			$proxies = widget[PROXIES] = PROXIES in widget
-				? widget[PROXIES]
-				: {};
-
-			// Loop over each property in widget
-			for (key in widget) {
-				// Match wire signature in key
-				matches = RE_WIRE.exec(key);
-
-				if (matches !== NULL) {
-					topic = matches[3];
-
-					switch (matches[1]) {
-					case APP:
-						// Unsubscribe from topic
-						hub.unsubscribe(topic, widget[key]);
-						break;
-
-					case DOM:
-						// Unbind from element (note we're unbinding the proxy)
-						$(element).unbind(topic, $proxies[topic]);
-						break;
-					}
-				}
-			}
-		});
 	};
 });
