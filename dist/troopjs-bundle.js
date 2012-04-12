@@ -656,6 +656,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
  */
 define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Compose, Component, hub, Topic, Deferred) {
 	var NULL = null;
+	var FUNCTION = Function;
 	var BUILD = "build";
 	var DESTROY = "destroy";
 	var RE_SCAN = new RegExp("^(" + [BUILD, DESTROY].join("|") + ")/.+");
@@ -684,14 +685,20 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 
 				// Loop over each property in component
 				for (key in self) {
+					// Get value
+					value = self[key];
+
+					// Continue if value is not a function
+					if (!(value instanceof FUNCTION)) {
+						continue;
+					}
+
 					// Get matches
 					matches = RE_SCAN.exec(key);
 
 					// Make sure we have matches
-					match: if (matches !== NULL) {
-						// Get value
-						value = self[key];
-
+					if (matches !== NULL) {
+						// Switch on prefix
 						switch (matches[1]) {
 						case BUILD:
 							// Update next
@@ -708,14 +715,14 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 							break;
 
 						default:
-							break match;
+							continue;
 						}
 
 						// Update topic
 						value.topic = key;
 
-						// Remove value from self
-						delete self[key];
+						// NULL value
+						self[key] = NULL;
 					}
 				}
 
@@ -759,6 +766,14 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 
 				// Loop over each property in gadget
 				for (key in self) {
+					// Get value
+					value = self[key];
+
+					// Continue if value is not a function
+					if (!(value instanceof FUNCTION)) {
+						continue;
+					}
+
 					// Match signature in key
 					matches = RE_HUB.exec(key);
 
@@ -766,17 +781,14 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 						// Get topic
 						topic = matches[1];
 
-						// Get value
-						value = self[key];
-
 						// Subscribe
 						hub.subscribe(new Topic(topic, self), self, value);
 
 						// Store in subscriptions
 						subscriptions[subscriptions.length] = [topic, value];
 
-						// Remove value from self
-						delete self[key];
+						// NULL value
+						self[key] = NULL;
 					}
 				}
 
@@ -944,6 +956,14 @@ define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery" ], func
 
 				// Loop over each property in widget
 				for (key in self) {
+					// Get value
+					value = self[key];
+
+					// Continue if value is not a function
+					if (!(value instanceof FUNCTION)) {
+						continue;
+					}
+
 					// Match signature in key
 					matches = RE.exec(key);
 
@@ -952,7 +972,7 @@ define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery" ], func
 						topic = matches[2];
 
 						// Replace value with a scoped proxy
-						value = eventProxy(topic, self, self[key]);
+						value = eventProxy(topic, self, value);
 
 						// Either ONE or BIND element
 						$element[matches[2] === ONE ? ONE : BIND](topic, self, value);
@@ -960,8 +980,8 @@ define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery" ], func
 						// Store in $proxies
 						$proxies[$proxies.length] = [topic, value];
 
-						// Remove value from self
-						delete self[key];
+						// NULL value
+						self[key] = NULL;
 					}
 				}
 
