@@ -573,7 +573,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					? topic.toString()
 					: topic;
 			var re = self.re;
-			var candidates = new Array();
+			var candidates = Array();
 			var candidate;
 			var length = 0;
 			var handler;
@@ -651,15 +651,14 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
  * Released under the MIT license.
  */
 /**
- * The gadget trait provides convenient access to common application
- * logic such as pubsub* and ajax
+ * The gadget trait provides convenient access to common application logic
  */
 define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Compose, Component, hub, Topic, Deferred) {
 	var NULL = null;
 	var FUNCTION = Function;
 	var BUILD = "build";
 	var DESTROY = "destroy";
-	var RE_SCAN = new RegExp("^(" + [BUILD, DESTROY].join("|") + ")/.+");
+	var RE_SCAN = RegExp("^(" + [BUILD, DESTROY].join("|") + ")/.+");
 	var RE_HUB = /^hub\/(.+)/;
 	var PUBLISH = hub.publish;
 	var SUBSCRIBE = hub.subscribe;
@@ -669,7 +668,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 		var self = this;
 		var builder = NULL;
 		var destructor = NULL;
-		var subscriptions = new Array();
+		var subscriptions = Array();
 
 		Compose.call(self, {
 			/**
@@ -782,7 +781,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 						topic = matches[1];
 
 						// Subscribe
-						hub.subscribe(new Topic(topic, self), self, value);
+						hub.subscribe(Topic(topic, self), self, value);
 
 						// Store in subscriptions
 						subscriptions[subscriptions.length] = [topic, value];
@@ -799,7 +798,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 			 * Destructor for hub subscriptions
 			 * @returns self
 			 */
-			"destroy/hub": function destroy() {
+			"destroy/hub" : function destroy() {
 				var subscription;
 
 				// Loop over subscriptions
@@ -843,274 +842,6 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 			var self = this;
 
 			UNSUBSCRIBE.apply(hub, arguments);
-
-			return self;
-		}
-	});
-});
-
-/*!
- * TroopJS widget component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-/**
- * The widget trait provides common UI related logic
- */
-define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery" ], function WidgetModule(Compose, Gadget, $) {
-	var NULL = null;
-	var FUNCTION = Function;
-	var ARRAY_PROTO = Array.prototype;
-	var SLICE = ARRAY_PROTO.slice;
-	var UNSHIFT = ARRAY_PROTO.unshift;
-	var RE = /^dom(?::(\w+))?\/([^\.]+(?:\.(.+))?)/;
-	var REFRESH = "widget/refresh";
-	var $ELEMENT = "$element";
-	var ONE = "one";
-	var BIND = "bind";
-	var ATTR_WEAVE = "[data-weave]";
-	var ATTR_WOVEN = "[data-woven]";
-
-	/**
-	 * Creates a proxy of the inner method 'handlerProxy' with the 'topic', 'widget' and handler parameters set
-	 * @param topic event topic
-	 * @param widget target widget
-	 * @param handler target handler
-	 * @returns {Function} proxied handler
-	 */
-	function eventProxy(topic, widget, handler) {
-		/**
-		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
-		 * @returns result of proxied hanlder invocation
-		 */
-		return function handlerProxy() {
-			// Add topic to front of arguments
-			UNSHIFT.call(arguments, topic);
-
-			// Apply with shifted arguments to handler
-			return handler.apply(widget, arguments);
-		};
-	}
-
-	/**
-	 * Creates a proxy of the inner method 'render' with the 'op' parameter set
-	 * @param op name of jQuery method call
-	 * @returns {Function} proxied render
-	 */
-	function renderProxy(op) {
-		/**
-		 * Renders contents into element
-		 * @param contents (Function | String) Template/String to render
-		 * @param data (Object) If contents is a template - template data
-		 * @param deferred (Deferred) Deferred (optional)
-		 * @returns self
-		 */
-		function render(contents, data, deferred) {
-			var self = this;
-
-			// If contents is a function, call it
-			if (contents instanceof FUNCTION) {
-				contents = contents.call(self, data);
-			}
-			// otherwise data makes no sense
-			else {
-				deferred = data;
-			}
-
-			var $element = self[$ELEMENT];
-
-			// Defer render (as weaving it may need to load async)
-			var deferredRender = $.Deferred(function deferredRender(dfdRender) {
-				// Call render
-				op.call($element, contents);
-
-				// Weave element
-				self.weave($element, dfdRender);
-			})
-			.done(function renderDone() {
-				// After render is complete, trigger "widget/refresh" with woven components
-				$element.trigger(REFRESH, arguments);
-			});
-
-			if (deferred) {
-				deferredRender.then(deferred.resolve, deferred.reject);
-			}
-
-			return self;
-		}
-
-		return render;
-	}
-
-	return Gadget.extend(function Widget($element, displayName) {
-		var self = this;
-		var $proxies = new Array();
-
-		// Extend self
-		Compose.call(self, {
-			"build/dom" : function build() {
-				var key = NULL;
-				var value;
-				var matches;
-				var topic;
-
-				// Loop over each property in widget
-				for (key in self) {
-					// Get value
-					value = self[key];
-
-					// Continue if value is not a function
-					if (!(value instanceof FUNCTION)) {
-						continue;
-					}
-
-					// Match signature in key
-					matches = RE.exec(key);
-
-					if (matches !== NULL) {
-						// Get topic
-						topic = matches[2];
-
-						// Replace value with a scoped proxy
-						value = eventProxy(topic, self, value);
-
-						// Either ONE or BIND element
-						$element[matches[2] === ONE ? ONE : BIND](topic, self, value);
-
-						// Store in $proxies
-						$proxies[$proxies.length] = [topic, value];
-
-						// NULL value
-						self[key] = NULL;
-					}
-				}
-
-				return self;
-			},
-
-			/**
-			 * Destructor for dom events
-			 * @returns self
-			 */
-			"destroy/dom" : function destroy() {
-				var $proxy;
-
-				// Loop over subscriptions
-				while ($proxy = $proxies.shift()) {
-					$element.unbind($proxy[0], $proxy[1]);
-				}
-
-				return self;
-			},
-
-			"$element" : $element,
-			"displayName" : displayName || "component/widget"
-		});
-	}, {
-		/**
-		 * Weaves all children of $element
-		 * @param $element (jQuery) Element to weave
-		 * @param deferred (Deferred) Deferred (optional)
-		 * @returns self
-		 */
-		weave : function weave($element, deferred) {
-			$element.find(ATTR_WEAVE).weave(deferred);
-
-			return this;
-		},
-
-		/**
-		 * Unweaves all children of $element _and_ self
-		 * @param $element (jQuery) Element to unweave
-		 * @returns self
-		 */
-		unweave : function unweave($element) {
-			$element.find(ATTR_WOVEN).andSelf().unweave();
-
-			return this;
-		},
-
-		/**
-		 * Triggers event on $element
-		 * @param $event (jQuery.Event | String) Event to trigger
-		 * @returns self
-		 */
-		trigger : function trigger($event) {
-			var self = this;
-
-			self[$ELEMENT].trigger($event, SLICE.call(arguments, 1));
-
-			return self;
-		},
-
-		/**
-		 * Renders content and inserts it before $element
-		 */
-		before : renderProxy($.fn.before),
-
-		/**
-		 * Renders content and inserts it after $element
-		 */
-		after : renderProxy($.fn.after),
-
-		/**
-		 * Renders content and replaces $element contents
-		 */
-		html : renderProxy($.fn.html),
-
-		/**
-		 * Renders content and appends it to $element
-		 */
-		append : renderProxy($.fn.append),
-
-		/**
-		 * Renders content and prepends it to $element
-		 */
-		prepend : renderProxy($.fn.prepend),
-
-		/**
-		 * Empties widget
-		 * @param deferred (Deferred) Deferred (optional)
-		 * @returns self
-		 */
-		empty : function empty(deferred) {
-			var self = this;
-
-			var $element = self[$ELEMENT];
-
-			// Create deferred for emptying
-			var emptyDeferred = $.Deferred(function emptyDeferred(dfd) {
-
-				// Detach contents
-				var $contents = $element.contents().detach();
-
-				// Trigger refresh
-				$element.trigger(REFRESH, arguments);
-
-				// Get DOM elements
-				var contents = $contents.get();
-
-				// Use timeout in order to yield
-				setTimeout(function emptyTimeout() {
-					try {
-						// Remove elements from DOM
-						$contents.remove();
-
-						// Resolve deferred
-						dfd.resolve(contents);
-					}
-					// If there's an error
-					catch (e) {
-						// Reject deferred
-						dfd.reject(contents);
-					}
-				}, 0);
-			});
-
-			// If a deferred was passed, add resolve/reject
-			if (deferred) {
-				emptyDeferred.then(deferred.resolve, deferred.reject);
-			}
 
 			return self;
 		}
@@ -1302,6 +1033,686 @@ define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessi
 				deferred.resolve();
 			}
 		}
+	});
+});
+/*!
+ * TroopJS widget component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+/**
+ * The widget trait provides common UI related logic
+ */
+define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery", "deferred" ], function WidgetModule(Compose, Gadget, $, Deferred) {
+	var NULL = null;
+	var FUNCTION = Function;
+	var ARRAY_PROTO = Array.prototype;
+	var SLICE = ARRAY_PROTO.slice;
+	var UNSHIFT = ARRAY_PROTO.unshift;
+	var RE = /^dom(?::(\w+))?\/([^\.]+(?:\.(.+))?)/;
+	var REFRESH = "widget/refresh";
+	var $ELEMENT = "$element";
+	var ONE = "one";
+	var BIND = "bind";
+	var ATTR_WEAVE = "[data-weave]";
+	var ATTR_WOVEN = "[data-woven]";
+
+	/**
+	 * Creates a proxy of the inner method 'handlerProxy' with the 'topic', 'widget' and handler parameters set
+	 * @param topic event topic
+	 * @param widget target widget
+	 * @param handler target handler
+	 * @returns {Function} proxied handler
+	 */
+	function eventProxy(topic, widget, handler) {
+		/**
+		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
+		 * @returns result of proxied hanlder invocation
+		 */
+		return function handlerProxy() {
+			// Add topic to front of arguments
+			UNSHIFT.call(arguments, topic);
+
+			// Apply with shifted arguments to handler
+			return handler.apply(widget, arguments);
+		};
+	}
+
+	/**
+	 * Creates a proxy of the inner method 'render' with the 'op' parameter set
+	 * @param op name of jQuery method call
+	 * @returns {Function} proxied render
+	 */
+	function renderProxy(op) {
+		/**
+		 * Renders contents into element
+		 * @param contents (Function | String) Template/String to render
+		 * @param data (Object) If contents is a template - template data
+		 * @param deferred (Deferred) Deferred (optional)
+		 * @returns self
+		 */
+		function render(contents, data, deferred) {
+			var self = this;
+
+			// If contents is a function, call it
+			if (contents instanceof FUNCTION) {
+				contents = contents.call(self, data);
+			}
+			// otherwise data makes no sense
+			else {
+				deferred = data;
+			}
+
+			var $element = self[$ELEMENT];
+
+			// Defer render (as weaving it may need to load async)
+			var deferredRender = Deferred(function deferredRender(dfdRender) {
+				// Call render
+				op.call($element, contents);
+
+				// Weave element
+				self.weave($element, dfdRender);
+			})
+			.done(function renderDone() {
+				// After render is complete, trigger "widget/refresh" with woven components
+				$element.trigger(REFRESH, arguments);
+			});
+
+			if (deferred) {
+				deferredRender.then(deferred.resolve, deferred.reject);
+			}
+
+			return self;
+		}
+
+		return render;
+	}
+
+	return Gadget.extend(function Widget($element, displayName) {
+		var self = this;
+		var $proxies = new Array();
+
+		// Extend self
+		Compose.call(self, {
+			"build/dom" : function build() {
+				var key = NULL;
+				var value;
+				var matches;
+				var topic;
+
+				// Loop over each property in widget
+				for (key in self) {
+					// Get value
+					value = self[key];
+
+					// Continue if value is not a function
+					if (!(value instanceof FUNCTION)) {
+						continue;
+					}
+
+					// Match signature in key
+					matches = RE.exec(key);
+
+					if (matches !== NULL) {
+						// Get topic
+						topic = matches[2];
+
+						// Replace value with a scoped proxy
+						value = eventProxy(topic, self, value);
+
+						// Either ONE or BIND element
+						$element[matches[2] === ONE ? ONE : BIND](topic, self, value);
+
+						// Store in $proxies
+						$proxies[$proxies.length] = [topic, value];
+
+						// NULL value
+						self[key] = NULL;
+					}
+				}
+
+				return self;
+			},
+
+			/**
+			 * Destructor for dom events
+			 * @returns self
+			 */
+			"destroy/dom" : function destroy() {
+				var $proxy;
+
+				// Loop over subscriptions
+				while ($proxy = $proxies.shift()) {
+					$element.unbind($proxy[0], $proxy[1]);
+				}
+
+				return self;
+			},
+
+			"$element" : $element,
+			"displayName" : displayName || "component/widget"
+		});
+	}, {
+		/**
+		 * Weaves all children of $element
+		 * @param $element (jQuery) Element to weave
+		 * @param deferred (Deferred) Deferred (optional)
+		 * @returns self
+		 */
+		weave : function weave($element, deferred) {
+			$element.find(ATTR_WEAVE).weave(deferred);
+
+			return this;
+		},
+
+		/**
+		 * Unweaves all children of $element _and_ self
+		 * @param $element (jQuery) Element to unweave
+		 * @returns self
+		 */
+		unweave : function unweave($element) {
+			$element.find(ATTR_WOVEN).andSelf().unweave();
+
+			return this;
+		},
+
+		/**
+		 * Triggers event on $element
+		 * @param $event (jQuery.Event | String) Event to trigger
+		 * @returns self
+		 */
+		trigger : function trigger($event) {
+			var self = this;
+
+			self[$ELEMENT].trigger($event, SLICE.call(arguments, 1));
+
+			return self;
+		},
+
+		/**
+		 * Renders content and inserts it before $element
+		 */
+		before : renderProxy($.fn.before),
+
+		/**
+		 * Renders content and inserts it after $element
+		 */
+		after : renderProxy($.fn.after),
+
+		/**
+		 * Renders content and replaces $element contents
+		 */
+		html : renderProxy($.fn.html),
+
+		/**
+		 * Renders content and appends it to $element
+		 */
+		append : renderProxy($.fn.append),
+
+		/**
+		 * Renders content and prepends it to $element
+		 */
+		prepend : renderProxy($.fn.prepend),
+
+		/**
+		 * Empties widget
+		 * @param deferred (Deferred) Deferred (optional)
+		 * @returns self
+		 */
+		empty : function empty(deferred) {
+			var self = this;
+
+			var $element = self[$ELEMENT];
+
+			// Create deferred for emptying
+			var emptyDeferred = Deferred(function emptyDeferred(dfd) {
+
+				// Detach contents
+				var $contents = $element.contents().detach();
+
+				// Trigger refresh
+				$element.trigger(REFRESH, arguments);
+
+				// Get DOM elements
+				var contents = $contents.get();
+
+				// Use timeout in order to yield
+				setTimeout(function emptyTimeout() {
+					try {
+						// Remove elements from DOM
+						$contents.remove();
+
+						// Resolve deferred
+						dfd.resolve(contents);
+					}
+					// If there's an error
+					catch (e) {
+						// Reject deferred
+						dfd.reject(contents);
+					}
+				}, 0);
+			});
+
+			// If a deferred was passed, add resolve/reject
+			if (deferred) {
+				emptyDeferred.then(deferred.resolve, deferred.reject);
+			}
+
+			return self;
+		}
+	});
+});
+
+/*!
+ * TroopJS util/uri module
+ * 
+ * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
+ * 
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
+	var NULL = null;
+	var FUNCTION = Function;
+	var ARRAY = Array;
+	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/;
+	var RE_QUERY = /(?:^|&)([^&=]*)=?([^&]*)/g;
+
+	var PROTOCOL = "protocol";
+	var AUTHORITY = "authority";
+	var PATH = "path";
+	var QUERY = "query";
+	var ANCHOR = "anchor";
+
+	var KEYS = [ "source",
+		PROTOCOL,
+		AUTHORITY,
+		"userInfo",
+		"user",
+		"password",
+		"host",
+		"port",
+		"relative",
+		PATH,
+		"directory",
+		"file",
+		QUERY,
+		ANCHOR ];
+
+	// Store current Compose.secure setting
+	var SECURE = Compose.secure;
+
+	// Prevent Compose from creating constructor property
+	Compose.secure = true;
+
+	var Query = Compose(function Query(str) {
+		if (!str) {
+			return;
+		}
+
+		var self = this;
+		var matches;
+		var key;
+		var value;
+
+		while (matches = RE_QUERY.exec(str)) {
+			key = matches[1];
+
+			if (key in self) {
+				value = self[key];
+
+				if (value instanceof ARRAY) {
+					value[value.length] = matches[2];
+				}
+				else {
+					self[key] = [ value, matches[2] ];
+				}
+			}
+			else {
+				self[key] = matches[2];
+			}
+		}
+	}, {
+		toString : function toString() {
+			var self = this;
+			var key = NULL;
+			var value = NULL;
+			var query = Array();
+			var i = 0;
+			var j;
+
+			for (key in self) {
+				if (self[key] instanceof FUNCTION) {
+					continue;
+				}
+
+				query[i++] = key;
+			}
+
+			query.sort();
+
+			while (i--) {
+				key = query[i];
+				value = self[key];
+
+				if (value instanceof ARRAY) {
+					value = value.slice(0);
+
+					value.sort();
+
+					j = value.length;
+
+					while (j--) {
+						value[j] = key + "=" + value[j];
+					}
+
+					query[i] = value.join("&");
+				}
+				else {
+					query[i] = key + "=" + value;
+				}
+			}
+
+			return query.join("&");
+		}
+	});
+
+	var URI = Compose(function URI(str) {
+		if (!str) {
+			return;
+		}
+
+		var self = this;
+		var matches = RE_URI.exec(str);
+		var i = 14;
+		var value;
+
+		while (i--) {
+			value = matches[i];
+
+			if (value) {
+				self[KEYS[i]] = value;
+			}
+		}
+
+		if (QUERY in self) {
+			self[QUERY] = Query(self[QUERY]);
+		}
+
+	}, {
+		toString : function toString() {
+			var self = this;
+			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
+			var i;
+			var key;
+
+			if (!(PROTOCOL in self)) {
+				uri.splice(0, 3);
+			}
+
+			if (!(ANCHOR in self)) {
+				uri.splice(-2, 2);
+			}
+
+			if (!(QUERY in self)) {
+				uri.splice(-2, 2);
+			}
+
+			i = uri.length;
+
+			while (i--) {
+				key = uri[i];
+
+				if (key in self) {
+					uri[i] = self[key];
+				}
+			}
+
+			return uri.join("");
+		}
+	});
+
+	// Restore Compose.secure setting
+	Compose.secure = SECURE;
+
+	return URI;
+});
+/*!
+ * TroopJS callbacks component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('callbacks',[ "jquery" ], function CallbacksModule($) {
+	return $.Callbacks;
+});
+/*!
+ * TroopJS route/router module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/route/router',[ "compose", "../component/widget", "../util/uri", "callbacks" ], function RouteRouterModule(Compose, Widget, URI, Callbacks) {
+	var NULL = null;
+
+	return Widget.extend(function RouteRouterWidget($element, name) {
+		var self = this;
+		var callbacks = Callbacks("memory unique");
+		var oldUri = NULL;
+		var newUri = NULL;
+
+		Compose.call(self, {
+			"hub/route" : function fireRouteCallbacks(topic, uri) {
+				newUri = uri.toString();
+
+				if (newUri !== oldUri) {
+					oldUri = newUri;
+
+					callbacks.fire(uri);
+				}
+			},
+
+			"hub/route/add" : function addRouteCallback(topic, callback) {
+				callbacks.add(callback);
+			},
+
+			"hub/route/remove" : function removeRouteCallback(topic, callback) {
+				callbacks.remove(callback);
+			}
+		});
+	}, {
+		"hub/start" : function start(topic) {
+			this.trigger("hashchange");
+		},
+
+		"dom/hashchange" : function onHashChange(topic, $event) {
+			this.publish("route", URI($event.target.location.hash.replace(/^#/, "")));
+		}
+	});
+});
+/*!
+ * TroopJS widget/placeholder component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/widget/placeholder',[ "compose", "../component/widget", "jquery", "deferred" ], function WidgetPlaceholderModule(Compose, Widget, $, Deferred) {
+	var NULL = null;
+	var UNDEFINED = undefined;
+	var ARRAY = Array;
+	var ARRAY_PROTO = ARRAY.prototype;
+	var DATA_HOLDING = "data-holding";
+
+	return Widget.extend(function WidgetPlaceholder($element, name, _name) {
+		var self = this;
+		var _widget = UNDEFINED;
+
+		function release(/* arg, arg, arg, */ deferred) {
+			// Internal deferred
+			Deferred(function deferredRelease(dfd) {
+				// Make arguments into a real array
+				var argv  = ARRAY.apply(ARRAY_PROTO, arguments);
+
+				// Update deferred to the last argument
+				deferred = argv.pop();
+
+				// We're already holding something, reject
+				if (_widget !== UNDEFINED) {
+					dfd.reject(_widget);
+				}
+				else try {
+					// Set _widget to NULL to indicate that we're in progress
+					_widget = NULL;
+
+					// Initialize deferred
+					dfd
+						.done(function done(widget) {
+							// Update _widget
+							_widget = widget;
+
+							// Set DATA_HOLDING attribute
+							$element.attr(DATA_HOLDING, widget);
+						})
+						.fail(function fail(widget) {
+							// Update _widget
+							_widget = widget;
+						});
+
+					// Require widget by _name
+					require([ _name ], function required(widget) {
+						// If no additional arguments, do simple instantiation
+						if (argv.length === 0) {
+							widget = widget($element, _name);
+						}
+						// Otherwise, do a complicated one
+						else {
+							// Add $element and _name to the beginning of argv
+							argv.unshift($element, _name);
+
+							// Instantiate
+							widget = widget.apply(widget, argv);
+						}
+
+						// Build
+						widget.build();
+
+						// Resolve
+						dfd.resolve(widget);
+					});
+				}
+				catch (e) {
+					dfd.reject(UNDEFINED);
+				}
+
+				// Link deferred
+				if (deferred) {
+					dfd.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return this;
+		}
+
+		function hold(deferred) {
+			// Internal deferred
+			Deferred(function deferredHold(dfd) {
+				// First check that we're holding
+				if (_widget === UNDEFINED || _widget === NULL) {
+					dfd.reject(_widget);
+				}
+				else try {
+					// Initialize deferred
+					dfd
+						.done(function done(widget) {
+							// Remove DATA_HOLDING attribute
+							$element.removeAttr(DATA_HOLDING);
+
+							// Update _widget
+							_widget = UNDEFINED;
+						})
+						.fail(function fail(widget) {
+							// Update _widget
+							_widget = UNDEFINED;
+						});
+
+					// Destroy
+					_widget.destroy();
+
+					// Resolve
+					dfd.resolve(_widget);
+				}
+				catch (e) {
+					dfd.reject(_widget);
+				}
+
+				// Link deferred
+				if (deferred) {
+					dfd.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return this;
+		}
+
+		// Extend instance
+		Compose.call(self, {
+			release : release,
+			hold : hold,
+			destructor : hold
+		});
+	});
+});
+/*!
+ * TroopJS route/placeholder module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/route/placeholder',[ "compose", "../widget/placeholder" ], function RoutePlaceholderModule(Compose, Placeholder) {
+	return Placeholder.extend(function RoutePlaceholderWidget($element, name) {
+		var self = this;
+		var re = RegExp($element.data("route"));
+
+		function onRoute(uri) {
+			if (re.test(uri.path)) {
+				self.release();
+			}
+			else {
+				self.hold();
+			}
+		}
+
+		Compose.call(self, {
+			"build/route" : function build() {
+				self.publish("route/add", onRoute);
+			},
+
+			"destroy/route" : function destroy() {
+				self.publish("route/remove", onRoute);
+			}
+		});
+	});
+});
+/*!
+ * TroopJS widget/application component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/widget/application',[ "compose", "../component/widget" ], function ApplicationModule(Compose, Widget) {
+	return Widget.extend(function ApplicationWidget($element, name) {
+		var self = this;
+
+		Compose.call(self, {
+			"build/application" : function build() {
+				self
+					.weave($element)
+					.publish("start", name);
+			},
+
+			"destroy/application" : function destroy() {
+				var self = this;
+
+				self
+					.publish("stop", name)
+					.unweave($element);
+			}
+		});
 	});
 });
 /**
@@ -1642,7 +2053,7 @@ define('template',[ "text" ], function TemplateModule(text) {
 			return REPLACE[token] || token;
 		}
 
-		return new Function("data", ("var o; o = \""
+		return Function("data", ("var o; o = \""
 		// Sanitize body before we start templating
 		+ body.replace(RE_SANITIZE, "")
 

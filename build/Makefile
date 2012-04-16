@@ -4,12 +4,14 @@ R := lib/rjs/dist/r.js
 
 # Core services
 TROOPJS-CORE := troopjs-core/component/gadget \
-	troopjs-core/component/widget \
 	troopjs-core/pubsub/hub \
 	troopjs-core/pubsub/topic \
 	troopjs-core/remote/ajax \
 	troopjs-core/store/local \
 	troopjs-core/store/session \
+	troopjs-core/route/router \
+	troopjs-core/route/placeholder \
+	troopjs-core/widget/application \
 	template
 
 # jQuery plugins
@@ -57,6 +59,7 @@ js: prepare
 		paths.text=lib/requirejs/text \
 		paths.template=lib/troopjs-requirejs/src/template \
 		paths.deferred=lib/troopjs-jquery/src/deferred \
+		paths.callbacks=lib/troopjs-jquery/src/callbacks \
 		include=$(call join-with,$(comma),$(INCLUDE)) \
 		optimize=none
 
