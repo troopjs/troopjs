@@ -1016,19 +1016,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		publish : function publish(topic /*, arg, arg, ..*/) {
-<<<<<<< HEAD
-			var self = this;
-			var topics = self.topics;
-			var string = topic.constructor === Topic
-					? topic.toString()
-					: topic;
-			var re = self.re;
-			var candidates = Array();
-			var candidate;
-			var length = 0;
-=======
 			var handlers;
->>>>>>> bumped rjs
 			var handler;
 
 			// Have handlers
@@ -1087,23 +1075,12 @@ define('deferred',[ "jquery" ], function DeferredModule($) {
  * Released under the MIT license.
  */
 /**
-<<<<<<< HEAD
- * The gadget trait provides convenient access to common application logic
-=======
  * The gadget trait provides life cycle management
->>>>>>> bumped rjs
  */
 define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
 	var NULL = null;
 	var FUNCTION = Function;
-<<<<<<< HEAD
-	var BUILD = "build";
-	var DESTROY = "destroy";
-	var RE_SCAN = RegExp("^(" + [BUILD, DESTROY].join("|") + ")/.+");
-	var RE_HUB = /^hub\/(.+)/;
-=======
 	var RE = /^hub(?::(\w+))?\/(.+)/;
->>>>>>> bumped rjs
 	var PUBLISH = hub.publish;
 	var SUBSCRIBE = hub.subscribe;
 	var UNSUBSCRIBE = hub.unsubscribe;
@@ -1115,11 +1092,6 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 
 	return Component.extend(function Gadget() {
 		var self = this;
-<<<<<<< HEAD
-		var builder = NULL;
-		var destructor = NULL;
-		var subscriptions = Array();
-=======
 		var __proto__ = self;
 		var callback;
 		var sCallbacks = [];
@@ -1155,7 +1127,6 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 			add: if (__proto__.hasOwnProperty(FINALIZE)) {
 				// Store callback
 				callback = __proto__[FINALIZE];
->>>>>>> bumped rjs
 
 				// Reset counter
 				i = fCount;
@@ -1193,53 +1164,6 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 
 		// Extend self
 		Compose.call(self, {
-<<<<<<< HEAD
-			/**
-			 * First scans for build/destroy signatures and pushes them on the stack
-			 * then iterates builders and executes them in reverse order
-			 * @returns self
-			 */
-			build : function build() {
-				var key = NULL;
-				var value;
-				var matches;
-				var current;
-
-				// Loop over each property in component
-				for (key in self) {
-					// Get value
-					value = self[key];
-
-					// Continue if value is not a function
-					if (!(value instanceof FUNCTION)) {
-						continue;
-					}
-
-					// Get matches
-					matches = RE_SCAN.exec(key);
-
-					// Make sure we have matches
-					if (matches !== NULL) {
-						// Switch on prefix
-						switch (matches[1]) {
-						case BUILD:
-							// Update next
-							value.next = builder;
-							// Update current
-							builder = value;
-							break;
-
-						case DESTROY:
-							// Update next
-							value.next = destructor;
-							// Update current
-							destructor = value;
-							break;
-
-						default:
-							continue;
-						}
-=======
 			initialize : iCount <= 1
 				// No prototypes, use original
 				? self[INITIALIZE]
@@ -1255,7 +1179,6 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 
 					return _self;
 				},
->>>>>>> bumped rjs
 
 			finalize : fCount <= 1
 				// No prototypes, use original
@@ -1265,14 +1188,9 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 					var count = -1;
 					var length = fCount;
 
-<<<<<<< HEAD
-						// NULL value
-						self[key] = NULL;
-=======
 					// Loop fCallbacks start to end and execute
 					while (++count < length) {
 						fCallbacks[count].apply(_self, arguments);
->>>>>>> bumped rjs
 					}
 
 					return _self;
@@ -1333,31 +1251,12 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 					// Get topic
 					topic = matches[2];
 
-<<<<<<< HEAD
-				// Loop over each property in gadget
-				for (key in self) {
-					// Get value
-					value = self[key];
-
-					// Continue if value is not a function
-					if (!(value instanceof FUNCTION)) {
-						continue;
-					}
-
-					// Match signature in key
-					matches = RE_HUB.exec(key);
-=======
 					// Subscribe
 					hub.subscribe(topic, self, matches[1] === MEMORY, value);
->>>>>>> bumped rjs
 
 					// Store in subscriptions
 					subscriptions[subscriptions.length] = [topic, self, value];
 
-<<<<<<< HEAD
-						// Subscribe
-						hub.subscribe(Topic(topic, self), self, value);
-=======
 					// NULL value
 					self[key] = NULL;
 				}
@@ -1365,32 +1264,10 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 
 			return self;
 		},
->>>>>>> bumped rjs
 
 		finalize : function finalize() {
 			var self = this;
 
-<<<<<<< HEAD
-						// NULL value
-						self[key] = NULL;
-					}
-				}
-
-				return self;
-			},
-
-			/**
-			 * Destructor for hub subscriptions
-			 * @returns self
-			 */
-			"destroy/hub" : function destroy() {
-				var subscription;
-
-				// Loop over subscriptions
-				while (subscription = subscriptions.shift()) {
-					hub.unsubscribe(subscription[0], subscription[1]);
-				}
-=======
 			var subscriptions = self[SUBSCRIPTIONS];
 			var subscription;
 
@@ -1401,7 +1278,6 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 
 			return self;
 		},
->>>>>>> bumped rjs
 
 		/**
 		 * Calls hub.publish in self context
@@ -1454,238 +1330,12 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 });
 
 /*!
-<<<<<<< HEAD
- * TroopJS util/merge module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/util/merge',[],function MergeModule() {
-	var ARRAY = Array;
-	var OBJECT = Object;
-
-	return function merge(source) {
-		var target = this;
-		var key = null;
-		var i;
-		var iMax;
-		var value;
-		var constructor;
-
-		for (i = 0, iMax = arguments.length; i < iMax; i++) {
-			source = arguments[i];
-
-			for (key in source) {
-				value = source[key];
-				constructor = value.constructor;
-	
-				if (!(key in target)) {
-					target[key] = value;
-				}
-				else if (constructor === ARRAY) {
-					target[key] = target[key].concat(value);
-				}
-				else if (constructor === OBJECT) {
-					merge.call(target[key], value);
-				}
-				else {
-					target[key] = value;
-				}
-			}
-		}
-
-		return target;
-	};
-});
-/*!
- * TroopJS remote/ajax module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/remote/ajax',[ "compose", "../component/gadget", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Compose, Gadget, Topic, $, merge) {
-
-	return Compose.create(Gadget, function Ajax() {
-		// Build
-		this.build();
-	}, {
-		displayName : "remote/ajax",
-
-		"hub/ajax" : function request(topic, settings, deferred) {
-			// Request
-			$.ajax(merge.call({
-				"headers": {
-					"x-request-id": new Date().getTime(),
-					"x-components": topic.constructor === Topic ? topic.trace() : topic
-				}
-			}, settings)).then(deferred.resolve, deferred.reject);
-		}
-	});
-});
-/*!
- * TroopJS store/base module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
-	return Gadget.extend({
-		set : Compose.required,
-		get : Compose.required,
-		remove : Compose.required,
-		clear : Compose.required
-	});
-});
-/*!
- * TroopJS store/local module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
-
-	// Grab local storage
-	var STORAGE = window.localStorage;
-
-	return Compose.create(Store, {
-		displayName : "store/local",
-
-		set : function set(key, value, deferred) {
-			// JSON encoded 'value' then store as 'key'
-			STORAGE.setItem(key, JSON.stringify(value));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		get : function get(key, deferred) {
-			// Get value from 'key', parse JSON
-			var value = JSON.parse(STORAGE.getItem(key));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		remove : function remove(key, deferred) {
-			// Remove key
-			STORAGE.removeItem(key);
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		},
-
-		clear : function clear(deferred) {
-			// Clear
-			STORAGE.clear();
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		}
-	});
-});
-/*!
- * TroopJS store/session module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
-
-	// Grab session storage
-	var STORAGE = window.sessionStorage;
-
-	return Compose.create(Store, {
-		displayName : "store/session",
-
-		set : function set(key, value, deferred) {
-			// JSON encoded 'value' then store as 'key'
-			STORAGE.setItem(key, JSON.stringify(value));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		get : function get(key, deferred) {
-			// Get value from 'key', parse JSON
-			var value = JSON.parse(STORAGE.getItem(key));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		remove : function remove(key, deferred) {
-			// Remove key
-			STORAGE.removeItem(key);
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		},
-
-		clear : function clear(deferred) {
-			// Clear
-			STORAGE.clear();
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		}
-	});
-});
-/*!
- * TroopJS widget component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-/**
- * The widget trait provides common UI related logic
- */
-define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery", "deferred" ], function WidgetModule(Compose, Gadget, $, Deferred) {
-	var NULL = null;
-	var FUNCTION = Function;
-	var ARRAY_PROTO = Array.prototype;
-	var SLICE = ARRAY_PROTO.slice;
-	var UNSHIFT = ARRAY_PROTO.unshift;
-	var RE = /^dom(?::(\w+))?\/([^\.]+(?:\.(.+))?)/;
-	var REFRESH = "widget/refresh";
-	var $ELEMENT = "$element";
-	var ONE = "one";
-	var BIND = "bind";
-	var ATTR_WEAVE = "[data-weave]";
-	var ATTR_WOVEN = "[data-woven]";
-
-	/**
-	 * Creates a proxy of the inner method 'handlerProxy' with the 'topic', 'widget' and handler parameters set
-	 * @param topic event topic
-	 * @param widget target widget
-	 * @param handler target handler
-	 * @returns {Function} proxied handler
-	 */
-	function eventProxy(topic, widget, handler) {
-		/**
-		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
-		 * @returns result of proxied hanlder invocation
-		 */
-		return function handlerProxy() {
-			// Add topic to front of arguments
-			UNSHIFT.call(arguments, topic);
-=======
  * TroopJS service component
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
 	var STATE = "state";
->>>>>>> bumped rjs
 
 	function onState(topic, state) {
 		this.state(state);
@@ -1694,15 +1344,8 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 	return Gadget.extend({
 		displayName : "core/component/service",
 
-<<<<<<< HEAD
-			// Defer render (as weaving it may need to load async)
-			var deferredRender = Deferred(function deferredRender(dfdRender) {
-				// Call render
-				op.call($element, contents);
-=======
 		initialize : function initialize() {
 			var self = this;
->>>>>>> bumped rjs
 
 			return self.subscribe(STATE, self, true, onState);
 		},
@@ -1753,20 +1396,6 @@ define('troopjs-core/util/merge',[],function MergeModule() {
 			}
 		}
 
-<<<<<<< HEAD
-				// Loop over each property in widget
-				for (key in self) {
-					// Get value
-					value = self[key];
-
-					// Continue if value is not a function
-					if (!(value instanceof FUNCTION)) {
-						continue;
-					}
-
-					// Match signature in key
-					matches = RE.exec(key);
-=======
 		return target;
 	};
 });
@@ -1778,7 +1407,6 @@ define('troopjs-core/util/merge',[],function MergeModule() {
 define('troopjs-core/remote/ajax',[ "compose", "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Compose, Service, Topic, $, merge) {
 	return Compose.create(Service, {
 		displayName : "core/remote/ajax",
->>>>>>> bumped rjs
 
 		"hub/ajax" : function request(topic, settings, deferred) {
 			// Request
@@ -1838,15 +1466,10 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			return;
 		}
 
-<<<<<<< HEAD
-						// Replace value with a scoped proxy
-						value = eventProxy(topic, self, value);
-=======
 		var self = this;
 		var matches;
 		var key;
 		var value;
->>>>>>> bumped rjs
 
 		while (matches = RE_QUERY.exec(str)) {
 			key = matches[1];
@@ -1854,14 +1477,8 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			if (key in self) {
 				value = self[key];
 
-<<<<<<< HEAD
-						// NULL value
-						self[key] = NULL;
-					}
-=======
 				if (value instanceof ARRAY) {
 					value[value.length] = matches[2];
->>>>>>> bumped rjs
 				}
 				else {
 					self[key] = [ value, matches[2] ];
@@ -1945,14 +1562,9 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			var i;
 			var key;
 
-<<<<<<< HEAD
-			// Create deferred for emptying
-			var emptyDeferred = Deferred(function emptyDeferred(dfd) {
-=======
 			if (!(PROTOCOL in self)) {
 				uri.splice(0, 3);
 			}
->>>>>>> bumped rjs
 
 			if (!(PATH in self)) {
 				uri.splice(0, 1);
@@ -1986,115 +1598,6 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	return URI;
 });
 /*!
-<<<<<<< HEAD
- * TroopJS util/uri module
- * 
- * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
- * 
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
-	var NULL = null;
-	var FUNCTION = Function;
-	var ARRAY = Array;
-	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/;
-	var RE_QUERY = /(?:^|&)([^&=]*)=?([^&]*)/g;
-
-	var PROTOCOL = "protocol";
-	var AUTHORITY = "authority";
-	var PATH = "path";
-	var QUERY = "query";
-	var ANCHOR = "anchor";
-
-	var KEYS = [ "source",
-		PROTOCOL,
-		AUTHORITY,
-		"userInfo",
-		"user",
-		"password",
-		"host",
-		"port",
-		"relative",
-		PATH,
-		"directory",
-		"file",
-		QUERY,
-		ANCHOR ];
-
-	// Store current Compose.secure setting
-	var SECURE = Compose.secure;
-
-	// Prevent Compose from creating constructor property
-	Compose.secure = true;
-
-	var Query = Compose(function Query(str) {
-		if (!str) {
-			return;
-		}
-
-		var self = this;
-		var matches;
-		var key;
-		var value;
-
-		while (matches = RE_QUERY.exec(str)) {
-			key = matches[1];
-
-			if (key in self) {
-				value = self[key];
-
-				if (value instanceof ARRAY) {
-					value[value.length] = matches[2];
-				}
-				else {
-					self[key] = [ value, matches[2] ];
-				}
-			}
-			else {
-				self[key] = matches[2];
-			}
-		}
-	}, {
-		toString : function toString() {
-			var self = this;
-			var key = NULL;
-			var value = NULL;
-			var query = Array();
-			var i = 0;
-			var j;
-
-			for (key in self) {
-				if (self[key] instanceof FUNCTION) {
-					continue;
-				}
-
-				query[i++] = key;
-			}
-
-			query.sort();
-
-			while (i--) {
-				key = query[i];
-				value = self[key];
-
-				if (value instanceof ARRAY) {
-					value = value.slice(0);
-
-					value.sort();
-
-					j = value.length;
-
-					while (j--) {
-						value[j] = key + "=" + value[j];
-					}
-
-					query[i] = value.join("&");
-				}
-				else {
-					query[i] = key + "=" + value;
-				}
-=======
  * TroopJS route/router module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
@@ -2122,67 +1625,9 @@ define('troopjs-core/route/router',[ "compose", "../component/service", "../util
 
 				// Publish route
 				$event.data.publish("route", uri);
->>>>>>> bumped rjs
-			}
-
-			return query.join("&");
-		}
-	});
-
-	var URI = Compose(function URI(str) {
-		if (!str) {
-			return;
-		}
-
-		var self = this;
-		var matches = RE_URI.exec(str);
-		var i = 14;
-		var value;
-
-		while (i--) {
-			value = matches[i];
-
-			if (value) {
-				self[KEYS[i]] = value;
 			}
 		}
 
-<<<<<<< HEAD
-		if (QUERY in self) {
-			self[QUERY] = Query(self[QUERY]);
-		}
-
-	}, {
-		toString : function toString() {
-			var self = this;
-			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
-			var i;
-			var key;
-
-			if (!(PROTOCOL in self)) {
-				uri.splice(0, 3);
-			}
-
-			if (!(ANCHOR in self)) {
-				uri.splice(-2, 2);
-			}
-
-			if (!(QUERY in self)) {
-				uri.splice(-2, 2);
-			}
-
-			i = uri.length;
-
-			while (i--) {
-				key = uri[i];
-
-				if (key in self) {
-					uri[i] = self[key];
-				}
-			}
-
-			return uri.join("");
-=======
 		Compose.call(this, {
 			state : function state(state) {
 				var self = this;
@@ -2221,269 +1666,88 @@ define('troopjs-core/route/router',[ "compose", "../component/service", "../util
 			delete self[$ELEMENT];
 
 			return self;
->>>>>>> bumped rjs
 		}
 	});
-
-	// Restore Compose.secure setting
-	Compose.secure = SECURE;
-
-	return URI;
 });
 /*!
- * TroopJS callbacks component
+ * TroopJS store/base module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('callbacks',[ "jquery" ], function CallbacksModule($) {
-	return $.Callbacks;
+define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
+	return Gadget.extend({
+		set : Compose.required,
+		get : Compose.required,
+		remove : Compose.required,
+		clear : Compose.required
+	});
 });
 /*!
- * TroopJS route/router module
+ * TroopJS store/local module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/route/router',[ "compose", "../component/widget", "../util/uri", "callbacks" ], function RouteRouterModule(Compose, Widget, URI, Callbacks) {
-	var NULL = null;
+define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
 
-	return Widget.extend(function RouteRouterWidget($element, name) {
-		var self = this;
-		var callbacks = Callbacks("memory unique");
-		var oldUri = NULL;
-		var newUri = NULL;
+	// Grab local storage
+	var STORAGE = window.localStorage;
 
-		Compose.call(self, {
-			"hub/route" : function fireRouteCallbacks(topic, uri) {
-				newUri = uri.toString();
+	return Compose.create(Store, {
+		displayName : "core/store/local",
 
-				if (newUri !== oldUri) {
-					oldUri = newUri;
+		set : function set(key, value, deferred) {
+			// JSON encoded 'value' then store as 'key'
+			STORAGE.setItem(key, JSON.stringify(value));
 
-					callbacks.fire(uri);
-				}
-			},
-
-			"hub/route/add" : function addRouteCallback(topic, callback) {
-				callbacks.add(callback);
-			},
-
-			"hub/route/remove" : function removeRouteCallback(topic, callback) {
-				callbacks.remove(callback);
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve(value);
 			}
-		});
-	}, {
-		"hub/start" : function start(topic) {
-			this.trigger("hashchange");
 		},
 
-		"dom/hashchange" : function onHashChange(topic, $event) {
-			this.publish("route", URI($event.target.location.hash.replace(/^#/, "")));
+		get : function get(key, deferred) {
+			// Get value from 'key', parse JSON
+			var value = JSON.parse(STORAGE.getItem(key));
+
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve(value);
+			}
+		},
+
+		remove : function remove(key, deferred) {
+			// Remove key
+			STORAGE.removeItem(key);
+
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve();
+			}
+		},
+
+		clear : function clear(deferred) {
+			// Clear
+			STORAGE.clear();
+
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve();
+			}
 		}
 	});
 });
 /*!
- * TroopJS widget/placeholder component
+ * TroopJS store/session module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/widget/placeholder',[ "compose", "../component/widget", "jquery", "deferred" ], function WidgetPlaceholderModule(Compose, Widget, $, Deferred) {
-	var NULL = null;
-	var UNDEFINED = undefined;
-	var ARRAY = Array;
-	var ARRAY_PROTO = ARRAY.prototype;
-	var DATA_HOLDING = "data-holding";
+define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
 
-<<<<<<< HEAD
-	return Widget.extend(function WidgetPlaceholder($element, name, _name) {
-		var self = this;
-		var _widget = UNDEFINED;
-
-		function release(/* arg, arg, arg, */ deferred) {
-			// Internal deferred
-			Deferred(function deferredRelease(dfd) {
-				// Make arguments into a real array
-				var argv  = ARRAY.apply(ARRAY_PROTO, arguments);
-
-				// Update deferred to the last argument
-				deferred = argv.pop();
-
-				// We're already holding something, reject
-				if (_widget !== UNDEFINED) {
-					dfd.reject(_widget);
-				}
-				else try {
-					// Set _widget to NULL to indicate that we're in progress
-					_widget = NULL;
-
-					// Initialize deferred
-					dfd
-						.done(function done(widget) {
-							// Update _widget
-							_widget = widget;
-
-							// Set DATA_HOLDING attribute
-							$element.attr(DATA_HOLDING, widget);
-						})
-						.fail(function fail(widget) {
-							// Update _widget
-							_widget = widget;
-						});
-
-					// Require widget by _name
-					require([ _name ], function required(widget) {
-						// If no additional arguments, do simple instantiation
-						if (argv.length === 0) {
-							widget = widget($element, _name);
-						}
-						// Otherwise, do a complicated one
-						else {
-							// Add $element and _name to the beginning of argv
-							argv.unshift($element, _name);
-
-							// Instantiate
-							widget = widget.apply(widget, argv);
-						}
-
-						// Build
-						widget.build();
-
-						// Resolve
-						dfd.resolve(widget);
-					});
-				}
-				catch (e) {
-					dfd.reject(UNDEFINED);
-				}
-
-				// Link deferred
-				if (deferred) {
-					dfd.then(deferred.resolve, deferred.reject);
-				}
-			});
-
-			return this;
-		}
-
-		function hold(deferred) {
-			// Internal deferred
-			Deferred(function deferredHold(dfd) {
-				// First check that we're holding
-				if (_widget === UNDEFINED || _widget === NULL) {
-					dfd.reject(_widget);
-				}
-				else try {
-					// Initialize deferred
-					dfd
-						.done(function done(widget) {
-							// Remove DATA_HOLDING attribute
-							$element.removeAttr(DATA_HOLDING);
-
-							// Update _widget
-							_widget = UNDEFINED;
-						})
-						.fail(function fail(widget) {
-							// Update _widget
-							_widget = UNDEFINED;
-						});
-
-					// Destroy
-					_widget.destroy();
-
-					// Resolve
-					dfd.resolve(_widget);
-				}
-				catch (e) {
-					dfd.reject(_widget);
-				}
-
-				// Link deferred
-				if (deferred) {
-					dfd.then(deferred.resolve, deferred.reject);
-				}
-			});
-
-			return this;
-		}
-
-		// Extend instance
-		Compose.call(self, {
-			release : release,
-			hold : hold,
-			destructor : hold
-		});
-	});
-});
-/*!
- * TroopJS route/placeholder module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/route/placeholder',[ "compose", "../widget/placeholder" ], function RoutePlaceholderModule(Compose, Placeholder) {
-	return Placeholder.extend(function RoutePlaceholderWidget($element, name) {
-		var self = this;
-		var re = RegExp($element.data("route"));
-
-		function onRoute(uri) {
-			if (re.test(uri.path)) {
-				self.release();
-			}
-			else {
-				self.hold();
-			}
-		}
-
-		Compose.call(self, {
-			"build/route" : function build() {
-				self.publish("route/add", onRoute);
-			},
-
-			"destroy/route" : function destroy() {
-				self.publish("route/remove", onRoute);
-			}
-		});
-	});
-});
-/*!
- * TroopJS widget/application component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/widget/application',[ "compose", "../component/widget" ], function ApplicationModule(Compose, Widget) {
-	return Widget.extend(function ApplicationWidget($element, name) {
-		var self = this;
-
-		Compose.call(self, {
-			"build/application" : function build() {
-				self
-					.weave($element)
-					.publish("start", name);
-			},
-
-			"destroy/application" : function destroy() {
-				var self = this;
-
-				self
-					.publish("stop", name)
-					.unweave($element);
-			}
-		});
-	});
-});
-/**
- * @license RequireJS text 1.0.7 Copyright (c) 2010-2011, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/jrburke/requirejs for details
- */
-/*jslint regexp: false, nomen: false, plusplus: false, strict: false */
-/*global require: false, XMLHttpRequest: false, ActiveXObject: false,
-  define: false, window: false, process: false, Packages: false,
-  java: false, location: false */
-=======
 	// Grab session storage
 	var STORAGE = window.sessionStorage;
 
 	return Compose.create(Store, {
-		displayName : "store/session",
+		displayName : "core/store/session",
 
 		set : function set(key, value, deferred) {
 			// JSON encoded 'value' then store as 'key'
@@ -2752,7 +2016,6 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 			var self = this;
 
 			$UNBIND.apply(self[$ELEMENT], arguments);
->>>>>>> bumped rjs
 
 			return self;
 		},
@@ -2844,80 +2107,6 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 });
 
 /*!
- * TroopJS widget/application component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/widget/application',[ "../component/widget", "deferred" ], function ApplicationModule(Widget, Deferred) {
-	var STARTED = "started";
-	var STOPPED = "stopped";
-
-	return Widget.extend({
-		displayName : "core/widget/application",
-
-		state : function state(state, deferred) {
-			var self = this;
-
-			// Publish state to services
-			self.publish("state", state);
-
-			switch (state) {
-			case STARTED:
-				self.weave(deferred);
-				break;
-
-			case STOPPED:
-				self.unweave();
-
-			default:
-				if (deferred) {
-					deferred.resolve();
-				}
-			}
-
-			return self;
-		},
-
-		start : function start(deferred) {
-			var self = this;
-
-			Deferred(function deferredStart(dfdStart) {
-				Deferred(function deferredStarting(dfdStarting) {
-					self.state("starting", dfdStarting);
-				})
-				.done(function doneStarting() {
-					self.state(STARTED, dfdStart);
-				});
-
-				if (deferred) {
-					dfdStart.then(deferred.resolve, deferred.reject);
-				}
-			});
-
-			return self;
-		},
-
-		stop : function stop(deferred) {
-			var self = this;
-
-			Deferred(function deferredStop(dfdStop) {
-				Deferred(function deferredStopping(dfdStopping) {
-					self.state("stopping", sfdStopping);
-				})
-				.done(function doneStopping() {
-					self.state(STOPPED, dfdStop);
-				});
-
-				if (deferred) {
-					dfdStop.then(deferred.resolve, deferred.reject);
-				}
-			});
-
-			return self;
-		}
-	});
-});
-/*!
  * TroopJS widget/placeholder component
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
@@ -2954,16 +2143,10 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
 				// Set something in HOLDING
 				self[HOLDING] = UNDEFINED;
 
-<<<<<<< HEAD
-		return Function("data", ("var o; o = \""
-		// Sanitize body before we start templating
-		+ body.replace(RE_SANITIZE, "")
-=======
 				// Add done handler to release
 				dfd.done(function doneRelease(widget) {
 					// Set DATA_HOLDING attribute
 					self[$ELEMENT].attr(DATA_HOLDING, widget);
->>>>>>> bumped rjs
 
 					// Store widget
 					self[HOLDING] = widget;
@@ -3075,6 +2258,80 @@ define('troopjs-core/route/placeholder',[ "compose", "../widget/placeholder" ], 
 			else {
 				self.hold();
 			}
+		}
+	});
+});
+/*!
+ * TroopJS widget/application component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/widget/application',[ "../component/widget", "deferred" ], function ApplicationModule(Widget, Deferred) {
+	var STARTED = "started";
+	var STOPPED = "stopped";
+
+	return Widget.extend({
+		displayName : "core/widget/application",
+
+		state : function state(state, deferred) {
+			var self = this;
+
+			// Publish state to services
+			self.publish("state", state);
+
+			switch (state) {
+			case STARTED:
+				self.weave(deferred);
+				break;
+
+			case STOPPED:
+				self.unweave();
+
+			default:
+				if (deferred) {
+					deferred.resolve();
+				}
+			}
+
+			return self;
+		},
+
+		start : function start(deferred) {
+			var self = this;
+
+			Deferred(function deferredStart(dfdStart) {
+				Deferred(function deferredStarting(dfdStarting) {
+					self.state("starting", dfdStarting);
+				})
+				.done(function doneStarting() {
+					self.state(STARTED, dfdStart);
+				});
+
+				if (deferred) {
+					dfdStart.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
+		},
+
+		stop : function stop(deferred) {
+			var self = this;
+
+			Deferred(function deferredStop(dfdStop) {
+				Deferred(function deferredStopping(dfdStopping) {
+					self.state("stopping", sfdStopping);
+				})
+				.done(function doneStopping() {
+					self.state(STOPPED, dfdStop);
+				});
+
+				if (deferred) {
+					dfdStop.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
 		}
 	});
 });
