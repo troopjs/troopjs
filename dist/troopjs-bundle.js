@@ -1,4 +1,377 @@
 
+/**
+ * @license RequireJS text 1.0.8 Copyright (c) 2010-2011, The Dojo Foundation All Rights Reserved.
+ * Available via the MIT or new BSD license.
+ * see: http://github.com/jrburke/requirejs for details
+ */
+/*jslint regexp: true, plusplus: true, sloppy: true */
+/*global require: false, XMLHttpRequest: false, ActiveXObject: false,
+  define: false, window: false, process: false, Packages: false,
+  java: false, location: false */
+
+(function () {
+    var progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
+        xmlRegExp = /^\s*<\?xml(\s)+version=[\'\"](\d)*.(\d)*[\'\"](\s)*\?>/im,
+        bodyRegExp = /<body[^>]*>\s*([\s\S]+)\s*<\/body>/im,
+        hasLocation = typeof location !== 'undefined' && location.href,
+        defaultProtocol = hasLocation && location.protocol && location.protocol.replace(/\:/, ''),
+        defaultHostName = hasLocation && location.hostname,
+        defaultPort = hasLocation && (location.port || undefined),
+        buildMap = [];
+
+    define('text',[],function () {
+        var text, fs;
+
+        text = {
+            version: '1.0.8',
+
+            strip: function (content) {
+                //Strips <?xml ...?> declarations so that external SVG and XML
+                //documents can be added to a document without worry. Also, if the string
+                //is an HTML document, only the part inside the body tag is returned.
+                if (content) {
+                    content = content.replace(xmlRegExp, "");
+                    var matches = content.match(bodyRegExp);
+                    if (matches) {
+                        content = matches[1];
+                    }
+                } else {
+                    content = "";
+                }
+                return content;
+            },
+
+            jsEscape: function (content) {
+                return content.replace(/(['\\])/g, '\\$1')
+                    .replace(/[\f]/g, "\\f")
+                    .replace(/[\b]/g, "\\b")
+                    .replace(/[\n]/g, "\\n")
+                    .replace(/[\t]/g, "\\t")
+                    .replace(/[\r]/g, "\\r");
+            },
+
+            createXhr: function () {
+                //Would love to dump the ActiveX crap in here. Need IE 6 to die first.
+                var xhr, i, progId;
+                if (typeof XMLHttpRequest !== "undefined") {
+                    return new XMLHttpRequest();
+                } else if (typeof ActiveXObject !== "undefined") {
+                    for (i = 0; i < 3; i++) {
+                        progId = progIds[i];
+                        try {
+                            xhr = new ActiveXObject(progId);
+                        } catch (e) {}
+
+                        if (xhr) {
+                            progIds = [progId];  // so faster next time
+                            break;
+                        }
+                    }
+                }
+
+                return xhr;
+            },
+
+            /**
+             * Parses a resource name into its component parts. Resource names
+             * look like: module/name.ext!strip, where the !strip part is
+             * optional.
+             * @param {String} name the resource name
+             * @returns {Object} with properties "moduleName", "ext" and "strip"
+             * where strip is a boolean.
+             */
+            parseName: function (name) {
+                var strip = false, index = name.indexOf("."),
+                    modName = name.substring(0, index),
+                    ext = name.substring(index + 1, name.length);
+
+                index = ext.indexOf("!");
+                if (index !== -1) {
+                    //Pull off the strip arg.
+                    strip = ext.substring(index + 1, ext.length);
+                    strip = strip === "strip";
+                    ext = ext.substring(0, index);
+                }
+
+                return {
+                    moduleName: modName,
+                    ext: ext,
+                    strip: strip
+                };
+            },
+
+            xdRegExp: /^((\w+)\:)?\/\/([^\/\\]+)/,
+
+            /**
+             * Is an URL on another domain. Only works for browser use, returns
+             * false in non-browser environments. Only used to know if an
+             * optimized .js version of a text resource should be loaded
+             * instead.
+             * @param {String} url
+             * @returns Boolean
+             */
+            useXhr: function (url, protocol, hostname, port) {
+                var match = text.xdRegExp.exec(url),
+                    uProtocol, uHostName, uPort;
+                if (!match) {
+                    return true;
+                }
+                uProtocol = match[2];
+                uHostName = match[3];
+
+                uHostName = uHostName.split(':');
+                uPort = uHostName[1];
+                uHostName = uHostName[0];
+
+                return (!uProtocol || uProtocol === protocol) &&
+                       (!uHostName || uHostName === hostname) &&
+                       ((!uPort && !uHostName) || uPort === port);
+            },
+
+            finishLoad: function (name, strip, content, onLoad, config) {
+                content = strip ? text.strip(content) : content;
+                if (config.isBuild) {
+                    buildMap[name] = content;
+                }
+                onLoad(content);
+            },
+
+            load: function (name, req, onLoad, config) {
+                //Name has format: some.module.filext!strip
+                //The strip part is optional.
+                //if strip is present, then that means only get the string contents
+                //inside a body tag in an HTML string. For XML/SVG content it means
+                //removing the <?xml ...?> declarations so the content can be inserted
+                //into the current doc without problems.
+
+                // Do not bother with the work if a build and text will
+                // not be inlined.
+                if (config.isBuild && !config.inlineText) {
+                    onLoad();
+                    return;
+                }
+
+                var parsed = text.parseName(name),
+                    nonStripName = parsed.moduleName + '.' + parsed.ext,
+                    url = req.toUrl(nonStripName),
+                    useXhr = (config && config.text && config.text.useXhr) ||
+                             text.useXhr;
+
+                //Load the text. Use XHR if possible and in a browser.
+                if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
+                    text.get(url, function (content) {
+                        text.finishLoad(name, parsed.strip, content, onLoad, config);
+                    });
+                } else {
+                    //Need to fetch the resource across domains. Assume
+                    //the resource has been optimized into a JS module. Fetch
+                    //by the module name + extension, but do not include the
+                    //!strip part to avoid file system issues.
+                    req([nonStripName], function (content) {
+                        text.finishLoad(parsed.moduleName + '.' + parsed.ext,
+                                        parsed.strip, content, onLoad, config);
+                    });
+                }
+            },
+
+            write: function (pluginName, moduleName, write, config) {
+                if (buildMap.hasOwnProperty(moduleName)) {
+                    var content = text.jsEscape(buildMap[moduleName]);
+                    write.asModule(pluginName + "!" + moduleName,
+                                   "define(function () { return '" +
+                                       content +
+                                   "';});\n");
+                }
+            },
+
+            writeFile: function (pluginName, moduleName, req, write, config) {
+                var parsed = text.parseName(moduleName),
+                    nonStripName = parsed.moduleName + '.' + parsed.ext,
+                    //Use a '.js' file name so that it indicates it is a
+                    //script that can be loaded across domains.
+                    fileName = req.toUrl(parsed.moduleName + '.' +
+                                         parsed.ext) + '.js';
+
+                //Leverage own load() method to load plugin value, but only
+                //write out values that do not have the strip argument,
+                //to avoid any potential issues with ! in file names.
+                text.load(nonStripName, req, function (value) {
+                    //Use own write() method to construct full module value.
+                    //But need to create shell that translates writeFile's
+                    //write() to the right interface.
+                    var textWrite = function (contents) {
+                        return write(fileName, contents);
+                    };
+                    textWrite.asModule = function (moduleName, contents) {
+                        return write.asModule(moduleName, fileName, contents);
+                    };
+
+                    text.write(pluginName, nonStripName, textWrite, config);
+                }, config);
+            }
+        };
+
+        if (text.createXhr()) {
+            text.get = function (url, callback) {
+                var xhr = text.createXhr();
+                xhr.open('GET', url, true);
+                xhr.onreadystatechange = function (evt) {
+                    //Do not explicitly handle errors, those should be
+                    //visible via console output in the browser.
+                    if (xhr.readyState === 4) {
+                        callback(xhr.responseText);
+                    }
+                };
+                xhr.send(null);
+            };
+        } else if (typeof process !== "undefined" &&
+                 process.versions &&
+                 !!process.versions.node) {
+            //Using special require.nodeRequire, something added by r.js.
+            fs = require.nodeRequire('fs');
+
+            text.get = function (url, callback) {
+                var file = fs.readFileSync(url, 'utf8');
+                //Remove BOM (Byte Mark Order) from utf8 files if it is there.
+                if (file.indexOf('\uFEFF') === 0) {
+                    file = file.substring(1);
+                }
+                callback(file);
+            };
+        } else if (typeof Packages !== 'undefined') {
+            //Why Java, why is this so awkward?
+            text.get = function (url, callback) {
+                var encoding = "utf-8",
+                    file = new java.io.File(url),
+                    lineSeparator = java.lang.System.getProperty("line.separator"),
+                    input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding)),
+                    stringBuffer, line,
+                    content = '';
+                try {
+                    stringBuffer = new java.lang.StringBuffer();
+                    line = input.readLine();
+
+                    // Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
+                    // http://www.unicode.org/faq/utf_bom.html
+
+                    // Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
+                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
+                    if (line && line.length() && line.charAt(0) === 0xfeff) {
+                        // Eat the BOM, since we've already found the encoding on this file,
+                        // and we plan to concatenating this buffer with others; the BOM should
+                        // only appear at the top of a file.
+                        line = line.substring(1);
+                    }
+
+                    stringBuffer.append(line);
+
+                    while ((line = input.readLine()) !== null) {
+                        stringBuffer.append(lineSeparator);
+                        stringBuffer.append(line);
+                    }
+                    //Make sure we return a JavaScript string and not a Java string.
+                    content = String(stringBuffer.toString()); //String
+                } finally {
+                    input.close();
+                }
+                callback(content);
+            };
+        }
+
+        return text;
+    });
+}());
+
+/*!
+ * TroopJS RequireJS template plug-in
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+/**
+ * This plugin provides a template loader and compiler.
+ */
+define('template',[ "text" ], function TemplateModule(text) {
+	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
+	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
+	var RE_TOKENS = /<%(\d+)%>/gm;
+	var RE_REPLACE = /(["\n\t\r])/gm;
+	var RE_CLEAN = /o \+= "";| \+ ""/gm;
+	var EMPTY = "";
+	var REPLACE = {
+		"\"" : "\\\"",
+		"\n" : "\\n",
+		"\t" : "\\t",
+		"\r" : "\\r"
+	};
+
+	var buildMap = {};
+
+	/**
+	 * Compiles template
+	 * 
+	 * @param body Template body
+	 * @returns {Function}
+	 */
+	function compile(body) {
+		var blocks = [];
+		var length = 0;
+
+		function blocksTokens(original, prefix, block) {
+			blocks[length] = prefix
+				? "\" +" + block + "+ \""
+				: "\";" + block + "o += \"";
+			return "<%" + String(length++) + "%>";
+		}
+
+		function tokensBlocks(original, token) {
+			return blocks[token];
+		}
+
+		function replace(original, token) {
+			return REPLACE[token] || token;
+		}
+
+		return Function("data", ("var o; o = \""
+		// Sanitize body before we start templating
+		+ body.replace(RE_SANITIZE, "")
+
+		// Replace script blocks with tokens
+		.replace(RE_BLOCK, blocksTokens)
+
+		// Replace unwanted tokens
+		.replace(RE_REPLACE, replace)
+
+		// Replace tokens with script blocks
+		.replace(RE_TOKENS, tokensBlocks)
+
+		+ "\"; return o;")
+
+		// Clean
+		.replace(RE_CLEAN, EMPTY));
+	}
+
+	return {
+		load : function(name, req, load, config) {
+			text.load(name, req, function(value) {
+				// Compile template and store in buildMap
+				var template = buildMap[name] = compile(value);
+
+				// Set display name for debugging
+				template.displayName = name;
+
+				// Pass template to load
+				load(template);
+			}, config);
+		},
+
+		write : function(pluginName, moduleName, write, config) {
+			if (moduleName in buildMap) {
+				write.asModule(pluginName + "!" + moduleName, "define(function () { return " + buildMap[moduleName].toString().replace(RE_SANITIZE, EMPTY) + ";});\n");
+			}
+		}
+	};
+});
+
 /*
  * ComposeJS, object composition for JavaScript, featuring
 * JavaScript-style prototype inheritance and composition, multiple inheritance, 
@@ -6,17 +379,26 @@
  */
 (function(define){
 
+var PROTO = "__proto__";
 define('compose',[], function(){
 	// function for creating instances from a prototype
 	function Create(){
 	}
 	var delegate = Object.create ?
 		function(proto){
-			return Object.create(typeof proto == "function" ? proto.prototype : proto || Object.prototype);
+			proto = typeof proto === "function" ? proto.prototype : proto || Object.prototype;
+			var instance = Object.create(proto);
+			if (!(PROTO in instance)) {
+				instance[PROTO] = proto;
+			}
+			return instance;
 		} :
 		function(proto){
-			Create.prototype = typeof proto == "function" ? proto.prototype : proto;
+			Create.prototype = proto = typeof proto == "function" ? proto.prototype : proto;
 			var instance = new Create();
+			if (!(PROTO in instance)) {
+				instance[PROTO] = proto;
+			}
 			Create.prototype = null;
 			return instance;
 		};
@@ -305,6 +687,8 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 	return Compose(function Component() {
 		this.instanceCount = COUNT++;
 	}, {
+		displayName : "core/component",
+
 		/**
 		 * Application configuration
 		 */
@@ -317,19 +701,11 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 		toString : function toString() {
 			var self = this;
 
-			return (self.displayName || "component") + "@" + self.instanceCount;
+			return self.displayName + "@" + self.instanceCount;
 		}
 	});
 });
 
-/*!
- * TroopJS deferred component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('deferred',[ "jquery" ], function DeferredModule($) {
-	return $.Deferred;
-});
 /*!
  * TroopJS pubsub/topic module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
@@ -345,7 +721,7 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 		self.publisher = publisher;
 		self.parent = parent;
 	}, {
-		displayName : "pubsub/topic",
+		displayName : "core/pubsub/topic",
 
 		/**
 		 * Generates string representation of this object
@@ -400,58 +776,116 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
  */
 define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
 	var UNDEFINED = undefined;
-	var RECURSIVE = "\/" + "**";
+	var CONTEXT = {};
+	var HANDLERS = {};
+	var MEMORY = "memory";
 
-	return Compose.create(Component, function Hub() {
-		var self = this;
-
-		self.re = /\/\w+(?=\/)|\*{1,2}$/g;
-		self.context = {};
-		self.topics = {};
-	}, {
-		displayName: "pubsub/hub",
+	return Compose.create({
+		displayName: "core/pubsub/hub",
 
 		/**
 		 * Subscribe to a topic
 		 * 
 		 * @param topic Topic to subscribe to
 		 * @param context (optional) context to scope callbacks to
+		 * @param memory (optional) do we want the last value applied to callbacks
 		 * @param callback Callback for this topic
 		 * @returns self
 		 */
-		subscribe : function subscribe(topic /*, context, callback,* callback, ..*/) {
+		subscribe : function subscribe(topic /*, context, memory, callback, callback, ..*/) {
 			var self = this;
-			var topics = self.topics;
-			var offset = 1;
 			var length = arguments.length;
-			var context = arguments[offset];
+			var context = arguments[1];
+			var memory = arguments[2];
+			var callback = arguments[3];
+			var offset;
+			var handlers;
+			var handler;
 			var head;
 			var tail;
 
-			// No provided context, set default one
+			// No context or memory was supplied
 			if (context instanceof Function) {
-				context = self.context;
+				callback = context;
+				memory = false;
+				context = CONTEXT;
+				offset = 1;
 			}
-			// Context was provided, increase offset
+			// Only memory was supplied
+			else if (context === true || context === false) {
+				callback = memory;
+				memory = context;
+				context = CONTEXT;
+				offset = 2;
+			}
+			// Context was supplied, but not memory
+			else if (memory instanceof Function) {
+				callback = memory;
+				memory = false;
+				offset = 2;
+			}
+			// All arguments were supplied
+			else if (callback instanceof Function){
+				offset = 3;
+			}
+			// Something is wrong, return fast
 			else {
-				offset++;
+				return self;
 			}
 
-			// Do we have handlers
-			if (topic in topics) {
-				// Get last handler
-				tail = topics[topic].tail;
+			// Have handlers
+			if (topic in HANDLERS) {
 
-				for (; offset < length; offset++) {
+				// Get handlers
+				handlers = HANDLERS[topic];
+
+				// Create new handler
+				handler = {
+					"callback" : arguments[offset++],
+					"context" : context
+				};
+
+				// Get last handler
+				tail = "tail" in handlers
+					// Have tail, update handlers.tail.next to point to handler
+					? handlers.tail.next = handler
+					// Have no tail, update handlers.head to point to handler
+					: handlers.head = handler;
+
+				// Iterate handlers from offset
+				while (offset < length) {
 					// Set last -> last.next -> handler
 					tail = tail.next = {
-						"callback" : arguments[offset],
+						"callback" : arguments[offset++],
 						"context" : context
 					};
 				}
 
 				// Set last handler
-				topics[topic].tail = tail;
+				handlers.tail = tail;
+
+				// Want memory and have memory
+				if (memory && MEMORY in handlers) {
+					// Get memory
+					memory = handlers[MEMORY];
+
+					// Loop through handlers, optimize for arguments
+					if (memory.length > 0 ) while(handler) {
+						// Apply handler callback
+						handler.callback.apply(handler.context, memory);
+
+						// Update handler
+						handler = handler.next;
+					}
+					// Loop through handlers, optimize for no arguments
+					else while(handler) {
+						// Call handler callback
+						handler.callback.call(handler.context);
+
+						// Update handler
+						handler = handler.next;
+					}
+				}
 			}
 			// No handlers
 			else {
@@ -461,17 +895,17 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					"context" : context
 				};
 
-				// Loop through arguments
-				for (; offset < length; offset++) {
+				// Iterate handlers from offset
+				while (offset < length) {
 					// Set last -> last.next -> handler
 					tail = tail.next = {
-						"callback" : arguments[offset],
+						"callback" : arguments[offset++],
 						"context" : context
 					};
 				}
 
 				// Create topic list
-				topics[topic] = {
+				HANDLERS[topic] = {
 					"head" : head,
 					"tail" : tail
 				};
@@ -484,39 +918,54 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * Unsubscribes from topic
 		 * 
 		 * @param topic Topic to unsubscribe from
+		 * @param context (optional) context to scope callbacks to
 		 * @param callback (optional) Callback to unsubscribe, if none
 		 *        are provided all callbacks are unsubscribed
 		 * @returns self
 		 */
-		unsubscribe : function unsubscribe(topic /*, callback, callback, ..*/) {
-			var self = this;
-			var topics = self.topics;
-			var offset;
+		unsubscribe : function unsubscribe(topic /*, context, callback, callback, ..*/) {
 			var length = arguments.length;
+			var context = arguments[1];
+			var callback = arguments[2];
+			var offset;
+			var handler;
 			var head;
 			var previous = null;
-			var handler;
-			var callback;
+
+			// No context or memory was supplied
+			if (context instanceof Function) {
+				callback = context;
+				context = CONTEXT;
+				offset = 1;
+			}
+			// All arguments were supplied
+			else if (callback instanceof Function){
+				offset = 2;
+			}
+			// Something is wrong, return fast
+			else {
+				return self;
+			}
 
 			unsubscribe: {
 				// Fast fail if we don't have subscribers
-				if (!topic in topics) {
+				if (!topic in HANDLERS) {
 					break unsubscribe;
 				}
 
 				// Simply delete list if there is no callback to match
 				if (length === 1) {
-					delete topics[topic];
+					delete HANDLERS[topic];
 					break unsubscribe;
 				}
 
 				// Get head
-				head = topics[topic].head;
+				head = HANDLERS[topic].head;
 
 				// Loop over remaining arguments
-				for (offset = 1; offset < length; offset++) {
+				while (offset < length) {
 					// Store callback
-					callback = arguments[offset];
+					callback = arguments[offset++];
 
 					// Get first handler
 					handler = previous = head;
@@ -524,7 +973,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					// Loop through handlers
 					do {
 						// Check if this handler should be unlinked
-						if (handler.callback === callback) {
+						if (handler.callback === callback && handler.context === context) {
 							// Is this the first handler
 							if (handler === head) {
 								// Re-link head and previous, then
@@ -544,19 +993,19 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 					// Delete list if we've deleted all handlers
 					if (head === UNDEFINED) {
-						delete topics[topic];
+						delete HANDLERS[topic];
 						break unsubscribe;
 					}
 				}
 
 				// Update head and tail
-				topics[topic] = {
+				HANDLERS[topic] = {
 					"head" : head,
 					"tail" : previous
 				};
 			}
 
-			return self;
+			return this;
 		},
 
 		/**
@@ -567,6 +1016,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		publish : function publish(topic /*, arg, arg, ..*/) {
+<<<<<<< HEAD
 			var self = this;
 			var topics = self.topics;
 			var string = topic.constructor === Topic
@@ -576,101 +1026,174 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 			var candidates = Array();
 			var candidate;
 			var length = 0;
+=======
+			var handlers;
+>>>>>>> bumped rjs
 			var handler;
 
-			// Create initial set of candidates
-			while (re.test(string)) {
-				candidates[length++] = string.substr(0, re.lastIndex) + RECURSIVE;
+			// Have handlers
+			if (topic in HANDLERS) {
+				// Get handlers
+				handlers = HANDLERS[topic];
+
+				// Remember arguments
+				handlers[MEMORY] = arguments;
+
+				// Get first handler
+				handler = handlers.head;
+
+				// Loop through handlers, optimize for arguments
+				if (arguments.length > 0) while(handler) {
+					// Apply handler callback
+					handler.callback.apply(handler.context, arguments);
+
+					// Update handler
+					handler = handler.next;
+				}
+				// Loop through handlers, optimize for no arguments
+				else while(handler) {
+					// Call handler callback
+					handler.callback.call(handler.context);
+
+					// Update handler
+					handler = handler.next;
+				}
+			}
+			// No handlers
+			else if (arguments.length > 0){
+				// Create handlers and store with topic
+				HANDLERS[topic] = handlers = {};
+
+				// Remember arguments
+				handlers[MEMORY] = arguments;
 			}
 
-			// Are sub-topics even possible?
-			if (length > 0) {
-				// Copy second to last candidate to last, minus the last
-				// char
-				candidates[length] = candidates[length - 1].slice(0, -1);
-
-				// Increase length
-				length++;
-			}
-
-			// Add original topic to the candidates
-			candidates[length] = string;
-
-			// Optimise of no arguments
-			if (arguments.length === 0) {
-				// Loop backwards over candidates
-				do {
-					// Get candidate
-					candidate = candidates[length];
-
-					// Fail fast if there are no handlers for candidate
-					if (!(candidate in topics)) {
-						continue;
-					}
-
-					// Get first handler
-					handler = topics[candidate].head;
-
-					// Loop through handlers
-					do {
-						handler.callback.call(handler.context);
-					} while (handler = handler.next);
-				} while (length-- > 0);
-			}
-			// Optimise for arguments
-			else {
-				// Loop backwards over candidates
-				do {
-					// Get candidate
-					candidate = candidates[length];
-
-					// Fail fast if there are no handlers for candidate
-					if (!(candidate in topics)) {
-						continue;
-					}
-
-					// Get first handler
-					handler = topics[candidate].head;
-
-					// Loop through handlers
-					do {
-						handler.callback
-								.apply(handler.context, arguments);
-					} while (handler = handler.next);
-				} while (length-- > 0);
-			}
-
-			return self;
+			return this;
 		}
 	});
 });
 
+/*!
+ * TroopJS deferred component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('deferred',[ "jquery" ], function DeferredModule($) {
+	return $.Deferred;
+});
 /*!
  * TroopJS gadget component
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 /**
+<<<<<<< HEAD
  * The gadget trait provides convenient access to common application logic
+=======
+ * The gadget trait provides life cycle management
+>>>>>>> bumped rjs
  */
-define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "../pubsub/topic", "deferred" ], function GadgetModule(Compose, Component, hub, Topic, Deferred) {
+define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
 	var NULL = null;
 	var FUNCTION = Function;
+<<<<<<< HEAD
 	var BUILD = "build";
 	var DESTROY = "destroy";
 	var RE_SCAN = RegExp("^(" + [BUILD, DESTROY].join("|") + ")/.+");
 	var RE_HUB = /^hub\/(.+)/;
+=======
+	var RE = /^hub(?::(\w+))?\/(.+)/;
+>>>>>>> bumped rjs
 	var PUBLISH = hub.publish;
 	var SUBSCRIBE = hub.subscribe;
 	var UNSUBSCRIBE = hub.unsubscribe;
+	var MEMORY = "memory";
+	var SUBSCRIPTIONS = "subscriptions";
+	var STATE = "state";
+	var INITIALIZE = "initialize";
+	var FINALIZE = "finalize";
 
 	return Component.extend(function Gadget() {
 		var self = this;
+<<<<<<< HEAD
 		var builder = NULL;
 		var destructor = NULL;
 		var subscriptions = Array();
+=======
+		var __proto__ = self;
+		var callback;
+		var sCallbacks = [];
+		var iCallbacks = [];
+		var fCallbacks = [];
+		var sCount = 0;
+		var iCount = 0;
+		var fCount = 0;
+		var i;
 
+		// Iterate prototype chain (while there's a prototype)
+		do {
+			// Check if we have INITIALIZE on __proto__
+			add: if (__proto__.hasOwnProperty(INITIALIZE)) {
+				// Store callback
+				callback = __proto__[INITIALIZE];
+
+				// Reset counter
+				i = iCount;
+
+				// Loop iCallbacks, break add if we've already added this callback
+				while (i--) {
+					if (callback === iCallbacks[i]) {
+						break add;
+					}
+				}
+
+				// Store callback
+				iCallbacks[iCount++] = callback;
+			}
+
+			// Check if we have FINALIZE on __proto__
+			add: if (__proto__.hasOwnProperty(FINALIZE)) {
+				// Store callback
+				callback = __proto__[FINALIZE];
+>>>>>>> bumped rjs
+
+				// Reset counter
+				i = fCount;
+
+				// Loop fCallbacks, break add if we've already added this callback
+				while (i--) {
+					if (callback === fCallbacks[i]) {
+						break add;
+					}
+				}
+
+				// Store callback
+				fCallbacks[fCount++] = callback;
+			}
+
+			// Check if we have STATE on __proto__
+			add: if (__proto__.hasOwnProperty(STATE)) {
+				// Store callback
+				callback = __proto__[STATE];
+
+				// Reset counter
+				i = sCount;
+
+				// Loop sCallbacks, break add if we've already added this callback
+				while (i--) {
+					if (callback === sCallbacks[i]) {
+						break add;
+					}
+				}
+
+				// Store callback
+				sCallbacks[sCount++] = callback;
+			}
+		} while (__proto__ = __proto__.__proto__);
+
+		// Extend self
 		Compose.call(self, {
+<<<<<<< HEAD
 			/**
 			 * First scans for build/destroy signatures and pushes them on the stack
 			 * then iterates builders and executes them in reverse order
@@ -716,53 +1239,101 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 						default:
 							continue;
 						}
+=======
+			initialize : iCount <= 1
+				// No prototypes, use original
+				? self[INITIALIZE]
+				: function initialize() {
+					var _self = this;
+					var count = -1;
+					var length = iCount;
 
-						// Update topic
-						value.topic = key;
+					// Loop iCallbacks start to end and execute
+					while (++count < length) {
+						iCallbacks[count].apply(_self, arguments);
+					}
 
+					return _self;
+				},
+>>>>>>> bumped rjs
+
+			finalize : fCount <= 1
+				// No prototypes, use original
+				? self[FINALIZE]
+				: function finalize() {
+					var _self = this;
+					var count = -1;
+					var length = fCount;
+
+<<<<<<< HEAD
 						// NULL value
 						self[key] = NULL;
+=======
+					// Loop fCallbacks start to end and execute
+					while (++count < length) {
+						fCallbacks[count].apply(_self, arguments);
+>>>>>>> bumped rjs
 					}
+
+					return _self;
+				},
+
+			state : sCount <= 1
+				// No prototypes, use original
+				? self[STATE]
+				: function state(state, deferred) {
+					var _self = this;
+					var count = sCount;
+					var callbacks = [];
+
+					// Build deferred chain from end to 1
+					while (--count) {
+						callbacks[count] = Deferred(function (dfd) {
+							var callback = sCallbacks[count];
+							var _deferred = sCallbacks[count + 1] || deferred;
+	
+							dfd.done(function done() {
+								callback.call(_self, state, _deferred);
+							});
+						});
+					}
+
+					// Execute first sCallback, use first deferred or default
+					sCallbacks[0].call(_self, state, callbacks[1] || deferred);
+
+					return _self;
+				}
+		});
+	}, {
+		displayName : "core/component/gadget",
+
+		initialize : function initialize() {
+			var self = this;
+
+			var subscriptions = self[SUBSCRIPTIONS] = [];
+			var key = NULL;
+			var value;
+			var matches;
+			var topic;
+
+			// Loop over each property in gadget
+			for (key in self) {
+				// Get value
+				value = self[key];
+
+				// Continue if value is not a function
+				if (!(value instanceof FUNCTION)) {
+					continue;
 				}
 
-				// Set current
-				current = builder;
+				// Match signature in key
+				matches = RE.exec(key);
 
-				while (current !== NULL) {
-					current.call(self);
+				if (matches !== NULL) {
+					// Get topic
+					topic = matches[2];
 
-					current = current.next;
-				}
-
-				return self;
-			},
-
-			/**
-			 * Iterates destructors and executes them in reverse order
-			 * @returns self
-			 */
-			destroy : function iterator() {
-				var current = destructor;
-
-				while (current !== NULL) {
-					current.call(self);
-
-					current = current.next;
-				}
-
-				return self;
-			},
-
-			/**
-			 * Builder for hub subscriptions
-			 * @returns self
-			 */
-			"build/hub" : function build() {
-				var key = NULL;
-				var value;
-				var matches;
-				var topic;
-
+<<<<<<< HEAD
 				// Loop over each property in gadget
 				for (key in self) {
 					// Get value
@@ -775,17 +1346,31 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 
 					// Match signature in key
 					matches = RE_HUB.exec(key);
+=======
+					// Subscribe
+					hub.subscribe(topic, self, matches[1] === MEMORY, value);
+>>>>>>> bumped rjs
 
-					if (matches !== NULL) {
-						// Get topic
-						topic = matches[1];
+					// Store in subscriptions
+					subscriptions[subscriptions.length] = [topic, self, value];
 
+<<<<<<< HEAD
 						// Subscribe
 						hub.subscribe(Topic(topic, self), self, value);
+=======
+					// NULL value
+					self[key] = NULL;
+				}
+			}
 
-						// Store in subscriptions
-						subscriptions[subscriptions.length] = [topic, value];
+			return self;
+		},
+>>>>>>> bumped rjs
 
+		finalize : function finalize() {
+			var self = this;
+
+<<<<<<< HEAD
 						// NULL value
 						self[key] = NULL;
 					}
@@ -805,11 +1390,19 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 				while (subscription = subscriptions.shift()) {
 					hub.unsubscribe(subscription[0], subscription[1]);
 				}
+=======
+			var subscriptions = self[SUBSCRIPTIONS];
+			var subscription;
 
-				return self;
-			},
-		});
-	}, {
+			// Loop over subscriptions
+			while (subscription = subscriptions.shift()) {
+				hub.unsubscribe(subscription[0], subscription[1], subscription[2]);
+			}
+
+			return self;
+		},
+>>>>>>> bumped rjs
+
 		/**
 		 * Calls hub.publish in self context
 		 * @returns self
@@ -844,11 +1437,24 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../pubsub/hub", "
 			UNSUBSCRIBE.apply(hub, arguments);
 
 			return self;
+		},
+
+		/**
+		 * Defaul state handler
+		 * @param state state
+		 * @param deferred deferred
+		 * @returns self
+		 */
+		state : function state(state, deferred) {
+			if (deferred) {
+				deferred.resolve();
+			}
 		}
 	});
 });
 
 /*!
+<<<<<<< HEAD
  * TroopJS util/merge module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
@@ -1072,74 +1678,82 @@ define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery", "defer
 		return function handlerProxy() {
 			// Add topic to front of arguments
 			UNSHIFT.call(arguments, topic);
+=======
+ * TroopJS service component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
+	var STATE = "state";
+>>>>>>> bumped rjs
 
-			// Apply with shifted arguments to handler
-			return handler.apply(widget, arguments);
-		};
+	function onState(topic, state) {
+		this.state(state);
 	}
 
-	/**
-	 * Creates a proxy of the inner method 'render' with the 'op' parameter set
-	 * @param op name of jQuery method call
-	 * @returns {Function} proxied render
-	 */
-	function renderProxy(op) {
-		/**
-		 * Renders contents into element
-		 * @param contents (Function | String) Template/String to render
-		 * @param data (Object) If contents is a template - template data
-		 * @param deferred (Deferred) Deferred (optional)
-		 * @returns self
-		 */
-		function render(contents, data, deferred) {
-			var self = this;
+	return Gadget.extend({
+		displayName : "core/component/service",
 
-			// If contents is a function, call it
-			if (contents instanceof FUNCTION) {
-				contents = contents.call(self, data);
-			}
-			// otherwise data makes no sense
-			else {
-				deferred = data;
-			}
-
-			var $element = self[$ELEMENT];
-
+<<<<<<< HEAD
 			// Defer render (as weaving it may need to load async)
 			var deferredRender = Deferred(function deferredRender(dfdRender) {
 				// Call render
 				op.call($element, contents);
+=======
+		initialize : function initialize() {
+			var self = this;
+>>>>>>> bumped rjs
 
-				// Weave element
-				self.weave($element, dfdRender);
-			})
-			.done(function renderDone() {
-				// After render is complete, trigger "widget/refresh" with woven components
-				$element.trigger(REFRESH, arguments);
-			});
+			return self.subscribe(STATE, self, true, onState);
+		},
 
-			if (deferred) {
-				deferredRender.then(deferred.resolve, deferred.reject);
+		finalize : function finalize() {
+			var self = this;
+
+			return self.unsubscribe(STATE, self, onState);
+		}
+	});
+});
+/*!
+ * TroopJS util/merge module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/merge',[],function MergeModule() {
+	var ARRAY = Array;
+	var OBJECT = Object;
+
+	return function merge(source) {
+		var target = this;
+		var key = null;
+		var i;
+		var iMax;
+		var value;
+		var constructor;
+
+		for (i = 0, iMax = arguments.length; i < iMax; i++) {
+			source = arguments[i];
+
+			for (key in source) {
+				value = source[key];
+				constructor = value.constructor;
+	
+				if (!(key in target)) {
+					target[key] = value;
+				}
+				else if (constructor === ARRAY) {
+					target[key] = target[key].concat(value);
+				}
+				else if (constructor === OBJECT) {
+					merge.call(target[key], value);
+				}
+				else {
+					target[key] = value;
+				}
 			}
-
-			return self;
 		}
 
-		return render;
-	}
-
-	return Gadget.extend(function Widget($element, displayName) {
-		var self = this;
-		var $proxies = new Array();
-
-		// Extend self
-		Compose.call(self, {
-			"build/dom" : function build() {
-				var key = NULL;
-				var value;
-				var matches;
-				var topic;
-
+<<<<<<< HEAD
 				// Loop over each property in widget
 				for (key in self) {
 					// Get value
@@ -1152,158 +1766,227 @@ define('troopjs-core/component/widget',[ "compose", "./gadget", "jquery", "defer
 
 					// Match signature in key
 					matches = RE.exec(key);
+=======
+		return target;
+	};
+});
+/*!
+ * TroopJS remote/ajax module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/remote/ajax',[ "compose", "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Compose, Service, Topic, $, merge) {
+	return Compose.create(Service, {
+		displayName : "core/remote/ajax",
+>>>>>>> bumped rjs
 
-					if (matches !== NULL) {
-						// Get topic
-						topic = matches[2];
-
-						// Replace value with a scoped proxy
-						value = eventProxy(topic, self, value);
-
-						// Either ONE or BIND element
-						$element[matches[2] === ONE ? ONE : BIND](topic, self, value);
-
-						// Store in $proxies
-						$proxies[$proxies.length] = [topic, value];
-
-						// NULL value
-						self[key] = NULL;
-					}
+		"hub/ajax" : function request(topic, settings, deferred) {
+			// Request
+			$.ajax(merge.call({
+				"headers": {
+					"x-request-id": new Date().getTime(),
+					"x-components": topic instanceof Topic ? topic.trace() : topic
 				}
-
-				return self;
-			},
-
-			/**
-			 * Destructor for dom events
-			 * @returns self
-			 */
-			"destroy/dom" : function destroy() {
-				var $proxy;
-
-				// Loop over subscriptions
-				while ($proxy = $proxies.shift()) {
-					$element.unbind($proxy[0], $proxy[1]);
-				}
-
-				return self;
-			},
-
-			"$element" : $element,
-			"displayName" : displayName || "component/widget"
-		});
-	}, {
-		/**
-		 * Weaves all children of $element
-		 * @param $element (jQuery) Element to weave
-		 * @param deferred (Deferred) Deferred (optional)
-		 * @returns self
-		 */
-		weave : function weave($element, deferred) {
-			$element.find(ATTR_WEAVE).weave(deferred);
-
-			return this;
-		},
-
-		/**
-		 * Unweaves all children of $element _and_ self
-		 * @param $element (jQuery) Element to unweave
-		 * @returns self
-		 */
-		unweave : function unweave($element) {
-			$element.find(ATTR_WOVEN).andSelf().unweave();
-
-			return this;
-		},
-
-		/**
-		 * Triggers event on $element
-		 * @param $event (jQuery.Event | String) Event to trigger
-		 * @returns self
-		 */
-		trigger : function trigger($event) {
-			var self = this;
-
-			self[$ELEMENT].trigger($event, SLICE.call(arguments, 1));
-
-			return self;
-		},
-
-		/**
-		 * Renders content and inserts it before $element
-		 */
-		before : renderProxy($.fn.before),
-
-		/**
-		 * Renders content and inserts it after $element
-		 */
-		after : renderProxy($.fn.after),
-
-		/**
-		 * Renders content and replaces $element contents
-		 */
-		html : renderProxy($.fn.html),
-
-		/**
-		 * Renders content and appends it to $element
-		 */
-		append : renderProxy($.fn.append),
-
-		/**
-		 * Renders content and prepends it to $element
-		 */
-		prepend : renderProxy($.fn.prepend),
-
-		/**
-		 * Empties widget
-		 * @param deferred (Deferred) Deferred (optional)
-		 * @returns self
-		 */
-		empty : function empty(deferred) {
-			var self = this;
-
-			var $element = self[$ELEMENT];
-
-			// Create deferred for emptying
-			var emptyDeferred = Deferred(function emptyDeferred(dfd) {
-
-				// Detach contents
-				var $contents = $element.contents().detach();
-
-				// Trigger refresh
-				$element.trigger(REFRESH, arguments);
-
-				// Get DOM elements
-				var contents = $contents.get();
-
-				// Use timeout in order to yield
-				setTimeout(function emptyTimeout() {
-					try {
-						// Remove elements from DOM
-						$contents.remove();
-
-						// Resolve deferred
-						dfd.resolve(contents);
-					}
-					// If there's an error
-					catch (e) {
-						// Reject deferred
-						dfd.reject(contents);
-					}
-				}, 0);
-			});
-
-			// If a deferred was passed, add resolve/reject
-			if (deferred) {
-				emptyDeferred.then(deferred.resolve, deferred.reject);
-			}
-
-			return self;
+			}, settings)).then(deferred.resolve, deferred.reject);
 		}
 	});
 });
-
 /*!
+ * TroopJS util/uri module
+ * 
+ * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
+ * 
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
+	var NULL = null;
+	var FUNCTION = Function;
+	var ARRAY = Array;
+	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/;
+	var RE_QUERY = /(?:^|&)([^&=]*)=?([^&]*)/g;
+
+	var PROTOCOL = "protocol";
+	var AUTHORITY = "authority";
+	var PATH = "path";
+	var QUERY = "query";
+	var ANCHOR = "anchor";
+
+	var KEYS = [ "source",
+		PROTOCOL,
+		AUTHORITY,
+		"userInfo",
+		"user",
+		"password",
+		"host",
+		"port",
+		"relative",
+		PATH,
+		"directory",
+		"file",
+		QUERY,
+		ANCHOR ];
+
+	// Store current Compose.secure setting
+	var SECURE = Compose.secure;
+
+	// Prevent Compose from creating constructor property
+	Compose.secure = true;
+
+	var Query = Compose(function Query(str) {
+		if (!str) {
+			return;
+		}
+
+<<<<<<< HEAD
+						// Replace value with a scoped proxy
+						value = eventProxy(topic, self, value);
+=======
+		var self = this;
+		var matches;
+		var key;
+		var value;
+>>>>>>> bumped rjs
+
+		while (matches = RE_QUERY.exec(str)) {
+			key = matches[1];
+
+			if (key in self) {
+				value = self[key];
+
+<<<<<<< HEAD
+						// NULL value
+						self[key] = NULL;
+					}
+=======
+				if (value instanceof ARRAY) {
+					value[value.length] = matches[2];
+>>>>>>> bumped rjs
+				}
+				else {
+					self[key] = [ value, matches[2] ];
+				}
+			}
+			else {
+				self[key] = matches[2];
+			}
+		}
+	}, {
+		toString : function toString() {
+			var self = this;
+			var key = NULL;
+			var value = NULL;
+			var query = Array();
+			var i = 0;
+			var j;
+
+			for (key in self) {
+				if (self[key] instanceof FUNCTION) {
+					continue;
+				}
+
+				query[i++] = key;
+			}
+
+			query.sort();
+
+			while (i--) {
+				key = query[i];
+				value = self[key];
+
+				if (value instanceof ARRAY) {
+					value = value.slice(0);
+
+					value.sort();
+
+					j = value.length;
+
+					while (j--) {
+						value[j] = key + "=" + value[j];
+					}
+
+					query[i] = value.join("&");
+				}
+				else {
+					query[i] = key + "=" + value;
+				}
+			}
+
+			return query.join("&");
+		}
+	});
+
+	var URI = Compose(function URI(str) {
+		if (!str) {
+			return;
+		}
+
+		var self = this;
+		var matches = RE_URI.exec(str);
+		var i = 14;
+		var value;
+
+		while (i--) {
+			value = matches[i];
+
+			if (value) {
+				self[KEYS[i]] = value;
+			}
+		}
+
+		if (QUERY in self) {
+			self[QUERY] = Query(self[QUERY]);
+		}
+
+	}, {
+		toString : function toString() {
+			var self = this;
+			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
+			var i;
+			var key;
+
+<<<<<<< HEAD
+			// Create deferred for emptying
+			var emptyDeferred = Deferred(function emptyDeferred(dfd) {
+=======
+			if (!(PROTOCOL in self)) {
+				uri.splice(0, 3);
+			}
+>>>>>>> bumped rjs
+
+			if (!(PATH in self)) {
+				uri.splice(0, 1);
+			}
+
+			if (!(ANCHOR in self)) {
+				uri.splice(-2, 2);
+			}
+
+			if (!(QUERY in self)) {
+				uri.splice(-2, 2);
+			}
+
+			i = uri.length;
+
+			while (i--) {
+				key = uri[i];
+
+				if (key in self) {
+					uri[i] = self[key];
+				}
+			}
+
+			return uri.join("");
+		}
+	});
+
+	// Restore Compose.secure setting
+	Compose.secure = SECURE;
+
+	return URI;
+});
+/*!
+<<<<<<< HEAD
  * TroopJS util/uri module
  * 
  * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
@@ -1411,6 +2094,35 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 				else {
 					query[i] = key + "=" + value;
 				}
+=======
+ * TroopJS route/router module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/route/router',[ "compose", "../component/service", "../util/uri" ], function RouterModule(Compose, Service, URI) {
+	var NULL = null;
+	var $ELEMENT = "$element";
+	var HASHCHANGE = "hashchange";
+
+	return Compose.create(Service, function RouterService() {
+		var oldUri = NULL;
+		var newUri = NULL;
+
+		function onHashChange($event) {
+			// Create URI
+			var uri = URI($event.target.location.hash.replace(/^#/, ""));
+
+			// Convert to string
+			newUri = uri.toString();
+
+			// Did anything change?
+			if (newUri !== oldUri) {
+				// Store new value
+				oldUri = newUri;
+
+				// Publish route
+				$event.data.publish("route", uri);
+>>>>>>> bumped rjs
 			}
 
 			return query.join("&");
@@ -1435,6 +2147,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			}
 		}
 
+<<<<<<< HEAD
 		if (QUERY in self) {
 			self[QUERY] = Query(self[QUERY]);
 		}
@@ -1469,6 +2182,46 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			}
 
 			return uri.join("");
+=======
+		Compose.call(this, {
+			state : function state(state) {
+				var self = this;
+
+				switch(state) {
+				case "starting" :
+					self[$ELEMENT].bind(HASHCHANGE, self, onHashChange);
+					break;
+
+				case "started" :
+					self[$ELEMENT].trigger(HASHCHANGE);
+					break;
+
+				case "stopping" :
+					self[$ELEMENT].unbind(HASHCHANGE, onHashChange);
+					break;
+				}
+
+				return self;
+			}
+		});
+	}, {
+		displayName : "core/route/router",
+
+		initialize : function initialize($element) {
+			var self = this;
+
+			self[$ELEMENT] = $element;
+
+			return self;
+		},
+
+		finalize : function finalize() {
+			var self = this;
+
+			delete self[$ELEMENT];
+
+			return self;
+>>>>>>> bumped rjs
 		}
 	});
 
@@ -1540,6 +2293,7 @@ define('troopjs-core/widget/placeholder',[ "compose", "../component/widget", "jq
 	var ARRAY_PROTO = ARRAY.prototype;
 	var DATA_HOLDING = "data-holding";
 
+<<<<<<< HEAD
 	return Widget.extend(function WidgetPlaceholder($element, name, _name) {
 		var self = this;
 		var _widget = UNDEFINED;
@@ -1724,376 +2478,606 @@ define('troopjs-core/widget/application',[ "compose", "../component/widget" ], f
 /*global require: false, XMLHttpRequest: false, ActiveXObject: false,
   define: false, window: false, process: false, Packages: false,
   java: false, location: false */
+=======
+	// Grab session storage
+	var STORAGE = window.sessionStorage;
 
-(function () {
-    var progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-        xmlRegExp = /^\s*<\?xml(\s)+version=[\'\"](\d)*.(\d)*[\'\"](\s)*\?>/im,
-        bodyRegExp = /<body[^>]*>\s*([\s\S]+)\s*<\/body>/im,
-        hasLocation = typeof location !== 'undefined' && location.href,
-        defaultProtocol = hasLocation && location.protocol && location.protocol.replace(/\:/, ''),
-        defaultHostName = hasLocation && location.hostname,
-        defaultPort = hasLocation && (location.port || undefined),
-        buildMap = [];
+	return Compose.create(Store, {
+		displayName : "store/session",
 
-    define('text',[],function () {
-        var text, get, fs;
+		set : function set(key, value, deferred) {
+			// JSON encoded 'value' then store as 'key'
+			STORAGE.setItem(key, JSON.stringify(value));
 
-        if (typeof window !== "undefined" && window.navigator && window.document) {
-            get = function (url, callback) {
-                var xhr = text.createXhr();
-                xhr.open('GET', url, true);
-                xhr.onreadystatechange = function (evt) {
-                    //Do not explicitly handle errors, those should be
-                    //visible via console output in the browser.
-                    if (xhr.readyState === 4) {
-                        callback(xhr.responseText);
-                    }
-                };
-                xhr.send(null);
-            };
-        } else if (typeof process !== "undefined" &&
-                 process.versions &&
-                 !!process.versions.node) {
-            //Using special require.nodeRequire, something added by r.js.
-            fs = require.nodeRequire('fs');
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve(value);
+			}
+		},
 
-            get = function (url, callback) {
-                var file = fs.readFileSync(url, 'utf8');
-                //Remove BOM (Byte Mark Order) from utf8 files if it is there.
-                if (file.indexOf('\uFEFF') === 0) {
-                    file = file.substring(1);
-                }
-                callback(file);
-            };
-        } else if (typeof Packages !== 'undefined') {
-            //Why Java, why is this so awkward?
-            get = function (url, callback) {
-                var encoding = "utf-8",
-                    file = new java.io.File(url),
-                    lineSeparator = java.lang.System.getProperty("line.separator"),
-                    input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding)),
-                    stringBuffer, line,
-                    content = '';
-                try {
-                    stringBuffer = new java.lang.StringBuffer();
-                    line = input.readLine();
+		get : function get(key, deferred) {
+			// Get value from 'key', parse JSON
+			var value = JSON.parse(STORAGE.getItem(key));
 
-                    // Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
-                    // http://www.unicode.org/faq/utf_bom.html
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve(value);
+			}
+		},
 
-                    // Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
-                    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
-                    if (line && line.length() && line.charAt(0) === 0xfeff) {
-                        // Eat the BOM, since we've already found the encoding on this file,
-                        // and we plan to concatenating this buffer with others; the BOM should
-                        // only appear at the top of a file.
-                        line = line.substring(1);
-                    }
+		remove : function remove(key, deferred) {
+			// Remove key
+			STORAGE.removeItem(key);
 
-                    stringBuffer.append(line);
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve();
+			}
+		},
 
-                    while ((line = input.readLine()) !== null) {
-                        stringBuffer.append(lineSeparator);
-                        stringBuffer.append(line);
-                    }
-                    //Make sure we return a JavaScript string and not a Java string.
-                    content = String(stringBuffer.toString()); //String
-                } finally {
-                    input.close();
-                }
-                callback(content);
-            };
-        }
+		clear : function clear(deferred) {
+			// Clear
+			STORAGE.clear();
 
-        text = {
-            version: '1.0.7',
-
-            strip: function (content) {
-                //Strips <?xml ...?> declarations so that external SVG and XML
-                //documents can be added to a document without worry. Also, if the string
-                //is an HTML document, only the part inside the body tag is returned.
-                if (content) {
-                    content = content.replace(xmlRegExp, "");
-                    var matches = content.match(bodyRegExp);
-                    if (matches) {
-                        content = matches[1];
-                    }
-                } else {
-                    content = "";
-                }
-                return content;
-            },
-
-            jsEscape: function (content) {
-                return content.replace(/(['\\])/g, '\\$1')
-                    .replace(/[\f]/g, "\\f")
-                    .replace(/[\b]/g, "\\b")
-                    .replace(/[\n]/g, "\\n")
-                    .replace(/[\t]/g, "\\t")
-                    .replace(/[\r]/g, "\\r");
-            },
-
-            createXhr: function () {
-                //Would love to dump the ActiveX crap in here. Need IE 6 to die first.
-                var xhr, i, progId;
-                if (typeof XMLHttpRequest !== "undefined") {
-                    return new XMLHttpRequest();
-                } else {
-                    for (i = 0; i < 3; i++) {
-                        progId = progIds[i];
-                        try {
-                            xhr = new ActiveXObject(progId);
-                        } catch (e) {}
-
-                        if (xhr) {
-                            progIds = [progId];  // so faster next time
-                            break;
-                        }
-                    }
-                }
-
-                if (!xhr) {
-                    throw new Error("createXhr(): XMLHttpRequest not available");
-                }
-
-                return xhr;
-            },
-
-            get: get,
-
-            /**
-             * Parses a resource name into its component parts. Resource names
-             * look like: module/name.ext!strip, where the !strip part is
-             * optional.
-             * @param {String} name the resource name
-             * @returns {Object} with properties "moduleName", "ext" and "strip"
-             * where strip is a boolean.
-             */
-            parseName: function (name) {
-                var strip = false, index = name.indexOf("."),
-                    modName = name.substring(0, index),
-                    ext = name.substring(index + 1, name.length);
-
-                index = ext.indexOf("!");
-                if (index !== -1) {
-                    //Pull off the strip arg.
-                    strip = ext.substring(index + 1, ext.length);
-                    strip = strip === "strip";
-                    ext = ext.substring(0, index);
-                }
-
-                return {
-                    moduleName: modName,
-                    ext: ext,
-                    strip: strip
-                };
-            },
-
-            xdRegExp: /^((\w+)\:)?\/\/([^\/\\]+)/,
-
-            /**
-             * Is an URL on another domain. Only works for browser use, returns
-             * false in non-browser environments. Only used to know if an
-             * optimized .js version of a text resource should be loaded
-             * instead.
-             * @param {String} url
-             * @returns Boolean
-             */
-            useXhr: function (url, protocol, hostname, port) {
-                var match = text.xdRegExp.exec(url),
-                    uProtocol, uHostName, uPort;
-                if (!match) {
-                    return true;
-                }
-                uProtocol = match[2];
-                uHostName = match[3];
-
-                uHostName = uHostName.split(':');
-                uPort = uHostName[1];
-                uHostName = uHostName[0];
-
-                return (!uProtocol || uProtocol === protocol) &&
-                       (!uHostName || uHostName === hostname) &&
-                       ((!uPort && !uHostName) || uPort === port);
-            },
-
-            finishLoad: function (name, strip, content, onLoad, config) {
-                content = strip ? text.strip(content) : content;
-                if (config.isBuild) {
-                    buildMap[name] = content;
-                }
-                onLoad(content);
-            },
-
-            load: function (name, req, onLoad, config) {
-                //Name has format: some.module.filext!strip
-                //The strip part is optional.
-                //if strip is present, then that means only get the string contents
-                //inside a body tag in an HTML string. For XML/SVG content it means
-                //removing the <?xml ...?> declarations so the content can be inserted
-                //into the current doc without problems.
-
-                // Do not bother with the work if a build and text will
-                // not be inlined.
-                if (config.isBuild && !config.inlineText) {
-                    onLoad();
-                    return;
-                }
-
-                var parsed = text.parseName(name),
-                    nonStripName = parsed.moduleName + '.' + parsed.ext,
-                    url = req.toUrl(nonStripName),
-                    useXhr = (config && config.text && config.text.useXhr) ||
-                             text.useXhr;
-
-                //Load the text. Use XHR if possible and in a browser.
-                if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
-                    text.get(url, function (content) {
-                        text.finishLoad(name, parsed.strip, content, onLoad, config);
-                    });
-                } else {
-                    //Need to fetch the resource across domains. Assume
-                    //the resource has been optimized into a JS module. Fetch
-                    //by the module name + extension, but do not include the
-                    //!strip part to avoid file system issues.
-                    req([nonStripName], function (content) {
-                        text.finishLoad(parsed.moduleName + '.' + parsed.ext,
-                                        parsed.strip, content, onLoad, config);
-                    });
-                }
-            },
-
-            write: function (pluginName, moduleName, write, config) {
-                if (moduleName in buildMap) {
-                    var content = text.jsEscape(buildMap[moduleName]);
-                    write.asModule(pluginName + "!" + moduleName,
-                                   "define(function () { return '" +
-                                       content +
-                                   "';});\n");
-                }
-            },
-
-            writeFile: function (pluginName, moduleName, req, write, config) {
-                var parsed = text.parseName(moduleName),
-                    nonStripName = parsed.moduleName + '.' + parsed.ext,
-                    //Use a '.js' file name so that it indicates it is a
-                    //script that can be loaded across domains.
-                    fileName = req.toUrl(parsed.moduleName + '.' +
-                                         parsed.ext) + '.js';
-
-                //Leverage own load() method to load plugin value, but only
-                //write out values that do not have the strip argument,
-                //to avoid any potential issues with ! in file names.
-                text.load(nonStripName, req, function (value) {
-                    //Use own write() method to construct full module value.
-                    //But need to create shell that translates writeFile's
-                    //write() to the right interface.
-                    var textWrite = function (contents) {
-                        return write(fileName, contents);
-                    };
-                    textWrite.asModule = function (moduleName, contents) {
-                        return write.asModule(moduleName, fileName, contents);
-                    };
-
-                    text.write(pluginName, nonStripName, textWrite, config);
-                }, config);
-            }
-        };
-
-        return text;
-    });
-}());
-
+			// Resolve deferred
+			if (deferred && deferred.resolve instanceof Function) {
+				deferred.resolve();
+			}
+		}
+	});
+});
 /*!
- * TroopJS RequireJS template plug-in
+ * TroopJS widget component
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 /**
- * This plugin provides a template loader and compiler.
+ * The widget trait provides common UI related logic
  */
-define('template',[ "text" ], function TemplateModule(text) {
-	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
-	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
-	var RE_TOKENS = /<%(\d+)%>/gm;
-	var RE_REPLACE = /(["\n\t\r])/gm;
-	var RE_CLEAN = /o \+= "";| \+ ""/gm;
-	var EMPTY = "";
-	var REPLACE = {
-		"\"" : "\\\"",
-		"\n" : "\\n",
-		"\t" : "\\t",
-		"\r" : "\\r"
-	};
-
-	var buildMap = {};
+define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], function WidgetModule(Gadget, $, Deferred) {
+	var NULL = null;
+	var FUNCTION = Function;
+	var UNDEFINED = undefined;
+	var ARRAY_PROTO = Array.prototype;
+	var SHIFT = ARRAY_PROTO.shift;
+	var UNSHIFT = ARRAY_PROTO.unshift;
+	var POP = ARRAY_PROTO.pop;
+	var $TRIGGER = $.fn.trigger;
+	var $ONE = $.fn.one;
+	var $BIND = $.fn.bind;
+	var $UNBIND = $.fn.unbind;
+	var RE = /^dom(?::(\w+))?\/([^\.]+(?:\.(.+))?)/;
+	var REFRESH = "widget/refresh";
+	var $ELEMENT = "$element";
+	var $PROXIES = "$proxies";
+	var ONE = "one";
+	var THEN = "then";
+	var ATTR_WEAVE = "[data-weave]";
+	var ATTR_WOVEN = "[data-woven]";
 
 	/**
-	 * Compiles template
-	 * 
-	 * @param body Template body
-	 * @returns {Function}
+	 * Creates a proxy of the inner method 'handlerProxy' with the 'topic', 'widget' and handler parameters set
+	 * @param topic event topic
+	 * @param widget target widget
+	 * @param handler target handler
+	 * @returns {Function} proxied handler
 	 */
-	function compile(body) {
-		var blocks = [];
-		var length = 0;
+	function eventProxy(topic, widget, handler) {
+		/**
+		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
+		 * @returns result of proxied hanlder invocation
+		 */
+		return function handlerProxy() {
+			// Add topic to front of arguments
+			UNSHIFT.call(arguments, topic);
 
-		function blocksTokens(original, prefix, block) {
-			blocks[length] = prefix
-				? "\" +" + block + "+ \""
-				: "\";" + block + "o += \"";
-			return "<%" + String(length++) + "%>";
+			// Apply with shifted arguments to handler
+			return handler.apply(widget, arguments);
+		};
+	}
+
+	/**
+	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
+	 * @param $fn jQuery method
+	 * @returns {Function} proxied render
+	 */
+	function renderProxy($fn) {
+		/**
+		 * Renders contents into element
+		 * @param contents (Function | String) Template/String to render
+		 * @param data (Object) If contents is a template - template data (optional)
+		 * @param deferred (Deferred) Deferred (optional)
+		 * @returns self
+		 */
+		function render(/* contents, data, ..., deferred */) {
+			var self = this;
+			var $element = self[$ELEMENT];
+			var arg = arguments;
+
+			// Get contents from first argument
+			var contents = SHIFT.call(arg);
+
+			// Check if the last argument looks like a deferred, and in that case set it
+			var deferred = THEN in arg[arg.length - 1]
+				? POP.call(arg)
+				: UNDEFINED;
+
+			// Call render with contents (or result of contents if it's a function)
+			$fn.call($element, contents instanceof FUNCTION ? contents.apply(self, arg) : contents);
+
+			// Defer render (as weaving it may need to load async)
+			Deferred(function deferredRender(dfdRender) {
+				// Weave element
+				$element.find(ATTR_WEAVE).weave(dfdRender);
+
+				// After render is complete, trigger REFRESH with woven components
+				dfdRender.done(function renderDone() {
+					$element.trigger(REFRESH, arguments);
+				});
+
+				// Link deferred
+				if (deferred) {
+					dfdRender.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
 		}
 
-		function tokensBlocks(original, token) {
-			return blocks[token];
-		}
+		return render;
+	}
 
-		function replace(original, token) {
-			return REPLACE[token] || token;
-		}
+	return Gadget.extend(function Widget($element, displayName) {
+		var self = this;
 
+		self[$ELEMENT] = $element;
+
+		if (displayName) {
+			self.displayName = displayName;
+		}
+	}, {
+		displayName : "core/component/widget",
+
+		initialize : function initialize() {
+			var self = this;
+			var $proxies = self[$PROXIES] = [];
+			var $element = self[$ELEMENT];
+			var key = NULL;
+			var value;
+			var matches;
+			var topic;
+
+			// Loop over each property in widget
+			for (key in self) {
+				// Get value
+				value = self[key];
+
+				// Continue if value is not a function
+				if (!(value instanceof FUNCTION)) {
+					continue;
+				}
+
+				// Match signature in key
+				matches = RE.exec(key);
+
+				if (matches !== NULL) {
+					// Get topic
+					topic = matches[2];
+
+					// Replace value with a scoped proxy
+					value = eventProxy(topic, self, value);
+
+					// Either ONE or BIND element
+					(matches[2] === ONE ? $ONE : $BIND).call($element, topic, self, value);
+
+					// Store in $proxies
+					$proxies[$proxies.length] = [topic, value];
+
+					// NULL value
+					self[key] = NULL;
+				}
+			}
+
+			return self;
+		},
+
+		finalize : function finalize() {
+			var self = this;
+			var $proxies = self[$PROXIES];
+			var $element = self[$ELEMENT];
+			var $proxy;
+
+			// Loop over subscriptions
+			while ($proxy = $proxies.shift()) {
+				$element.unbind($proxy[0], $proxy[1]);
+			}
+
+			return self;
+		},
+
+		/**
+		 * Weaves all children of $element
+		 * @param deferred (Deferred) Deferred (optional)
+		 * @returns self
+		 */
+		weave : function weave(deferred) {
+			var self = this;
+
+			self[$ELEMENT].find(ATTR_WEAVE).weave(deferred);
+
+			return self;
+		},
+
+		/**
+		 * Unweaves all children of $element _and_ self
+		 * @returns self
+		 */
+		unweave : function unweave() {
+			var self = this;
+
+			self[$ELEMENT].find(ATTR_WOVEN).andSelf().unweave();
+
+			return this;
+		},
+
+		/**
+		 * Binds event from $element, exactly once
+		 * @returns self
+		 */
+		one : function one() {
+			var self = this;
+
+			$ONE.apply(self[$ELEMENT], arguments);
+
+			return self;
+		},
+
+		/**
+		 * Binds event to $element
+		 * @returns self
+		 */
+		bind : function bind() {
+			var self = this;
+
+			$BIND.apply(self[$ELEMENT], arguments);
+
+			return self;
+		},
+
+		/**
+		 * Unbinds event from $element
+		 * @returns self
+		 */
+		unbind : function unbind() {
+			var self = this;
+
+			$UNBIND.apply(self[$ELEMENT], arguments);
+>>>>>>> bumped rjs
+
+			return self;
+		},
+
+		/**
+		 * Triggers event on $element
+		 * @returns self
+		 */
+		trigger : function trigger() {
+			var self = this;
+
+			$TRIGGER.apply(self[$ELEMENT], arguments);
+
+			return self;
+		},
+
+		/**
+		 * Renders content and inserts it before $element
+		 */
+		before : renderProxy($.fn.before),
+
+		/**
+		 * Renders content and inserts it after $element
+		 */
+		after : renderProxy($.fn.after),
+
+		/**
+		 * Renders content and replaces $element contents
+		 */
+		html : renderProxy($.fn.html),
+
+		/**
+		 * Renders content and appends it to $element
+		 */
+		append : renderProxy($.fn.append),
+
+		/**
+		 * Renders content and prepends it to $element
+		 */
+		prepend : renderProxy($.fn.prepend),
+
+		/**
+		 * Empties widget
+		 * @param deferred (Deferred) Deferred (optional)
+		 * @returns self
+		 */
+		empty : function empty(deferred) {
+			var self = this;
+
+			// Create deferred for emptying
+			Deferred(function emptyDeferred(dfd) {
+				// If a deferred was passed, add resolve/reject
+				if (deferred) {
+					dfd.then(deferred.resolve, deferred.reject);
+				}
+
+				// Get element
+				var $element = self[$ELEMENT];
+
+				// Detach contents
+				var $contents = $element.contents().detach();
+
+				// Trigger refresh
+				$element.trigger(REFRESH, self);
+
+				// Get DOM elements
+				var contents = $contents.get();
+
+				// Use timeout in order to yield
+				setTimeout(function emptyTimeout() {
+					try {
+						// Remove elements from DOM
+						$contents.remove();
+
+						// Resolve deferred
+						dfd.resolve(contents);
+					}
+					// If there's an error
+					catch (e) {
+						// Reject deferred
+						dfd.reject(contents);
+					}
+				}, 0);
+			});
+
+			return self;
+		}
+	});
+});
+
+/*!
+ * TroopJS widget/application component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/widget/application',[ "../component/widget", "deferred" ], function ApplicationModule(Widget, Deferred) {
+	var STARTED = "started";
+	var STOPPED = "stopped";
+
+	return Widget.extend({
+		displayName : "core/widget/application",
+
+		state : function state(state, deferred) {
+			var self = this;
+
+			// Publish state to services
+			self.publish("state", state);
+
+			switch (state) {
+			case STARTED:
+				self.weave(deferred);
+				break;
+
+			case STOPPED:
+				self.unweave();
+
+			default:
+				if (deferred) {
+					deferred.resolve();
+				}
+			}
+
+			return self;
+		},
+
+		start : function start(deferred) {
+			var self = this;
+
+			Deferred(function deferredStart(dfdStart) {
+				Deferred(function deferredStarting(dfdStarting) {
+					self.state("starting", dfdStarting);
+				})
+				.done(function doneStarting() {
+					self.state(STARTED, dfdStart);
+				});
+
+				if (deferred) {
+					dfdStart.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
+		},
+
+		stop : function stop(deferred) {
+			var self = this;
+
+			Deferred(function deferredStop(dfdStop) {
+				Deferred(function deferredStopping(dfdStopping) {
+					self.state("stopping", sfdStopping);
+				})
+				.done(function doneStopping() {
+					self.state(STOPPED, dfdStop);
+				});
+
+				if (deferred) {
+					dfdStop.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
+		}
+	});
+});
+/*!
+ * TroopJS widget/placeholder component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "deferred" ], function WidgetPlaceholderModule(Widget, $, Deferred) {
+	var UNDEFINED = undefined;
+	var ARRAY = Array;
+	var ARRAY_PROTO = ARRAY.prototype;
+	var HOLDING = "holding";
+	var DATA_HOLDING = "data-" + HOLDING;
+	var $ELEMENT = "$element";
+	var TARGET = "target";
+
+	function release(/* arg, arg, arg, deferred*/) {
+		var self = this;
+
+		// Make arguments into a real array
+		var argx  = ARRAY.apply(ARRAY_PROTO, arguments);
+
+		// Update deferred to the last argument
+		var deferred = argx.pop();
+
+		Deferred(function deferredRelease(dfd) {
+			var i;
+			var iMax;
+			var name;
+			var argv;
+
+			// We're already holding something, resolve with cache
+			if (HOLDING in self) {
+				dfd.resolve(self[HOLDING]);
+			}
+			else {
+				// Set something in HOLDING
+				self[HOLDING] = UNDEFINED;
+
+<<<<<<< HEAD
 		return Function("data", ("var o; o = \""
 		// Sanitize body before we start templating
 		+ body.replace(RE_SANITIZE, "")
+=======
+				// Add done handler to release
+				dfd.done(function doneRelease(widget) {
+					// Set DATA_HOLDING attribute
+					self[$ELEMENT].attr(DATA_HOLDING, widget);
+>>>>>>> bumped rjs
 
-		// Replace script blocks with tokens
-		.replace(RE_BLOCK, blocksTokens)
+					// Store widget
+					self[HOLDING] = widget;
+				});
 
-		// Replace unwanted tokens
-		.replace(RE_REPLACE, replace)
+				// Get widget name
+				name = self[TARGET];
 
-		// Replace tokens with script blocks
-		.replace(RE_TOKENS, tokensBlocks)
+				// Set initial argv
+				argv = [ self[$ELEMENT], name ];
 
-		+ "\"; return o;")
+				// Append values from argx to argv
+				for (i = 0, iMax = argx.length; i < iMax; i++) {
+					argv[i + 2] = argx[i];
+				}
 
-		// Clean
-		.replace(RE_CLEAN, EMPTY));
+				// Require widget by name
+				require([ name ], function required(Widget) {
+					// Resolve with constructed, bound and initialized instance
+					var widget = Widget
+						.apply(Widget, argv)
+						.initialize();
+
+					Deferred(function deferredStarted(dfdStarted) {
+						Deferred(function deferredStarting(dfdStarting) {
+							widget.state("starting", dfdStarting);
+						})
+						.done(function doneStarting() {
+							widget.state("started", dfdStarted);
+						});
+					})
+					.done(function doneStarted() {
+						dfd.resolve(widget);
+					});
+				});
+			}
+
+			// Link deferred
+			if (deferred) {
+				dfd.then(deferred.resolve, deferred.reject);
+			}
+		});
+
+		return self;
 	}
 
-	return {
-		load : function(name, req, load, config) {
-			text.load(name, req, function(value) {
-				// Compile template and store in buildMap
-				var template = buildMap[name] = compile(value);
+	function hold() {
+		var self = this;
+		var widget;
 
-				// Set display name for debugging
-				template.displayName = name;
+		// Check that we are holding
+		if (HOLDING in self) {
+			// Get what we're holding
+			widget = self[HOLDING];
 
-				// Pass template to load
-				load(template);
-			}, config);
-		},
+			// Cleanup
+			delete self[HOLDING];
 
-		write : function(pluginName, moduleName, write, config) {
-			if (moduleName in buildMap) {
-				write.asModule(pluginName + "!" + moduleName, "define(function () { return " + buildMap[moduleName].toString().replace(RE_SANITIZE, EMPTY) + ";});\n");
+			// Remove DATA_HOLDING attribute
+			self[$ELEMENT].removeAttr(DATA_HOLDING);
+
+			// State and finalize TODO add a wrapping deferred for the whole uhold
+			Deferred(function deferredStopped(dfdStopped) {
+				Deferred(function deferredStopping(dfdStopping) {
+					widget.state("stopping", dfdStopping);
+				})
+				.done(function doneStopping() {
+					widget.state("stopped", dfdStopped);
+				});
+			})
+			.done(function doneStopped() {
+				widget.finalize();
+			});
+		}
+
+		return self;
+	}
+
+	return Widget.extend(function WidgetPlaceholder($element, name, target) {
+		this[TARGET] = target;
+	}, {
+		displayName : "core/widget/placeholder",
+
+		release : release,
+		hold : hold,
+		finalize : hold
+	});
+});
+/*!
+ * TroopJS route/placeholder module
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/route/placeholder',[ "compose", "../widget/placeholder" ], function RoutePlaceholderModule(Compose, Placeholder) {
+	var ROUTE = "route";
+
+	return Placeholder.extend(function RoutePlaceholderWidget($element, name) {
+		this[ROUTE] = RegExp($element.data("route"));
+	}, {
+		"displayName" : "core/route/placeholder",
+
+		"hub:memory/route" : function onRoute(topic, uri) {
+			var self = this;
+			var re = self[ROUTE];
+
+			if (re.test(uri.path)) {
+				self.release();
+			}
+			else {
+				self.hold();
 			}
 		}
-	};
+	});
 });
-
 /*!
  * TroopJS jQuery action plug-in
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
@@ -2575,9 +3559,8 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
+define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, Deferred) {
 	var UNDEFINED = undefined;
-	var NULL = null;
 	var TRUE = true;
 	var ARRAY = Array;
 	var ARRAY_PROTO = ARRAY.prototype;
@@ -2591,7 +3574,6 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var DATA_WOVEN = "data-" + WOVEN;
 	var SELECTOR_WEAVE = "[" + DATA_WEAVE + "]";
 	var SELECTOR_WOVEN = "[" + DATA_WOVEN + "]";
-	var RE_WEAVE = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
 	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
@@ -2606,7 +3588,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		$(this).unweave();
 	}
 
-	$.fn[WEAVE] = function weave(/* arg, arg, arg, */ deferred) {
+	$.fn[WEAVE] = function weave(/* arg, arg, arg, deferred*/) {
 		var required = [];
 		var i = 0;
 		var $elements = $(this);
@@ -2615,7 +3597,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		var argx  = ARRAY.apply(ARRAY_PROTO, arguments);
 
 		// Update deferred to the last argument
-		deferred = argx.pop();
+		var deferred = argx.pop();
 
 		$elements
 			// Reduce to only elements that can be woven
@@ -2625,6 +3607,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 				var $element = $(element);
 				var $data = $element.data();
 				var weave = $element.attr(DATA_WEAVE) || "";
+				var re = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
 				var widgets = [];
 				var mark = i;
 				var j = 0;
@@ -2638,90 +3621,87 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 					// Make sure to remove DATA_WEAVE (so we don't try processing this again)
 					.removeAttr(DATA_WEAVE);
 
-				// Iterate widgets (while the rexep matches)
-				while ((matches = RE_WEAVE.exec(weave)) !== NULL) {
+				// Iterate widgets (while the RE_WEAVE matches)
+				while (matches = re.exec(weave)) {
 					// Add deferred to required array
-					required[i] = $.Deferred(function deferedRequire(dfd) {
-						// Store prefixed values as they will not be available during require
-						var _j = j;
-						var _matches = matches;
+					Deferred(function deferedRequire(dfd) {
+						var _j = j++; // store _j before we increment
+						var k;
+						var l;
+						var kMax;
+						var value;
+
+						// Store on required
+						required[i++] = dfd;
+
+						// Add done handler to register
+						dfd.done(function doneRequire(widget) {
+							widgets[_j] = widget;
+						});
 
 						// Get widget name
-						var name = _matches[1];
+						var name = matches[1];
+
+						// Set initial argv
+						var argv = [ $element, name ];
+
+						// Append values from argx to argv
+						for (k = 0, kMax = argx.length, l = argv.length; k < kMax; k++, l++) {
+							argv[l] = argx[k];
+						}
 
 						// Get widget args
-						var args = _matches[2];
+						var args = matches[2];
 
-						try {
-							// Require widget
-							require([ name ], function required(Widget) {
-								var k;
-								var l;
-								var kMax;
-								var value;
-							var widget;
+						// Any widget arguments
+						if (args !== UNDEFINED) {
+							// Convert args to array
+							args = args.split(RE_SEPARATOR);
 
-								// Set initial argv
-								var argv = [ $element, name ];
+							// Append typed values from args to argv
+							for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
+								// Get value
+								value = args[k];
 
-								// Copy values from argx to argv
-								for (k = 0, kMax = argx.length, l = argv.length; k < kMax; k++, l++) {
-									argv[l] = arg[k];
+								if (value in $data) {
+									argv[l] = $data[value];
+								} else if (RE_STRING.test(value)) {
+									argv[l] = value.slice(1, -1);
+								} else if (RE_DIGIT.test(value)) {
+									argv[l] = Number(value);
+								} else if (RE_BOOLEAN.test(value)) {
+									argv[l] = value === TRUE;
+								} else {
+									argv[l] = value;
 								}
+							}
+						}
 
-								// Any widget arguments
-								if (args !== UNDEFINED) {
-									// Convert args to array
-									args = args.split(RE_SEPARATOR);
+						require([ name ], function required(Widget) {
+							// Resolve with constructed, bound and initialized instance
+							var widget = Widget
+								.apply(Widget, argv)
+								.bind(DESTROY, onDestroy)
+								.initialize();
 
-									// Iterate to 'cast' values
-									for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
-										// Get value
-										value = args[k];
-
-										if (value in $data) {
-											argv[l] = $data[value];
-										} else if (RE_STRING.test(value)) {
-											argv[l] = value.slice(1, -1);
-										} else if (RE_DIGIT.test(value)) {
-											argv[l] = Number(value);
-										} else if (RE_BOOLEAN.test(value)) {
-											argv[l] = value === TRUE;
-										} else {
-											argv[l] = value;
-										}
-									}
-								}
-
-								// Simple or complex instantiation
-								widget = l === 2
-									? Widget($element, name)
-									: Widget.apply(Widget, argv);
-
-								// Bind destroy event handler
-								$element.bind(DESTROY, onDestroy);
-
-								// Build
-								widget.build();
-
-								// Store widgets[_j] and resolve with widget instance
-								dfd.resolve(widgets[_j] = widget);
+							Deferred(function deferredStarted(dfdStarted) {
+								Deferred(function deferredStarting(dfdStarting) {
+									widget.state("starting", dfdStarting);
+								})
+								.done(function doneStarting() {
+									widget.state("started", dfdStarted);
+								});
+							})
+							.done(function doneStarted() {
+								dfd.resolve(widget);
 							});
-						}
-						catch (e) {
-							// Reset widgets[_j] and resolve with UNDEFINED
-							dfd.resolve(widgets[_j] = UNDEFINED);
-						}
+						});
 					});
-
-					// Step i, j
-					i++;
-					j++;
 				}
 
 				// Slice out widgets woven for this element
 				WHEN.apply($, required.slice(mark, i)).done(function doneRequired() {
-					// Set 'data-woven' attribute
+					// Set DATA_WOVEN attribute
 					$element.attr(DATA_WOVEN, JOIN.call(arguments, " "));
 				});
 			});
@@ -2752,15 +3732,25 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 
 				// Somewhat safe(r) iterator over widgets
 				while (widget = widgets.shift()) {
-					// Destroy
-					widget.destroy();
+					// State and finalize TODO add a wrapping deferred for the whole unweave
+					Deferred(function deferredStopped(dfdStopped) {
+						Deferred(function deferredStopping(dfdStopping) {
+							widget.state("stopping", dfdStopping);
+						})
+						.done(function doneStopping() {
+							widget.state("stopped", dfdStopped);
+						});
+					})
+					.done(function doneStopped() {
+						widget.finalize();
+					});
 				}
 
 				$element
 					// Copy woven data to data-weave attribute
 					.attr(DATA_WEAVE, $element.data(WEAVE))
 					// Remove data fore WEAVE
-					.removeData(DATA_WEAVE)
+					.removeData(WEAVE)
 					// Make sure to clean the destroy event handler
 					.unbind(DESTROY, onDestroy);
 			});

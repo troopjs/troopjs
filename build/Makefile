@@ -3,16 +3,26 @@ DIST := ../dist
 R := lib/rjs/dist/r.js
 
 # Core services
+<<<<<<< HEAD
 TROOPJS-CORE := troopjs-core/component/gadget \
 	troopjs-core/pubsub/hub \
 	troopjs-core/pubsub/topic \
+=======
+TROOPJS-CORE := template \
+>>>>>>> bumped rjs
 	troopjs-core/remote/ajax \
+	troopjs-core/route/router \
 	troopjs-core/store/local \
 	troopjs-core/store/session \
+<<<<<<< HEAD
 	troopjs-core/route/router \
 	troopjs-core/route/placeholder \
 	troopjs-core/widget/application \
 	template
+=======
+	troopjs-core/widget/application \
+	troopjs-core/route/placeholder
+>>>>>>> bumped rjs
 
 # jQuery plugins
 TROOPJS-JQUERY := troopjs-jquery/action \
