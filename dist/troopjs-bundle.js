@@ -379,26 +379,17 @@ define('template',[ "text" ], function TemplateModule(text) {
  */
 (function(define){
 
-var PROTO = "__proto__";
 define('compose',[], function(){
 	// function for creating instances from a prototype
 	function Create(){
 	}
 	var delegate = Object.create ?
 		function(proto){
-			proto = typeof proto === "function" ? proto.prototype : proto || Object.prototype;
-			var instance = Object.create(proto);
-			if (!(PROTO in instance)) {
-				instance[PROTO] = proto;
-			}
-			return instance;
+			return Object.create(typeof proto == "function" ? proto.prototype : proto || Object.prototype);
 		} :
 		function(proto){
-			Create.prototype = proto = typeof proto == "function" ? proto.prototype : proto;
+			Create.prototype = typeof proto == "function" ? proto.prototype : proto;
 			var instance = new Create();
-			if (!(PROTO in instance)) {
-				instance[PROTO] = proto;
-			}
 			Create.prototype = null;
 			return instance;
 		};
@@ -1079,6 +1070,7 @@ define('deferred',[ "jquery" ], function DeferredModule($) {
  */
 define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
 	var NULL = null;
+	var OBJECT = Object;
 	var FUNCTION = Function;
 	var RE = /^hub(?::(\w+))?\/(.+)/;
 	var PUBLISH = hub.publish;
@@ -1089,6 +1081,15 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 	var STATE = "state";
 	var INITIALIZE = "initialize";
 	var FINALIZE = "finalize";
+	var __PROTO__ = "__proto__";
+
+	var getPrototypeOf = OBJECT.getPrototypeOf || (__PROTO__ in OBJECT
+		? function getPrototypeOf(object) {
+			return object[__PROTO__];
+		}
+		: function getPrototypeOf(object) {
+			return object.constructor.prototype;
+		});
 
 	return Component.extend(function Gadget() {
 		var self = this;
@@ -1160,7 +1161,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 				// Store callback
 				sCallbacks[sCount++] = callback;
 			}
-		} while (__proto__ = __proto__.__proto__);
+		} while (__proto__ = getPrototypeOf(__proto__));
 
 		// Extend self
 		Compose.call(self, {
