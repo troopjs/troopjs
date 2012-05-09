@@ -984,8 +984,14 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				}
 
 				// Update head and tail
-				handlers[HEAD] = head;
-				handlers[TAIL] = previous;
+				if (head && previous) {
+					handlers[HEAD] = head;
+					handlers[TAIL] = previous;
+				}
+				else {
+					delete handlers[HEAD];
+					delete handlers[TAIL];
+				}
 			}
 
 			return this;
@@ -1854,8 +1860,11 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 			// Get contents from first argument
 			var contents = SHIFT.call(arg);
 
+			// Get arg length
+			var argc = arg.length;
+
 			// Check if the last argument looks like a deferred, and in that case set it
-			var deferred = THEN in arg[arg.length - 1]
+			var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
 				? POP.call(arg)
 				: UNDEFINED;
 
@@ -2106,21 +2115,25 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
  */
 define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "deferred" ], function WidgetPlaceholderModule(Widget, $, Deferred) {
 	var UNDEFINED = undefined;
+	var FUNCTION = Function;
 	var ARRAY = Array;
 	var ARRAY_PROTO = ARRAY.prototype;
+	var POP = ARRAY_PROTO.pop;
 	var HOLDING = "holding";
 	var DATA_HOLDING = "data-" + HOLDING;
 	var $ELEMENT = "$element";
 	var TARGET = "target";
+	var THEN = "then";
 
 	function release(/* arg, arg, arg, deferred*/) {
 		var self = this;
+		var arg = arguments;
+		var argc = arg.length;
 
-		// Make arguments into a real array
-		var argx  = ARRAY.apply(ARRAY_PROTO, arguments);
-
-		// Update deferred to the last argument
-		var deferred = argx.pop();
+		// Check if the last argument looks like a deferred, and in that case set it
+		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
+			? POP.call(arg)
+			: UNDEFINED;
 
 		Deferred(function deferredRelease(dfd) {
 			var i;
@@ -2151,9 +2164,9 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
 				// Set initial argv
 				argv = [ self[$ELEMENT], name ];
 
-				// Append values from argx to argv
-				for (i = 0, iMax = argx.length; i < iMax; i++) {
-					argv[i + 2] = argx[i];
+				// Append values from arg to argv
+				for (i = 0, iMax = arg.length; i < iMax; i++) {
+					argv[i + 2] = arg[i];
 				}
 
 				// Require widget by name
@@ -2233,7 +2246,8 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/route/placeholder',[ "compose", "../widget/placeholder" ], function RoutePlaceholderModule(Compose, Placeholder) {
+define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function RoutePlaceholderModule(Placeholder) {
+	var NULL = null;
 	var ROUTE = "route";
 
 	return Placeholder.extend(function RoutePlaceholderWidget($element, name) {
@@ -2243,10 +2257,10 @@ define('troopjs-core/route/placeholder',[ "compose", "../widget/placeholder" ], 
 
 		"hub:memory/route" : function onRoute(topic, uri) {
 			var self = this;
-			var re = self[ROUTE];
+			var matches = self[ROUTE].exec(uri.path);
 
-			if (re.test(uri.path)) {
-				self.release();
+			if (matches !== NULL) {
+				self.release.apply(self, matches.slice(1));
 			}
 			else {
 				self.hold();
@@ -2813,9 +2827,12 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 	var UNDEFINED = undefined;
 	var TRUE = true;
 	var ARRAY = Array;
+	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
 	var JOIN = ARRAY_PROTO.join;
+	var POP = ARRAY_PROTO.pop;
 	var WHEN = $.when;
+	var THEN = "then";
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
 	var WOVEN = "woven";
@@ -2843,11 +2860,13 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 		var i = 0;
 		var $elements = $(this);
 
-		// Make arguments into a real array
-		var argx  = ARRAY.apply(ARRAY_PROTO, arguments);
+		var arg = arguments;
+		var argc = arg.length;
 
-		// Update deferred to the last argument
-		var deferred = argx.pop();
+		// Check if the last argument looks like a deferred, and in that case set it
+		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
+			? POP.call(arg)
+			: UNDEFINED;
 
 		$elements
 			// Reduce to only elements that can be woven
@@ -2895,9 +2914,9 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 						// Set initial argv
 						var argv = [ $element, name ];
 
-						// Append values from argx to argv
-						for (k = 0, kMax = argx.length, l = argv.length; k < kMax; k++, l++) {
-							argv[l] = argx[k];
+						// Append values from arg to argv
+						for (k = 0, kMax = arg.length, l = argv.length; k < kMax; k++, l++) {
+							argv[l] = arg[k];
 						}
 
 						// Get widget args
