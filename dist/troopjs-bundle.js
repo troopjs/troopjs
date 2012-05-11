@@ -2063,11 +2063,6 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 
 			// Create deferred for emptying
 			Deferred(function emptyDeferred(dfd) {
-				// If a deferred was passed, add resolve/reject
-				if (deferred) {
-					dfd.then(deferred.resolve, deferred.reject);
-				}
-
 				// Get element
 				var $element = self[$ELEMENT];
 
@@ -2077,24 +2072,22 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 				// Trigger refresh
 				$element.trigger(REFRESH, self);
 
-				// Get DOM elements
-				var contents = $contents.get();
-
 				// Use timeout in order to yield
 				setTimeout(function emptyTimeout() {
-					try {
-						// Remove elements from DOM
-						$contents.remove();
+					// Get DOM elements
+					var contents = $contents.get();
 
-						// Resolve deferred
-						dfd.resolve(contents);
-					}
-					// If there's an error
-					catch (e) {
-						// Reject deferred
-						dfd.reject(contents);
-					}
+					// Remove elements from DOM
+					$contents.remove();
+
+					// Resolve deferred
+					dfd.resolve(contents);
 				}, 0);
+
+				// If a deferred was passed, add resolve/reject
+				if (deferred) {
+					dfd.then(deferred.resolve, deferred.reject);
+				}
 			});
 
 			return self;
@@ -2140,9 +2133,6 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
 				dfd.resolve(self[HOLDING]);
 			}
 			else {
-				// Set something in HOLDING
-				self[HOLDING] = UNDEFINED;
-
 				// Add done handler to release
 				dfd.done(function doneRelease(widget) {
 					// Set DATA_HOLDING attribute
@@ -2188,26 +2178,38 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
 		return self;
 	}
 
-	function hold() {
+	function hold(deferred) {
 		var self = this;
-		var widget;
 
-		// Check that we are holding
-		if (HOLDING in self) {
-			// Get what we're holding
-			widget = self[HOLDING];
+		Deferred(function deferredHold(dfdHold) {
+			var widget;
 
-			// Cleanup
-			delete self[HOLDING];
+			// Check that we are holding
+			if (HOLDING in self) {
+				// Get what we're holding
+				widget = self[HOLDING];
 
-			// Remove DATA_HOLDING attribute
-			self[$ELEMENT].removeAttr(DATA_HOLDING);
+				// Cleanup
+				delete self[HOLDING];
 
-			// Stop TODO add a wrapping deferred for the whole uhold
-			Deferred(function deferredStop(dfdStop) {
-				widget.stop(dfdStop);
-			});
-		}
+				// Remove DATA_HOLDING attribute
+				self[$ELEMENT].removeAttr(DATA_HOLDING);
+
+				// Deferred stop
+				Deferred(function deferredStop(dfdStop) {
+					widget.stop(dfdStop);
+				})
+				.then(dfdHold.resolve, dfdHold.reject);
+			}
+			else {
+				dfdHold.resolve();
+			}
+
+			// Link deferred
+			if (deferred) {
+				dfd.then(deferred.resolve, deferred.reject);
+			}
+		});
 
 		return self;
 	}
@@ -2269,11 +2271,7 @@ define('troopjs-core/widget/application',[ "../component/widget", "deferred" ], 
 		"sig/finalize" : function finalize(signal, deferred) {
 			var self = this;
 
-			self.unweave();
-
-			if (deferred) {
-				deferred.resolve();
-			}
+			self.unweave(deferred);
 
 			return self;
 		}
@@ -2793,7 +2791,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 	}
 
 	$.fn[WEAVE] = function weave(/* arg, arg, arg, deferred*/) {
-		var required = [];
+		var woven = [];
 		var i = 0;
 		var $elements = $(this);
 
@@ -2829,7 +2827,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 
 				// Iterate widgets (while the RE_WEAVE matches)
 				while (matches = re.exec(weave)) {
-					// Add deferred to required array
+					// Add deferred to woven array
 					Deferred(function deferedRequire(dfd) {
 						var _j = j++; // store _j before we increment
 						var k;
@@ -2837,8 +2835,8 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 						var kMax;
 						var value;
 
-						// Store on required
-						required[i++] = dfd;
+						// Store on woven
+						woven[i++] = dfd;
 
 						// Add done handler to register
 						dfd.done(function doneRequire(widget) {
@@ -2902,7 +2900,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 				}
 
 				// Slice out widgets woven for this element
-				$WHEN.apply($, required.slice(mark, i)).done(function doneRequired() {
+				$WHEN.apply($, woven.slice(mark, i)).done(function doneRequired() {
 					// Set DATA_WOVEN attribute
 					$element.attr(DATA_WOVEN, JOIN.call(arguments, " "));
 				});
@@ -2910,14 +2908,18 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 
 		if (deferred) {
 			// When all deferred are resolved, resolve original deferred
-			$WHEN.apply($, required).then(deferred.resolve, deferred.reject);
+			$WHEN.apply($, woven).then(deferred.resolve, deferred.reject);
 		}
 
 		return $elements;
 	};
 
-	$.fn[UNWEAVE] = function unweave() {
-		return $(this)
+	$.fn[UNWEAVE] = function unweave(deferred) {
+		var unwoven = [];
+		var i = 0;
+		var $elements = $(this);
+
+		$elements
 			// Reduce to only elements that are woven
 			.filter(SELECTOR_WOVEN)
 			// Iterate
@@ -2934,8 +2936,11 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 
 				// Somewhat safe(r) iterator over widgets
 				while (widget = widgets.shift()) {
-					// Stop TODO add a wrapping deferred for the whole unweave
+					// Deferred stop
 					Deferred(function deferredStop(dfdStop) {
+						// Store on onwoven
+						unwoven[i++] = dfdStop;
+
 						widget.stop(dfdStop);
 					});
 				}
@@ -2948,5 +2953,12 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 					// Make sure to clean the destroy event handler
 					.unbind(DESTROY, onDestroy);
 			});
+
+		if (deferred) {
+			// When all deferred are resolved, resolve original deferred
+			$WHEN.apply($, unwoven).then(deferred.resolve, deferred.reject);
+		}
+
+		return $elements;
 	};
 });
