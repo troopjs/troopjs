@@ -1070,15 +1070,13 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 	var NULL = null;
 	var OBJECT = Object;
 	var FUNCTION = Function;
-	var RE = /^hub(?::(\w+))?\/(.+)/;
+	var RE_HUB = /^hub(?::(\w+))?\/(.+)/;
+	var RE_SIG = /^sig\/(.+)/;
 	var PUBLISH = hub.publish;
 	var SUBSCRIBE = hub.subscribe;
 	var UNSUBSCRIBE = hub.unsubscribe;
 	var MEMORY = "memory";
 	var SUBSCRIPTIONS = "subscriptions";
-	var STATE = "state";
-	var INITIALIZE = "initialize";
-	var FINALIZE = "finalize";
 	var __PROTO__ = "__proto__";
 
 	var getPrototypeOf = OBJECT.getPrototypeOf || (__PROTO__ in OBJECT
@@ -1092,139 +1090,105 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 	return Component.extend(function Gadget() {
 		var self = this;
 		var __proto__ = self;
+		var callbacks;
 		var callback;
-		var sCallbacks = [];
-		var iCallbacks = [];
-		var fCallbacks = [];
-		var sCount = 0;
-		var iCount = 0;
-		var fCount = 0;
 		var i;
+		var iMax;
+
+		var signals = {};
+		var signal;
+		var matches;
+		var key = null;
 
 		// Iterate prototype chain (while there's a prototype)
 		do {
-			// Check if we have INITIALIZE on __proto__
-			add: if (__proto__.hasOwnProperty(INITIALIZE)) {
-				// Store callback
-				callback = __proto__[INITIALIZE];
+			add: for (key in __proto__) {
+				// Get value
+				callback = __proto__[key];
 
-				// Reset counter
-				i = iCount;
-
-				// Loop iCallbacks, break add if we've already added this callback
-				while (i--) {
-					if (callback === iCallbacks[i]) {
-						break add;
-					}
+				// Continue if value is not a function
+				if (!(callback instanceof FUNCTION)) {
+					continue;
 				}
 
-				// Store callback
-				iCallbacks[iCount++] = callback;
-			}
+				// Match signature in key
+				matches = RE_SIG.exec(key);
 
-			// Check if we have FINALIZE on __proto__
-			add: if (__proto__.hasOwnProperty(FINALIZE)) {
-				// Store callback
-				callback = __proto__[FINALIZE];
+				if (matches !== NULL) {
+					// Get signal
+					signal = matches[1];
 
-				// Reset counter
-				i = fCount;
+					// Have we stored any callbacks for this signal?
+					if (signal in signals) {
+						// Get callbacks (for this signal)
+						callbacks = signals[signal];
 
-				// Loop fCallbacks, break add if we've already added this callback
-				while (i--) {
-					if (callback === fCallbacks[i]) {
-						break add;
+						// Reset counters
+						i = iMax = callbacks.length;
+
+						// Loop callbacks, continue add if we've already added this callback
+						while (i--) {
+							if (callback === callbacks[i]) {
+								continue add;
+							}
+						}
+
+						// Add callback to callbacks chain
+						callbacks[iMax] = callback;
+					}
+					else {
+						// First callback
+						signals[signal] = [ callback ];
 					}
 				}
-
-				// Store callback
-				fCallbacks[fCount++] = callback;
-			}
-
-			// Check if we have STATE on __proto__
-			add: if (__proto__.hasOwnProperty(STATE)) {
-				// Store callback
-				callback = __proto__[STATE];
-
-				// Reset counter
-				i = sCount;
-
-				// Loop sCallbacks, break add if we've already added this callback
-				while (i--) {
-					if (callback === sCallbacks[i]) {
-						break add;
-					}
-				}
-
-				// Store callback
-				sCallbacks[sCount++] = callback;
 			}
 		} while (__proto__ = getPrototypeOf(__proto__));
 
 		// Extend self
 		Compose.call(self, {
-			initialize : iCount <= 1
-				// No prototypes, use original
-				? self[INITIALIZE]
-				: function initialize() {
-					var _self = this;
-					var count = -1;
-					var length = iCount;
+			signal : function signal(signal, deferred) {
+				var _self = this;
+				var _callbacks;
+				var _i;
+				var head = deferred;
 
-					// Loop iCallbacks start to end and execute
-					while (++count < length) {
-						iCallbacks[count].apply(_self, arguments);
-					}
+				// Only trigger if we have callbacks for this signal
+				if (signal in signals) {
+					// Get callbacks
+					_callbacks = signals[signal];
 
-					return _self;
-				},
-
-			finalize : fCount <= 1
-				// No prototypes, use original
-				? self[FINALIZE]
-				: function finalize() {
-					var _self = this;
-					var count = -1;
-					var length = fCount;
-
-					// Loop fCallbacks start to end and execute
-					while (++count < length) {
-						fCallbacks[count].apply(_self, arguments);
-					}
-
-					return _self;
-				},
-
-			state : sCount <= 1
-				// No prototypes, use original
-				? self[STATE]
-				: function state(state, deferred) {
-					var _self = this;
-					var count = sCount;
-					var callbacks = [];
+					// Reset counter
+					_i = _callbacks.length;
 
 					// Build deferred chain from end to 1
-					while (--count) {
-						callbacks[count] = Deferred(function (dfd) {
-							var callback = sCallbacks[count];
-							var _deferred = sCallbacks[count + 1] || deferred;
-	
+					while (--_i) {
+						// Create new deferred
+						head = Deferred(function (dfd) {
+							// Store callback and deferred as they will have changed by the time we exec
+							var _callback = _callbacks[_i];
+							var _deferred = head;
+
+							// Add done handler
 							dfd.done(function done() {
-								callback.call(_self, state, _deferred);
+								_callback.call(_self, signal, _deferred);
 							});
 						});
 					}
 
-					// Execute first sCallback, use first deferred or default
-					sCallbacks[0].call(_self, state, callbacks[1] || deferred);
-
-					return _self;
+					// Execute first sCallback, use head deferred
+					_callbacks[0].call(_self, signal, head);
 				}
+				else if (deferred) {
+					deferred.resolve();
+				}
+
+				return _self;
+			}
 		});
 	}, {
 		displayName : "core/component/gadget",
 
-		initialize : function initialize() {
+		"sig/initialize" : function initialize(signal, deferred) {
 			var self = this;
 
 			var subscriptions = self[SUBSCRIPTIONS] = [];
@@ -1244,7 +1208,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 				}
 
 				// Match signature in key
-				matches = RE.exec(key);
+				matches = RE_HUB.exec(key);
 
 				if (matches !== NULL) {
 					// Get topic
@@ -1261,18 +1225,25 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 				}
 			}
 
+			if (deferred) {
+				deferred.resolve();
+			}
+
 			return self;
 		},
 
-		finalize : function finalize() {
+		"sig/finalize" : function finalize(signal, deferred) {
 			var self = this;
-
 			var subscriptions = self[SUBSCRIPTIONS];
 			var subscription;
 
 			// Loop over subscriptions
 			while (subscription = subscriptions.shift()) {
 				hub.unsubscribe(subscription[0], subscription[1], subscription[2]);
+			}
+
+			if (deferred) {
+				deferred.resolve();
 			}
 
 			return self;
@@ -1314,16 +1285,44 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
 			return self;
 		},
 
-		/**
-		 * Defaul state handler
-		 * @param state state
-		 * @param deferred deferred
-		 * @returns self
-		 */
-		state : function state(state, deferred) {
-			if (deferred) {
-				deferred.resolve();
-			}
+		start : function start(deferred) {
+			var self = this;
+
+			Deferred(function deferredStart(dfdStart) {
+				Deferred(function deferredInitialize(dfdInitialize) {
+					self.signal("initialize", dfdInitialize);
+				})
+				.done(function doneInitialize() {
+					self.signal("start", dfdStart);
+				})
+				.fail(dfdStart.reject);
+
+				if (deferred) {
+					dfdStart.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
+		},
+
+		stop : function stop(deferred) {
+			var self = this;
+
+			Deferred(function deferredFinalize(dfdFinalize) {
+				Deferred(function deferredStop(dfdStop) {
+					self.signal("stop", dfdStop);
+				})
+				.done(function doneStop() {
+					self.signal("finalize", dfdFinalize);
+				})
+				.fail(dfdFinalize.reject);
+
+				if (deferred) {
+					dfdFinalize.then(deferred.resolve, deferred.reject);
+				}
+			});
+
+			return self;
 		}
 	});
 });
@@ -1334,26 +1333,8 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pu
  * Released under the MIT license.
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	var STATE = "state";
-
-	function onState(topic, state) {
-		this.state(state);
-	}
-
 	return Gadget.extend({
 		displayName : "core/component/service",
-
-		initialize : function initialize() {
-			var self = this;
-
-			return self.subscribe(STATE, self, true, onState);
-		},
-
-		finalize : function finalize() {
-			var self = this;
-
-			return self.unsubscribe(STATE, self, onState);
-		}
 	});
 });
 /*!
@@ -1403,8 +1384,8 @@ define('troopjs-core/util/merge',[],function MergeModule() {
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/remote/ajax',[ "compose", "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Compose, Service, Topic, $, merge) {
-	return Compose.create(Service, {
+define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Service, Topic, $, merge) {
+	return Service.extend({
 		displayName : "core/remote/ajax",
 
 		"hub/ajax" : function request(topic, settings, deferred) {
@@ -1601,68 +1582,68 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/route/router',[ "compose", "../component/service", "../util/uri" ], function RouterModule(Compose, Service, URI) {
-	var NULL = null;
-	var $ELEMENT = "$element";
+define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], function RouterModule(Service, URI) {
 	var HASHCHANGE = "hashchange";
+	var $ELEMENT = "$element";
+	var ROUTE = "route";
+	var RE = /^#/;
 
-	return Compose.create(Service, function RouterService() {
-		var oldUri = NULL;
-		var newUri = NULL;
+	function onHashChange($event) {
+		var self = $event.data;
 
-		function onHashChange($event) {
-			// Create URI
-			var uri = URI($event.target.location.hash.replace(/^#/, ""));
+		// Create URI
+		var uri = URI($event.target.location.hash.replace(RE, ""));
 
-			// Convert to string
-			newUri = uri.toString();
+		// Convert to string
+		var route = uri.toString();
 
-			// Did anything change?
-			if (newUri !== oldUri) {
-				// Store new value
-				oldUri = newUri;
+		// Did anything change?
+		if (route !== self[ROUTE]) {
+			// Store new value
+			self[ROUTE] = route;
 
-				// Publish route
-				$event.data.publish("route", uri);
-			}
+			// Publish route
+			self.publish(ROUTE, uri);
 		}
+	}
 
-		Compose.call(this, {
-			state : function state(state) {
-				var self = this;
-
-				switch(state) {
-				case "starting" :
-					self[$ELEMENT].bind(HASHCHANGE, self, onHashChange);
-					break;
-
-				case "started" :
-					self[$ELEMENT].trigger(HASHCHANGE);
-					break;
-
-				case "stopping" :
-					self[$ELEMENT].unbind(HASHCHANGE, onHashChange);
-					break;
-				}
-
-				return self;
-			}
-		});
+	return Service.extend(function RouterService($element) {
+		this[$ELEMENT] = $element;
 	}, {
 		displayName : "core/route/router",
 
-		initialize : function initialize($element) {
+		"sig/initialize" : function initialize(signal, deferred) {
 			var self = this;
 
-			self[$ELEMENT] = $element;
+			self[$ELEMENT].bind(HASHCHANGE, self, onHashChange);
+
+			if (deferred) {
+				deferred.resolve();
+			}
 
 			return self;
 		},
 
-		finalize : function finalize() {
+		"sig/start" : function start(signal, deferred) {
 			var self = this;
 
-			delete self[$ELEMENT];
+			self[$ELEMENT].trigger(HASHCHANGE);
+
+			if (deferred) {
+				deferred.resolve();
+			}
+
+			return self;
+		},
+
+		"sig/finalize" : function finalize(signal, deferred) {
+			var self = this;
+
+			self[$ELEMENT].unbind(HASHCHANGE, onHashChange);
+
+			if (deferred) {
+				deferred.resolve();
+			}
 
 			return self;
 		}
@@ -1904,10 +1885,10 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 	}, {
 		displayName : "core/component/widget",
 
-		initialize : function initialize() {
+		"sig/initialize" : function initialize(signal, deferred) {
 			var self = this;
-			var $proxies = self[$PROXIES] = [];
 			var $element = self[$ELEMENT];
+			var $proxies = self[$PROXIES] = [];;
 			var key = NULL;
 			var value;
 			var matches;
@@ -1944,18 +1925,26 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 				}
 			}
 
+			if (deferred) {
+				deferred.resolve();
+			}
+
 			return self;
 		},
 
-		finalize : function finalize() {
+		"sig/finalize" : function finalize(signal, deferred) {
 			var self = this;
-			var $proxies = self[$PROXIES];
 			var $element = self[$ELEMENT];
+			var $proxies = self[$PROXIES];
 			var $proxy;
 
 			// Loop over subscriptions
 			while ($proxy = $proxies.shift()) {
 				$element.unbind($proxy[0], $proxy[1]);
+			}
+
+			if (deferred) {
+				deferred.resolve();
 			}
 
 			return self;
@@ -2048,6 +2037,11 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
 		 * Renders content and replaces $element contents
 		 */
 		html : renderProxy($.fn.html),
+
+		/**
+		 * Renders content and replaces $element contents
+		 */
+		text : renderProxy($.fn.text),
 
 		/**
 		 * Renders content and appends it to $element
@@ -2173,20 +2167,15 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
 				require([ name ], function required(Widget) {
 					// Resolve with constructed, bound and initialized instance
 					var widget = Widget
-						.apply(Widget, argv)
-						.initialize();
+						.apply(Widget, argv);
 
-					Deferred(function deferredStarted(dfdStarted) {
-						Deferred(function deferredStarting(dfdStarting) {
-							widget.state("starting", dfdStarting);
-						})
-						.done(function doneStarting() {
-							widget.state("started", dfdStarted);
-						});
+					Deferred(function deferredStart(dfdStart) {
+						widget.start(dfdStart);
 					})
 					.done(function doneStarted() {
 						dfd.resolve(widget);
-					});
+					})
+					.fail(dfd.reject);
 				});
 			}
 
@@ -2214,17 +2203,9 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "def
 			// Remove DATA_HOLDING attribute
 			self[$ELEMENT].removeAttr(DATA_HOLDING);
 
-			// State and finalize TODO add a wrapping deferred for the whole uhold
-			Deferred(function deferredStopped(dfdStopped) {
-				Deferred(function deferredStopping(dfdStopping) {
-					widget.state("stopping", dfdStopping);
-				})
-				.done(function doneStopping() {
-					widget.state("stopped", dfdStopped);
-				});
-			})
-			.done(function doneStopped() {
-				widget.finalize();
+			// Stop TODO add a wrapping deferred for the whole uhold
+			Deferred(function deferredStop(dfdStop) {
+				widget.stop(dfdStop);
 			});
 		}
 
@@ -2274,69 +2255,25 @@ define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function Ro
  * Released under the MIT license.
  */
 define('troopjs-core/widget/application',[ "../component/widget", "deferred" ], function ApplicationModule(Widget, Deferred) {
-	var STARTED = "started";
-	var STOPPED = "stopped";
-
 	return Widget.extend({
 		displayName : "core/widget/application",
 
-		state : function state(state, deferred) {
+		"sig/initialize" : function initialize(signal, deferred) {
 			var self = this;
 
-			// Publish state to services
-			self.publish("state", state);
+			self.weave(deferred);
 
-			switch (state) {
-			case STARTED:
-				self.weave(deferred);
-				break;
+			return self;
+		},
 
-			case STOPPED:
-				self.unweave();
+		"sig/finalize" : function finalize(signal, deferred) {
+			var self = this;
 
-			default:
-				if (deferred) {
-					deferred.resolve();
-				}
+			self.unweave();
+
+			if (deferred) {
+				deferred.resolve();
 			}
-
-			return self;
-		},
-
-		start : function start(deferred) {
-			var self = this;
-
-			Deferred(function deferredStart(dfdStart) {
-				Deferred(function deferredStarting(dfdStarting) {
-					self.state("starting", dfdStarting);
-				})
-				.done(function doneStarting() {
-					self.state(STARTED, dfdStart);
-				});
-
-				if (deferred) {
-					dfdStart.then(deferred.resolve, deferred.reject);
-				}
-			});
-
-			return self;
-		},
-
-		stop : function stop(deferred) {
-			var self = this;
-
-			Deferred(function deferredStop(dfdStop) {
-				Deferred(function deferredStopping(dfdStopping) {
-					self.state("stopping", sfdStopping);
-				})
-				.done(function doneStopping() {
-					self.state(STOPPED, dfdStop);
-				});
-
-				if (deferred) {
-					dfdStop.then(deferred.resolve, deferred.reject);
-				}
-			});
 
 			return self;
 		}
@@ -2831,7 +2768,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 	var ARRAY_PROTO = ARRAY.prototype;
 	var JOIN = ARRAY_PROTO.join;
 	var POP = ARRAY_PROTO.pop;
-	var WHEN = $.when;
+	var $WHEN = $.when;
 	var THEN = "then";
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
@@ -2947,29 +2884,25 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 						}
 
 						require([ name ], function required(Widget) {
-							// Resolve with constructed, bound and initialized instance
+							// Resolve with constructed and initialized instance
 							var widget = Widget
 								.apply(Widget, argv)
-								.bind(DESTROY, onDestroy)
-								.initialize();
+								.bind(DESTROY, onDestroy);
 
-							Deferred(function deferredStarted(dfdStarted) {
-								Deferred(function deferredStarting(dfdStarting) {
-									widget.state("starting", dfdStarting);
-								})
-								.done(function doneStarting() {
-									widget.state("started", dfdStarted);
-								});
+							// Start
+							Deferred(function deferredStart(dfdStart) {
+								widget.start(dfdStart);
 							})
-							.done(function doneStarted() {
+							.done(function doneStart() {
 								dfd.resolve(widget);
-							});
+							})
+							.fail(dfd.reject);
 						});
 					});
 				}
 
 				// Slice out widgets woven for this element
-				WHEN.apply($, required.slice(mark, i)).done(function doneRequired() {
+				$WHEN.apply($, required.slice(mark, i)).done(function doneRequired() {
 					// Set DATA_WOVEN attribute
 					$element.attr(DATA_WOVEN, JOIN.call(arguments, " "));
 				});
@@ -2977,7 +2910,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 
 		if (deferred) {
 			// When all deferred are resolved, resolve original deferred
-			WHEN.apply($, required).then(deferred.resolve, deferred.reject);
+			$WHEN.apply($, required).then(deferred.resolve, deferred.reject);
 		}
 
 		return $elements;
@@ -3001,17 +2934,9 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 
 				// Somewhat safe(r) iterator over widgets
 				while (widget = widgets.shift()) {
-					// State and finalize TODO add a wrapping deferred for the whole unweave
-					Deferred(function deferredStopped(dfdStopped) {
-						Deferred(function deferredStopping(dfdStopping) {
-							widget.state("stopping", dfdStopping);
-						})
-						.done(function doneStopping() {
-							widget.state("stopped", dfdStopped);
-						});
-					})
-					.done(function doneStopped() {
-						widget.finalize();
+					// Stop TODO add a wrapping deferred for the whole unweave
+					Deferred(function deferredStop(dfdStop) {
+						widget.stop(dfdStop);
 					});
 				}
 
