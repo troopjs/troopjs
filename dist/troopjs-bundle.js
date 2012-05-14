@@ -1055,7 +1055,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('deferred',[ "jquery" ], function DeferredModule($) {
+define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
 	return $.Deferred;
 });
 /*!
@@ -1066,7 +1066,7 @@ define('deferred',[ "jquery" ], function DeferredModule($) {
 /**
  * The gadget trait provides life cycle management
  */
-define('troopjs-core/component/gadget',[ "compose", "./base", "deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
+define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
 	var NULL = null;
 	var OBJECT = Object;
 	var FUNCTION = Function;
@@ -1655,11 +1655,50 @@ define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], fu
  * Released under the MIT license.
  */
 define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
+	var STORAGE = "storage";
+
 	return Gadget.extend({
-		set : Compose.required,
-		get : Compose.required,
-		remove : Compose.required,
-		clear : Compose.required
+		storage : Compose.required,
+
+		set : function set(key, value, deferred) {
+			// JSON encoded 'value' then store as 'key'
+			this[STORAGE].setItem(key, JSON.stringify(value));
+
+			// Resolve deferred
+			if (deferred) {
+				deferred.resolve(value);
+			}
+		},
+
+		get : function get(key, deferred) {
+			// Get value from 'key', parse JSON
+			var value = JSON.parse(this[STORAGE].getItem(key));
+
+			// Resolve deferred
+			if (deferred) {
+				deferred.resolve(value);
+			}
+		},
+
+		remove : function remove(key, deferred) {
+			// Remove key
+			this[STORAGE].removeItem(key);
+
+			// Resolve deferred
+			if (deferred) {
+				deferred.resolve();
+			}
+		},
+
+		clear : function clear(deferred) {
+			// Clear
+			this[STORAGE].clear();
+
+			// Resolve deferred
+			if (deferred) {
+				deferred.resolve();
+			}
+		}
 	});
 });
 /*!
@@ -1669,51 +1708,10 @@ define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function 
  */
 define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
 
-	// Grab local storage
-	var STORAGE = window.localStorage;
-
 	return Compose.create(Store, {
 		displayName : "core/store/local",
 
-		set : function set(key, value, deferred) {
-			// JSON encoded 'value' then store as 'key'
-			STORAGE.setItem(key, JSON.stringify(value));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		get : function get(key, deferred) {
-			// Get value from 'key', parse JSON
-			var value = JSON.parse(STORAGE.getItem(key));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		remove : function remove(key, deferred) {
-			// Remove key
-			STORAGE.removeItem(key);
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		},
-
-		clear : function clear(deferred) {
-			// Clear
-			STORAGE.clear();
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		}
+		storage : window.localStorage
 	});
 });
 /*!
@@ -1723,51 +1721,10 @@ define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalMo
  */
 define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
 
-	// Grab session storage
-	var STORAGE = window.sessionStorage;
-
 	return Compose.create(Store, {
 		displayName : "core/store/session",
 
-		set : function set(key, value, deferred) {
-			// JSON encoded 'value' then store as 'key'
-			STORAGE.setItem(key, JSON.stringify(value));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		get : function get(key, deferred) {
-			// Get value from 'key', parse JSON
-			var value = JSON.parse(STORAGE.getItem(key));
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve(value);
-			}
-		},
-
-		remove : function remove(key, deferred) {
-			// Remove key
-			STORAGE.removeItem(key);
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		},
-
-		clear : function clear(deferred) {
-			// Clear
-			STORAGE.clear();
-
-			// Resolve deferred
-			if (deferred && deferred.resolve instanceof Function) {
-				deferred.resolve();
-			}
-		}
+		storage: widow.sessionStorage
 	});
 });
 /*!
@@ -1778,7 +1735,7 @@ define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessi
 /**
  * The widget trait provides common UI related logic
  */
-define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], function WidgetModule(Gadget, $, Deferred) {
+define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred" ], function WidgetModule(Gadget, $, Deferred) {
 	var NULL = null;
 	var FUNCTION = Function;
 	var UNDEFINED = undefined;
@@ -2100,7 +2057,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "deferred" ], fun
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/widget/placeholder',[ "../component/widget", "jquery", "deferred" ], function WidgetPlaceholderModule(Widget, $, Deferred) {
+define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
 	var UNDEFINED = undefined;
 	var FUNCTION = Function;
 	var ARRAY = Array;
@@ -2256,7 +2213,7 @@ define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function Ro
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/widget/application',[ "../component/widget", "deferred" ], function ApplicationModule(Widget, Deferred) {
+define('troopjs-core/widget/application',[ "../component/widget", "../util/deferred" ], function ApplicationModule(Widget, Deferred) {
 	return Widget.extend({
 		displayName : "core/widget/application",
 
@@ -2758,7 +2715,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, Deferred) {
+define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var UNDEFINED = undefined;
 	var TRUE = true;
 	var ARRAY = Array;
@@ -2828,7 +2785,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 				// Iterate widgets (while the RE_WEAVE matches)
 				while (matches = re.exec(weave)) {
 					// Add deferred to woven array
-					Deferred(function deferedRequire(dfd) {
+					$.Deferred(function deferedRequire(dfd) {
 						var _j = j++; // store _j before we increment
 						var k;
 						var l;
@@ -2888,7 +2845,7 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 								.bind(DESTROY, onDestroy);
 
 							// Start
-							Deferred(function deferredStart(dfdStart) {
+							$.Deferred(function deferredStart(dfdStart) {
 								widget.start(dfdStart);
 							})
 							.done(function doneStart() {
@@ -2936,8 +2893,8 @@ define('troopjs-jquery/weave',[ "jquery", "deferred" ], function WeaveModule($, 
 
 				// Somewhat safe(r) iterator over widgets
 				while (widget = widgets.shift()) {
-					// Deferred stop
-					Deferred(function deferredStop(dfdStop) {
+					// $.Deferred stop
+					$.Deferred(function deferredStop(dfdStop) {
 						// Store on onwoven
 						unwoven[i++] = dfdStop;
 
