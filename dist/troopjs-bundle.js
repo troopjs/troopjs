@@ -1724,9 +1724,10 @@ define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessi
 	return Compose.create(Store, {
 		displayName : "core/store/session",
 
-		storage: widow.sessionStorage
+		storage: window.sessionStorage
 	});
 });
+
 /*!
  * TroopJS widget component
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
