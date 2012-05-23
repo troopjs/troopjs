@@ -1411,8 +1411,8 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	var NULL = null;
 	var FUNCTION = Function;
 	var ARRAY = Array;
-	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/;
-	var RE_QUERY = /(?:^|&)([^&=]*)=?([^&]*)/g;
+	var ARRAY_PROTO = ARRAY.prototype;
+	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:([^?#]*)(?:\?([^#]*))?(?:#(.*))?)/;
 
 	var PROTOCOL = "protocol";
 	var AUTHORITY = "authority";
@@ -1428,10 +1428,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		"password",
 		"host",
 		"port",
-		"relative",
 		PATH,
-		"directory",
-		"file",
 		QUERY,
 		ANCHOR ];
 
@@ -1442,7 +1439,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	Compose.secure = true;
 
 	var Query = Compose(function Query(str) {
-		if (!str) {
+		if (!str || str.length === 0) {
 			return;
 		}
 
@@ -1450,8 +1447,9 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		var matches;
 		var key;
 		var value;
+		var re = /(?:&|^)([^&=]*)=?([^&]*)/g;
 
-		while (matches = RE_QUERY.exec(str)) {
+		while (matches = re.exec(str)) {
 			key = matches[1];
 
 			if (key in self) {
@@ -1473,7 +1471,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			var self = this;
 			var key = NULL;
 			var value = NULL;
-			var query = Array();
+			var query = [];
 			var i = 0;
 			var j;
 
@@ -1513,14 +1511,28 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		}
 	});
 
-	var URI = Compose(function URI(str) {
-		if (!str) {
+	var Path = Compose(ARRAY_PROTO, function Path(str) {
+		if (!str || str.length === 0) {
 			return;
 		}
 
 		var self = this;
+		var matches;
+		var re = /(?:\/|^)([^\/]*)/g;
+
+		while (matches = re.exec(str)) {
+			self.push(matches[1]);
+		}
+	}, {
+		toString : function toString() {
+			return this.join("/");
+		}
+	});
+
+	var URI = Compose(function URI(str) {
+		var self = this;
 		var matches = RE_URI.exec(str);
-		var i = 14;
+		var i = matches.length;
 		var value;
 
 		while (i--) {
@@ -1535,6 +1547,9 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			self[QUERY] = Query(self[QUERY]);
 		}
 
+		if (PATH in self) {
+			self[PATH] = Path(self[PATH]);
+		}
 	}, {
 		toString : function toString() {
 			var self = this;
@@ -2218,7 +2233,7 @@ define('troopjs-core/widget/application',[ "../component/widget", "../util/defer
 	return Widget.extend({
 		displayName : "core/widget/application",
 
-		"sig/initialize" : function initialize(signal, deferred) {
+		"sig/start" : function start(signal, deferred) {
 			var self = this;
 
 			self.weave(deferred);
@@ -2226,7 +2241,7 @@ define('troopjs-core/widget/application',[ "../component/widget", "../util/defer
 			return self;
 		},
 
-		"sig/finalize" : function finalize(signal, deferred) {
+		"sig/stop" : function stop(signal, deferred) {
 			var self = this;
 
 			self.unweave(deferred);
@@ -2361,11 +2376,15 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 			}
 		});
 
-		// Trigger exclusive ACTION event
-		$target.trigger($.Event($event, {
-			type: ACTION + "!",
-			action: name
-		}), argv);
+		$target
+			// Trigger exclusive ACTION event
+			.trigger($.Event($event, {
+				type: ACTION + "!",
+				action: name
+			}), argv);
+
+		// Since we've translated the event, stop propagation
+		$event.stopPropagation();
 	}
 
 	$.event.special[ACTION] = {
