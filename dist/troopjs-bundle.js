@@ -10,7 +10,7 @@
 /**
  * This plugin provides a template loader and compiler.
  */
-define('template',['require'],function TemplateModule(compile) {
+define('template',[],function TemplateModule() {
 	
 
 	var FACTORIES = {
