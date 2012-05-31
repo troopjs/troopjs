@@ -546,6 +546,14 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 });
 
 /*!
+ * TroopJS deferred component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
+	return $.Deferred;
+});
+/*!
  * TroopJS pubsub/topic module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
@@ -898,14 +906,6 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 	});
 });
 
-/*!
- * TroopJS deferred component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
-	return $.Deferred;
-});
 /*!
  * TroopJS gadget component
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>

@@ -56,7 +56,6 @@ js: prepare
 		paths.troopjs-jquery=lib/troopjs-jquery/src \
 		paths.template=lib/troopjs-requirejs/src/template \
 		paths.deferred=lib/troopjs-jquery/src/deferred \
-		paths.callbacks=lib/troopjs-jquery/src/callbacks \
 		include=$(call join-with,$(comma),$(INCLUDE)) \
 		optimize=none
 
