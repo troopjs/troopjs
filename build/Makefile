@@ -54,7 +54,6 @@ js: prepare
 		paths.config=empty: \
 		paths.troopjs-core=lib/troopjs-core/src \
 		paths.troopjs-jquery=lib/troopjs-jquery/src \
-		paths.text=lib/requirejs/text \
 		paths.template=lib/troopjs-requirejs/src/template \
 		paths.deferred=lib/troopjs-jquery/src/deferred \
 		paths.callbacks=lib/troopjs-jquery/src/callbacks \
