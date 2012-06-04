@@ -2099,6 +2099,60 @@ define('troopjs-core/widget/application',[ "../component/widget", "../util/defer
 	});
 });
 /*!
+ * TroopJS each component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/each',[ "jquery" ], function EachModule($) {
+	return $.each;
+});
+/*!
+ * TroopJS grep component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/grep',[ "jquery" ], function GrepModule($) {
+	return $.grep;
+});
+/*!
+ * TroopJS util/tr component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/tr',[],function TrModule() {
+	var TYPEOF_NUMBER = typeof Number();
+
+	return function tr(callback) {
+		var self = this;
+		var result = [];
+		var i;
+		var length = self.length;
+		var key;
+
+		// Is this an array? Basically, is length a number, is it 0 or is it greater than 0 and that we have index 0 and index length-1
+		if (typeof length === TYPEOF_NUMBER && length === 0 || length > 0 && 0 in self && length - 1 in self) {
+			for (i = 0; i < length; i++) {
+				result.push(callback.call(self, self[i], i));
+			}
+		// Otherwise we'll iterate it as an object
+		} else if (self){
+			for (key in self) {
+				result.push(callback.call(self, self[key], key));
+			}
+		}
+
+		return result;
+	};
+});
+/*!
+ * TroopJS when component
+ * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
+	return $.when;
+});
+/*!
  * TroopJS jQuery action plug-in
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.

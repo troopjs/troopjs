@@ -10,7 +10,12 @@ TROOPJS-CORE := template \
 	troopjs-core/store/session \
 	troopjs-core/route/router \
 	troopjs-core/route/placeholder \
-	troopjs-core/widget/application
+	troopjs-core/widget/application \
+	troopjs-core/util/each \
+	troopjs-core/util/grep \
+	troopjs-core/util/merge \
+	troopjs-core/util/tr \
+	troopjs-core/util/when
 
 # jQuery plugins
 TROOPJS-JQUERY := troopjs-jquery/action \
