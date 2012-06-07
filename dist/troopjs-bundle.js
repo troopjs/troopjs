@@ -2769,6 +2769,11 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 								.apply(Widget, argv)
 								.bind(DESTROY, onDestroy);
 
+							if (deferred){
+								// notify deferred we wired an widget
+								deferred.notifyWith(widget, ['wired', widget]);
+							}
+
 							// Start
 							$.Deferred(function deferredStart(dfdStart) {
 								widget.start(dfdStart);
