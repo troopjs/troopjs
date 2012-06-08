@@ -1176,7 +1176,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
 	return Gadget.extend({
-		displayName : "core/component/service",
+		displayName : "core/component/service"
 	});
 });
 /*!
