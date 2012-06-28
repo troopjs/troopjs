@@ -2166,14 +2166,14 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 	var NULL = null;
 	var SLICE = Array.prototype.slice;
 	var ACTION = "action";
-	var TRUE = "true";
 	var ORIGINALEVENT = "originalEvent";
 	var RE_ACTION = /^([\w\d\s_\-\/]+)(?:\.([\w\.]+))?(?:\((.*)\))?$/;
 	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_DOT = /\.+/;
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
-	var RE_BOOLEAN = /^false|true$/i;
+	var RE_BOOLEAN = /^(?:false|true)$/i;
+	var RE_BOOLEAN_TRUE = /^true$/i;
 
 	/**
 	 * Namespace iterator
@@ -2275,7 +2275,7 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 			} else if (RE_DIGIT.test(value)) {
 				argv[i] = Number(value);
 			} else if (RE_BOOLEAN.test(value)) {
-				argv[i] = value === TRUE;
+				argv[i] = RE_BOOLEAN_TRUE.test(value);;
 			} else {
 				argv[i] = UNDEFINED;
 			}
@@ -2373,7 +2373,6 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * Released under the MIT license.
  */
 define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
-	var RE = /(w|h)(\d*)/g;
 	var DIMENSIONS = "dimensions";
 	var RESIZE = "resize." + DIMENSIONS;
 	var W = "w";
@@ -2385,27 +2384,39 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 	 * Internal comparator used for reverse sorting arrays
 	 */
 	function reverse(a, b) {
-		return a < b ? 1 : a > b ? -1 : 0;
+		return b - a;
 	}
 
+	/**
+	 * Internal onResize handler
+	 * @param $event
+	 */
 	function onResize($event) {
 		var $self = $(this);
-		var w = $self.width();
-		var h = $self.height();
+		var width = $self.width();
+		var height = $self.height();
 
-		$.each($self.data(DIMENSIONS), function dimensionIterator(namespace, dimension) {
-			var dimension_w = dimension[W];
-			var dimension_w_max = dimension_w.length - 1;
-			var dimension_h = dimension[H];
-			var dimension_h_max = dimension_h.length - 1;
+		// Iterate all dimensions
+		$.each($.data(self, DIMENSIONS), function dimensionIterator(namespace, dimension) {
+			var w = dimension[W];
+			var h = dimension[H];
+			var _w;
+			var _h;
+			var i;
 
-			var _w = $.grep(dimension_w, function(_w, i) {
-				return _w <= w || i === dimension_w_max;
-			})[0];
-			var _h = $.grep(dimension_h, function(_h, i) {
-				return _h <= h || i === dimension_h_max;
-			})[0];
+			i = w.length;
+			_w = w[i - 1];
+			while(w[--i] < width) {
+				_w = w[i];
+			}
 
+			i = h.length;
+			_h = h[i - 1];
+			while(h[--i] < height) {
+				_h = h[i];
+			}
+
+			// If _w or _h has changed, update and trigger
 			if (_w !== dimension[_W] || _h !== dimension[_H]) {
 				dimension[_W] = _w;
 				dimension[_H] = _h;
@@ -2431,23 +2442,33 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 				.data(DIMENSIONS, {});
 		},
 
+		/**
+		 * Do something each time an event handler is bound to a particular element
+		 * @param handleObj (Object)
+		 */
 		add : function onDimensionsAdd(handleObj) {
+			var self = this;
 			var namespace = handleObj.namespace;
 			var dimension = {};
 			var w = dimension[W] = [];
 			var h = dimension[H] = [];
+			var re = /(w|h)(\d+)/g;
 			var matches;
 
-			while (matches = RE.exec(namespace)) {
+			while (matches = re.exec(namespace)) {
 				dimension[matches[1]].push(parseInt(matches[2]));
 			}
 
 			w.sort(reverse);
 			h.sort(reverse);
 
-			$.data(this, DIMENSIONS)[namespace] = dimension;
+			$.data(self, DIMENSIONS)[namespace] = dimension;
 		},
 
+		/**
+		 * Do something each time an event handler is unbound from a particular element
+		 * @param handleObj (Object)
+		 */
 		remove : function onDimensionsRemove(handleObj) {
 			delete $.data(this, DIMENSIONS)[handleObj.namespace];
 		},
@@ -2460,6 +2481,48 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 			$(this)
 				.removeData(DIMENSIONS)
 				.unbind(RESIZE, onResize);
+		}
+	};
+});
+/*!
+ * TroopJS jQuery respond plug-in
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-jquery/respond',[ "jquery" ], function RespondModule($) {
+	var RESPOND = "respond";
+	var DIMENSIONS = "dimensions";
+
+	/**
+	 * Internal handler for dimensions
+	 * @param $event
+	 * @param w
+	 * @param h
+	 */
+	function onDimensions($event, w, h) {
+		$($event.data).trigger($.Event($event, { type : RESPOND }), [ w, h ]);
+	}
+
+	$.event.special[RESPOND] = {
+		/**
+		 * Do something each time an event handler is bound to a particular element
+		 * @param handleObj (Object)
+		 */
+		add : function onRespondAdd(handleObj) {
+			var self = this;
+			var doc = self.ownerDocument;
+
+			$(doc.defaultView || doc.parentWindow).bind(DIMENSIONS + "." + handleObj.namespace, self, onDimensions);
+		},
+
+		/**
+		 * Do something each time an event handler is unbound from a particular element
+		 * @param handleObj (Object)
+		 */
+		remove : function onRespondRemove(handleObj) {
+			var doc = this.ownerDocument;
+
+			$(doc.defaultView || doc.parentWindow).unbind(DIMENSIONS + "." + handleObj.namespace, onDimensions);
 		}
 	};
 });
@@ -2642,7 +2705,6 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  */
 define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var UNDEFINED = undefined;
-	var TRUE = true;
 	var ARRAY = Array;
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
