@@ -2436,6 +2436,10 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/**
+ * Trigger resize on all elements
+ * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
+ */
 define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
 	var NULL = null;
 	var RESIZE = "resize";
@@ -2535,6 +2539,7 @@ define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
 		}
 	};
 });
+
 /*!
  * TroopJS jQuery dimensions plug-in
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
