@@ -2368,6 +2368,110 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 });
 
 /*!
+ * TroopJS jQuery resize plug-in
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
+	var NULL = null;
+	var RESIZE = "resize";
+	var W = "w";
+	var H = "h";
+	var $ELEMENTS = $([]);
+	var INTERVAL = NULL;
+
+	/**
+	 * Iterator
+	 * @param index
+	 * @param self
+	 */
+	function iterator(index, self) {
+		// Get data
+		var $data = $.data(self);
+
+		// Get reference to $self
+		var $self = $(self);
+
+		// Get previous width and height
+		var w = $self.width();
+		var h = $self.height();
+
+		// Check if width or height has changed since last check
+		if (w !== $data[W] || h !== $data[H]) {
+			$self.trigger(RESIZE, [$data[W] = w, $data[H] = h]);
+		}
+	}
+
+	/**
+	 * Internal interval
+	 */
+	function interval() {
+		$ELEMENTS.each(iterator);
+	}
+
+	$.event.special[RESIZE] = {
+		/**
+		 * @param data (Anything) Whatever eventData (optional) was passed in
+		 *        when binding the event.
+		 * @param namespaces (Array) An array of namespaces specified when
+		 *        binding the event.
+		 * @param eventHandle (Function) The actual function that will be bound
+		 *        to the browser’s native event (this is used internally for the
+		 *        beforeunload event, you’ll never use it).
+		 */
+		setup : function hashChangeSetup(data, namespaces, eventHandle) {
+			var self = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(self)) {
+				return false;
+			}
+
+			// Store data
+			var $data = $.data(self, RESIZE, {});
+
+			// Get reference to $self
+			var $self = $(self);
+
+			// Initialize data
+			$data[W] = $self.width();
+			$data[H] = $self.height();
+
+			// Add to tracked collection
+			$ELEMENTS = $ELEMENTS.add(self);
+
+			// If this is the first element, start interval
+			if($ELEMENTS.length === 1) {
+				INTERVAL = setInterval(interval, 100);
+			}
+		},
+
+		/**
+		 * @param namespaces (Array) An array of namespaces specified when
+		 *        binding the event.
+		 */
+		teardown : function onDimensionsTeardown(namespaces) {
+			var self = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(self)) {
+				return false;
+			}
+
+			// Remove data
+			$.removeData(self, RESIZE);
+
+			// Remove from tracked collection
+			$ELEMENTS = $ELEMENTS.not(self);
+
+			// If this is the last element, stop interval
+			if($ELEMENTS.length === 0 && INTERVAL !== NULL) {
+				clearInterval(INTERVAL);
+			}
+		}
+	};
+});
+/*!
  * TroopJS jQuery dimensions plug-in
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.

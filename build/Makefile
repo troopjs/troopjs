@@ -20,6 +20,7 @@ TROOPJS-CORE := template \
 # jQuery plugins
 TROOPJS-JQUERY := troopjs-jquery/action \
 	troopjs-jquery/destroy \
+	troopjs-jquery/resize \
 	troopjs-jquery/dimensions \
 	troopjs-jquery/respond \
 	troopjs-jquery/hashchange \
