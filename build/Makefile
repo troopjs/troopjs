@@ -8,6 +8,7 @@ TROOPJS-CORE := template \
 	troopjs-core/route/router \
 	troopjs-core/store/local \
 	troopjs-core/store/session \
+	troopjs-core/dimensions/service \
 	troopjs-core/route/router \
 	troopjs-core/route/placeholder \
 	troopjs-core/widget/application \
@@ -22,7 +23,6 @@ TROOPJS-JQUERY := troopjs-jquery/action \
 	troopjs-jquery/destroy \
 	troopjs-jquery/resize \
 	troopjs-jquery/dimensions \
-	troopjs-jquery/respond \
 	troopjs-jquery/hashchange \
 	troopjs-jquery/weave
 
