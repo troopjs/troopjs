@@ -618,7 +618,7 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 });
 /*!
  * TroopJS pubsub/hub module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
@@ -799,7 +799,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 			unsubscribe: {
 				// Fast fail if we don't have subscribers
-				if (!topic in HANDLERS) {
+				if (!(topic in HANDLERS)) {
 					break unsubscribe;
 				}
 
