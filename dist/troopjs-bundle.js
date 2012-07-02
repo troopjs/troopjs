@@ -1246,7 +1246,7 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
  * 
  * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  * 
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
@@ -1413,7 +1413,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			}
 
 			if (!(PATH in self)) {
-				uri.splice(0, 1);
+				uri.splice(0, 2);
 			}
 
 			if (!(ANCHOR in self)) {
