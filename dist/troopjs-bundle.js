@@ -622,12 +622,18 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
  * Released under the MIT license.
  */
 define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
-	var CONTEXT = {};
-	var HANDLERS = {};
+	var FUNCTION = Function;
 	var MEMORY = "memory";
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var LENGTH = "length";
 	var HEAD = "head";
 	var TAIL = "tail";
 	var NEXT = "next";
+	var HANDLED = "handled";
+	var ROOT = {};
+	var HANDLERS = {};
+	var COUNT = 0;
 
 	return Compose.create({
 		displayName: "core/pubsub/hub",
@@ -643,38 +649,39 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 */
 		subscribe : function subscribe(topic /*, context, memory, callback, callback, ..*/) {
 			var self = this;
-			var length = arguments.length;
+			var length = arguments[LENGTH];
 			var context = arguments[1];
 			var memory = arguments[2];
 			var callback = arguments[3];
 			var offset;
 			var handlers;
 			var handler;
+			var handled;
 			var head;
 			var tail;
 
 			// No context or memory was supplied
-			if (context instanceof Function) {
+			if (context instanceof FUNCTION) {
 				callback = context;
 				memory = false;
-				context = CONTEXT;
+				context = ROOT;
 				offset = 1;
 			}
 			// Only memory was supplied
 			else if (context === true || context === false) {
 				callback = memory;
 				memory = context;
-				context = CONTEXT;
+				context = ROOT;
 				offset = 2;
 			}
 			// Context was supplied, but not memory
-			else if (memory instanceof Function) {
+			else if (memory instanceof FUNCTION) {
 				callback = memory;
 				memory = false;
 				offset = 2;
 			}
 			// All arguments were supplied
-			else if (callback instanceof Function){
+			else if (callback instanceof FUNCTION){
 				offset = 3;
 			}
 			// Something is wrong, return fast
@@ -694,7 +701,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					"context" : context
 				};
 
-				// Get last handler
+				// Get tail handler
 				tail = TAIL in handlers
 					// Have tail, update handlers.tail.next to point to handler
 					? handlers[TAIL][NEXT] = handler
@@ -703,14 +710,14 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 				// Iterate handlers from offset
 				while (offset < length) {
-					// Set last -> last.next -> handler
+					// Set tail -> tail.next -> handler
 					tail = tail[NEXT] = {
 						"callback" : arguments[offset++],
 						"context" : context
 					};
 				}
 
-				// Set last handler
+				// Set tail handler
 				handlers[TAIL] = tail;
 
 				// Want memory and have memory
@@ -718,18 +725,39 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					// Get memory
 					memory = handlers[MEMORY];
 
+					// Get handled
+					handled = memory[HANDLED];
+
 					// Loop through handlers, optimize for arguments
-					if (memory.length > 0 ) while(handler) {
+					if (memory[LENGTH] > 0 ) while(handler) {
+						// Skip to next handler if this handler has already been handled
+						if (handler[HANDLED] === handled) {
+							handler = handler[NEXT];
+							continue;
+						}
+
+						// Store handled
+						handler[HANDLED] = handled;
+
 						// Apply handler callback
-						handler.callback.apply(handler.context, memory);
+						handler[CALLBACK].apply(handler[CONTEXT], memory);
 
 						// Update handler
 						handler = handler[NEXT];
 					}
 					// Loop through handlers, optimize for no arguments
 					else while(handler) {
+						// Skip to next handler if this handler has already been handled
+						if (handler[HANDLED] === handled) {
+							handler = handler[NEXT];
+							continue;
+						}
+
+						// Store handled
+						handler[HANDLED] = handled;
+
 						// Call handler callback
-						handler.callback.call(handler.context);
+						handler[CALLBACK].call(handler[CONTEXT]);
 
 						// Update handler
 						handler = handler[NEXT];
@@ -746,7 +774,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 				// Iterate handlers from offset
 				while (offset < length) {
-					// Set last -> last.next -> handler
+					// Set tail -> tail.next -> handler
 					tail = tail[NEXT] = {
 						"callback" : arguments[offset++],
 						"context" : context
@@ -773,7 +801,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		unsubscribe : function unsubscribe(topic /*, context, callback, callback, ..*/) {
-			var length = arguments.length;
+			var length = arguments[LENGTH];
 			var context = arguments[1];
 			var callback = arguments[2];
 			var offset;
@@ -783,13 +811,13 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 			var previous = null;
 
 			// No context or memory was supplied
-			if (context instanceof Function) {
+			if (context instanceof FUNCTION) {
 				callback = context;
-				context = CONTEXT;
+				context = ROOT;
 				offset = 1;
 			}
 			// All arguments were supplied
-			else if (callback instanceof Function){
+			else if (callback instanceof FUNCTION){
 				offset = 2;
 			}
 			// Something is wrong, return fast
@@ -820,7 +848,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					// Loop through handlers
 					do {
 						// Check if this handler should be unlinked
-						if (handler.callback === callback && handler.context === context) {
+						if (handler[CALLBACK] === callback && handler[CONTEXT] === context) {
 							// Is this the first handler
 							if (handler === head) {
 								// Re-link head and previous, then
@@ -864,6 +892,9 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 			var handlers;
 			var handler;
 
+			// Store handled
+			var handled = arguments[HANDLED] = COUNT++;
+
 			// Have handlers
 			if (topic in HANDLERS) {
 				// Get handlers
@@ -876,24 +907,42 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				handler = handlers[HEAD];
 
 				// Loop through handlers, optimize for arguments
-				if (arguments.length > 0) while(handler) {
+				if (arguments[LENGTH] > 0) while(handler) {
+					// Skip to next handler if this handler has already been handled
+					if (handler[HANDLED] === handled) {
+						handler = handler[NEXT];
+						continue;
+					}
+
+					// Update handled
+					handler[HANDLED] = handled;
+
 					// Apply handler callback
-					handler.callback.apply(handler.context, arguments);
+					handler[CALLBACK].apply(handler[CONTEXT], arguments);
 
 					// Update handler
 					handler = handler[NEXT];
 				}
 				// Loop through handlers, optimize for no arguments
 				else while(handler) {
+					// Skip to next handler if this handler has already been handled
+					if (handler[HANDLED] === handled) {
+						handler = handler[NEXT];
+						continue;
+					}
+
+					// Update handled
+					handler[HANDLED] = handled;
+
 					// Call handler callback
-					handler.callback.call(handler.context);
+					handler[CALLBACK].call(handler[CONTEXT]);
 
 					// Update handler
 					handler = handler[NEXT];
 				}
 			}
 			// No handlers
-			else if (arguments.length > 0){
+			else if (arguments[LENGTH] > 0){
 				// Create handlers and store with topic
 				HANDLERS[topic] = handlers = {};
 
