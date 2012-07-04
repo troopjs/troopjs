@@ -16,6 +16,7 @@ TROOPJS-CORE := template \
 	troopjs-core/util/grep \
 	troopjs-core/util/merge \
 	troopjs-core/util/tr \
+	troopjs-core/util/unique \
 	troopjs-core/util/when
 
 # jQuery plugins

@@ -554,12 +554,47 @@ define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
 	return $.Deferred;
 });
 /*!
+ * TroopJS util/unique component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/util/unique',[],function UniqueModule() {
+	return function unique(callback) {
+		var self = this;
+		var length = self.length;
+		var result = [];
+		var value;
+		var i;
+		var j;
+		var k;
+
+		add: for (i = j = k = 0; i < length; i++, j = 0) {
+			value = self[i];
+
+			while(j < k) {
+				if (callback.call(self, value, result[j++]) === true) {
+					continue add;
+				}
+			}
+
+			result[k++] = value;
+		}
+
+		return result;
+	};
+});
+/*!
  * TroopJS pubsub/topic module
  * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule(Component) {
-	var ARRAY = Array;
+define('troopjs-core/pubsub/topic',[ "../component/base", "../util/unique" ], function TopicModule(Component, unique) {
+	var TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARRAY = TOSTRING.call(Array.prototype);
+
+	function comparator (a, b) {
+		return a.publisherInstanceCount === b.publisherInstanceCount;
+	}
 
 	return Component.extend(function Topic(topic, publisher, parent) {
 		var self = this;
@@ -567,6 +602,7 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 		self.topic = topic;
 		self.publisher = publisher;
 		self.parent = parent;
+		self.publisherInstanceCount = publisher.instanceCount;
 	}, {
 		displayName : "core/pubsub/topic",
 
@@ -589,19 +625,22 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 			var item;
 			var stack = "";
 			var i;
+			var u;
 			var iMax;
 
 			while (current) {
-				if (current.constructor === ARRAY) {
-					for (i = 0, iMax = current.length; i < iMax; i++) {
-						item = current[i];
+				if (TOSTRING.call(current) === TOSTRING_ARRAY) {
+					u = unique.call(current, comparator);
 
-						current[i] = item.constructor === constructor
+					for (i = 0, iMax = u.length; i < iMax; i++) {
+						item = u[i];
+
+						u[i] = item.constructor === constructor
 							? item.trace()
-							: item;
+							: item.topic;
 					}
 
-					stack += current.join(",");
+					stack += u.join(",");
 					break;
 				}
 
