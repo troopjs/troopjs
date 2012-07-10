@@ -2785,15 +2785,15 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	}
 
 	Frame.prototype = {
-		getElement : function getElement() {
+		getElement : function () {
 			return this.element;
 		},
 
-		getHash : function getHash() {
+		getHash : function () {
 			return this.element.contentWindow.frameHash;
 		},
 
-		update : function update(hash) {
+		update : function (hash) {
 			var self = this;
 			var document = self.element.contentWindow.document;
 
