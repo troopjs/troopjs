@@ -1805,40 +1805,36 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 			var $element = self[$ELEMENT];
 			var arg = arguments;
 
-			// Get contents from first argument
+			// Shift contents from first argument
 			var contents = SHIFT.call(arg);
 
-			// Get arg length
-			var argc = arg.length;
+			// Assume deferred is the last argument
+			var deferred = arg[arg.length];
 
-			// Check if the last argument looks like a deferred, and in that case set it
-			var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
-				? POP.call(arg)
-				: UNDEFINED;
-
-			if (deferred){
-				deferred.notifyWith(this, ['beforeRender']);
-			}
-
-			// Call render with contents (or result of contents if it's a function)
-			$fn.call($element, contents instanceof FUNCTION ? contents.apply(self, arg) : contents);
-
-			if (deferred){
-				deferred.notifyWith(this, ['afterRender']);
+			// If deferred not a true Deferred, make it so
+			if (deferred === UNDEFINED || !(deferred[THEN] instanceof FUNCTION)) {
+				deferred = Deferred();
 			}
 
 			// Defer render (as weaving it may need to load async)
 			Deferred(function deferredRender(dfdRender) {
 
-				// After render is complete, trigger REFRESH with woven components
+				// After render is complete, trigger REFRESH with woven components. Add this here to make sure it's the first done hadler
 				dfdRender.done(function renderDone() {
 					$element.trigger(REFRESH, arguments);
 				});
 
 				// Link deferred
-				if (deferred) {
-					dfdRender.then(deferred.resolve, deferred.reject, deferred.notify);
-				}
+				dfdRender.then(deferred.resolve, deferred.reject, deferred.notify);
+
+				// Notify that we're about to render
+				dfdRender.notify([ "beforeRender" ]);
+
+				// Call render with contents (or result of contents if it's a function)
+				$fn.call($element, contents instanceof FUNCTION ? contents.apply(self, arg) : contents);
+
+				// Notify that we're rendered
+				dfdRender.notify([ "afterRender" ]);
 
 				// Weave element
 				$element.find(ATTR_WEAVE).weave(dfdRender);
@@ -2060,9 +2056,9 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 					dfd.resolve(contents);
 				}, 0);
 
-				// If a deferred was passed, add resolve/reject
+				// If a deferred was passed, add resolve/reject/notify
 				if (deferred) {
-					dfd.then(deferred.resolve, deferred.reject);
+					dfd.then(deferred.resolve, deferred.reject, deferred.notify);
 				}
 			});
 
