@@ -4,7 +4,6 @@ R := lib/rjs/dist/r.js
 
 # Core services
 TROOPJS-CORE := template \
-	troopjs-core/component/sandbox \
 	troopjs-core/remote/ajax \
 	troopjs-core/route/router \
 	troopjs-core/store/local \
@@ -13,6 +12,7 @@ TROOPJS-CORE := template \
 	troopjs-core/route/router \
 	troopjs-core/route/placeholder \
 	troopjs-core/widget/application \
+	troopjs-core/widget/sandbox \
 	troopjs-core/util/each \
 	troopjs-core/util/grep \
 	troopjs-core/util/merge \
