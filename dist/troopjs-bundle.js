@@ -1218,18 +1218,18 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		start : function start(deferred) {
 			var self = this;
 
-			Deferred(function deferredStart(dfdStart) {
-				Deferred(function deferredInitialize(dfdInitialize) {
-					self.signal("initialize", dfdInitialize);
-				})
-				.done(function doneInitialize() {
-					self.signal("start", dfdStart);
-				})
-				.fail(dfdStart.reject);
+			deferred = deferred || Deferred();
 
-				if (deferred) {
-					dfdStart.then(deferred.resolve, deferred.reject);
-				}
+			Deferred(function deferredStart(dfdStart) {
+				dfdStart.then(deferred.resolve, deferred.reject, deferred.notify);
+
+				Deferred(function deferredInitialize(dfdInitialize) {
+					dfdInitialize.then(function doneInitialize() {
+						self.signal("start", dfdStart);
+					}, dfdStart.reject, dfdStart.notify);
+
+					self.signal("initialize", dfdInitialize);
+				});
 			});
 
 			return self;
@@ -1238,18 +1238,18 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		stop : function stop(deferred) {
 			var self = this;
 
-			Deferred(function deferredFinalize(dfdFinalize) {
-				Deferred(function deferredStop(dfdStop) {
-					self.signal("stop", dfdStop);
-				})
-				.done(function doneStop() {
-					self.signal("finalize", dfdFinalize);
-				})
-				.fail(dfdFinalize.reject);
+			deferred = deferred || Deferred();
 
-				if (deferred) {
-					dfdFinalize.then(deferred.resolve, deferred.reject);
-				}
+			Deferred(function deferredFinalize(dfdFinalize) {
+				dfdFinalize.then(deferred.resolve, deferred.reject, deferred.notify);
+
+				Deferred(function deferredStop(dfdStop) {
+					dfdStop.then(function doneStop() {
+						self.signal("finalize", dfdStop);
+					}, dfdFinalize.reject, dfdFinalize.notify);
+
+					self.signal("stop", dfdFinalize);
+				});
 			});
 
 			return self;
@@ -1818,22 +1818,23 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 			// Defer render (as weaving it may need to load async)
 			Deferred(function deferredRender(dfdRender) {
 
-				// After render is complete, trigger REFRESH with woven components. Add this here to make sure it's the first done hadler
-				dfdRender.done(function renderDone() {
-					$element.trigger(REFRESH, arguments);
-				});
-
 				// Link deferred
-				dfdRender.then(deferred.resolve, deferred.reject, deferred.notify);
+				dfdRender.then(function renderDone() {
+					// Trigger refresh
+					$element.trigger(REFRESH, arguments);
+
+					// Resolve outer deferred
+					deferred.resolve();
+				}, deferred.reject, deferred.notify);
 
 				// Notify that we're about to render
-				dfdRender.notify([ "beforeRender" ]);
+				dfdRender.notify("beforeRender", self);
 
 				// Call render with contents (or result of contents if it's a function)
 				$fn.call($element, contents instanceof FUNCTION ? contents.apply(self, arg) : contents);
 
 				// Notify that we're rendered
-				dfdRender.notify([ "afterRender" ]);
+				dfdRender.notify("afterRender", self);
 
 				// Weave element
 				$element.find(ATTR_WEAVE).weave(dfdRender);
@@ -2953,7 +2954,6 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
 	var JOIN = ARRAY_PROTO.join;
-	var POP = ARRAY_PROTO.pop;
 	var $WHEN = $.when;
 	var THEN = "then";
 	var WEAVE = "weave";
@@ -2987,10 +2987,12 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		var arg = arguments;
 		var argc = arg.length;
 
-		// Check if the last argument looks like a deferred, and in that case set it
-		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
-			? POP.call(arg)
-			: UNDEFINED;
+		var deferred = arg[argc - 1];
+
+		// If deferred not a true Deferred, make it so
+		if (deferred === UNDEFINED || !(deferred[THEN] instanceof FUNCTION)) {
+			deferred = $.Deferred();
+		}
 
 		$elements
 			// Reduce to only elements that can be woven
@@ -3016,8 +3018,8 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 
 				// Iterate widgets (while the RE_WEAVE matches)
 				while (matches = re.exec(weave)) {
-					// Add deferred to woven array
-					$.Deferred(function deferedRequire(dfd) {
+					// Defer weave
+					$.Deferred(function deferedRequire(dfdWeave) {
 						var _j = j++; // store _j before we increment
 						var k;
 						var l;
@@ -3025,12 +3027,12 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 						var value;
 
 						// Store on woven
-						woven[i++] = dfd;
+						woven[i++] = dfdWeave;
 
-						// Add done handler to register
-						dfd.done(function doneRequire(widget) {
+						// Link deferred
+						dfdWeave.then(function doneRequire(widget) {
 							widgets[_j] = widget;
-						});
+						}, deferred.reject, deferred.notify);
 
 						// Get widget name
 						var name = matches[1];
@@ -3071,24 +3073,21 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 						}
 
 						require([ name ], function required(Widget) {
-							// Resolve with constructed and initialized instance
-							var widget = Widget
-								.apply(Widget, argv)
-								.bind(DESTROY, onDestroy);
+							// Defer require
+							$.Deferred(function deferredStart(dfdRequire) {
+								// Constructed and initialized instance
+								var widget = Widget
+									.apply(Widget, argv)
+									.bind(DESTROY, onDestroy);
 
-							if (deferred){
-								// notify deferred we wired an widget
-								deferred.notifyWith(widget, ['wired', widget]);
-							}
+								// Link deferred
+								dfdRequire.then(function doneStart() {
+									dfdWeave.resolve(widget);
+								}, dfdWeave.reject, dfdWeave.notify);
 
-							// Start
-							$.Deferred(function deferredStart(dfdStart) {
-								widget.start(dfdStart);
-							})
-							.done(function doneStart() {
-								dfd.resolve(widget);
-							})
-							.fail(dfd.reject);
+								// Start
+								widget.start(dfdRequire);
+							});
 						});
 					});
 				}
@@ -3100,10 +3099,8 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 				});
 			});
 
-		if (deferred) {
-			// When all deferred are resolved, resolve original deferred
-			$WHEN.apply($, woven).then(deferred.resolve, deferred.reject);
-		}
+		// When all deferred are resolved, resolve original deferred
+		$WHEN.apply($, woven).then(deferred.resolve, deferred.reject, deferred.notify);
 
 		return $elements;
 	};
@@ -3112,6 +3109,8 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		var unwoven = [];
 		var i = 0;
 		var $elements = $(this);
+
+		deferred = deferred || $.Deferred();
 
 		$elements
 			// Reduce to only elements that are woven
@@ -3150,7 +3149,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 
 		if (deferred) {
 			// When all deferred are resolved, resolve original deferred
-			$WHEN.apply($, unwoven).then(deferred.resolve, deferred.reject);
+			$WHEN.apply($, unwoven).then(deferred.resolve, deferred.reject, deferred.notify);
 		}
 
 		return $elements;
