@@ -2083,9 +2083,10 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 	function release(/* arg, arg, arg, deferred*/) {
 		var self = this;
 		var arg = arguments;
+		var argc = arg.length;
 
 		// If deferred not a true Deferred, make it so
-		var deferred = arg[arg.length - 1][THEN] instanceof FUNCTION
+		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
 			? POP.call(arg)
 			: Deferred();
 
@@ -2976,9 +2977,10 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		var i = 0;
 		var $elements = $(this);
 		var arg = arguments;
+		var argc = arg.length;
 
 		// If deferred not a true Deferred, make it so
-		var deferred = arg[arg.length - 1][THEN] instanceof FUNCTION
+		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
 			? POP.call(arg)
 			: $.Deferred();
 
