@@ -2087,7 +2087,7 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 		// If deferred not a true Deferred, make it so
 		var deferred = arg[arg.length - 1][THEN] instanceof FUNCTION
 			? POP.call(arg)
-			: $.Deferred();
+			: Deferred();
 
 		Deferred(function deferredRelease(dfdRelease) {
 			var i;
