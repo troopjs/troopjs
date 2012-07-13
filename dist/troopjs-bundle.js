@@ -2072,8 +2072,8 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
  * Released under the MIT license.
  */
 define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
-	var UNDEFINED = undefined;
 	var FUNCTION = Function;
+	var POP = Array.prototype.pop;
 	var HOLDING = "holding";
 	var DATA_HOLDING = "data-" + HOLDING;
 	var $ELEMENT = "$element";
@@ -2084,13 +2084,10 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 		var self = this;
 		var arg = arguments;
 
-		// Assume deferred is the last argument
-		var deferred = arg[arg.length - 1];
-
 		// If deferred not a true Deferred, make it so
-		if (deferred === UNDEFINED || !(deferred[THEN] instanceof FUNCTION)) {
-			deferred = Deferred();
-		}
+		var deferred = arg[arg.length - 1][THEN] instanceof FUNCTION
+			? POP.call(arg)
+			: $.Deferred();
 
 		Deferred(function deferredRelease(dfdRelease) {
 			var i;
@@ -2948,6 +2945,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
 	var JOIN = ARRAY_PROTO.join;
+	var POP = ARRAY_PROTO.pop;
 	var $WHEN = $.when;
 	var THEN = "then";
 	var WEAVE = "weave";
@@ -2977,16 +2975,12 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		var woven = [];
 		var i = 0;
 		var $elements = $(this);
-
 		var arg = arguments;
-		var argc = arg.length;
-
-		var deferred = arg[argc - 1];
 
 		// If deferred not a true Deferred, make it so
-		if (deferred === UNDEFINED || !(deferred[THEN] instanceof FUNCTION)) {
-			deferred = $.Deferred();
-		}
+		var deferred = arg[arg.length - 1][THEN] instanceof FUNCTION
+			? POP.call(arg)
+			: $.Deferred();
 
 		$elements
 			// Reduce to only elements that can be woven
