@@ -4,11 +4,8 @@
  *
  * parts of code from require-cs 0.4.0+ Copyright (c) 2010-2011, The Dojo Foundation
  *
- * @license TroopJS 0.0.2 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
- */
-/**
- * This plugin provides a template loader and compiler.
  */
 define('template',[],function TemplateModule() {
 	
@@ -513,7 +510,7 @@ define('compose',[], function(){
 
 /*!
  * TroopJS base component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 /**
@@ -546,8 +543,8 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 });
 
 /*!
- * TroopJS deferred component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/deferred component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
@@ -585,7 +582,7 @@ define('troopjs-core/util/unique',[],function UniqueModule() {
 });
 /*!
  * TroopJS pubsub/topic module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/pubsub/topic',[ "../component/base", "../util/unique" ], function TopicModule(Component, unique) {
@@ -996,7 +993,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 /*!
  * TroopJS gadget component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 /**
@@ -1259,7 +1256,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 
 /*!
  * TroopJS service component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
@@ -1269,7 +1266,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 });
 /*!
  * TroopJS util/merge module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/merge',[],function MergeModule() {
@@ -1311,7 +1308,7 @@ define('troopjs-core/util/merge',[],function MergeModule() {
 });
 /*!
  * TroopJS remote/ajax module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Service, Topic, $, merge) {
@@ -1325,7 +1322,7 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
 					"x-request-id": new Date().getTime(),
 					"x-components": topic instanceof Topic ? topic.trace() : topic
 				}
-			}, settings)).then(deferred.resolve, deferred.reject);
+			}, settings)).then(deferred.resolve, deferred.reject, deferred.notify);
 		}
 	});
 });
@@ -1536,7 +1533,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 });
 /*!
  * TroopJS route/router module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], function RouterModule(Service, URI) {
@@ -1608,7 +1605,7 @@ define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], fu
 });
 /*!
  * TroopJS store/base module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
@@ -1660,7 +1657,7 @@ define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function 
 });
 /*!
  * TroopJS store/local module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
@@ -1673,7 +1670,7 @@ define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalMo
 });
 /*!
  * TroopJS store/session module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
@@ -1739,7 +1736,7 @@ define('troopjs-core/dimensions/service',[ "../component/service" ], function Di
 });
 /*!
  * TroopJS widget component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 /**
@@ -2034,8 +2031,14 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 		empty : function empty(deferred) {
 			var self = this;
 
+			// Ensure we have deferred
+			deferred = deferred || Deferred();
+
 			// Create deferred for emptying
-			Deferred(function emptyDeferred(dfd) {
+			Deferred(function emptyDeferred(dfdEmpty) {
+				// Link deferred
+				dfdEmpty.then(deferred.resolve, deferred.reject, deferred.notify);
+
 				// Get element
 				var $element = self[$ELEMENT];
 
@@ -2054,13 +2057,8 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 					$contents.remove();
 
 					// Resolve deferred
-					dfd.resolve(contents);
+					dfdEmpty.resolve(contents);
 				}, 0);
-
-				// If a deferred was passed, add resolve/reject/notify
-				if (deferred) {
-					dfd.then(deferred.resolve, deferred.reject, deferred.notify);
-				}
 			});
 
 			return self;
@@ -2070,15 +2068,12 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 
 /*!
  * TroopJS widget/placeholder component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
 	var UNDEFINED = undefined;
 	var FUNCTION = Function;
-	var ARRAY = Array;
-	var ARRAY_PROTO = ARRAY.prototype;
-	var POP = ARRAY_PROTO.pop;
 	var HOLDING = "holding";
 	var DATA_HOLDING = "data-" + HOLDING;
 	var $ELEMENT = "$element";
@@ -2088,14 +2083,16 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 	function release(/* arg, arg, arg, deferred*/) {
 		var self = this;
 		var arg = arguments;
-		var argc = arg.length;
 
-		// Check if the last argument looks like a deferred, and in that case set it
-		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
-			? POP.call(arg)
-			: UNDEFINED;
+		// Assume deferred is the last argument
+		var deferred = arg[arg.length - 1];
 
-		Deferred(function deferredRelease(dfd) {
+		// If deferred not a true Deferred, make it so
+		if (deferred === UNDEFINED || !(deferred[THEN] instanceof FUNCTION)) {
+			deferred = Deferred();
+		}
+
+		Deferred(function deferredRelease(dfdRelease) {
 			var i;
 			var iMax;
 			var name;
@@ -2103,17 +2100,19 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 
 			// We're already holding something, resolve with cache
 			if (HOLDING in self) {
-				dfd.resolve(self[HOLDING]);
+				dfdRelease
+					.done(deferred.resolve)
+					.resolve(self[HOLDING]);
 			}
 			else {
 				// Add done handler to release
-				dfd.done(function doneRelease(widget) {
+				dfdRelease.then([ function doneRelease(widget) {
 					// Set DATA_HOLDING attribute
 					self[$ELEMENT].attr(DATA_HOLDING, widget);
 
 					// Store widget
 					self[HOLDING] = widget;
-				});
+				}, deferred.resolve ], deferred.reject, deferred.notify);
 
 				// Get widget name
 				name = self[TARGET];
@@ -2128,23 +2127,21 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 
 				// Require widget by name
 				require([ name ], function required(Widget) {
-					// Resolve with constructed, bound and initialized instance
-					var widget = Widget
-						.apply(Widget, argv);
+					// Defer require
+					Deferred(function deferredStart(dfdRequire) {
+						// Constructed and initialized instance
+						var widget = Widget
+							.apply(Widget, argv);
 
-					Deferred(function deferredStart(dfdStart) {
-						widget.start(dfdStart);
-					})
-					.done(function doneStarted() {
-						dfd.resolve(widget);
-					})
-					.fail(dfd.reject);
+						// Link deferred
+						dfdRequire.then(function doneStart() {
+							dfdRelease.resolve(widget);
+						}, dfdRelease.reject, dfdRelease.notify);
+
+						// Start
+						widget.start(dfdRequire);
+					});
 				});
-			}
-
-			// Link deferred
-			if (deferred) {
-				dfd.then(deferred.resolve, deferred.reject);
 			}
 		});
 
@@ -2154,8 +2151,13 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 	function hold(deferred) {
 		var self = this;
 
+		deferred = deferred || Deferred();
+
 		Deferred(function deferredHold(dfdHold) {
 			var widget;
+
+			// Link deferred
+			dfdHold.then(deferred.resolve, deferred.reject, deferred.notify);
 
 			// Check that we are holding
 			if (HOLDING in self) {
@@ -2168,19 +2170,11 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 				// Remove DATA_HOLDING attribute
 				self[$ELEMENT].removeAttr(DATA_HOLDING);
 
-				// Deferred stop
-				Deferred(function deferredStop(dfdStop) {
-					widget.stop(dfdStop);
-				})
-				.then(dfdHold.resolve, dfdHold.reject);
+				// Stop
+				widget.stop(dfdHold);
 			}
 			else {
 				dfdHold.resolve();
-			}
-
-			// Link deferred
-			if (deferred) {
-				dfdHold.then(deferred.resolve, deferred.reject);
 			}
 		});
 
@@ -2199,7 +2193,7 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 });
 /*!
  * TroopJS route/placeholder module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function RoutePlaceholderModule(Placeholder) {
@@ -2280,16 +2274,16 @@ define('troopjs-core/widget/sandbox', [ "../component/widget", "jquery" ], funct
 });
 
 /*!
- * TroopJS each component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/each component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/each',[ "jquery" ], function EachModule($) {
 	return $.each;
 });
 /*!
- * TroopJS grep component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/grep component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/grep',[ "jquery" ], function GrepModule($) {
@@ -2297,7 +2291,7 @@ define('troopjs-core/util/grep',[ "jquery" ], function GrepModule($) {
 });
 /*!
  * TroopJS util/tr component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/tr',[],function TrModule() {
@@ -2326,8 +2320,8 @@ define('troopjs-core/util/tr',[],function TrModule() {
 	};
 });
 /*!
- * TroopJS when component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/when component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
@@ -2335,7 +2329,7 @@ define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
 });
 /*!
  * TroopJS jQuery action plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
@@ -2527,7 +2521,7 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 
 /*!
  * TroopJS jQuery destroy plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
@@ -2656,7 +2650,7 @@ define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
 
 /*!
  * TroopJS jQuery dimensions plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
@@ -2773,7 +2767,7 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 });
 /*!
  * TroopJS jQuery hashchange plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 /**
@@ -2945,7 +2939,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 
 /*!
  * TroopJS jQuery weave plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
