@@ -3,8 +3,7 @@ DIST := ../dist
 R := lib/rjs/dist/r.js
 
 # Core services
-TROOPJS-CORE := template \
-	troopjs-core/remote/ajax \
+TROOPJS-CORE := troopjs-core/remote/ajax \
 	troopjs-core/route/router \
 	troopjs-core/store/local \
 	troopjs-core/store/session \
@@ -28,8 +27,11 @@ TROOPJS-JQUERY := troopjs-jquery/action \
 	troopjs-jquery/hashchange \
 	troopjs-jquery/weave
 
+# RequireJS plugins
+TROOPJS-REQUIREJS := troopjs-requirejs/template
+
 #  All modules
-INCLUDE := $(TROOPJS-CORE) $(TROOPJS-JQUERY)
+INCLUDE := $(TROOPJS-CORE) $(TROOPJS-JQUERY) $(TROOPJS-REQUIREJS)
 
 # A literal comma
 comma :=,
@@ -63,8 +65,7 @@ js: prepare
 		paths.config=empty: \
 		paths.troopjs-core=lib/troopjs-core/src \
 		paths.troopjs-jquery=lib/troopjs-jquery/src \
-		paths.template=lib/troopjs-requirejs/src/template \
-		paths.deferred=lib/troopjs-jquery/src/deferred \
+		paths.troopjs-requirejs=lib/troopjs-requirejs/src \
 		include=$(call join-with,$(comma),$(INCLUDE)) \
 		optimize=none
 
