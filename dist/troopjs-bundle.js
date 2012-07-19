@@ -2734,12 +2734,15 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
 	var WOVEN = "woven";
+	var WEAVING = "weaving";
 	var PENDING = "pending";
 	var DESTROY = "destroy";
-	var DATA_WEAVE = "data-" + WEAVE;
-	var DATA_WOVEN = "data-" + WOVEN;
+	var DATA = "data-";
+	var DATA_WEAVE = DATA + WEAVE;
+	var DATA_WOVEN = DATA + WOVEN;
+	var DATA_WEAVING = DATA + WEAVING;
 	var SELECTOR_WEAVE = "[" + DATA_WEAVE + "]";
-	var SELECTOR_WOVEN = "[" + DATA_WOVEN + "]";
+	var SELECTOR_UNWEAVE = "[" + DATA_WEAVING + "],[" + DATA_WOVEN + "]";
 	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
@@ -2749,9 +2752,8 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	/**
 	 * Generic destroy handler.
 	 * Simply makes sure that unweave has been called
-	 * @param $event
 	 */
-	function onDestroy($event) {
+	function onDestroy() {
 		$(this).unweave();
 	}
 
@@ -2772,113 +2774,132 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 			.filter(SELECTOR_WEAVE)
 			// Iterate
 			.each(function elementIterator(index, element) {
-				var $element = $(element);
-				var $data = $element.data();
-				var weave = $data[WEAVE] = $element.attr(DATA_WEAVE) || "";
-				var woven = $data[WOVEN] = [];
-				var pending = $data[PENDING] || ($data[PENDING] = []);
-				var re = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
-				var j = 0;
-				var matches;
+				// Defer weave
+				$.Deferred(function deferredWeave(dfdWeave) {
+					var $element = $(element);
+					var $data = $element.data();
+					var weave = $data[WEAVE] = $element.attr(DATA_WEAVE) || "";
+					var woven = $data[WOVEN] || ($data[WOVEN] = []);
+					var pending = $data[PENDING] || ($data[PENDING] = []);
 
-				// Wait for all pending deferred
-				$WHEN.apply($, pending).done(function doneRequired() {
-					$element
-						// Make sure to remove DATA_WEAVE (so we don't try processing this again)
-						.removeAttr(DATA_WEAVE)
-						// Bind destroy event
-						.bind(DESTROY, onDestroy);
+					// Link deferred
+					dfdWeave.done(function doneWeave() {
+						$element
+							// Remove DATA_WEAVING
+							.removeAttr(DATA_WEAVING)
+							// Set DATA_WOVEN with full names
+							.attr(DATA_WOVEN, JOIN.call(arguments, " "));
+					});
 
-					// Iterate woven (while the RE_WEAVE matches)
-					while (matches = re.exec(weave)) {
-						// Defer weave
-						$.Deferred(function deferredRequire(dfdWeave) {
-							var _j = j++; // store _j before we increment
-							var k;
-							var l;
-							var kMax;
-							var value;
+					// Wait for all pending deferred
+					$WHEN.apply($, pending).then(function donePending() {
+						var re = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
+						var mark = i;
+						var j = 0;
+						var matches;
 
-							// Add to widgets and pending
-							widgets[i++] = pending[pending.length] = dfdWeave;
+						// Push dfdWeave on pending to signify we're starting a new task
+						pending.push(dfdWeave);
 
-							// Link deferred
-							dfdWeave.then(function doneRequire(widget) {
-								woven[_j] = widget;
-							}, deferred.reject, deferred.notify);
+						$element
+							// Make sure to remove DATA_WEAVE (so we don't try processing this again)
+							.removeAttr(DATA_WEAVE)
+							// Set DATA_WEAVING (so that unweave can pick this up)
+							.attr(DATA_WEAVING, weave)
+							// Bind destroy event
+							.bind(DESTROY, onDestroy);
 
-							// Get widget name
-							var name = matches[1];
+						// Iterate woven (while RE_WEAVE matches)
+						while (matches = re.exec(weave)) {
+							// Defer widget
+							$.Deferred(function deferredWidget(dfdWidget) {
+								var _j = j++; // store _j before we increment
+								var k;
+								var l;
+								var kMax;
+								var value;
 
-							// Set initial argv
-							var argv = [ $element, name ];
+								// Add to widgets
+								widgets[i++] = dfdWidget;
 
-							// Append values from arg to argv
-							for (k = 0, kMax = arg.length, l = argv.length; k < kMax; k++, l++) {
-								argv[l] = arg[k];
-							}
+								// Link deferred
+								dfdWidget.then(function doneWidget(widget) {
+									woven[_j] = widget;
+								}, dfdWeave.reject, dfdWeave.notify);
 
-							// Get widget args
-							var args = matches[2];
+								// Get widget name
+								var name = matches[1];
 
-							// Any widget arguments
-							if (args !== UNDEFINED) {
-								// Convert args to array
-								args = args.split(RE_SEPARATOR);
+								// Set initial argv
+								var argv = [ $element, name ];
 
-								// Append typed values from args to argv
-								for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
-									// Get value
-									value = args[k];
+								// Append values from arg to argv
+								for (k = 0, kMax = arg.length, l = argv.length; k < kMax; k++, l++) {
+									argv[l] = arg[k];
+								}
 
-									if (value in $data) {
-										argv[l] = $data[value];
-									} else if (RE_STRING.test(value)) {
-										argv[l] = value.slice(1, -1);
-									} else if (RE_DIGIT.test(value)) {
-										argv[l] = Number(value);
-									} else if (RE_BOOLEAN.test(value)) {
-										argv[l] = RE_BOOLEAN_TRUE.test(value);
-									} else {
-										argv[l] = value;
+								// Get widget args
+								var args = matches[2];
+
+								// Any widget arguments
+								if (args !== UNDEFINED) {
+									// Convert args to array
+									args = args.split(RE_SEPARATOR);
+
+									// Append typed values from args to argv
+									for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
+										// Get value
+										value = args[k];
+
+										if (value in $data) {
+											argv[l] = $data[value];
+										} else if (RE_STRING.test(value)) {
+											argv[l] = value.slice(1, -1);
+										} else if (RE_DIGIT.test(value)) {
+											argv[l] = Number(value);
+										} else if (RE_BOOLEAN.test(value)) {
+											argv[l] = RE_BOOLEAN_TRUE.test(value);
+										} else {
+											argv[l] = value;
+										}
 									}
 								}
-							}
 
-							require([ name ], function required(Widget) {
-								// Defer require
-								$.Deferred(function deferredStart(dfdRequire) {
-									// Constructed and initialized instance
-									var widget = Widget.apply(Widget, argv);
+								// Require module
+								require([ name ], function required(Widget) {
+									// Defer start
+									$.Deferred(function deferredStart(dfdStart) {
+										// Constructed and initialized instance
+										var widget = Widget.apply(Widget, argv);
 
-									// Link deferred
-									dfdRequire.then(function doneStart() {
-										dfdWeave.resolve(widget);
-									}, dfdWeave.reject, dfdWeave.notify);
+										// Link deferred
+										dfdStart.then(function doneStart() {
+											dfdWidget.resolve(widget);
+										}, dfdWidget.reject, dfdWidget.notify);
 
-									// Start
-									widget.start(dfdRequire);
+										// Start
+										widget.start(dfdStart);
+									});
 								});
 							});
-						});
-					}
+						}
 
-					// Slice out woven woven for this element
-					$WHEN.apply($, pending).done(function donePending() {
-						// Set DATA_WOVEN attribute
-						$element.attr(DATA_WOVEN, JOIN.call(arguments, " "));
-					});
+						// Slice out widgets woven for this element
+						$WHEN.apply($, widgets.slice(mark, i)).then(dfdWeave.resolve, dfdWeave.reject, dfdWeave.notify);
+
+					}, dfdWeave.reject, dfdWeave.notify);
 				});
 			});
 
-		// When all deferred are resolved, resolve original deferred
+		// When all widgets are resolved, resolve original deferred
 		$WHEN.apply($, widgets).then(deferred.resolve, deferred.reject, deferred.notify);
 
 		return $elements;
 	};
 
+
 	$.fn[UNWEAVE] = function unweave(deferred) {
-		var unwoven = [];
+		var widgets = [];
 		var i = 0;
 		var $elements = $(this);
 
@@ -2886,50 +2907,72 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 		deferred = deferred || $.Deferred();
 
 		$elements
-			// Reduce to only elements that are woven
-			.filter(SELECTOR_WOVEN)
+			// Reduce to only elements that can be unwoven
+			.filter(SELECTOR_UNWEAVE)
 			// Iterate
 			.each(function elementIterator(index, element) {
-				var $element = $(element);
-				var $data = $element.data();
-				var pending = $data[PENDING] || ($data[PENDING] = []);
-				var woven = $data[WOVEN];
-				var widget;
+				// Defer unweave
+				$.Deferred(function deferredUnweave(dfdUnweave) {
+					var $element = $(element);
+					var $data = $element.data();
+					var pending = $data[PENDING] || ($data[PENDING] = []);
+					var woven = $data[WOVEN] || [];
 
-				$WHEN.apply($, pending).done(function donePending() {
-					// Remove WOVEN data
-					delete $data[WOVEN];
+					// Link deferred
+					dfdUnweave.done(function doneUnweave() {
+						$element
+							// Copy weave data to data-weave attribute
+							.attr(DATA_WEAVE, $data[WEAVE])
+							// Make sure to clean the destroy event handler
+							.unbind(DESTROY, onDestroy);
 
-					$element
-						// Remove DATA_WOVEN attribute
-						.removeAttr(DATA_WOVEN);
+						// Remove data fore WEAVE
+						delete $data[WEAVE];
+					});
 
-					// Somewhat safe(r) iterator over woven
-					while (widget = woven.shift()) {
-						// $.Deferred stop
-						$.Deferred(function deferredStop(dfdStop) {
-							// Add to unwoven and pending
-							unwoven[i++] = pending[pending.length] = dfdStop;
+					// Wait for all pending deferred
+					$WHEN.apply($, pending).done(function donePending() {
+						var mark = i;
+						var widget;
 
-							widget.stop(dfdStop);
-						});
-					}
+						// Push dfdUnweave on pending to signify we're starting a new task
+						pending.push(dfdUnweave);
 
-					$element
-						// Copy weave data to data-weave attribute
-						.attr(DATA_WEAVE, $data[WEAVE])
-						// Make sure to clean the destroy event handler
-						.unbind(DESTROY, onDestroy);
+						// Remove WOVEN data
+						delete $data[WOVEN];
 
-					// Remove data fore WEAVE
-					delete $data[WEAVE];
+						$element
+							// Remove DATA_WOVEN attribute
+							.removeAttr(DATA_WOVEN);
+
+						// Somewhat safe(r) iterator over woven
+						while (widget = woven.shift()) {
+							// Defer widget
+							$.Deferred(function deferredWidget(dfdWidget) {
+								// Add to unwoven and pending
+								widgets[i++] = dfdWidget;
+
+								// $.Deferred stop
+								$.Deferred(function deferredStop(dfdStop) {
+									// Link deferred
+									dfdStop.then(function doneStop() {
+										dfdWidget.resolve(widget);
+									}, dfdWidget.reject, dfdWidget.notify);
+
+									// Stop
+									widget.stop(dfdStop);
+								});
+							});
+						}
+
+						// Slice out widgets unwoven for this element
+						$WHEN.apply($, widgets.slice(mark, i)).then(dfdUnweave.resolve, dfdUnweave.reject, dfdUnweave.notify);
+					});
 				});
 			});
 
-		if (deferred) {
-			// When all deferred are resolved, resolve original deferred
-			$WHEN.apply($, unwoven).then(deferred.resolve, deferred.reject, deferred.notify);
-		}
+		// When all deferred are resolved, resolve original deferred
+		$WHEN.apply($, widgets).then(deferred.resolve, deferred.reject, deferred.notify);
 
 		return $elements;
 	};
