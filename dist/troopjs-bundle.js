@@ -1191,6 +1191,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			var self = this;
 			var key = NULL;
 			var value = NULL;
+			var values;
 			var query = [];
 			var i = 0;
 			var j;
@@ -1210,20 +1211,26 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 				value = self[key];
 
 				if (TOSTRING.call(value) === TOSTRING_ARRAY) {
-					value = value.slice(0);
+					values = value.slice(0);
 
-					value.sort();
+					values.sort();
 
-					j = value.length;
+					j = values.length;
 
 					while (j--) {
-						value[j] = key + "=" + value[j];
+						value = values[j];
+
+						values[j] = value === ""
+							? key
+							: key + "=" + value;
 					}
 
-					query[i] = value.join("&");
+					query[i] = values.join("&");
 				}
 				else {
-					query[i] = key + "=" + value;
+					query[i] = value === ""
+						? key
+						: key + "=" + value;
 				}
 			}
 
@@ -1279,6 +1286,10 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 
 			if (!(PROTOCOL in self)) {
 				uri[0] = uri[1] = "";
+			}
+
+			if (!(AUTHORITY in self)) {
+				uri[2] = uri[3] = "";
 			}
 
 			if (!(PATH in self)) {
