@@ -1120,6 +1120,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
 	var OBJECT_PROTO = Object.prototype;
+	var PUSH = ARRAY_PROTO.push;
 	var TOSTRING = OBJECT_PROTO.toString;
 	var TOSTRING_OBJECT = TOSTRING.call(OBJECT_PROTO);
 	var TOSTRING_ARRAY = TOSTRING.call(ARRAY_PROTO);
@@ -1165,7 +1166,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			}
 			break;
 
-		case TOSTRING_STRING:
+		default:
 			while (matches = re.exec(arg)) {
 				key = matches[1];
 
@@ -1238,8 +1239,8 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		}
 	});
 
-	var Path = Compose(ARRAY_PROTO, function Path(str) {
-		if (!str || str.length === 0) {
+	var Path = Compose(ARRAY_PROTO, function Path(arg) {
+		if (!arg || arg.length === 0) {
 			return;
 		}
 
@@ -1247,8 +1248,16 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		var matches;
 		var re = /(?:\/|^)([^\/]*)/g;
 
-		while (matches = re.exec(str)) {
-			self.push(matches[1]);
+		switch (TOSTRING.call(arg)) {
+			case TOSTRING_ARRAY:
+				PUSH.apply(self, arg);
+				break;
+
+			default:
+				while (matches = re.exec(arg)) {
+					PUSH.call(self, matches[1]);
+				}
+				break;
 		}
 	}, {
 		toString : function toString() {
