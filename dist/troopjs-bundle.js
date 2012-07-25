@@ -1121,6 +1121,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	var ARRAY_PROTO = Array.prototype;
 	var OBJECT_PROTO = Object.prototype;
 	var PUSH = ARRAY_PROTO.push;
+	var SPLIT = String.prototype.split;
 	var TOSTRING = OBJECT_PROTO.toString;
 	var TOSTRING_OBJECT = TOSTRING.call(OBJECT_PROTO);
 	var TOSTRING_ARRAY = TOSTRING.call(ARRAY_PROTO);
@@ -1240,13 +1241,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	});
 
 	var Path = Compose(ARRAY_PROTO, function Path(arg) {
-		if (!arg || arg.length === 0) {
-			return;
-		}
-
 		var self = this;
-		var matches;
-		var re = /(?:\/|^)([^\/]*)/g;
 
 		switch (TOSTRING.call(arg)) {
 			case TOSTRING_ARRAY:
@@ -1254,9 +1249,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 				break;
 
 			default:
-				while (matches = re.exec(arg)) {
-					PUSH.call(self, matches[1]);
-				}
+				PUSH.apply(self, SPLIT.call(arg, "/"));
 				break;
 		}
 	}, {
@@ -1289,7 +1282,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	}, {
 		toString : function toString() {
 			var self = this;
-			var uri = [ PROTOCOL , "://", AUTHORITY, "/", PATH, "?", QUERY, "#", ANCHOR ];
+			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
 			var i;
 			var key;
 
@@ -1298,19 +1291,19 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			}
 
 			if (!(AUTHORITY in self)) {
-				uri[2] = uri[3] = "";
+				uri[2] = "";
 			}
 
 			if (!(PATH in self)) {
-				uri[3] = uri[4] = "";
+				uri[3] = "";
 			}
 
 			if (!(QUERY in self)) {
-				uri[5] = uri[6] = "";
+				uri[4] = uri[5] = "";
 			}
 
 			if (!(ANCHOR in self)) {
-				uri[7] = uri[8] = "";
+				uri[6] = uri[7] = "";
 			}
 
 			i = uri.length;
