@@ -1,0 +1,80 @@
+/*global module:false*/
+module.exports = function(grunt) {
+
+	var files = {
+		core : [ "troopjs-core/remote/ajax",
+			"troopjs-core/route/router",
+			"troopjs-core/store/local",
+			"troopjs-core/store/session",
+			"troopjs-core/dimensions/service",
+			"troopjs-core/route/router",
+			"troopjs-core/route/placeholder",
+			"troopjs-core/widget/application",
+			"troopjs-core/widget/sandbox",
+			"troopjs-core/util/each",
+			"troopjs-core/util/grep",
+			"troopjs-core/util/merge",
+			"troopjs-core/util/tr",
+			"troopjs-core/util/unique",
+			"troopjs-core/util/when" ],
+		jquery : [ "troopjs-jquery/action",
+			"troopjs-jquery/destroy",
+			"troopjs-jquery/resize",
+			"troopjs-jquery/dimensions",
+			"troopjs-jquery/hashchange",
+			"troopjs-jquery/weave" ],
+		requirejs : [ "troopjs-requirejs/template" ]
+	};
+
+	// Project configuration.
+	grunt.config.init({
+		meta : {
+			version : "1.0.3",
+			banner : "/*! troopjs-bundle - v<%= meta.version %> - " +
+				"<%= grunt.template.today('yyyy-mm-dd') %>\n" +
+				"* http://troopjs.com/\n" +
+				"* Copyright (c) <%= grunt.template.today('yyyy') %> " +
+				"Mikael Karon <mikael@karon.se>; Licensed MIT */"
+		},
+		lint : {
+			files: [ "grunt.js" ]
+		},
+		jshint : {
+			options : {
+				curly : true,
+				eqeqeq : true,
+				immed : true,
+				latedef : true,
+				newcap : true,
+				noarg : true,
+				sub : true,
+				undef : true,
+				boss : true,
+				eqnull : true,
+				browser : true
+			},
+			globals : {
+				jQuery : true
+			}
+		},
+		requirejs : {
+			out : "dist/troopjs-bundle.js",
+			baseUrl : "src",
+			paths : {
+				"jquery" : "empty:",
+				"compose" : "lib/composejs/compose",
+				"config" : "empty:",
+				"troopjs-core" : "lib/troopjs-core/src",
+				"troopjs-jquery" : "lib/troopjs-jquery/src",
+				"troopjs-requirejs" : "lib/troopjs-requirejs/src"
+			},
+			include : Array.prototype.concat(files.core, files.jquery, files.requirejs),
+			optimize : "none"
+		}
+	});
+
+	grunt.loadNpmTasks("grunt-requirejs");
+
+	// Default task.
+	grunt.registerTask("default", "lint requirejs");
+};

@@ -13,6 +13,3 @@
 [submodule "src/lib/composejs"]
 	path = src/lib/composejs
 	url = https://github.com/troopjs/compose.git
-[submodule "build/lib/rjs"]
-	path = build/lib/rjs
-	url = https://github.com/troopjs/r.js.git
