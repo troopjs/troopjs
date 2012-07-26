@@ -29,12 +29,12 @@ module.exports = function(grunt) {
 	// Project configuration.
 	grunt.config.init({
 		meta : {
-			version : "1.0.3",
+			version : "1.0.2+",
 			banner : "/*! troopjs-bundle - v<%= meta.version %> - " +
 				"<%= grunt.template.today('yyyy-mm-dd') %>\n" +
 				"* http://troopjs.com/\n" +
 				"* Copyright (c) <%= grunt.template.today('yyyy') %> " +
-				"Mikael Karon <mikael@karon.se>; Licensed MIT */"
+				"Mikael Karon <mikael@karon.se>; Licensed MIT\n */"
 		},
 		lint : {
 			files: [ "grunt.js" ]
@@ -52,9 +52,6 @@ module.exports = function(grunt) {
 				boss : true,
 				eqnull : true,
 				browser : true
-			},
-			globals : {
-				jQuery : true
 			}
 		},
 		requirejs : {
@@ -70,11 +67,17 @@ module.exports = function(grunt) {
 			},
 			include : Array.prototype.concat(files.core, files.jquery, files.requirejs),
 			optimize : "none"
+		},
+		min : {
+			dist : {
+				src : [ "<banner>", "dist/troopjs-bundle.js" ],
+				dest : "dist/troopjs-bundle.min.js"
+			}
 		}
 	});
 
 	grunt.loadNpmTasks("grunt-requirejs");
 
 	// Default task.
-	grunt.registerTask("default", "lint requirejs");
+	grunt.registerTask("default", "lint requirejs min");
 };
