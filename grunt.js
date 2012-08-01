@@ -55,18 +55,22 @@ module.exports = function(grunt) {
 			}
 		},
 		requirejs : {
-			out : "dist/troopjs-bundle.js",
-			baseUrl : "src",
-			paths : {
-				"jquery" : "empty:",
-				"compose" : "lib/composejs/compose",
-				"config" : "empty:",
-				"troopjs-core" : "lib/troopjs-core/src",
-				"troopjs-jquery" : "lib/troopjs-jquery/src",
-				"troopjs-requirejs" : "lib/troopjs-requirejs/src"
-			},
-			include : Array.prototype.concat(files.core, files.jquery, files.requirejs),
-			optimize : "none"
+			compile : {
+				options : {
+					out : "dist/troopjs-bundle.js",
+					baseUrl : "src",
+					paths : {
+						"jquery" : "empty:",
+						"compose" : "lib/composejs/compose",
+						"config" : "empty:",
+						"troopjs-core" : "lib/troopjs-core/src",
+						"troopjs-jquery" : "lib/troopjs-jquery/src",
+						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
+					},
+					include : Array.prototype.concat(files.core, files.jquery, files.requirejs),
+					optimize : "none"
+				}
+			}
 		},
 		min : {
 			dist : {
@@ -76,7 +80,7 @@ module.exports = function(grunt) {
 		}
 	});
 
-	grunt.loadNpmTasks("grunt-requirejs");
+	grunt.loadNpmTasks("grunt-contrib");
 
 	// Default task.
 	grunt.registerTask("default", "lint requirejs min");
