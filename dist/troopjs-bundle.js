@@ -808,7 +808,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		var key = null;
 
 		// Iterate base chain (while there's a prototype)
-		for (i = bases.length; i >= 0; i--) {
+		for (i = bases.length - 1; i >= 0; i--) {
 			base = bases[i];
 
 			add: for (key in base) {
