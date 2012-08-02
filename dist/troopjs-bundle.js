@@ -295,10 +295,8 @@ define('compose',[], function(){
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * The base trait provides functionality for instance counting,
- * configuration and a default 'toString' method.
- */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-core/component/base',[ "compose", "config" ], function ComponentModule(Compose, config) {
 	var COUNT = 0;
 
@@ -367,6 +365,8 @@ define('troopjs-core/util/unique',[],function UniqueModule() {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-core/pubsub/topic',[ "../component/base", "../util/unique" ], function TopicModule(Component, unique) {
 	var TOSTRING = Object.prototype.toString;
 	var TOSTRING_ARRAY = TOSTRING.call(Array.prototype);
@@ -439,7 +439,10 @@ define('troopjs-core/pubsub/topic',[ "../component/base", "../util/unique" ], fu
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
+	var UNDEFINED;
 	var FUNCTION = Function;
 	var MEMORY = "memory";
 	var CONTEXT = "context";
@@ -467,10 +470,11 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 */
 		subscribe : function subscribe(topic /*, context, memory, callback, callback, ..*/) {
 			var self = this;
-			var length = arguments[LENGTH];
-			var context = arguments[1];
-			var memory = arguments[2];
-			var callback = arguments[3];
+			var arg = arguments;
+			var length = arg[LENGTH];
+			var context = arg[1];
+			var memory = arg[2];
+			var callback = arg[3];
 			var offset;
 			var handlers;
 			var handler;
@@ -515,7 +519,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 				// Create new handler
 				handler = {
-					"callback" : arguments[offset++],
+					"callback" : arg[offset++],
 					"context" : context
 				};
 
@@ -530,7 +534,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				while (offset < length) {
 					// Set tail -> tail.next -> handler
 					tail = tail[NEXT] = {
-						"callback" : arguments[offset++],
+						"callback" : arg[offset++],
 						"context" : context
 					};
 				}
@@ -546,39 +550,45 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					// Get handled
 					handled = memory[HANDLED];
 
-					// Loop through handlers, optimize for arguments
-					if (memory[LENGTH] > 0 ) while(handler) {
-						// Skip to next handler if this handler has already been handled
-						if (handler[HANDLED] === handled) {
+					// Optimize for arguments
+					if (memory[LENGTH] > 0 ) {
+						// Loop through handlers
+						while(handler) {
+							// Skip to next handler if this handler has already been handled
+							if (handler[HANDLED] === handled) {
+								handler = handler[NEXT];
+								continue;
+							}
+
+							// Store handled
+							handler[HANDLED] = handled;
+
+							// Apply handler callback
+							handler[CALLBACK].apply(handler[CONTEXT], memory);
+
+							// Update handler
 							handler = handler[NEXT];
-							continue;
 						}
-
-						// Store handled
-						handler[HANDLED] = handled;
-
-						// Apply handler callback
-						handler[CALLBACK].apply(handler[CONTEXT], memory);
-
-						// Update handler
-						handler = handler[NEXT];
 					}
-					// Loop through handlers, optimize for no arguments
-					else while(handler) {
-						// Skip to next handler if this handler has already been handled
-						if (handler[HANDLED] === handled) {
+					// Optimize for no arguments
+					else {
+						// Loop through handlers
+						while(handler) {
+							// Skip to next handler if this handler has already been handled
+							if (handler[HANDLED] === handled) {
+								handler = handler[NEXT];
+								continue;
+							}
+
+							// Store handled
+							handler[HANDLED] = handled;
+
+							// Call handler callback
+							handler[CALLBACK].call(handler[CONTEXT]);
+
+							// Update handler
 							handler = handler[NEXT];
-							continue;
 						}
-
-						// Store handled
-						handler[HANDLED] = handled;
-
-						// Call handler callback
-						handler[CALLBACK].call(handler[CONTEXT]);
-
-						// Update handler
-						handler = handler[NEXT];
 					}
 				}
 			}
@@ -586,7 +596,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 			else {
 				// Create head and tail
 				head = tail = {
-					"callback" : arguments[offset++],
+					"callback" : arg[offset++],
 					"context" : context
 				};
 
@@ -594,7 +604,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				while (offset < length) {
 					// Set tail -> tail.next -> handler
 					tail = tail[NEXT] = {
-						"callback" : arguments[offset++],
+						"callback" : arg[offset++],
 						"context" : context
 					};
 				}
@@ -619,9 +629,11 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		unsubscribe : function unsubscribe(topic /*, context, callback, callback, ..*/) {
-			var length = arguments[LENGTH];
-			var context = arguments[1];
-			var callback = arguments[2];
+			var self = this;
+			var arg = arguments;
+			var length = arg[LENGTH];
+			var context = arg[1];
+			var callback = arg[2];
 			var offset;
 			var handlers;
 			var handler;
@@ -643,60 +655,58 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				return self;
 			}
 
-			unsubscribe: {
-				// Fast fail if we don't have subscribers
-				if (!(topic in HANDLERS)) {
-					break unsubscribe;
-				}
+			// Fast fail if we don't have subscribers
+			if (!(topic in HANDLERS)) {
+				return self;
+			}
 
-				// Get handlers
-				handlers = HANDLERS[topic];
+			// Get handlers
+			handlers = HANDLERS[topic];
 
-				// Get head
-				head = handlers[HEAD];
+			// Get head
+			head = handlers[HEAD];
 
-				// Loop over remaining arguments
-				while (offset < length) {
-					// Store callback
-					callback = arguments[offset++];
+			// Loop over remaining arguments
+			while (offset < length) {
+				// Store callback
+				callback = arg[offset++];
 
-					// Get first handler
-					handler = previous = head;
+				// Get first handler
+				handler = previous = head;
 
-					// Loop through handlers
-					do {
-						// Check if this handler should be unlinked
-						if (handler[CALLBACK] === callback && handler[CONTEXT] === context) {
-							// Is this the first handler
-							if (handler === head) {
-								// Re-link head and previous, then
-								// continue
-								head = previous = handler[NEXT];
-								continue;
-							}
-
-							// Unlink current handler, then continue
-							previous[NEXT] = handler[NEXT];
+				// Loop through handlers
+				do {
+					// Check if this handler should be unlinked
+					if (handler[CALLBACK] === callback && handler[CONTEXT] === context) {
+						// Is this the first handler
+						if (handler === head) {
+							// Re-link head and previous, then
+							// continue
+							head = previous = handler[NEXT];
 							continue;
 						}
 
-						// Update previous pointer
-						previous = handler;
-					} while (handler = handler[NEXT]);
-				}
+						// Unlink current handler, then continue
+						previous[NEXT] = handler[NEXT];
+						continue;
+					}
 
-				// Update head and tail
-				if (head && previous) {
-					handlers[HEAD] = head;
-					handlers[TAIL] = previous;
-				}
-				else {
-					delete handlers[HEAD];
-					delete handlers[TAIL];
-				}
+					// Update previous pointer
+					previous = handler;
+				} while ((handler = handler[NEXT]) !== UNDEFINED);
 			}
 
-			return this;
+			// Update head and tail
+			if (head && previous) {
+				handlers[HEAD] = head;
+				handlers[TAIL] = previous;
+			}
+			else {
+				delete handlers[HEAD];
+				delete handlers[TAIL];
+			}
+
+			return self;
 		},
 
 		/**
@@ -707,11 +717,12 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		publish : function publish(topic /*, arg, arg, ..*/) {
+			var arg = arguments;
 			var handlers;
 			var handler;
 
 			// Store handled
-			var handled = arguments[HANDLED] = COUNT++;
+			var handled = arg[HANDLED] = COUNT++;
 
 			// Have handlers
 			if (topic in HANDLERS) {
@@ -719,53 +730,59 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				handlers = HANDLERS[topic];
 
 				// Remember arguments
-				handlers[MEMORY] = arguments;
+				handlers[MEMORY] = arg;
 
 				// Get first handler
 				handler = handlers[HEAD];
 
-				// Loop through handlers, optimize for arguments
-				if (arguments[LENGTH] > 0) while(handler) {
-					// Skip to next handler if this handler has already been handled
-					if (handler[HANDLED] === handled) {
+				// Optimize for arguments
+				if (arg[LENGTH] > 0) {
+					// Loop through handlers
+					while(handler) {
+						// Skip to next handler if this handler has already been handled
+						if (handler[HANDLED] === handled) {
+							handler = handler[NEXT];
+							continue;
+						}
+
+						// Update handled
+						handler[HANDLED] = handled;
+
+						// Apply handler callback
+						handler[CALLBACK].apply(handler[CONTEXT], arg);
+
+						// Update handler
 						handler = handler[NEXT];
-						continue;
 					}
-
-					// Update handled
-					handler[HANDLED] = handled;
-
-					// Apply handler callback
-					handler[CALLBACK].apply(handler[CONTEXT], arguments);
-
-					// Update handler
-					handler = handler[NEXT];
 				}
-				// Loop through handlers, optimize for no arguments
-				else while(handler) {
-					// Skip to next handler if this handler has already been handled
-					if (handler[HANDLED] === handled) {
+				// Optimize for no arguments
+				else {
+					// Loop through handlers
+					while(handler) {
+						// Skip to next handler if this handler has already been handled
+						if (handler[HANDLED] === handled) {
+							handler = handler[NEXT];
+							continue;
+						}
+
+						// Update handled
+						handler[HANDLED] = handled;
+
+						// Call handler callback
+						handler[CALLBACK].call(handler[CONTEXT]);
+
+						// Update handler
 						handler = handler[NEXT];
-						continue;
 					}
-
-					// Update handled
-					handler[HANDLED] = handled;
-
-					// Call handler callback
-					handler[CALLBACK].call(handler[CONTEXT]);
-
-					// Update handler
-					handler = handler[NEXT];
 				}
 			}
 			// No handlers
-			else if (arguments[LENGTH] > 0){
+			else if (arg[LENGTH] > 0){
 				// Create handlers and store with topic
 				HANDLERS[topic] = handlers = {};
 
 				// Remember arguments
-				handlers[MEMORY] = arguments;
+				handlers[MEMORY] = arg;
 			}
 
 			return this;
@@ -778,10 +795,10 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * The gadget trait provides life cycle management
- */
+/*jshint strict:false, smarttabs:true, newcap:false, forin:false, loopfunc:true */
+/*global define:true */
 define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
+	var UNDEFINED;
 	var NULL = null;
 	var FUNCTION = Function;
 	var RE_HUB = /^hub(?::(\w+))?\/(.+)/;
@@ -855,7 +872,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 
 		// Extend self
 		Compose.call(self, {
-			signal : function signal(signal, deferred) {
+			signal : function onSignal(signal, deferred) {
 				var _self = this;
 				var _callbacks;
 				var _j;
@@ -947,7 +964,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 			var subscription;
 
 			// Loop over subscriptions
-			while (subscription = subscriptions.shift()) {
+			while ((subscription = subscriptions.shift()) !== UNDEFINED) {
 				hub.unsubscribe(subscription[0], subscription[1], subscription[2]);
 			}
 
@@ -959,7 +976,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		},
 
 		/**
-		 * Calls hub.publish in self context
+			 * Calls hub.publish in self context
 		 * @returns self
 		 */
 		publish : function publish() {
@@ -1116,7 +1133,10 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false, forin:false, loopfunc:true */
+/*global define:true */
 define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
+	var UNDEFINED;
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
 	var OBJECT_PROTO = Object.prototype;
@@ -1160,15 +1180,12 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		var value;
 		var re = /(?:&|^)([^&=]*)=?([^&]*)/g;
 
-		switch (TOSTRING.call(arg)) {
-		case TOSTRING_OBJECT:
+		if (TOSTRING.call(arg) === TOSTRING_OBJECT) {
 			for (key in arg) {
 				self[key] = arg[key];
 			}
-			break;
-
-		default:
-			while (matches = re.exec(arg)) {
+		} else {
+			while ((matches = re.exec(arg)) !== UNDEFINED) {
 				key = matches[1];
 
 				if (key in self) {
@@ -1185,7 +1202,6 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 					self[key] = matches[2];
 				}
 			}
-			break;
 		}
 
 	}, {
@@ -1241,17 +1257,9 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	});
 
 	var Path = Compose(ARRAY_PROTO, function Path(arg) {
-		var self = this;
-
-		switch (TOSTRING.call(arg)) {
-			case TOSTRING_ARRAY:
-				PUSH.apply(self, arg);
-				break;
-
-			default:
-				PUSH.apply(self, SPLIT.call(arg, "/"));
-				break;
-		}
+		PUSH.apply(this, TOSTRING.call(arg) === TOSTRING_ARRAY
+			? arg
+			: SPLIT.call(arg, "/"));
 	}, {
 		toString : function toString() {
 			return this.join("/");
@@ -1536,13 +1544,12 @@ define('troopjs-core/dimensions/service',[ "../component/service" ], function Di
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * The widget trait provides common UI related logic
- */
+/*jshint strict:false, smarttabs:true, newcap:false */
+/*global define:true */
 define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred" ], function WidgetModule(Gadget, $, Deferred) {
+	var UNDEFINED;
 	var NULL = null;
 	var FUNCTION = Function;
-	var UNDEFINED = undefined;
 	var ARRAY_PROTO = Array.prototype;
 	var SHIFT = ARRAY_PROTO.shift;
 	var UNSHIFT = ARRAY_PROTO.unshift;
@@ -1654,7 +1661,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 		"sig/initialize" : function initialize(signal, deferred) {
 			var self = this;
 			var $element = self[$ELEMENT];
-			var $proxies = self[$PROXIES] = [];;
+			var $proxies = self[$PROXIES] = [];
 			var key = NULL;
 			var value;
 			var matches;
@@ -1705,7 +1712,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 			var $proxy;
 
 			// Loop over subscriptions
-			while ($proxy = $proxies.shift()) {
+			while (($proxy = $proxies.shift()) !== UNDEFINED) {
 				$element.unbind($proxy[0], $proxy[1]);
 			}
 
@@ -1868,6 +1875,8 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
 	var FUNCTION = Function;
 	var POP = Array.prototype.pop;
@@ -2127,8 +2136,10 @@ define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
-	var UNDEFINED = undefined;
+	var UNDEFINED;
 	var FALSE = false;
 	var NULL = null;
 	var SLICE = Array.prototype.slice;
@@ -2242,7 +2253,7 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 			} else if (RE_DIGIT.test(value)) {
 				argv[i] = Number(value);
 			} else if (RE_BOOLEAN.test(value)) {
-				argv[i] = RE_BOOLEAN_TRUE.test(value);;
+				argv[i] = RE_BOOLEAN_TRUE.test(value);
 			} else {
 				argv[i] = UNDEFINED;
 			}
@@ -2319,8 +2330,10 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	$.event.special["destroy"] = {
+	$.event.special.destroy = {
 		remove : function onDestroyRemove(handleObj) {
 			var self = this;
 
@@ -2336,13 +2349,14 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 
 /*!
  * TroopJS jQuery resize plug-in
+ *
+ * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
+ *
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * Trigger resize on all elements
- * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
- */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
 	var NULL = null;
 	var RESIZE = "resize";
@@ -2448,7 +2462,10 @@ define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
+	var UNDEFINED;
 	var DIMENSIONS = "dimensions";
 	var RESIZE = "resize." + DIMENSIONS;
 	var W = "w";
@@ -2531,8 +2548,8 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 			var re = /(w|h)(\d+)/g;
 			var matches;
 
-			while (matches = re.exec(namespace)) {
-				dimension[matches[1]].push(parseInt(matches[2]));
+			while ((matches = re.exec(namespace)) !== UNDEFINED) {
+				dimension[matches[1]].push(parseInt(matches[2], 10));
 			}
 
 			w.sort(reverse);
@@ -2562,13 +2579,15 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 });
 /*!
  * TroopJS jQuery hashchange plug-in
+ *
+ * Normalized hashchange event, ripped a _lot_ of code from
+ * https://github.com/millermedeiros/Hasher
+ *
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * Normalized hashchange event, ripped a _lot_ of code from
- * https://github.com/millermedeiros/Hasher
- */
+/*jshint strict:false, smarttabs:true, laxbreak:true, evil:true */
+/*global define:true */
 define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	var INTERVAL = "interval";
 	var HASHCHANGE = "hashchange";
@@ -2576,8 +2595,8 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	var RE_HASH = /#(.*)$/;
 	var RE_LOCAL = /\?/;
 
-	// hack based on this: http://webreflection.blogspot.com/2009/01/32-bytes-to-know-if-your-browser-is-ie.html
-	var _isIE = !+"\v1";
+	// hack based on this: http://code.google.com/p/closure-compiler/issues/detail?id=47#c13
+	var _isIE = /**@preserve@cc_on !@*/0;
 
 	function getHash(window) {
 		// parsed full URL instead of getting location.hash because Firefox
@@ -2737,8 +2756,10 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true, loopfunc:true */
+/*global define:true */
 define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
-	var UNDEFINED = undefined;
+	var UNDEFINED;
 	var ARRAY = Array;
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
@@ -2825,7 +2846,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 							.bind(DESTROY, onDestroy);
 
 						// Iterate woven (while RE_WEAVE matches)
-						while (matches = re.exec(weave)) {
+						while ((matches = re.exec(weave)) !== UNDEFINED) {
 							// Defer widget
 							$.Deferred(function deferredWidget(dfdWidget) {
 								var _j = j++; // store _j before we increment
@@ -2961,7 +2982,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 							.removeAttr(DATA_WOVEN);
 
 						// Somewhat safe(r) iterator over woven
-						while (widget = woven.shift()) {
+						while ((widget = woven.shift()) !== UNDEFINED) {
 							// Defer widget
 							$.Deferred(function deferredWidget(dfdWidget) {
 								// Add to unwoven and pending
@@ -3000,9 +3021,9 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false */
+/*global define:true */
 define('troopjs-requirejs/template',[],function TemplateModule() {
-	
-
 	var FACTORIES = {
 		"node" : function () {
 			// Using special require.nodeRequire, something added by r.js.
@@ -3023,14 +3044,16 @@ define('troopjs-requirejs/template',[],function TemplateModule() {
 			if (typeof XMLHttpRequest !== "undefined") {
 				XHR = XMLHttpRequest;
 			}
-			else find: {
+			else {
 				for (i = 0; i < 3; i++) {
 					progId = progIds[i];
 
 					try {
 						XHR = ActiveXObject(progId);
-						break find;
-					} catch (e) {}
+						break;
+					}
+					catch (e) {
+					}
 				}
 
 				throw new Error("XHR: XMLHttpRequest not available");
@@ -3155,7 +3178,7 @@ define('troopjs-requirejs/template',[],function TemplateModule() {
 
 		// Clean
 		.replace(RE_CLEAN, EMPTY);
-	};
+	}
 
 	var buildMap = {};
 	var fetchText = FACTORIES[ typeof process !== "undefined" && process.versions && !!process.versions.node

@@ -37,22 +37,7 @@ module.exports = function(grunt) {
 				"Mikael Karon <mikael@karon.se>; Licensed MIT\n */"
 		},
 		lint : {
-			files: [ "grunt.js" ]
-		},
-		jshint : {
-			options : {
-				curly : true,
-				eqeqeq : true,
-				immed : true,
-				latedef : true,
-				newcap : true,
-				noarg : true,
-				sub : true,
-				undef : true,
-				boss : true,
-				eqnull : true,
-				browser : true
-			}
+			files: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
 		},
 		requirejs : {
 			compile : {
@@ -60,12 +45,16 @@ module.exports = function(grunt) {
 					out : "dist/troopjs-bundle.js",
 					baseUrl : "src",
 					paths : {
-						"jquery" : "empty:",
 						"compose" : "lib/composejs/compose",
-						"config" : "empty:",
 						"troopjs-core" : "lib/troopjs-core/src",
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
 						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
+					},
+					map : {
+						"*" : {
+							"jquery" : "empty:",
+							"config" : "empty:"
+						}
 					},
 					include : Array.prototype.concat(files.core, files.jquery, files.requirejs),
 					optimize : "none"
