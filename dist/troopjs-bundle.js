@@ -1136,7 +1136,6 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
 /*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false, forin:false, loopfunc:true */
 /*global define:true */
 define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
-	var UNDEFINED;
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
 	var OBJECT_PROTO = Object.prototype;
@@ -1185,7 +1184,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 				self[key] = arg[key];
 			}
 		} else {
-			while ((matches = re.exec(arg)) !== UNDEFINED) {
+			while ((matches = re.exec(arg)) !== NULL) {
 				key = matches[1];
 
 				if (key in self) {
@@ -1268,15 +1267,19 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 
 	var URI = Compose(function URI(str) {
 		var self = this;
-		var matches = RE_URI.exec(str);
-		var i = matches.length;
 		var value;
+		var matches;
+		var i;
 
-		while (i--) {
-			value = matches[i];
+		if ((matches = RE_URI.exec(str)) !== NULL) {
+			i = matches.length;
 
-			if (value) {
-				self[KEYS[i]] = value;
+			while (i--) {
+				value = matches[i];
+
+				if (value) {
+					self[KEYS[i]] = value;
+				}
 			}
 		}
 
@@ -2465,7 +2468,7 @@ define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
 /*jshint strict:false, smarttabs:true */
 /*global define:true */
 define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
-	var UNDEFINED;
+	var NULL = null;
 	var DIMENSIONS = "dimensions";
 	var RESIZE = "resize." + DIMENSIONS;
 	var W = "w";
@@ -2548,7 +2551,7 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 			var re = /(w|h)(\d+)/g;
 			var matches;
 
-			while ((matches = re.exec(namespace)) !== UNDEFINED) {
+			while ((matches = re.exec(namespace)) !== NULL) {
 				dimension[matches[1]].push(parseInt(matches[2], 10));
 			}
 
@@ -2759,7 +2762,8 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 /*jshint strict:false, smarttabs:true, laxbreak:true, loopfunc:true */
 /*global define:true */
 define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
-	var UNDEFINED;
+    var UNDEFINED;
+	var NULL = null;
 	var ARRAY = Array;
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
@@ -2846,7 +2850,7 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 							.bind(DESTROY, onDestroy);
 
 						// Iterate woven (while RE_WEAVE matches)
-						while ((matches = re.exec(weave)) !== UNDEFINED) {
+						while ((matches = re.exec(weave)) !== NULL) {
 							// Defer widget
 							$.Deferred(function deferredWidget(dfdWidget) {
 								var _j = j++; // store _j before we increment
