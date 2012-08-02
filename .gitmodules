@@ -1,6 +1,3 @@
-[submodule "src/lib/requirejs"]
-	path = src/lib/requirejs
-	url = https://github.com/troopjs/requirejs.git
 [submodule "src/lib/troopjs-core"]
 	path = src/lib/troopjs-core
 	url = https://github.com/troopjs/troopjs-core.git
@@ -13,6 +10,3 @@
 [submodule "src/lib/composejs"]
 	path = src/lib/composejs
 	url = https://github.com/troopjs/compose.git
-[submodule "build/lib/rjs"]
-	path = build/lib/rjs
-	url = https://github.com/troopjs/r.js.git

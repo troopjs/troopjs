@@ -1,225 +1,4 @@
 
-/*!
- * TroopJS RequireJS template plug-in
- *
- * parts of code from require-cs 0.4.0+ Copyright (c) 2010-2011, The Dojo Foundation
- *
- * @license TroopJS 0.0.2 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-/**
- * This plugin provides a template loader and compiler.
- */
-define('template',[],function TemplateModule() {
-	
-
-	var FACTORIES = {
-		"node" : function () {
-			// Using special require.nodeRequire, something added by r.js.
-			var fs = require.nodeRequire("fs");
-
-			return function fetchText(path, callback) {
-				callback(fs.readFileSync(path, 'utf8'));
-			};
-		},
-
-		"browser" : function () {
-			// Would love to dump the ActiveX crap in here. Need IE 6 to die first.
-			var progIds = [ "Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
-			var progId;
-			var XHR;
-			var i;
-
-			if (typeof XMLHttpRequest !== "undefined") {
-				XHR = XMLHttpRequest;
-			}
-			else find: {
-				for (i = 0; i < 3; i++) {
-					progId = progIds[i];
-
-					try {
-						XHR = ActiveXObject(progId);
-						break find;
-					} catch (e) {}
-				}
-
-				throw new Error("XHR: XMLHttpRequest not available");
-			}
-
-			return function fetchText(url, callback) {
-				var xhr = new XHR();
-				xhr.open('GET', url, true);
-				xhr.onreadystatechange = function (evt) {
-					// Do not explicitly handle errors, those should be
-					// visible via console output in the browser.
-					if (xhr.readyState === 4) {
-						callback(xhr.responseText);
-					}
-				};
-				xhr.send(null);
-			};
-		},
-
-		"rhino" : function () {
-			var encoding = "utf-8";
-			var lineSeparator = java.lang.System.getProperty("line.separator");
-
-			// Why Java, why is this so awkward?
-			return function fetchText(path, callback) {
-				var file = new java.io.File(path);
-				var input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding));
-				var stringBuffer = new java.lang.StringBuffer();
-				var line;
-				var content = "";
-
-				try {
-					line = input.readLine();
-
-					// Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
-					// http://www.unicode.org/faq/utf_bom.html
-
-					// Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
-					// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
-					if (line && line.length() && line.charAt(0) === 0xfeff) {
-						// Eat the BOM, since we've already found the encoding on this file,
-						// and we plan to concatenating this buffer with others; the BOM should
-						// only appear at the top of a file.
-						line = line.substring(1);
-					}
-
-					stringBuffer.append(line);
-
-					while ((line = input.readLine()) !== null) {
-						stringBuffer.append(lineSeparator);
-						stringBuffer.append(line);
-					}
-					// Make sure we return a JavaScript string and not a Java string.
-					content = String(stringBuffer.toString()); // String
-				} finally {
-					input.close();
-				}
-
-				callback(content);
-			};
-		},
-
-		"borked" : function () {
-			return function fetchText() {
-				throw new Error("Environment unsupported.");
-			};
-		}
-	};
-
-	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
-	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
-	var RE_TOKENS = /<%(\d+)%>/gm;
-	var RE_REPLACE = /(["\n\t\r])/gm;
-	var RE_CLEAN = /o \+= "";| \+ ""/gm;
-	var EMPTY = "";
-	var REPLACE = {
-		"\"" : "\\\"",
-		"\n" : "\\n",
-		"\t" : "\\t",
-		"\r" : "\\r"
-	};
-
-	/**
-	 * Compiles template
-	 * 
-	 * @param body Template body
-	 * @returns {Function}
-	 */
-	function compile(body) {
-		var blocks = [];
-		var length = 0;
-
-		function blocksTokens(original, prefix, block) {
-			blocks[length] = prefix
-				? "\" +" + block + "+ \""
-				: "\";" + block + "o += \"";
-			return "<%" + String(length++) + "%>";
-		}
-
-		function tokensBlocks(original, token) {
-			return blocks[token];
-		}
-
-		function replace(original, token) {
-			return REPLACE[token] || token;
-		}
-
-		return ("function template(data) { var o = \""
-		// Sanitize body before we start templating
-		+ body.replace(RE_SANITIZE, "")
-
-		// Replace script blocks with tokens
-		.replace(RE_BLOCK, blocksTokens)
-
-		// Replace unwanted tokens
-		.replace(RE_REPLACE, replace)
-
-		// Replace tokens with script blocks
-		.replace(RE_TOKENS, tokensBlocks)
-
-		+ "\"; return o; }")
-
-		// Clean
-		.replace(RE_CLEAN, EMPTY);
-	};
-
-	var buildMap = {};
-	var fetchText = FACTORIES[ typeof process !== "undefined" && process.versions && !!process.versions.node
-		? "node"
-		: (typeof window !== "undefined" && window.navigator && window.document) || typeof importScripts !== "undefined"
-			? "browser"
-			: typeof Packages !== "undefined"
-				? "rhino"
-				: "borked" ]();
-
-	return {
-		load: function (name, parentRequire, load, config) {
-			var path = parentRequire.toUrl(name);
-
-			fetchText(path, function (text) {
-				try {
-					text = "define(function() { return " + compile(text, name, path, config.template) + "; })";
-				}
-				catch (err) {
-					err.message = "In " + path + ", " + err.message;
-					throw(err);
-				}
-
-				if (config.isBuild) {
-					buildMap[name] = text;
-				}
-
-				// IE with conditional comments on cannot handle the
-				// sourceURL trick, so skip it if enabled
-				/*@if (@_jscript) @else @*/
-				else {
-					text += "\n//@ sourceURL=" + path;
-				}
-				/*@end@*/
-
-				load.fromText(name, text);
-
-				// Give result to load. Need to wait until the module
-				// is fully parse, which will happen after this
-				// execution.
-				parentRequire([name], function (value) {
-					load(value);
-				});
-			});
-		},
-
-		write: function (pluginName, name, write) {
-			if (buildMap.hasOwnProperty(name)) {
-				write.asModule(pluginName + "!" + name, buildMap[name]);
-			}
-		}
-	};
-});
-
 /*
  * ComposeJS, object composition for JavaScript, featuring
 * JavaScript-style prototype inheritance and composition, multiple inheritance, 
@@ -513,13 +292,11 @@ define('compose',[], function(){
 
 /*!
  * TroopJS base component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * The base trait provides functionality for instance counting,
- * configuration and a default 'toString' method.
- */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-core/component/base',[ "compose", "config" ], function ComponentModule(Compose, config) {
 	var COUNT = 0;
 
@@ -546,20 +323,57 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 });
 
 /*!
- * TroopJS deferred component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/deferred component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
 	return $.Deferred;
 });
 /*!
- * TroopJS pubsub/topic module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/unique component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule(Component) {
-	var ARRAY = Array;
+define('troopjs-core/util/unique',[],function UniqueModule() {
+	return function unique(callback) {
+		var self = this;
+		var length = self.length;
+		var result = [];
+		var value;
+		var i;
+		var j;
+		var k;
+
+		add: for (i = j = k = 0; i < length; i++, j = 0) {
+			value = self[i];
+
+			while(j < k) {
+				if (callback.call(self, value, result[j++]) === true) {
+					continue add;
+				}
+			}
+
+			result[k++] = value;
+		}
+
+		return result;
+	};
+});
+/*!
+ * TroopJS pubsub/topic module
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
+define('troopjs-core/pubsub/topic',[ "../component/base", "../util/unique" ], function TopicModule(Component, unique) {
+	var TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARRAY = TOSTRING.call(Array.prototype);
+
+	function comparator (a, b) {
+		return a.publisherInstanceCount === b.publisherInstanceCount;
+	}
 
 	return Component.extend(function Topic(topic, publisher, parent) {
 		var self = this;
@@ -567,6 +381,7 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 		self.topic = topic;
 		self.publisher = publisher;
 		self.parent = parent;
+		self.publisherInstanceCount = publisher.instanceCount;
 	}, {
 		displayName : "core/pubsub/topic",
 
@@ -589,19 +404,22 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 			var item;
 			var stack = "";
 			var i;
+			var u;
 			var iMax;
 
 			while (current) {
-				if (current.constructor === ARRAY) {
-					for (i = 0, iMax = current.length; i < iMax; i++) {
-						item = current[i];
+				if (TOSTRING.call(current) === TOSTRING_ARRAY) {
+					u = unique.call(current, comparator);
 
-						current[i] = item.constructor === constructor
+					for (i = 0, iMax = u.length; i < iMax; i++) {
+						item = u[i];
+
+						u[i] = item.constructor === constructor
 							? item.trace()
-							: item;
+							: item.topic;
 					}
 
-					stack += current.join(",");
+					stack += u.join(",");
 					break;
 				}
 
@@ -618,16 +436,25 @@ define('troopjs-core/pubsub/topic',[ "../component/base" ], function TopicModule
 });
 /*!
  * TroopJS pubsub/hub module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], function HubModule(Compose, Component, Topic) {
-	var CONTEXT = {};
-	var HANDLERS = {};
+	var UNDEFINED;
+	var FUNCTION = Function;
 	var MEMORY = "memory";
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var LENGTH = "length";
 	var HEAD = "head";
 	var TAIL = "tail";
 	var NEXT = "next";
+	var HANDLED = "handled";
+	var ROOT = {};
+	var HANDLERS = {};
+	var COUNT = 0;
 
 	return Compose.create({
 		displayName: "core/pubsub/hub",
@@ -643,38 +470,40 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 */
 		subscribe : function subscribe(topic /*, context, memory, callback, callback, ..*/) {
 			var self = this;
-			var length = arguments.length;
-			var context = arguments[1];
-			var memory = arguments[2];
-			var callback = arguments[3];
+			var arg = arguments;
+			var length = arg[LENGTH];
+			var context = arg[1];
+			var memory = arg[2];
+			var callback = arg[3];
 			var offset;
 			var handlers;
 			var handler;
+			var handled;
 			var head;
 			var tail;
 
 			// No context or memory was supplied
-			if (context instanceof Function) {
+			if (context instanceof FUNCTION) {
 				callback = context;
 				memory = false;
-				context = CONTEXT;
+				context = ROOT;
 				offset = 1;
 			}
 			// Only memory was supplied
 			else if (context === true || context === false) {
 				callback = memory;
 				memory = context;
-				context = CONTEXT;
+				context = ROOT;
 				offset = 2;
 			}
 			// Context was supplied, but not memory
-			else if (memory instanceof Function) {
+			else if (memory instanceof FUNCTION) {
 				callback = memory;
 				memory = false;
 				offset = 2;
 			}
 			// All arguments were supplied
-			else if (callback instanceof Function){
+			else if (callback instanceof FUNCTION){
 				offset = 3;
 			}
 			// Something is wrong, return fast
@@ -690,11 +519,11 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 				// Create new handler
 				handler = {
-					"callback" : arguments[offset++],
+					"callback" : arg[offset++],
 					"context" : context
 				};
 
-				// Get last handler
+				// Get tail handler
 				tail = TAIL in handlers
 					// Have tail, update handlers.tail.next to point to handler
 					? handlers[TAIL][NEXT] = handler
@@ -703,14 +532,14 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 				// Iterate handlers from offset
 				while (offset < length) {
-					// Set last -> last.next -> handler
+					// Set tail -> tail.next -> handler
 					tail = tail[NEXT] = {
-						"callback" : arguments[offset++],
+						"callback" : arg[offset++],
 						"context" : context
 					};
 				}
 
-				// Set last handler
+				// Set tail handler
 				handlers[TAIL] = tail;
 
 				// Want memory and have memory
@@ -718,21 +547,48 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 					// Get memory
 					memory = handlers[MEMORY];
 
-					// Loop through handlers, optimize for arguments
-					if (memory.length > 0 ) while(handler) {
-						// Apply handler callback
-						handler.callback.apply(handler.context, memory);
+					// Get handled
+					handled = memory[HANDLED];
 
-						// Update handler
-						handler = handler[NEXT];
+					// Optimize for arguments
+					if (memory[LENGTH] > 0 ) {
+						// Loop through handlers
+						while(handler) {
+							// Skip to next handler if this handler has already been handled
+							if (handler[HANDLED] === handled) {
+								handler = handler[NEXT];
+								continue;
+							}
+
+							// Store handled
+							handler[HANDLED] = handled;
+
+							// Apply handler callback
+							handler[CALLBACK].apply(handler[CONTEXT], memory);
+
+							// Update handler
+							handler = handler[NEXT];
+						}
 					}
-					// Loop through handlers, optimize for no arguments
-					else while(handler) {
-						// Call handler callback
-						handler.callback.call(handler.context);
+					// Optimize for no arguments
+					else {
+						// Loop through handlers
+						while(handler) {
+							// Skip to next handler if this handler has already been handled
+							if (handler[HANDLED] === handled) {
+								handler = handler[NEXT];
+								continue;
+							}
 
-						// Update handler
-						handler = handler[NEXT];
+							// Store handled
+							handler[HANDLED] = handled;
+
+							// Call handler callback
+							handler[CALLBACK].call(handler[CONTEXT]);
+
+							// Update handler
+							handler = handler[NEXT];
+						}
 					}
 				}
 			}
@@ -740,15 +596,15 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 			else {
 				// Create head and tail
 				head = tail = {
-					"callback" : arguments[offset++],
+					"callback" : arg[offset++],
 					"context" : context
 				};
 
 				// Iterate handlers from offset
 				while (offset < length) {
-					// Set last -> last.next -> handler
+					// Set tail -> tail.next -> handler
 					tail = tail[NEXT] = {
-						"callback" : arguments[offset++],
+						"callback" : arg[offset++],
 						"context" : context
 					};
 				}
@@ -773,9 +629,11 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		unsubscribe : function unsubscribe(topic /*, context, callback, callback, ..*/) {
-			var length = arguments.length;
-			var context = arguments[1];
-			var callback = arguments[2];
+			var self = this;
+			var arg = arguments;
+			var length = arg[LENGTH];
+			var context = arg[1];
+			var callback = arg[2];
 			var offset;
 			var handlers;
 			var handler;
@@ -783,13 +641,13 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 			var previous = null;
 
 			// No context or memory was supplied
-			if (context instanceof Function) {
+			if (context instanceof FUNCTION) {
 				callback = context;
-				context = CONTEXT;
+				context = ROOT;
 				offset = 1;
 			}
 			// All arguments were supplied
-			else if (callback instanceof Function){
+			else if (callback instanceof FUNCTION){
 				offset = 2;
 			}
 			// Something is wrong, return fast
@@ -797,60 +655,58 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				return self;
 			}
 
-			unsubscribe: {
-				// Fast fail if we don't have subscribers
-				if (!topic in HANDLERS) {
-					break unsubscribe;
-				}
+			// Fast fail if we don't have subscribers
+			if (!(topic in HANDLERS)) {
+				return self;
+			}
 
-				// Get handlers
-				handlers = HANDLERS[topic];
+			// Get handlers
+			handlers = HANDLERS[topic];
 
-				// Get head
-				head = handlers[HEAD];
+			// Get head
+			head = handlers[HEAD];
 
-				// Loop over remaining arguments
-				while (offset < length) {
-					// Store callback
-					callback = arguments[offset++];
+			// Loop over remaining arguments
+			while (offset < length) {
+				// Store callback
+				callback = arg[offset++];
 
-					// Get first handler
-					handler = previous = head;
+				// Get first handler
+				handler = previous = head;
 
-					// Loop through handlers
-					do {
-						// Check if this handler should be unlinked
-						if (handler.callback === callback && handler.context === context) {
-							// Is this the first handler
-							if (handler === head) {
-								// Re-link head and previous, then
-								// continue
-								head = previous = handler[NEXT];
-								continue;
-							}
-
-							// Unlink current handler, then continue
-							previous[NEXT] = handler[NEXT];
+				// Loop through handlers
+				do {
+					// Check if this handler should be unlinked
+					if (handler[CALLBACK] === callback && handler[CONTEXT] === context) {
+						// Is this the first handler
+						if (handler === head) {
+							// Re-link head and previous, then
+							// continue
+							head = previous = handler[NEXT];
 							continue;
 						}
 
-						// Update previous pointer
-						previous = handler;
-					} while (handler = handler[NEXT]);
-				}
+						// Unlink current handler, then continue
+						previous[NEXT] = handler[NEXT];
+						continue;
+					}
 
-				// Update head and tail
-				if (head && previous) {
-					handlers[HEAD] = head;
-					handlers[TAIL] = previous;
-				}
-				else {
-					delete handlers[HEAD];
-					delete handlers[TAIL];
-				}
+					// Update previous pointer
+					previous = handler;
+				} while ((handler = handler[NEXT]) !== UNDEFINED);
 			}
 
-			return this;
+			// Update head and tail
+			if (head && previous) {
+				handlers[HEAD] = head;
+				handlers[TAIL] = previous;
+			}
+			else {
+				delete handlers[HEAD];
+				delete handlers[TAIL];
+			}
+
+			return self;
 		},
 
 		/**
@@ -861,8 +717,12 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 		 * @returns self
 		 */
 		publish : function publish(topic /*, arg, arg, ..*/) {
+			var arg = arguments;
 			var handlers;
 			var handler;
+
+			// Store handled
+			var handled = arg[HANDLED] = COUNT++;
 
 			// Have handlers
 			if (topic in HANDLERS) {
@@ -870,35 +730,59 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 				handlers = HANDLERS[topic];
 
 				// Remember arguments
-				handlers[MEMORY] = arguments;
+				handlers[MEMORY] = arg;
 
 				// Get first handler
 				handler = handlers[HEAD];
 
-				// Loop through handlers, optimize for arguments
-				if (arguments.length > 0) while(handler) {
-					// Apply handler callback
-					handler.callback.apply(handler.context, arguments);
+				// Optimize for arguments
+				if (arg[LENGTH] > 0) {
+					// Loop through handlers
+					while(handler) {
+						// Skip to next handler if this handler has already been handled
+						if (handler[HANDLED] === handled) {
+							handler = handler[NEXT];
+							continue;
+						}
 
-					// Update handler
-					handler = handler[NEXT];
+						// Update handled
+						handler[HANDLED] = handled;
+
+						// Apply handler callback
+						handler[CALLBACK].apply(handler[CONTEXT], arg);
+
+						// Update handler
+						handler = handler[NEXT];
+					}
 				}
-				// Loop through handlers, optimize for no arguments
-				else while(handler) {
-					// Call handler callback
-					handler.callback.call(handler.context);
+				// Optimize for no arguments
+				else {
+					// Loop through handlers
+					while(handler) {
+						// Skip to next handler if this handler has already been handled
+						if (handler[HANDLED] === handled) {
+							handler = handler[NEXT];
+							continue;
+						}
 
-					// Update handler
-					handler = handler[NEXT];
+						// Update handled
+						handler[HANDLED] = handled;
+
+						// Call handler callback
+						handler[CALLBACK].call(handler[CONTEXT]);
+
+						// Update handler
+						handler = handler[NEXT];
+					}
 				}
 			}
 			// No handlers
-			else if (arguments.length > 0){
+			else if (arg[LENGTH] > 0){
 				// Create handlers and store with topic
 				HANDLERS[topic] = handlers = {};
 
 				// Remember arguments
-				handlers[MEMORY] = arguments;
+				handlers[MEMORY] = arg;
 			}
 
 			return this;
@@ -908,13 +792,13 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
 
 /*!
  * TroopJS gadget component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * The gadget trait provides life cycle management
- */
+/*jshint strict:false, smarttabs:true, newcap:false, forin:false, loopfunc:true */
+/*global define:true */
 define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
+	var UNDEFINED;
 	var NULL = null;
 	var FUNCTION = Function;
 	var RE_HUB = /^hub(?::(\w+))?\/(.+)/;
@@ -941,7 +825,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		var key = null;
 
 		// Iterate base chain (while there's a prototype)
-		for (i = bases.length; i >= 0; i--) {
+		for (i = bases.length - 1; i >= 0; i--) {
 			base = bases[i];
 
 			add: for (key in base) {
@@ -988,7 +872,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 
 		// Extend self
 		Compose.call(self, {
-			signal : function signal(signal, deferred) {
+			signal : function onSignal(signal, deferred) {
 				var _self = this;
 				var _callbacks;
 				var _j;
@@ -1080,7 +964,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 			var subscription;
 
 			// Loop over subscriptions
-			while (subscription = subscriptions.shift()) {
+			while ((subscription = subscriptions.shift()) !== UNDEFINED) {
 				hub.unsubscribe(subscription[0], subscription[1], subscription[2]);
 			}
 
@@ -1092,7 +976,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		},
 
 		/**
-		 * Calls hub.publish in self context
+			 * Calls hub.publish in self context
 		 * @returns self
 		 */
 		publish : function publish() {
@@ -1130,18 +1014,18 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		start : function start(deferred) {
 			var self = this;
 
-			Deferred(function deferredStart(dfdStart) {
-				Deferred(function deferredInitialize(dfdInitialize) {
-					self.signal("initialize", dfdInitialize);
-				})
-				.done(function doneInitialize() {
-					self.signal("start", dfdStart);
-				})
-				.fail(dfdStart.reject);
+			deferred = deferred || Deferred();
 
-				if (deferred) {
-					dfdStart.then(deferred.resolve, deferred.reject);
-				}
+			Deferred(function deferredStart(dfdStart) {
+				dfdStart.then(deferred.resolve, deferred.reject, deferred.notify);
+
+				Deferred(function deferredInitialize(dfdInitialize) {
+					dfdInitialize.then(function doneInitialize() {
+						self.signal("start", dfdStart);
+					}, dfdStart.reject, dfdStart.notify);
+
+					self.signal("initialize", dfdInitialize);
+				});
 			});
 
 			return self;
@@ -1150,18 +1034,18 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 		stop : function stop(deferred) {
 			var self = this;
 
-			Deferred(function deferredFinalize(dfdFinalize) {
-				Deferred(function deferredStop(dfdStop) {
-					self.signal("stop", dfdStop);
-				})
-				.done(function doneStop() {
-					self.signal("finalize", dfdFinalize);
-				})
-				.fail(dfdFinalize.reject);
+			deferred = deferred || Deferred();
 
-				if (deferred) {
-					dfdFinalize.then(deferred.resolve, deferred.reject);
-				}
+			Deferred(function deferredFinalize(dfdFinalize) {
+				dfdFinalize.then(deferred.resolve, deferred.reject, deferred.notify);
+
+				Deferred(function deferredStop(dfdStop) {
+					dfdStop.then(function doneStop() {
+						self.signal("finalize", dfdFinalize);
+					}, dfdFinalize.reject, dfdFinalize.notify);
+
+					self.signal("stop", dfdStop);
+				});
 			});
 
 			return self;
@@ -1171,7 +1055,7 @@ define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred"
 
 /*!
  * TroopJS service component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
@@ -1181,7 +1065,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 });
 /*!
  * TroopJS util/merge module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/merge',[],function MergeModule() {
@@ -1223,7 +1107,7 @@ define('troopjs-core/util/merge',[],function MergeModule() {
 });
 /*!
  * TroopJS remote/ajax module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Service, Topic, $, merge) {
@@ -1237,7 +1121,7 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
 					"x-request-id": new Date().getTime(),
 					"x-components": topic instanceof Topic ? topic.trace() : topic
 				}
-			}, settings)).then(deferred.resolve, deferred.reject);
+			}, settings)).then(deferred.resolve, deferred.reject, deferred.notify);
 		}
 	});
 });
@@ -1246,14 +1130,23 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
  * 
  * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  * 
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false, forin:false, loopfunc:true */
+/*global define:true */
 define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
+	var UNDEFINED;
 	var NULL = null;
-	var FUNCTION = Function;
-	var ARRAY = Array;
-	var ARRAY_PROTO = ARRAY.prototype;
+	var ARRAY_PROTO = Array.prototype;
+	var OBJECT_PROTO = Object.prototype;
+	var PUSH = ARRAY_PROTO.push;
+	var SPLIT = String.prototype.split;
+	var TOSTRING = OBJECT_PROTO.toString;
+	var TOSTRING_OBJECT = TOSTRING.call(OBJECT_PROTO);
+	var TOSTRING_ARRAY = TOSTRING.call(ARRAY_PROTO);
+	var TOSTRING_STRING = TOSTRING.call(String.prototype);
+	var TOSTRING_FUNCTION = TOSTRING.call(Function.prototype);
 	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:([^?#]*)(?:\?([^#]*))?(?:#(.*))?)/;
 
 	var PROTOCOL = "protocol";
@@ -1280,45 +1173,49 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	// Prevent Compose from creating constructor property
 	Compose.secure = true;
 
-	var Query = Compose(function Query(str) {
-		if (!str || str.length === 0) {
-			return;
-		}
-
+	var Query = Compose(function Query(arg) {
 		var self = this;
 		var matches;
-		var key;
+		var key = NULL;
 		var value;
 		var re = /(?:&|^)([^&=]*)=?([^&]*)/g;
 
-		while (matches = re.exec(str)) {
-			key = matches[1];
+		if (TOSTRING.call(arg) === TOSTRING_OBJECT) {
+			for (key in arg) {
+				self[key] = arg[key];
+			}
+		} else {
+			while ((matches = re.exec(arg)) !== UNDEFINED) {
+				key = matches[1];
 
-			if (key in self) {
-				value = self[key];
+				if (key in self) {
+					value = self[key];
 
-				if (value instanceof ARRAY) {
-					value[value.length] = matches[2];
+					if (TOSTRING.call(value) === TOSTRING_ARRAY) {
+						value[value.length] = matches[2];
+					}
+					else {
+						self[key] = [ value, matches[2] ];
+					}
 				}
 				else {
-					self[key] = [ value, matches[2] ];
+					self[key] = matches[2];
 				}
 			}
-			else {
-				self[key] = matches[2];
-			}
 		}
+
 	}, {
 		toString : function toString() {
 			var self = this;
 			var key = NULL;
 			var value = NULL;
+			var values;
 			var query = [];
 			var i = 0;
 			var j;
 
 			for (key in self) {
-				if (self[key] instanceof FUNCTION) {
+				if (TOSTRING.call(self[key]) === TOSTRING_FUNCTION) {
 					continue;
 				}
 
@@ -1331,21 +1228,27 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 				key = query[i];
 				value = self[key];
 
-				if (value instanceof ARRAY) {
-					value = value.slice(0);
+				if (TOSTRING.call(value) === TOSTRING_ARRAY) {
+					values = value.slice(0);
 
-					value.sort();
+					values.sort();
 
-					j = value.length;
+					j = values.length;
 
 					while (j--) {
-						value[j] = key + "=" + value[j];
+						value = values[j];
+
+						values[j] = value === ""
+							? key
+							: key + "=" + value;
 					}
 
-					query[i] = value.join("&");
+					query[i] = values.join("&");
 				}
 				else {
-					query[i] = key + "=" + value;
+					query[i] = value === ""
+						? key
+						: key + "=" + value;
 				}
 			}
 
@@ -1353,18 +1256,10 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 		}
 	});
 
-	var Path = Compose(ARRAY_PROTO, function Path(str) {
-		if (!str || str.length === 0) {
-			return;
-		}
-
-		var self = this;
-		var matches;
-		var re = /(?:\/|^)([^\/]*)/g;
-
-		while (matches = re.exec(str)) {
-			self.push(matches[1]);
-		}
+	var Path = Compose(ARRAY_PROTO, function Path(arg) {
+		PUSH.apply(this, TOSTRING.call(arg) === TOSTRING_ARRAY
+			? arg
+			: SPLIT.call(arg, "/"));
 	}, {
 		toString : function toString() {
 			return this.join("/");
@@ -1400,19 +1295,23 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 			var key;
 
 			if (!(PROTOCOL in self)) {
-				uri.splice(0, 3);
+				uri[0] = uri[1] = "";
+			}
+
+			if (!(AUTHORITY in self)) {
+				uri[2] = "";
 			}
 
 			if (!(PATH in self)) {
-				uri.splice(0, 1);
-			}
-
-			if (!(ANCHOR in self)) {
-				uri.splice(-2, 2);
+				uri[3] = "";
 			}
 
 			if (!(QUERY in self)) {
-				uri.splice(-2, 2);
+				uri[4] = uri[5] = "";
+			}
+
+			if (!(ANCHOR in self)) {
+				uri[6] = uri[7] = "";
 			}
 
 			i = uri.length;
@@ -1432,11 +1331,14 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
 	// Restore Compose.secure setting
 	Compose.secure = SECURE;
 
+	URI.Path = Path;
+	URI.Query = Query;
+
 	return URI;
 });
 /*!
  * TroopJS route/router module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], function RouterModule(Service, URI) {
@@ -1508,7 +1410,7 @@ define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], fu
 });
 /*!
  * TroopJS store/base module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function StoreModule(Compose, Gadget) {
@@ -1560,7 +1462,7 @@ define('troopjs-core/store/base',[ "compose", "../component/gadget" ], function 
 });
 /*!
  * TroopJS store/local module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalModule(Compose, Store) {
@@ -1573,7 +1475,7 @@ define('troopjs-core/store/local',[ "compose", "./base" ], function StoreLocalMo
 });
 /*!
  * TroopJS store/session module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessionModule(Compose, Store) {
@@ -1586,21 +1488,71 @@ define('troopjs-core/store/session',[ "compose", "./base" ], function StoreSessi
 });
 
 /*!
- * TroopJS widget component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS dimensions/service module
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-/**
- * The widget trait provides common UI related logic
+define('troopjs-core/dimensions/service',[ "../component/service" ], function DimensionsServiceModule(Service) {
+	var DIMENSIONS = "dimensions";
+	var $ELEMENT = "$element";
+
+	function onDimensions($event, w, h) {
+		$event.data.publish(DIMENSIONS, w, h);
+	}
+
+	return Service.extend(function DimensionsService($element, dimensions) {
+		var self = this;
+
+		self[$ELEMENT] = $element;
+		self[DIMENSIONS] = dimensions;
+	}, {
+		displayName : "core/dimensions/service",
+
+		"sig/initialize" : function initialize(signal, deferred) {
+			var self = this;
+
+			self[$ELEMENT].bind(DIMENSIONS + "." + self[DIMENSIONS], self, onDimensions);
+
+			if (deferred) {
+				deferred.resolve();
+			}
+		},
+
+		"sig/start" : function start(signal, deferred) {
+			var self = this;
+
+			self[$ELEMENT].trigger("resize." + DIMENSIONS);
+
+			if (deferred) {
+				deferred.resolve();
+			}
+		},
+
+		"sig/finalize" : function finalize(signal, deferred) {
+			var self = this;
+
+			self[$ELEMENT].unbind(DIMENSIONS + "." + self[DIMENSIONS], onDimensions);
+
+			if (deferred) {
+				deferred.resolve();
+			}
+		}
+	});
+});
+/*!
+ * TroopJS widget component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, newcap:false */
+/*global define:true */
 define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred" ], function WidgetModule(Gadget, $, Deferred) {
+	var UNDEFINED;
 	var NULL = null;
 	var FUNCTION = Function;
-	var UNDEFINED = undefined;
 	var ARRAY_PROTO = Array.prototype;
 	var SHIFT = ARRAY_PROTO.shift;
 	var UNSHIFT = ARRAY_PROTO.unshift;
-	var POP = ARRAY_PROTO.pop;
 	var $TRIGGER = $.fn.trigger;
 	var $ONE = $.fn.one;
 	var $BIND = $.fn.bind;
@@ -1653,40 +1605,37 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 			var $element = self[$ELEMENT];
 			var arg = arguments;
 
-			// Get contents from first argument
+			// Shift contents from first argument
 			var contents = SHIFT.call(arg);
 
-			// Get arg length
-			var argc = arg.length;
+			// Assume deferred is the last argument
+			var deferred = arg[arg.length - 1];
 
-			// Check if the last argument looks like a deferred, and in that case set it
-			var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
-				? POP.call(arg)
-				: UNDEFINED;
-
-			if (deferred){
-				deferred.notifyWith(this, ['beforeRender']);
-			}
-
-			// Call render with contents (or result of contents if it's a function)
-			$fn.call($element, contents instanceof FUNCTION ? contents.apply(self, arg) : contents);
-
-			if (deferred){
-				deferred.notifyWith(this, ['afterRender']);
+			// If deferred not a true Deferred, make it so
+			if (deferred === UNDEFINED || !(deferred[THEN] instanceof FUNCTION)) {
+				deferred = Deferred();
 			}
 
 			// Defer render (as weaving it may need to load async)
 			Deferred(function deferredRender(dfdRender) {
 
-				// After render is complete, trigger REFRESH with woven components
-				dfdRender.done(function renderDone() {
-					$element.trigger(REFRESH, arguments);
-				});
-
 				// Link deferred
-				if (deferred) {
-					dfdRender.then(deferred.resolve, deferred.reject, deferred.notify);
-				}
+				dfdRender.then(function renderDone() {
+					// Trigger refresh
+					$element.trigger(REFRESH, arguments);
+
+					// Resolve outer deferred
+					deferred.resolve();
+				}, deferred.reject, deferred.notify);
+
+				// Notify that we're about to render
+				dfdRender.notify("beforeRender", self);
+
+				// Call render with contents (or result of contents if it's a function)
+				$fn.call($element, contents instanceof FUNCTION ? contents.apply(self, arg) : contents);
+
+				// Notify that we're rendered
+				dfdRender.notify("afterRender", self);
 
 				// Weave element
 				$element.find(ATTR_WEAVE).weave(dfdRender);
@@ -1712,7 +1661,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 		"sig/initialize" : function initialize(signal, deferred) {
 			var self = this;
 			var $element = self[$ELEMENT];
-			var $proxies = self[$PROXIES] = [];;
+			var $proxies = self[$PROXIES] = [];
 			var key = NULL;
 			var value;
 			var matches;
@@ -1763,7 +1712,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 			var $proxy;
 
 			// Loop over subscriptions
-			while ($proxy = $proxies.shift()) {
+			while (($proxy = $proxies.shift()) !== UNDEFINED) {
 				$element.unbind($proxy[0], $proxy[1]);
 			}
 
@@ -1789,12 +1738,13 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 
 		/**
 		 * Unweaves all children of $element _and_ self
+		 * @param deferred (Deferred) Deferred (optional)
 		 * @returns self
 		 */
-		unweave : function unweave() {
+		unweave : function unweave(deferred) {
 			var self = this;
 
-			self[$ELEMENT].find(ATTR_WOVEN).andSelf().unweave();
+			self[$ELEMENT].find(ATTR_WOVEN).andSelf().unweave(deferred);
 
 			return this;
 		},
@@ -1885,8 +1835,14 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 		empty : function empty(deferred) {
 			var self = this;
 
+			// Ensure we have deferred
+			deferred = deferred || Deferred();
+
 			// Create deferred for emptying
-			Deferred(function emptyDeferred(dfd) {
+			Deferred(function emptyDeferred(dfdEmpty) {
+				// Link deferred
+				dfdEmpty.then(deferred.resolve, deferred.reject, deferred.notify);
+
 				// Get element
 				var $element = self[$ELEMENT];
 
@@ -1905,13 +1861,8 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 					$contents.remove();
 
 					// Resolve deferred
-					dfd.resolve(contents);
+					dfdEmpty.resolve(contents);
 				}, 0);
-
-				// If a deferred was passed, add resolve/reject
-				if (deferred) {
-					dfd.then(deferred.resolve, deferred.reject);
-				}
 			});
 
 			return self;
@@ -1921,15 +1872,14 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
 
 /*!
  * TroopJS widget/placeholder component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
-	var UNDEFINED = undefined;
 	var FUNCTION = Function;
-	var ARRAY = Array;
-	var ARRAY_PROTO = ARRAY.prototype;
-	var POP = ARRAY_PROTO.pop;
+	var POP = Array.prototype.pop;
 	var HOLDING = "holding";
 	var DATA_HOLDING = "data-" + HOLDING;
 	var $ELEMENT = "$element";
@@ -1941,12 +1891,12 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 		var arg = arguments;
 		var argc = arg.length;
 
-		// Check if the last argument looks like a deferred, and in that case set it
+		// If deferred not a true Deferred, make it so
 		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
 			? POP.call(arg)
-			: UNDEFINED;
+			: Deferred();
 
-		Deferred(function deferredRelease(dfd) {
+		Deferred(function deferredRelease(dfdRelease) {
 			var i;
 			var iMax;
 			var name;
@@ -1954,17 +1904,19 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 
 			// We're already holding something, resolve with cache
 			if (HOLDING in self) {
-				dfd.resolve(self[HOLDING]);
+				dfdRelease
+					.done(deferred.resolve)
+					.resolve(self[HOLDING]);
 			}
 			else {
 				// Add done handler to release
-				dfd.done(function doneRelease(widget) {
+				dfdRelease.then([ function doneRelease(widget) {
 					// Set DATA_HOLDING attribute
 					self[$ELEMENT].attr(DATA_HOLDING, widget);
 
 					// Store widget
 					self[HOLDING] = widget;
-				});
+				}, deferred.resolve ], deferred.reject, deferred.notify);
 
 				// Get widget name
 				name = self[TARGET];
@@ -1979,23 +1931,21 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 
 				// Require widget by name
 				require([ name ], function required(Widget) {
-					// Resolve with constructed, bound and initialized instance
-					var widget = Widget
-						.apply(Widget, argv);
+					// Defer require
+					Deferred(function deferredStart(dfdRequire) {
+						// Constructed and initialized instance
+						var widget = Widget
+							.apply(Widget, argv);
 
-					Deferred(function deferredStart(dfdStart) {
-						widget.start(dfdStart);
-					})
-					.done(function doneStarted() {
-						dfd.resolve(widget);
-					})
-					.fail(dfd.reject);
+						// Link deferred
+						dfdRequire.then(function doneStart() {
+							dfdRelease.resolve(widget);
+						}, dfdRelease.reject, dfdRelease.notify);
+
+						// Start
+						widget.start(dfdRequire);
+					});
 				});
-			}
-
-			// Link deferred
-			if (deferred) {
-				dfd.then(deferred.resolve, deferred.reject);
 			}
 		});
 
@@ -2005,8 +1955,13 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 	function hold(deferred) {
 		var self = this;
 
+		deferred = deferred || Deferred();
+
 		Deferred(function deferredHold(dfdHold) {
 			var widget;
+
+			// Link deferred
+			dfdHold.then(deferred.resolve, deferred.reject, deferred.notify);
 
 			// Check that we are holding
 			if (HOLDING in self) {
@@ -2019,19 +1974,11 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 				// Remove DATA_HOLDING attribute
 				self[$ELEMENT].removeAttr(DATA_HOLDING);
 
-				// Deferred stop
-				Deferred(function deferredStop(dfdStop) {
-					widget.stop(dfdStop);
-				})
-				.then(dfdHold.resolve, dfdHold.reject);
+				// Stop
+				widget.stop(dfdHold);
 			}
 			else {
 				dfdHold.resolve();
-			}
-
-			// Link deferred
-			if (deferred) {
-				dfdHold.then(deferred.resolve, deferred.reject);
 			}
 		});
 
@@ -2050,7 +1997,7 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/defer
 });
 /*!
  * TroopJS route/placeholder module
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function RoutePlaceholderModule(Placeholder) {
@@ -2077,7 +2024,7 @@ define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function Ro
 });
 /*!
  * TroopJS widget/application component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/widget/application',[ "../component/widget", "../util/deferred" ], function ApplicationModule(Widget, Deferred) {
@@ -2085,33 +2032,62 @@ define('troopjs-core/widget/application',[ "../component/widget", "../util/defer
 		displayName : "core/widget/application",
 
 		"sig/start" : function start(signal, deferred) {
-			var self = this;
-
-			self.weave(deferred);
-
-			return self;
+			this.weave(deferred);
 		},
 
 		"sig/stop" : function stop(signal, deferred) {
-			var self = this;
-
-			self.unweave(deferred);
-
-			return self;
+			this.unweave(deferred);
 		}
 	});
 });
 /*!
- * TroopJS each component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS widget/sandbox component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-core/widget/sandbox', [ "../component/widget", "jquery" ], function SandboxModule(Widget, $) {
+	var $ELEMENT = "$element";
+	var _$ELEMENT = "_" + $ELEMENT;
+
+	return Widget.extend({
+		"sig/initialize" : function onInitialize(signal, deferred) {
+			var self = this;
+
+			// Store ref to current $element
+			var $element = self[_$ELEMENT] = self[$ELEMENT];
+
+			// Get the contentWindow
+			var contentWindow = $element.get(0).contentWindow;
+
+			// Set $element to iframe document element
+			self[$ELEMENT] = $(contentWindow.ownerDocument || contentWindow.document);
+
+			if (deferred) {
+				deferred.resolve();
+			}
+		},
+
+		"sig/start" : function onStart(signal, deferred) {
+			this.weave(deferred);
+		},
+
+		"sig/stop" : function onStop(signal, deferred) {
+			this.unweave(deferred);
+		}
+	});
+});
+
+/*!
+ * TroopJS util/each component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/each',[ "jquery" ], function EachModule($) {
 	return $.each;
 });
 /*!
- * TroopJS grep component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/grep component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/grep',[ "jquery" ], function GrepModule($) {
@@ -2119,7 +2095,7 @@ define('troopjs-core/util/grep',[ "jquery" ], function GrepModule($) {
 });
 /*!
  * TroopJS util/tr component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/tr',[],function TrModule() {
@@ -2148,8 +2124,8 @@ define('troopjs-core/util/tr',[],function TrModule() {
 	};
 });
 /*!
- * TroopJS when component
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS util/when component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
 define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
@@ -2157,23 +2133,25 @@ define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
 });
 /*!
  * TroopJS jQuery action plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true */
+/*global define:true */
 define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
-	var UNDEFINED = undefined;
+	var UNDEFINED;
 	var FALSE = false;
 	var NULL = null;
 	var SLICE = Array.prototype.slice;
 	var ACTION = "action";
-	var TRUE = "true";
 	var ORIGINALEVENT = "originalEvent";
 	var RE_ACTION = /^([\w\d\s_\-\/]+)(?:\.([\w\.]+))?(?:\((.*)\))?$/;
 	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_DOT = /\.+/;
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
-	var RE_BOOLEAN = /^false|true$/i;
+	var RE_BOOLEAN = /^(?:false|true)$/i;
+	var RE_BOOLEAN_TRUE = /^true$/i;
 
 	/**
 	 * Namespace iterator
@@ -2275,7 +2253,7 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 			} else if (RE_DIGIT.test(value)) {
 				argv[i] = Number(value);
 			} else if (RE_BOOLEAN.test(value)) {
-				argv[i] = value === TRUE;
+				argv[i] = RE_BOOLEAN_TRUE.test(value);
 			} else {
 				argv[i] = UNDEFINED;
 			}
@@ -2349,11 +2327,13 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 
 /*!
  * TroopJS jQuery destroy plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	$.event.special["destroy"] = {
+	$.event.special.destroy = {
 		remove : function onDestroyRemove(handleObj) {
 			var self = this;
 
@@ -2368,12 +2348,124 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 });
 
 /*!
- * TroopJS jQuery dimensions plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * TroopJS jQuery resize plug-in
+ *
+ * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
+ *
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
+define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
+	var NULL = null;
+	var RESIZE = "resize";
+	var W = "w";
+	var H = "h";
+	var $ELEMENTS = $([]);
+	var INTERVAL = NULL;
+
+	/**
+	 * Iterator
+	 * @param index
+	 * @param self
+	 */
+	function iterator(index, self) {
+		// Get data
+		var $data = $.data(self);
+
+		// Get reference to $self
+		var $self = $(self);
+
+		// Get previous width and height
+		var w = $self.width();
+		var h = $self.height();
+
+		// Check if width or height has changed since last check
+		if (w !== $data[W] || h !== $data[H]) {
+			$self.trigger(RESIZE, [$data[W] = w, $data[H] = h]);
+		}
+	}
+
+	/**
+	 * Internal interval
+	 */
+	function interval() {
+		$ELEMENTS.each(iterator);
+	}
+
+	$.event.special[RESIZE] = {
+		/**
+		 * @param data (Anything) Whatever eventData (optional) was passed in
+		 *        when binding the event.
+		 * @param namespaces (Array) An array of namespaces specified when
+		 *        binding the event.
+		 * @param eventHandle (Function) The actual function that will be bound
+		 *        to the browser’s native event (this is used internally for the
+		 *        beforeunload event, you’ll never use it).
+		 */
+		setup : function hashChangeSetup(data, namespaces, eventHandle) {
+			var self = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(self)) {
+				return false;
+			}
+
+			// Store data
+			var $data = $.data(self, RESIZE, {});
+
+			// Get reference to $self
+			var $self = $(self);
+
+			// Initialize data
+			$data[W] = $self.width();
+			$data[H] = $self.height();
+
+			// Add to tracked collection
+			$ELEMENTS = $ELEMENTS.add(self);
+
+			// If this is the first element, start interval
+			if($ELEMENTS.length === 1) {
+				INTERVAL = setInterval(interval, 100);
+			}
+		},
+
+		/**
+		 * @param namespaces (Array) An array of namespaces specified when
+		 *        binding the event.
+		 */
+		teardown : function onDimensionsTeardown(namespaces) {
+			var self = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(self)) {
+				return false;
+			}
+
+			// Remove data
+			$.removeData(self, RESIZE);
+
+			// Remove from tracked collection
+			$ELEMENTS = $ELEMENTS.not(self);
+
+			// If this is the last element, stop interval
+			if($ELEMENTS.length === 0 && INTERVAL !== NULL) {
+				clearInterval(INTERVAL);
+			}
+		}
+	};
+});
+
+/*!
+ * TroopJS jQuery dimensions plug-in
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+/*jshint strict:false, smarttabs:true */
+/*global define:true */
 define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
-	var RE = /(w|h)(\d*)/g;
+	var UNDEFINED;
 	var DIMENSIONS = "dimensions";
 	var RESIZE = "resize." + DIMENSIONS;
 	var W = "w";
@@ -2385,27 +2477,39 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 	 * Internal comparator used for reverse sorting arrays
 	 */
 	function reverse(a, b) {
-		return a < b ? 1 : a > b ? -1 : 0;
+		return b - a;
 	}
 
+	/**
+	 * Internal onResize handler
+	 * @param $event
+	 */
 	function onResize($event) {
 		var $self = $(this);
-		var w = $self.width();
-		var h = $self.height();
+		var width = $self.width();
+		var height = $self.height();
 
-		$.each($self.data(DIMENSIONS), function dimensionIterator(namespace, dimension) {
-			var dimension_w = dimension[W];
-			var dimension_w_max = dimension_w.length - 1;
-			var dimension_h = dimension[H];
-			var dimension_h_max = dimension_h.length - 1;
+		// Iterate all dimensions
+		$.each($.data(self, DIMENSIONS), function dimensionIterator(namespace, dimension) {
+			var w = dimension[W];
+			var h = dimension[H];
+			var _w;
+			var _h;
+			var i;
 
-			var _w = $.grep(dimension_w, function(_w, i) {
-				return _w <= w || i === dimension_w_max;
-			})[0];
-			var _h = $.grep(dimension_h, function(_h, i) {
-				return _h <= h || i === dimension_h_max;
-			})[0];
+			i = w.length;
+			_w = w[i - 1];
+			while(w[--i] < width) {
+				_w = w[i];
+			}
 
+			i = h.length;
+			_h = h[i - 1];
+			while(h[--i] < height) {
+				_h = h[i];
+			}
+
+			// If _w or _h has changed, update and trigger
 			if (_w !== dimension[_W] || _h !== dimension[_H]) {
 				dimension[_W] = _w;
 				dimension[_H] = _h;
@@ -2431,23 +2535,33 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 				.data(DIMENSIONS, {});
 		},
 
+		/**
+		 * Do something each time an event handler is bound to a particular element
+		 * @param handleObj (Object)
+		 */
 		add : function onDimensionsAdd(handleObj) {
+			var self = this;
 			var namespace = handleObj.namespace;
 			var dimension = {};
 			var w = dimension[W] = [];
 			var h = dimension[H] = [];
+			var re = /(w|h)(\d+)/g;
 			var matches;
 
-			while (matches = RE.exec(namespace)) {
-				dimension[matches[1]].push(parseInt(matches[2]));
+			while ((matches = re.exec(namespace)) !== UNDEFINED) {
+				dimension[matches[1]].push(parseInt(matches[2], 10));
 			}
 
 			w.sort(reverse);
 			h.sort(reverse);
 
-			$.data(this, DIMENSIONS)[namespace] = dimension;
+			$.data(self, DIMENSIONS)[namespace] = dimension;
 		},
 
+		/**
+		 * Do something each time an event handler is unbound from a particular element
+		 * @param handleObj (Object)
+		 */
 		remove : function onDimensionsRemove(handleObj) {
 			delete $.data(this, DIMENSIONS)[handleObj.namespace];
 		},
@@ -2465,13 +2579,15 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
 });
 /*!
  * TroopJS jQuery hashchange plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-/**
+ *
  * Normalized hashchange event, ripped a _lot_ of code from
  * https://github.com/millermedeiros/Hasher
+ *
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true, evil:true */
+/*global define:true */
 define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	var INTERVAL = "interval";
 	var HASHCHANGE = "hashchange";
@@ -2479,8 +2595,8 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	var RE_HASH = /#(.*)$/;
 	var RE_LOCAL = /\?/;
 
-	// hack based on this: http://webreflection.blogspot.com/2009/01/32-bytes-to-know-if-your-browser-is-ie.html
-	var _isIE = !+"\v1";
+	// hack based on this: http://code.google.com/p/closure-compiler/issues/detail?id=47#c13
+	var _isIE = /**@preserve@cc_on !@*/0;
 
 	function getHash(window) {
 		// parsed full URL instead of getting location.hash because Firefox
@@ -2503,15 +2619,15 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	}
 
 	Frame.prototype = {
-		getElement : function getElement() {
+		getElement : function () {
 			return this.element;
 		},
 
-		getHash : function getHash() {
+		getHash : function () {
 			return this.element.contentWindow.frameHash;
 		},
 
-		update : function update(hash) {
+		update : function (hash) {
 			var self = this;
 			var document = self.element.contentWindow.document;
 
@@ -2637,12 +2753,13 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 
 /*!
  * TroopJS jQuery weave plug-in
- * @license TroopJS 0.0.1 Copyright 2012, Mikael Karon <mikael@karon.se>
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
+/*jshint strict:false, smarttabs:true, laxbreak:true, loopfunc:true */
+/*global define:true */
 define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
-	var UNDEFINED = undefined;
-	var TRUE = true;
+	var UNDEFINED;
 	var ARRAY = Array;
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
@@ -2653,11 +2770,15 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
 	var WOVEN = "woven";
+	var WEAVING = "weaving";
+	var PENDING = "pending";
 	var DESTROY = "destroy";
-	var DATA_WEAVE = "data-" + WEAVE;
-	var DATA_WOVEN = "data-" + WOVEN;
+	var DATA = "data-";
+	var DATA_WEAVE = DATA + WEAVE;
+	var DATA_WOVEN = DATA + WOVEN;
+	var DATA_WEAVING = DATA + WEAVING;
 	var SELECTOR_WEAVE = "[" + DATA_WEAVE + "]";
-	var SELECTOR_WOVEN = "[" + DATA_WOVEN + "]";
+	var SELECTOR_UNWEAVE = "[" + DATA_WEAVING + "],[" + DATA_WOVEN + "]";
 	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_STRING = /^(["']).*\1$/;
 	var RE_DIGIT = /^\d+$/;
@@ -2667,186 +2788,447 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	/**
 	 * Generic destroy handler.
 	 * Simply makes sure that unweave has been called
-	 * @param $event
 	 */
-	function onDestroy($event) {
+	function onDestroy() {
 		$(this).unweave();
 	}
 
 	$.fn[WEAVE] = function weave(/* arg, arg, arg, deferred*/) {
-		var woven = [];
+		var widgets = [];
 		var i = 0;
 		var $elements = $(this);
-
 		var arg = arguments;
 		var argc = arg.length;
 
-		// Check if the last argument looks like a deferred, and in that case set it
+		// If deferred not a true Deferred, make it so
 		var deferred = argc > 0 && arg[argc - 1][THEN] instanceof FUNCTION
 			? POP.call(arg)
-			: UNDEFINED;
+			: $.Deferred();
 
 		$elements
 			// Reduce to only elements that can be woven
 			.filter(SELECTOR_WEAVE)
 			// Iterate
 			.each(function elementIterator(index, element) {
-				var $element = $(element);
-				var $data = $element.data();
-				var weave = $element.attr(DATA_WEAVE) || "";
-				var re = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
-				var widgets = [];
-				var mark = i;
-				var j = 0;
-				var matches;
+				// Defer weave
+				$.Deferred(function deferredWeave(dfdWeave) {
+					var $element = $(element);
+					var $data = $element.data();
+					var weave = $data[WEAVE] = $element.attr(DATA_WEAVE) || "";
+					var woven = $data[WOVEN] || ($data[WOVEN] = []);
+					var pending = $data[PENDING] || ($data[PENDING] = []);
 
-				$element
-					// Store DATA_WEAVE attribute as WEAVE
-					.data(WEAVE, weave)
-					// Store widgets array as WOVEN
-					.data(WOVEN, widgets)
-					// Make sure to remove DATA_WEAVE (so we don't try processing this again)
-					.removeAttr(DATA_WEAVE);
-
-				// Iterate widgets (while the RE_WEAVE matches)
-				while (matches = re.exec(weave)) {
-					// Add deferred to woven array
-					$.Deferred(function deferedRequire(dfd) {
-						var _j = j++; // store _j before we increment
-						var k;
-						var l;
-						var kMax;
-						var value;
-
-						// Store on woven
-						woven[i++] = dfd;
-
-						// Add done handler to register
-						dfd.done(function doneRequire(widget) {
-							widgets[_j] = widget;
-						});
-
-						// Get widget name
-						var name = matches[1];
-
-						// Set initial argv
-						var argv = [ $element, name ];
-
-						// Append values from arg to argv
-						for (k = 0, kMax = arg.length, l = argv.length; k < kMax; k++, l++) {
-							argv[l] = arg[k];
-						}
-
-						// Get widget args
-						var args = matches[2];
-
-						// Any widget arguments
-						if (args !== UNDEFINED) {
-							// Convert args to array
-							args = args.split(RE_SEPARATOR);
-
-							// Append typed values from args to argv
-							for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
-								// Get value
-								value = args[k];
-
-								if (value in $data) {
-									argv[l] = $data[value];
-								} else if (RE_STRING.test(value)) {
-									argv[l] = value.slice(1, -1);
-								} else if (RE_DIGIT.test(value)) {
-									argv[l] = Number(value);
-								} else if (RE_BOOLEAN.test(value)) {
-									argv[l] = RE_BOOLEAN_TRUE.test(value);
-								} else {
-									argv[l] = value;
-								}
-							}
-						}
-
-						require([ name ], function required(Widget) {
-							// Resolve with constructed and initialized instance
-							var widget = Widget
-								.apply(Widget, argv)
-								.bind(DESTROY, onDestroy);
-
-							if (deferred){
-								// notify deferred we wired an widget
-								deferred.notifyWith(widget, ['wired', widget]);
-							}
-
-							// Start
-							$.Deferred(function deferredStart(dfdStart) {
-								widget.start(dfdStart);
-							})
-							.done(function doneStart() {
-								dfd.resolve(widget);
-							})
-							.fail(dfd.reject);
-						});
+					// Link deferred
+					dfdWeave.done(function doneWeave() {
+						$element
+							// Remove DATA_WEAVING
+							.removeAttr(DATA_WEAVING)
+							// Set DATA_WOVEN with full names
+							.attr(DATA_WOVEN, JOIN.call(arguments, " "));
 					});
-				}
 
-				// Slice out widgets woven for this element
-				$WHEN.apply($, woven.slice(mark, i)).done(function doneRequired() {
-					// Set DATA_WOVEN attribute
-					$element.attr(DATA_WOVEN, JOIN.call(arguments, " "));
+					// Wait for all pending deferred
+					$WHEN.apply($, pending).then(function donePending() {
+						var re = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
+						var mark = i;
+						var j = 0;
+						var matches;
+
+						// Push dfdWeave on pending to signify we're starting a new task
+						pending.push(dfdWeave);
+
+						$element
+							// Make sure to remove DATA_WEAVE (so we don't try processing this again)
+							.removeAttr(DATA_WEAVE)
+							// Set DATA_WEAVING (so that unweave can pick this up)
+							.attr(DATA_WEAVING, weave)
+							// Bind destroy event
+							.bind(DESTROY, onDestroy);
+
+						// Iterate woven (while RE_WEAVE matches)
+						while ((matches = re.exec(weave)) !== UNDEFINED) {
+							// Defer widget
+							$.Deferred(function deferredWidget(dfdWidget) {
+								var _j = j++; // store _j before we increment
+								var k;
+								var l;
+								var kMax;
+								var value;
+
+								// Add to widgets
+								widgets[i++] = dfdWidget;
+
+								// Link deferred
+								dfdWidget.then(function doneWidget(widget) {
+									woven[_j] = widget;
+								}, dfdWeave.reject, dfdWeave.notify);
+
+								// Get widget name
+								var name = matches[1];
+
+								// Set initial argv
+								var argv = [ $element, name ];
+
+								// Append values from arg to argv
+								for (k = 0, kMax = arg.length, l = argv.length; k < kMax; k++, l++) {
+									argv[l] = arg[k];
+								}
+
+								// Get widget args
+								var args = matches[2];
+
+								// Any widget arguments
+								if (args !== UNDEFINED) {
+									// Convert args to array
+									args = args.split(RE_SEPARATOR);
+
+									// Append typed values from args to argv
+									for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
+										// Get value
+										value = args[k];
+
+										if (value in $data) {
+											argv[l] = $data[value];
+										} else if (RE_STRING.test(value)) {
+											argv[l] = value.slice(1, -1);
+										} else if (RE_DIGIT.test(value)) {
+											argv[l] = Number(value);
+										} else if (RE_BOOLEAN.test(value)) {
+											argv[l] = RE_BOOLEAN_TRUE.test(value);
+										} else {
+											argv[l] = value;
+										}
+									}
+								}
+
+								// Require module
+								require([ name ], function required(Widget) {
+									// Defer start
+									$.Deferred(function deferredStart(dfdStart) {
+										// Constructed and initialized instance
+										var widget = Widget.apply(Widget, argv);
+
+										// Link deferred
+										dfdStart.then(function doneStart() {
+											dfdWidget.resolve(widget);
+										}, dfdWidget.reject, dfdWidget.notify);
+
+										// Start
+										widget.start(dfdStart);
+									});
+								});
+							});
+						}
+
+						// Slice out widgets woven for this element
+						$WHEN.apply($, widgets.slice(mark, i)).then(dfdWeave.resolve, dfdWeave.reject, dfdWeave.notify);
+
+					}, dfdWeave.reject, dfdWeave.notify);
 				});
 			});
 
-		if (deferred) {
-			// When all deferred are resolved, resolve original deferred
-			$WHEN.apply($, woven).then(deferred.resolve, deferred.reject);
-		}
+		// When all widgets are resolved, resolve original deferred
+		$WHEN.apply($, widgets).then(deferred.resolve, deferred.reject, deferred.notify);
 
 		return $elements;
 	};
 
+
 	$.fn[UNWEAVE] = function unweave(deferred) {
-		var unwoven = [];
+		var widgets = [];
 		var i = 0;
 		var $elements = $(this);
 
+		// Create default deferred if none was passed
+		deferred = deferred || $.Deferred();
+
 		$elements
-			// Reduce to only elements that are woven
-			.filter(SELECTOR_WOVEN)
+			// Reduce to only elements that can be unwoven
+			.filter(SELECTOR_UNWEAVE)
 			// Iterate
 			.each(function elementIterator(index, element) {
-				var $element = $(element);
-				var widgets = $element.data(WOVEN);
-				var widget;
+				// Defer unweave
+				$.Deferred(function deferredUnweave(dfdUnweave) {
+					var $element = $(element);
+					var $data = $element.data();
+					var pending = $data[PENDING] || ($data[PENDING] = []);
+					var woven = $data[WOVEN] || [];
 
-				$element
-					// Remove WOVEN data
-					.removeData(WOVEN)
-					// Remove DATA_WOVEN attribute
-					.removeAttr(DATA_WOVEN);
+					// Link deferred
+					dfdUnweave.done(function doneUnweave() {
+						$element
+							// Copy weave data to data-weave attribute
+							.attr(DATA_WEAVE, $data[WEAVE])
+							// Make sure to clean the destroy event handler
+							.unbind(DESTROY, onDestroy);
 
-				// Somewhat safe(r) iterator over widgets
-				while (widget = widgets.shift()) {
-					// $.Deferred stop
-					$.Deferred(function deferredStop(dfdStop) {
-						// Store on onwoven
-						unwoven[i++] = dfdStop;
-
-						widget.stop(dfdStop);
+						// Remove data fore WEAVE
+						delete $data[WEAVE];
 					});
-				}
 
-				$element
-					// Copy woven data to data-weave attribute
-					.attr(DATA_WEAVE, $element.data(WEAVE))
-					// Remove data fore WEAVE
-					.removeData(WEAVE)
-					// Make sure to clean the destroy event handler
-					.unbind(DESTROY, onDestroy);
+					// Wait for all pending deferred
+					$WHEN.apply($, pending).done(function donePending() {
+						var mark = i;
+						var widget;
+
+						// Push dfdUnweave on pending to signify we're starting a new task
+						pending.push(dfdUnweave);
+
+						// Remove WOVEN data
+						delete $data[WOVEN];
+
+						$element
+							// Remove DATA_WOVEN attribute
+							.removeAttr(DATA_WOVEN);
+
+						// Somewhat safe(r) iterator over woven
+						while ((widget = woven.shift()) !== UNDEFINED) {
+							// Defer widget
+							$.Deferred(function deferredWidget(dfdWidget) {
+								// Add to unwoven and pending
+								widgets[i++] = dfdWidget;
+
+								// $.Deferred stop
+								$.Deferred(function deferredStop(dfdStop) {
+									// Link deferred
+									dfdStop.then(function doneStop() {
+										dfdWidget.resolve(widget);
+									}, dfdWidget.reject, dfdWidget.notify);
+
+									// Stop
+									widget.stop(dfdStop);
+								});
+							});
+						}
+
+						// Slice out widgets unwoven for this element
+						$WHEN.apply($, widgets.slice(mark, i)).then(dfdUnweave.resolve, dfdUnweave.reject, dfdUnweave.notify);
+					});
+				});
 			});
 
-		if (deferred) {
-			// When all deferred are resolved, resolve original deferred
-			$WHEN.apply($, unwoven).then(deferred.resolve, deferred.reject);
-		}
+		// When all deferred are resolved, resolve original deferred
+		$WHEN.apply($, widgets).then(deferred.resolve, deferred.reject, deferred.notify);
 
 		return $elements;
+	};
+});
+/*!
+ * TroopJS RequireJS template plug-in
+ *
+ * parts of code from require-cs 0.4.0+ Copyright (c) 2010-2011, The Dojo Foundation
+ *
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+/*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false */
+/*global define:true */
+define('troopjs-requirejs/template',[],function TemplateModule() {
+	var FACTORIES = {
+		"node" : function () {
+			// Using special require.nodeRequire, something added by r.js.
+			var fs = require.nodeRequire("fs");
+
+			return function fetchText(path, callback) {
+				callback(fs.readFileSync(path, 'utf8'));
+			};
+		},
+
+		"browser" : function () {
+			// Would love to dump the ActiveX crap in here. Need IE 6 to die first.
+			var progIds = [ "Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
+			var progId;
+			var XHR;
+			var i;
+
+			if (typeof XMLHttpRequest !== "undefined") {
+				XHR = XMLHttpRequest;
+			}
+			else {
+				for (i = 0; i < 3; i++) {
+					progId = progIds[i];
+
+					try {
+						XHR = ActiveXObject(progId);
+						break;
+					}
+					catch (e) {
+					}
+				}
+
+				throw new Error("XHR: XMLHttpRequest not available");
+			}
+
+			return function fetchText(url, callback) {
+				var xhr = new XHR();
+				xhr.open('GET', url, true);
+				xhr.onreadystatechange = function (evt) {
+					// Do not explicitly handle errors, those should be
+					// visible via console output in the browser.
+					if (xhr.readyState === 4) {
+						callback(xhr.responseText);
+					}
+				};
+				xhr.send(null);
+			};
+		},
+
+		"rhino" : function () {
+			var encoding = "utf-8";
+			var lineSeparator = java.lang.System.getProperty("line.separator");
+
+			// Why Java, why is this so awkward?
+			return function fetchText(path, callback) {
+				var file = new java.io.File(path);
+				var input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding));
+				var stringBuffer = new java.lang.StringBuffer();
+				var line;
+				var content = "";
+
+				try {
+					line = input.readLine();
+
+					// Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
+					// http://www.unicode.org/faq/utf_bom.html
+
+					// Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
+					// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
+					if (line && line.length() && line.charAt(0) === 0xfeff) {
+						// Eat the BOM, since we've already found the encoding on this file,
+						// and we plan to concatenating this buffer with others; the BOM should
+						// only appear at the top of a file.
+						line = line.substring(1);
+					}
+
+					stringBuffer.append(line);
+
+					while ((line = input.readLine()) !== null) {
+						stringBuffer.append(lineSeparator);
+						stringBuffer.append(line);
+					}
+					// Make sure we return a JavaScript string and not a Java string.
+					content = String(stringBuffer.toString()); // String
+				} finally {
+					input.close();
+				}
+
+				callback(content);
+			};
+		},
+
+		"borked" : function () {
+			return function fetchText() {
+				throw new Error("Environment unsupported.");
+			};
+		}
+	};
+
+	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
+	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
+	var RE_TOKENS = /<%(\d+)%>/gm;
+	var RE_REPLACE = /(["\n\t\r])/gm;
+	var RE_CLEAN = /o \+= "";| \+ ""/gm;
+	var EMPTY = "";
+	var REPLACE = {
+		"\"" : "\\\"",
+		"\n" : "\\n",
+		"\t" : "\\t",
+		"\r" : "\\r"
+	};
+
+	/**
+	 * Compiles template
+	 * 
+	 * @param body Template body
+	 * @returns {Function}
+	 */
+	function compile(body) {
+		var blocks = [];
+		var length = 0;
+
+		function blocksTokens(original, prefix, block) {
+			blocks[length] = prefix
+				? "\" +" + block + "+ \""
+				: "\";" + block + "o += \"";
+			return "<%" + String(length++) + "%>";
+		}
+
+		function tokensBlocks(original, token) {
+			return blocks[token];
+		}
+
+		function replace(original, token) {
+			return REPLACE[token] || token;
+		}
+
+		return ("function template(data) { var o = \""
+		// Sanitize body before we start templating
+		+ body.replace(RE_SANITIZE, "")
+
+		// Replace script blocks with tokens
+		.replace(RE_BLOCK, blocksTokens)
+
+		// Replace unwanted tokens
+		.replace(RE_REPLACE, replace)
+
+		// Replace tokens with script blocks
+		.replace(RE_TOKENS, tokensBlocks)
+
+		+ "\"; return o; }")
+
+		// Clean
+		.replace(RE_CLEAN, EMPTY);
+	}
+
+	var buildMap = {};
+	var fetchText = FACTORIES[ typeof process !== "undefined" && process.versions && !!process.versions.node
+		? "node"
+		: (typeof window !== "undefined" && window.navigator && window.document) || typeof importScripts !== "undefined"
+			? "browser"
+			: typeof Packages !== "undefined"
+				? "rhino"
+				: "borked" ]();
+
+	return {
+		load: function (name, parentRequire, load, config) {
+			var path = parentRequire.toUrl(name);
+
+			fetchText(path, function (text) {
+				try {
+					text = "define(function() { return " + compile(text, name, path, config.template) + "; })";
+				}
+				catch (err) {
+					err.message = "In " + path + ", " + err.message;
+					throw(err);
+				}
+
+				if (config.isBuild) {
+					buildMap[name] = text;
+				}
+
+				// IE with conditional comments on cannot handle the
+				// sourceURL trick, so skip it if enabled
+				/*@if (@_jscript) @else @*/
+				else {
+					text += "\n//@ sourceURL='" + path +"'";
+				}
+				/*@end@*/
+
+				load.fromText(name, text);
+
+				// Give result to load. Need to wait until the module
+				// is fully parse, which will happen after this
+				// execution.
+				parentRequire([name], function (value) {
+					load(value);
+				});
+			});
+		},
+
+		write: function (pluginName, name, write) {
+			if (buildMap.hasOwnProperty(name)) {
+				write.asModule(pluginName + "!" + name, buildMap[name]);
+			}
+		}
 	};
 });
