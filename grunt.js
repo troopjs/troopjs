@@ -10,13 +10,13 @@ module.exports = function(grunt) {
 			"troopjs-core/route/router",
 			"troopjs-core/route/placeholder",
 			"troopjs-core/widget/application",
-			"troopjs-core/widget/sandbox",
-			"troopjs-core/util/each",
-			"troopjs-core/util/grep",
-			"troopjs-core/util/merge",
-			"troopjs-core/util/tr",
-			"troopjs-core/util/unique",
-			"troopjs-core/util/when" ],
+			"troopjs-core/widget/sandbox" ],
+		utils : [ "troopjs-utils/each",
+			"troopjs-utils/grep",
+			"troopjs-utils/merge",
+			"troopjs-utils/tr",
+			"troopjs-utils/unique",
+			"troopjs-utils/when" ],
 		jquery : [ "troopjs-jquery/action",
 			"troopjs-jquery/destroy",
 			"troopjs-jquery/resize",
@@ -47,6 +47,7 @@ module.exports = function(grunt) {
 					paths : {
 						"compose" : "lib/composejs/compose",
 						"troopjs-core" : "lib/troopjs-core/src",
+						"troopjs-utils" : "lib/troopjs-utils/src",
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
 						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
 					},
@@ -56,7 +57,7 @@ module.exports = function(grunt) {
 							"config" : "empty:"
 						}
 					},
-					include : Array.prototype.concat(files.core, files.jquery, files.requirejs),
+					include : Array.prototype.concat(files.core, files.utils, files.jquery, files.requirejs),
 					optimize : "none"
 				}
 			}
