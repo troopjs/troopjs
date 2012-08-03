@@ -323,19 +323,19 @@ define('troopjs-core/component/base',[ "compose", "config" ], function Component
 });
 
 /*!
- * TroopJS util/deferred component
+ * TroopJS Utils deferred component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/deferred',[ "jquery" ], function DeferredModule($) {
+define('troopjs-utils/deferred',[ "jquery" ], function DeferredModule($) {
 	return $.Deferred;
 });
 /*!
- * TroopJS util/unique component
+ * TroopJS Utils unique component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/unique',[],function UniqueModule() {
+define('troopjs-utils/unique',[],function UniqueModule() {
 	return function unique(callback) {
 		var self = this;
 		var length = self.length;
@@ -367,7 +367,7 @@ define('troopjs-core/util/unique',[],function UniqueModule() {
  */
 /*jshint strict:false, smarttabs:true, laxbreak:true */
 /*global define:true */
-define('troopjs-core/pubsub/topic',[ "../component/base", "../util/unique" ], function TopicModule(Component, unique) {
+define('troopjs-core/pubsub/topic',[ "../component/base", "troopjs-utils/unique" ], function TopicModule(Component, unique) {
 	var TOSTRING = Object.prototype.toString;
 	var TOSTRING_ARRAY = TOSTRING.call(Array.prototype);
 
@@ -797,7 +797,7 @@ define('troopjs-core/pubsub/hub',[ "compose", "../component/base", "./topic" ], 
  */
 /*jshint strict:false, smarttabs:true, newcap:false, forin:false, loopfunc:true */
 /*global define:true */
-define('troopjs-core/component/gadget',[ "compose", "./base", "../util/deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
+define('troopjs-core/component/gadget',[ "compose", "./base", "troopjs-utils/deferred", "../pubsub/hub" ], function GadgetModule(Compose, Component, Deferred, hub) {
 	var UNDEFINED;
 	var NULL = null;
 	var FUNCTION = Function;
@@ -1064,11 +1064,11 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 	});
 });
 /*!
- * TroopJS util/merge module
+ * TroopJS Utils merge module
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/merge',[],function MergeModule() {
+define('troopjs-utils/merge',[],function MergeModule() {
 	var ARRAY = Array;
 	var OBJECT = Object;
 
@@ -1110,7 +1110,7 @@ define('troopjs-core/util/merge',[],function MergeModule() {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "jquery", "../util/merge" ], function AjaxModule(Service, Topic, $, merge) {
+define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "jquery", "troopjs-utils/merge" ], function AjaxModule(Service, Topic, $, merge) {
 	return Service.extend({
 		displayName : "core/remote/ajax",
 
@@ -1126,7 +1126,7 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
 	});
 });
 /*!
- * TroopJS util/uri module
+ * TroopJS Utils URI module
  * 
  * parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  * 
@@ -1135,7 +1135,7 @@ define('troopjs-core/remote/ajax',[ "../component/service", "../pubsub/topic", "
  */
 /*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false, forin:false, loopfunc:true */
 /*global define:true */
-define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
+define('troopjs-utils/uri',[ "compose" ], function URIModule(Compose) {
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
 	var OBJECT_PROTO = Object.prototype;
@@ -1344,7 +1344,7 @@ define('troopjs-core/util/uri',[ "compose" ], function URIModule(Compose) {
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/route/router',[ "../component/service", "../util/uri" ], function RouterModule(Service, URI) {
+define('troopjs-core/route/router',[ "../component/service", "troopjs-utils/uri" ], function RouterModule(Service, URI) {
 	var HASHCHANGE = "hashchange";
 	var $ELEMENT = "$element";
 	var ROUTE = "route";
@@ -1549,7 +1549,7 @@ define('troopjs-core/dimensions/service',[ "../component/service" ], function Di
  */
 /*jshint strict:false, smarttabs:true, newcap:false */
 /*global define:true */
-define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred" ], function WidgetModule(Gadget, $, Deferred) {
+define('troopjs-core/component/widget',[ "./gadget", "jquery", "troopjs-utils/deferred" ], function WidgetModule(Gadget, $, Deferred) {
 	var UNDEFINED;
 	var NULL = null;
 	var FUNCTION = Function;
@@ -1880,7 +1880,7 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "../util/deferred
  */
 /*jshint strict:false, smarttabs:true, laxbreak:true */
 /*global define:true */
-define('troopjs-core/widget/placeholder',[ "../component/widget", "../util/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
+define('troopjs-core/widget/placeholder',[ "../component/widget", "troopjs-utils/deferred" ], function WidgetPlaceholderModule(Widget, Deferred) {
 	var FUNCTION = Function;
 	var POP = Array.prototype.pop;
 	var HOLDING = "holding";
@@ -2030,7 +2030,7 @@ define('troopjs-core/route/placeholder',[ "../widget/placeholder" ], function Ro
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/widget/application',[ "../component/widget", "../util/deferred" ], function ApplicationModule(Widget, Deferred) {
+define('troopjs-core/widget/application',[ "../component/widget", "troopjs-utils/deferred" ], function ApplicationModule(Widget, Deferred) {
 	return Widget.extend({
 		displayName : "core/widget/application",
 
@@ -2081,27 +2081,27 @@ define('troopjs-core/widget/sandbox', [ "../component/widget", "jquery" ], funct
 });
 
 /*!
- * TroopJS util/each component
+ * TroopJS Utils each component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/each',[ "jquery" ], function EachModule($) {
+define('troopjs-utils/each',[ "jquery" ], function EachModule($) {
 	return $.each;
 });
 /*!
- * TroopJS util/grep component
+ * TroopJS Utils grep component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/grep',[ "jquery" ], function GrepModule($) {
+define('troopjs-utils/grep',[ "jquery" ], function GrepModule($) {
 	return $.grep;
 });
 /*!
- * TroopJS util/tr component
+ * TroopJS Utils tr component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/tr',[],function TrModule() {
+define('troopjs-utils/tr',[],function TrModule() {
 	var TYPEOF_NUMBER = typeof Number();
 
 	return function tr(callback) {
@@ -2127,11 +2127,11 @@ define('troopjs-core/util/tr',[],function TrModule() {
 	};
 });
 /*!
- * TroopJS util/when component
+ * TroopJS Utils when component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-core/util/when',[ "jquery" ], function WhenModule($) {
+define('troopjs-utils/when',[ "jquery" ], function WhenModule($) {
 	return $.when;
 });
 /*!
