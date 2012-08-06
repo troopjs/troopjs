@@ -17,7 +17,7 @@ module.exports = function(grunt) {
 			"troopjs-utils/tr",
 			"troopjs-utils/unique",
 			"troopjs-utils/when",
-			"troopjs-utils/arg" ],
+			"troopjs-utils/getargs" ],
 		jquery : [ "troopjs-jquery/action",
 			"troopjs-jquery/destroy",
 			"troopjs-jquery/resize",

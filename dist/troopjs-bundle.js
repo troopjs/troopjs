@@ -1995,7 +1995,9 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "troopjs-utils
 
 		release : release,
 		hold : hold,
-		finalize : hold
+		finalize : function onFinalize(signal, deferred) {
+			hold(deferred);
+		}
 	});
 });
 /*!
@@ -2135,18 +2137,18 @@ define('troopjs-utils/when',[ "jquery" ], function WhenModule($) {
 	return $.when;
 });
 /*!
- * TroopJS Utils arg module
+ * TroopJS Utils getargs module
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
  * Released under the MIT license.
  */
-define('troopjs-utils/arg',[],function ArgModule() {
+define('troopjs-utils/getargs',[],function GetArgsModule() {
 	var PUSH = Array.prototype.push;
 	var SUBSTRING = String.prototype.substring;
 	var RE_BOOLEAN = /^(?:false|true)$/i;
 	var RE_BOOLEAN_TRUE = /^true$/i;
 	var RE_DIGIT = /^\d+$/;
 
-	return function arg() {
+	return function getargs() {
 		var self = this;
 		var result = [];
 		var length;
@@ -2254,7 +2256,7 @@ define('troopjs-utils/arg',[],function ArgModule() {
  */
 /*jshint strict:false, smarttabs:true, laxbreak:true */
 /*global define:true */
-define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
+define('troopjs-jquery/action',[ "jquery", "troopjs-utils/getargs" ], function ActionModule($, getargs) {
 	var UNDEFINED;
 	var FALSE = false;
 	var NULL = null;
@@ -2262,12 +2264,7 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 	var ACTION = "action";
 	var ORIGINALEVENT = "originalEvent";
 	var RE_ACTION = /^([\w\d\s_\-\/]+)(?:\.([\w\.]+))?(?:\((.*)\))?$/;
-	var RE_SEPARATOR = /\s*,\s*/;
 	var RE_DOT = /\.+/;
-	var RE_STRING = /^(["']).*\1$/;
-	var RE_DIGIT = /^\d+$/;
-	var RE_BOOLEAN = /^(?:false|true)$/i;
-	var RE_BOOLEAN_TRUE = /^true$/i;
 
 	/**
 	 * Namespace iterator
@@ -2357,21 +2354,13 @@ define('troopjs-jquery/action',[ "jquery" ], function ActionModule($) {
 
 		// Split args by separator (if there were args)
 		var argv = args !== UNDEFINED
-			? args.split(RE_SEPARATOR)
+			? getargs.call(args)
 			: [];
 
 		// Iterate argv to determine arg type
 		$.each(argv, function argsIterator(i, value) {
 			if (value in $data) {
 				argv[i] = $data[value];
-			} else if (RE_STRING.test(value)) {
-				argv[i] = value.slice(1, -1);
-			} else if (RE_DIGIT.test(value)) {
-				argv[i] = Number(value);
-			} else if (RE_BOOLEAN.test(value)) {
-				argv[i] = RE_BOOLEAN_TRUE.test(value);
-			} else {
-				argv[i] = UNDEFINED;
 			}
 		});
 
@@ -2874,7 +2863,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  */
 /*jshint strict:false, smarttabs:true, laxbreak:true, loopfunc:true */
 /*global define:true */
-define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
+define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function WeaveModule($, getargs) {
     var UNDEFINED;
 	var NULL = null;
 	var ARRAY = Array;
@@ -2896,11 +2885,6 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 	var DATA_WEAVING = DATA + WEAVING;
 	var SELECTOR_WEAVE = "[" + DATA_WEAVE + "]";
 	var SELECTOR_UNWEAVE = "[" + DATA_WEAVING + "],[" + DATA_WOVEN + "]";
-	var RE_SEPARATOR = /\s*,\s*/;
-	var RE_STRING = /^(["']).*\1$/;
-	var RE_DIGIT = /^\d+$/;
-	var RE_BOOLEAN = /^(?:false|true)$/i;
-	var RE_BOOLEAN_TRUE = /^true$/i;
 
 	/**
 	 * Generic destroy handler.
@@ -2996,25 +2980,18 @@ define('troopjs-jquery/weave',[ "jquery" ], function WeaveModule($) {
 
 								// Any widget arguments
 								if (args !== UNDEFINED) {
-									// Convert args to array
-									args = args.split(RE_SEPARATOR);
+									// Convert args using getargs
+									args = getargs.call(args);
 
 									// Append typed values from args to argv
 									for (k = 0, kMax = args.length, l = argv.length; k < kMax; k++, l++) {
 										// Get value
 										value = args[k];
 
-										if (value in $data) {
-											argv[l] = $data[value];
-										} else if (RE_STRING.test(value)) {
-											argv[l] = value.slice(1, -1);
-										} else if (RE_DIGIT.test(value)) {
-											argv[l] = Number(value);
-										} else if (RE_BOOLEAN.test(value)) {
-											argv[l] = RE_BOOLEAN_TRUE.test(value);
-										} else {
-											argv[l] = value;
-										}
+										// Get value from $data or fall back to pure value
+										argv[l] = value in $data
+											? $data[value]
+											: value;
 									}
 								}
 
