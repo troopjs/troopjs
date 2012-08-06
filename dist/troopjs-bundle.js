@@ -1993,13 +1993,15 @@ define('troopjs-core/widget/placeholder',[ "../component/widget", "troopjs-utils
 	}, {
 		displayName : "core/widget/placeholder",
 
+		"sig/finalize" : function finalize(signal, deferred) {
+			this.hold(deferred);
+		},
+
 		release : release,
-		hold : hold,
-		finalize : function onFinalize(signal, deferred) {
-			hold(deferred);
-		}
+		hold : hold
 	});
 });
+
 /*!
  * TroopJS route/placeholder module
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
