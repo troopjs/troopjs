@@ -1719,6 +1719,8 @@ define('troopjs-core/component/widget',[ "./gadget", "jquery", "troopjs-utils/de
 				$element.unbind($proxy[0], $proxy[1]);
 			}
 
+			delete self[$ELEMENT];
+
 			if (deferred) {
 				deferred.resolve();
 			}
@@ -2080,6 +2082,15 @@ define('troopjs-core/widget/sandbox', [ "../component/widget", "jquery" ], funct
 
 		"sig/stop" : function onStop(signal, deferred) {
 			this.unweave(deferred);
+		},
+
+		"sig/finalize": function onFinalize(signal, deferred){
+
+			delete this[_$ELEMENT];
+			
+			if (deferred){
+				deferred.resolve();
+			}
 		}
 	});
 });
