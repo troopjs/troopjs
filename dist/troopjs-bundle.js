@@ -2907,6 +2907,36 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 		$(this).unweave();
 	}
 
+	$.expr[":"][WOVEN] = $.expr.createPseudo
+		? $.expr.createPseudo(function (widgets) {
+			if (widgets !== UNDEFINED) {
+				widgets = RegExp($.map(getargs.call(widgets), function (widget) {
+					return "^" + widget + "@";
+				}).join("|"), "m");
+			}
+
+			return function (element, context, isXml) {
+				var woven = $(element).attr(DATA_WOVEN);
+
+				return woven === UNDEFINED
+					? false
+					: widgets === UNDEFINED
+						? true
+						: widgets.test(woven.split(/[\s,]+/).join("\n"));
+			};
+		})
+		: function (element, index, match) {
+			var woven = $(element).attr(DATA_WOVEN);
+
+			return woven === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: RegExp($.map(getargs.call(match[3]), function (widget) {
+						return "^" + widget + "@";
+					}).join("|"), "m").test(woven.split(/[\s,]+/).join("\n"));
+		};
+
 	$.fn[WEAVE] = function weave(/* arg, arg, arg, deferred*/) {
 		var widgets = [];
 		var i = 0;
@@ -3040,7 +3070,6 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 		return $elements;
 	};
 
-
 	$.fn[UNWEAVE] = function unweave(deferred) {
 		var widgets = [];
 		var i = 0;
@@ -3120,6 +3149,7 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 		return $elements;
 	};
 });
+
 /*!
  * TroopJS RequireJS template plug-in
  *
