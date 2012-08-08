@@ -2883,6 +2883,7 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 	var FUNCTION = Function;
 	var ARRAY_PROTO = ARRAY.prototype;
 	var JOIN = ARRAY_PROTO.join;
+	var PUSH = ARRAY_PROTO.push;
 	var POP = ARRAY_PROTO.pop;
 	var $WHEN = $.when;
 	var THEN = "then";
@@ -2979,7 +2980,7 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 						var matches;
 
 						// Push dfdWeave on pending to signify we're starting a new task
-						pending.push(dfdWeave);
+						PUSH.call(pending, dfdWeave);
 
 						$element
 							// Make sure to remove DATA_WEAVE (so we don't try processing this again)
@@ -3108,7 +3109,7 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 						var widget;
 
 						// Push dfdUnweave on pending to signify we're starting a new task
-						pending.push(dfdUnweave);
+						PUSH.call(pending, dfdUnweave);
 
 						// Remove WOVEN data
 						delete $data[WOVEN];
@@ -3147,6 +3148,31 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 		$WHEN.apply($, widgets).then(deferred.resolve, deferred.reject, deferred.notify);
 
 		return $elements;
+	};
+
+	$.fn[WOVEN] = function woven(/* arg, arg */) {
+		var result = [];
+		var widgets = arguments.length > 0
+			? RegExp($.map(arguments, function (widget) {
+				return "^" + widget + "$";
+			}).join("|"), "m")
+			: UNDEFINED;
+
+		$(this).each(function elementIterator(index, element) {
+			if (!$.hasData(element)) {
+				return;
+			}
+
+			PUSH.apply(result, widgets === UNDEFINED
+				? $.data(element, WOVEN)
+				: $.map($.data(element, WOVEN), function (woven) {
+					return widgets.test(woven.displayName)
+						? woven
+						: UNDEFINED;
+				}));
+		});
+
+		return result;
 	};
 });
 
