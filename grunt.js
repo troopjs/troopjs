@@ -62,6 +62,11 @@ module.exports = function(grunt) {
 				}
 			}
 		},
+		buster : {
+			test : {
+				config : "test/buster.js"
+			}
+		},
 		min : {
 			dist : {
 				src : [ "<banner>", "dist/troopjs-bundle.js" ],
@@ -71,7 +76,11 @@ module.exports = function(grunt) {
 	});
 
 	grunt.loadNpmTasks("grunt-contrib");
+	grunt.loadNpmTasks("grunt-buster");
+
+	grunt.registerTask("test", "lint buster");
+	grunt.registerTask("dist", "requirejs min");
 
 	// Default task.
-	grunt.registerTask("default", "lint requirejs min");
+	grunt.registerTask("default", "test dist");
 };
