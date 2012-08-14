@@ -1,3 +1,8 @@
+/*! troopjs-bundle - v1.0.4-13-g1193739
+* http://troopjs.com/
+* Copyright (c) 2012 Mikael Karon <mikael@karon.se>; Licensed MIT
+ */
+
 
 /*
  * ComposeJS, object composition for JavaScript, featuring

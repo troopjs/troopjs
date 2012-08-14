@@ -66,6 +66,12 @@ module.exports = function(grunt) {
 				config : "test/buster.js"
 			}
 		},
+		concat : {
+			dist : {
+				src : [ "<banner>", "dist/troopjs-bundle.js" ],
+				dest : "dist/troopjs-bundle.js"
+			}
+		},
 		min : {
 			dist : {
 				src : [ "<banner>", "dist/troopjs-bundle.js" ],
@@ -96,7 +102,7 @@ module.exports = function(grunt) {
 	});
 
 	grunt.registerTask("test", "lint buster");
-	grunt.registerTask("dist", "describe requirejs min");
+	grunt.registerTask("dist", "describe requirejs concat min");
 
 	// Default task.
 	grunt.registerTask("default", "test dist");
