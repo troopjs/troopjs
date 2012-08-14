@@ -29,9 +29,8 @@ module.exports = function(grunt) {
 	// Project configuration.
 	grunt.config.init({
 		meta : {
-			version : "1.0.2+",
-			banner : "/*! troopjs-bundle - v<%= meta.version %> - " +
-				"<%= grunt.template.today('yyyy-mm-dd') %>\n" +
+			version : "SNAPSHOT",
+			banner : "/*! troopjs-bundle - v<%= meta.version %>\n" +
 				"* http://troopjs.com/\n" +
 				"* Copyright (c) <%= grunt.template.today('yyyy') %> " +
 				"Mikael Karon <mikael@karon.se>; Licensed MIT\n */"
@@ -78,8 +77,26 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-contrib");
 	grunt.loadNpmTasks("grunt-buster");
 
+	grunt.registerTask("describe", "Describes current commit", function () {
+		var done = this.async();
+
+		grunt.utils.spawn({
+			cmd : "git",
+			args : [ "describe", "--always", "--long" ]
+		}, function (err, result) {
+			if (err) {
+				grunt.log.error(err);
+				return done(false);
+			}
+
+			grunt.config("meta.version", result);
+
+			done(result);
+		});
+	});
+
 	grunt.registerTask("test", "lint buster");
-	grunt.registerTask("dist", "requirejs min");
+	grunt.registerTask("dist", "describe requirejs min");
 
 	// Default task.
 	grunt.registerTask("default", "test dist");
