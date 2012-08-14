@@ -2129,7 +2129,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 		// Iterate over string
 		for (from = to = i = 0, length = self.length; i < length; i++) {
 			// Get char
-			c = self[i];
+			c = self.charAt(i);
 
 			switch(c) {
 				case "\"" :
@@ -2928,7 +2928,7 @@ define('troopjs-jquery/weave',[ "jquery", "troopjs-utils/getargs" ], function We
 
 					// Wait for all pending deferred
 					$WHEN.apply($, pending).then(function donePending() {
-						var re = /[\s,]*([\w_\-\/]+)(?:\(([^\)]+)\))?/g;
+						var re = /[\s,]*([\w_\-\/\.]+)(?:\(([^\)]+)\))?/g;
 						var mark = i;
 						var j = 0;
 						var matches;
