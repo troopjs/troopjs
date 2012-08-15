@@ -93,7 +93,7 @@ module.exports = function(grunt) {
 
 		grunt.utils.spawn({
 			cmd : "git",
-			args : [ "describe", "--always", "--long" ]
+			args : [ "describe", "--tags", "--always", "--long", "--dirty" ]
 		}, function (err, result) {
 			if (err) {
 				grunt.log.error(err);
