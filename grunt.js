@@ -89,10 +89,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
 
-
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
-
-	// Default task.
 	grunt.registerTask("default", "test dist");
 };
