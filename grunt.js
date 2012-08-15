@@ -110,5 +110,5 @@ module.exports = function(grunt) {
 	grunt.registerTask("dist", "describe requirejs concat min");
 
 	// Default task.
-	grunt.registerTask("default", "test");
+	grunt.registerTask("default", "test dist");
 };
