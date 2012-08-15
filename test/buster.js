@@ -6,12 +6,12 @@ config["troop"] = {
 	rootPath : "../",
 
 	libs : [
-		"src/lib/requirejs/require.js"
+		"test/lib/requirejs/require.js"
 	],
 
 	resources : [
 		"src/lib/composejs/compose.js",
-		"src/lib/requirejs/require.js",
+		"test/lib/requirejs/require.js",
 		"src/lib/troopjs-*/**/*.js"
 	],
 

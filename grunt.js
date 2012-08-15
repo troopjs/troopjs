@@ -9,14 +9,14 @@ module.exports = function(grunt) {
 			"troopjs-core/dimensions/service",
 			"troopjs-core/route/router",
 			"troopjs-core/route/placeholder",
-			"troopjs-core/widget/application",
-			"troopjs-core/widget/sandbox" ],
+			"troopjs-core/widget/application" ],
 		utils : [ "troopjs-utils/each",
 			"troopjs-utils/grep",
 			"troopjs-utils/merge",
 			"troopjs-utils/tr",
 			"troopjs-utils/unique",
-			"troopjs-utils/when" ],
+			"troopjs-utils/when",
+			"troopjs-utils/getargs" ],
 		jquery : [ "troopjs-jquery/action",
 			"troopjs-jquery/destroy",
 			"troopjs-jquery/resize",
@@ -29,18 +29,22 @@ module.exports = function(grunt) {
 	// Project configuration.
 	grunt.config.init({
 		meta : {
-			version : "1.0.2+",
-			banner : "/*! troopjs-bundle - v<%= meta.version %> - " +
-				"<%= grunt.template.today('yyyy-mm-dd') %>\n" +
+			version : "SNAPSHOT",
+			banner : "/*!\n" +
+				"* TroopJS Bundle - <%= meta.version %>\n" +
 				"* http://troopjs.com/\n" +
-				"* Copyright (c) <%= grunt.template.today('yyyy') %> " +
-				"Mikael Karon <mikael@karon.se>; Licensed MIT\n */"
+				"* Copyright (c) <%= grunt.template.today('yyyy') %> " + "Mikael Karon <mikael@karon.se>\n" +
+				"* Licensed MIT\n" +
+				"*/"
+		},
+		clean : {
+			dist : [ "dist" ]
 		},
 		lint : {
-			files: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
+			src: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
 		},
 		requirejs : {
-			compile : {
+			dist : {
 				options : {
 					out : "dist/troopjs-bundle.js",
 					baseUrl : "src",
@@ -62,16 +66,30 @@ module.exports = function(grunt) {
 				}
 			}
 		},
+		buster : {
+			test : {
+				config : "test/buster.js"
+			}
+		},
+		concat : {
+			dist : {
+				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
+				dest : "dist/troopjs-bundle.js"
+			}
+		},
 		min : {
 			dist : {
-				src : [ "<banner>", "dist/troopjs-bundle.js" ],
+				src : [ "<banner>", "<config:concat.dist.dest>" ],
 				dest : "dist/troopjs-bundle.min.js"
 			}
 		}
 	});
 
 	grunt.loadNpmTasks("grunt-contrib");
+	grunt.loadNpmTasks("grunt-buster");
+	grunt.loadNpmTasks("grunt-git-describe");
 
-	// Default task.
-	grunt.registerTask("default", "lint requirejs min");
+	grunt.registerTask("test", "lint buster");
+	grunt.registerTask("dist", "describe requirejs concat min");
+	grunt.registerTask("default", "test dist");
 };

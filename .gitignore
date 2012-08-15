@@ -1,5 +1,13 @@
+# IDEA
+.idea
+
 # Eclipse
 .project
 .settings
 .externalToolBuilders
+
+# Node
 node_modules
+
+# dist
+dist/
