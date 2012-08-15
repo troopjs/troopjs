@@ -35,11 +35,14 @@ module.exports = function(grunt) {
 				"* Copyright (c) <%= grunt.template.today('yyyy') %> " +
 				"Mikael Karon <mikael@karon.se>; Licensed MIT\n */"
 		},
+		clean : {
+			dist : [ "dist" ]
+		},
 		lint : {
-			files: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
+			src: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
 		},
 		requirejs : {
-			compile : {
+			dist : {
 				options : {
 					out : "dist/troopjs-bundle.js",
 					baseUrl : "src",
