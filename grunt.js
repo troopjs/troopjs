@@ -87,24 +87,8 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks("grunt-contrib");
 	grunt.loadNpmTasks("grunt-buster");
+	grunt.loadNpmTasks("grunt-git-describe");
 
-	grunt.registerTask("describe", "Describes current commit", function () {
-		var done = this.async();
-
-		grunt.utils.spawn({
-			cmd : "git",
-			args : [ "describe", "--tags", "--always", "--long", "--dirty" ]
-		}, function (err, result) {
-			if (err) {
-				grunt.log.error(err);
-				return done(false);
-			}
-
-			grunt.config("meta.version", result);
-
-			done(result);
-		});
-	});
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
