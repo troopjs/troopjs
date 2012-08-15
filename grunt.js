@@ -30,10 +30,12 @@ module.exports = function(grunt) {
 	grunt.config.init({
 		meta : {
 			version : "SNAPSHOT",
-			banner : "/*! troopjs-bundle - v<%= meta.version %>\n" +
+			banner : "/*!\n" +
+				"* TroopJS Bundle - <%= meta.version %>\n" +
 				"* http://troopjs.com/\n" +
-				"* Copyright (c) <%= grunt.template.today('yyyy') %> " +
-				"Mikael Karon <mikael@karon.se>; Licensed MIT\n */"
+				"* Copyright (c) <%= grunt.template.today('yyyy') %> " + "Mikael Karon <mikael@karon.se>\n" +
+				"* Licensed MIT\n" +
+				"*/"
 		},
 		clean : {
 			dist : [ "dist" ]
@@ -71,13 +73,13 @@ module.exports = function(grunt) {
 		},
 		concat : {
 			dist : {
-				src : [ "<banner>", "dist/troopjs-bundle.js" ],
+				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
 				dest : "dist/troopjs-bundle.js"
 			}
 		},
 		min : {
 			dist : {
-				src : [ "<banner>", "dist/troopjs-bundle.js" ],
+				src : [ "<banner>", "<config:concat.dist.dest>" ],
 				dest : "dist/troopjs-bundle.min.js"
 			}
 		}
@@ -108,5 +110,5 @@ module.exports = function(grunt) {
 	grunt.registerTask("dist", "describe requirejs concat min");
 
 	// Default task.
-	grunt.registerTask("default", "test dist");
+	grunt.registerTask("default", "test");
 };
