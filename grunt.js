@@ -110,5 +110,5 @@ module.exports = function(grunt) {
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
-	grunt.registerTask("default", "test dist");
+	grunt.registerTask("default", "test clean dist");
 };
