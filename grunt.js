@@ -1,6 +1,5 @@
 /*global module:false*/
 module.exports = function(grunt) {
-
 	var files = {
 		core : [ "troopjs-core/remote/ajax",
 			"troopjs-core/route/router",
@@ -30,6 +29,7 @@ module.exports = function(grunt) {
 	grunt.config.init({
 		meta : {
 			version : "SNAPSHOT",
+			auth : "<json:auth.json>",
 			banner : "/*!\n" +
 				"* TroopJS Bundle - <%= meta.version %>\n" +
 				"* http://troopjs.com/\n" +
@@ -82,12 +82,27 @@ module.exports = function(grunt) {
 				src : [ "<banner>", "<config:concat.dist.dest>" ],
 				dest : "dist/troopjs-bundle.min.js"
 			}
+		},
+		upload : {
+			"troopjs-bundle.js" : {
+				repo : "troopjs/troopjs-bundle",
+				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
+				file : "dist/troopjs-bundle.js",
+				description : "TroopJS bundle - <%= meta.version %>"
+			},
+			"troopjs-bundle.min.js" : {
+				repo : "troopjs/troopjs-bundle",
+				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
+				file : "dist/troopjs-bundle.min.js",
+				description : "TroopJS bundle - <%= meta.version %> (minified)"
+			}
 		}
 	});
 
 	grunt.loadNpmTasks("grunt-contrib");
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
+	grunt.loadNpmTasks("grunt-github-upload");
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
