@@ -91,13 +91,13 @@ module.exports = function(grunt) {
 			"troopjs-bundle.js" : {
 				repo : "troopjs/troopjs-bundle",
 				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:concat.dist.dest>",
+				file : "<config:meta.path.bundle>",
 				description : "TroopJS bundle - <%= meta.version %>"
 			},
 			"troopjs-bundle.min.js" : {
 				repo : "troopjs/troopjs-bundle",
 				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:min.dist.dest>",
+				file : "<config:meta.path.min>",
 				description : "TroopJS bundle - <%= meta.version %> (minified)"
 			}
 		}
