@@ -1,5 +1,6 @@
 /*global module:false*/
 module.exports = function(grunt) {
+
 	grunt.loadNpmTasks("grunt-contrib");
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
@@ -8,7 +9,6 @@ module.exports = function(grunt) {
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
 	grunt.registerTask("default", "test clean dist");
-
 
 	grunt.config.init({
 		meta : {
