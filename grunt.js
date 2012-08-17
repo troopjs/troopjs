@@ -20,7 +20,7 @@ module.exports = function(grunt) {
 				"* Licensed MIT\n" +
 				"*/",
 			dist : {
-				bundle : "dist/troopjs-bundle.js",
+				max : "dist/troopjs-bundle.js",
 				min : "dist/troopjs-bundle.min.js"
 			},
 			auth : "<json:auth.json>"
@@ -32,7 +32,7 @@ module.exports = function(grunt) {
 		requirejs : {
 			dist : {
 				options : {
-					out : "<config:meta.dist.bundle>",
+					out : "<config:meta.dist.max>",
 					baseUrl : "src",
 					paths : {
 						"compose" : "lib/composejs/compose",
@@ -62,7 +62,7 @@ module.exports = function(grunt) {
 		concat : {
 			dist : {
 				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
-				dest : "<config:meta.dist.bundle>"
+				dest : "<config:meta.dist.max>"
 			}
 		},
 		min : {
@@ -75,7 +75,7 @@ module.exports = function(grunt) {
 			"troopjs-bundle.js" : {
 				repo : "troopjs/troopjs-bundle",
 				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:meta.dist.bundle>",
+				file : "<config:meta.dist.max>",
 				description : "TroopJS bundle - <%= meta.version %>"
 			},
 			"troopjs-bundle.min.js" : {
