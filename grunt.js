@@ -1,10 +1,18 @@
 /*global module:false*/
 module.exports = function(grunt) {
-	// Project configuration.
+	grunt.loadNpmTasks("grunt-contrib");
+	grunt.loadNpmTasks("grunt-buster");
+	grunt.loadNpmTasks("grunt-git-describe");
+	grunt.loadNpmTasks("grunt-github-upload");
+
+	grunt.registerTask("test", "lint buster");
+	grunt.registerTask("dist", "describe requirejs concat min");
+	grunt.registerTask("default", "test clean dist");
+
+
 	grunt.config.init({
 		meta : {
 			version : "SNAPSHOT",
-			auth : "<json:auth.json>",
 			banner : "/*!\n" +
 				"* TroopJS Bundle - <%= meta.version %>\n" +
 				"* http://troopjs.com/\n" +
@@ -14,7 +22,8 @@ module.exports = function(grunt) {
 			path : {
 				bundle : "dist/troopjs-bundle.js",
 				min : "dist/troopjs-bundle.min.js"
-			}
+			},
+			auth : "<json:auth.json>"
 		},
 		clean : {
 			dist : [ "<config:meta.path.bundle>", "<config:meta.path.min>" ]
@@ -79,13 +88,4 @@ module.exports = function(grunt) {
 			}
 		}
 	});
-
-	grunt.loadNpmTasks("grunt-contrib");
-	grunt.loadNpmTasks("grunt-buster");
-	grunt.loadNpmTasks("grunt-git-describe");
-	grunt.loadNpmTasks("grunt-github-upload");
-
-	grunt.registerTask("test", "lint buster");
-	grunt.registerTask("dist", "describe requirejs concat min");
-	grunt.registerTask("default", "test clean dist");
 };
