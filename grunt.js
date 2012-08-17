@@ -1,30 +1,5 @@
 /*global module:false*/
 module.exports = function(grunt) {
-	var files = {
-		core : [ "troopjs-core/remote/ajax",
-			"troopjs-core/route/router",
-			"troopjs-core/store/local",
-			"troopjs-core/store/session",
-			"troopjs-core/dimensions/service",
-			"troopjs-core/route/router",
-			"troopjs-core/route/placeholder",
-			"troopjs-core/widget/application" ],
-		utils : [ "troopjs-utils/each",
-			"troopjs-utils/grep",
-			"troopjs-utils/merge",
-			"troopjs-utils/tr",
-			"troopjs-utils/unique",
-			"troopjs-utils/when",
-			"troopjs-utils/getargs" ],
-		jquery : [ "troopjs-jquery/action",
-			"troopjs-jquery/destroy",
-			"troopjs-jquery/resize",
-			"troopjs-jquery/dimensions",
-			"troopjs-jquery/hashchange",
-			"troopjs-jquery/weave" ],
-		requirejs : [ "troopjs-requirejs/template" ]
-	};
-
 	// Project configuration.
 	grunt.config.init({
 		meta : {
@@ -65,7 +40,9 @@ module.exports = function(grunt) {
 							"config" : "empty:"
 						}
 					},
-					include : Array.prototype.concat(files.core, files.utils, files.jquery, files.requirejs),
+					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
+						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
+					}),
 					optimize : "none"
 				}
 			}
