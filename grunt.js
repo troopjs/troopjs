@@ -19,22 +19,20 @@ module.exports = function(grunt) {
 				"* Copyright (c) <%= grunt.template.today('yyyy') %> " + "Mikael Karon <mikael@karon.se>\n" +
 				"* Licensed MIT\n" +
 				"*/",
-			path : {
+			dist : {
 				bundle : "dist/troopjs-bundle.js",
 				min : "dist/troopjs-bundle.min.js"
 			},
 			auth : "<json:auth.json>"
 		},
-		clean : {
-			dist : [ "<config:meta.path.bundle>", "<config:meta.path.min>" ]
-		},
+		clean : "<config:meta.dist>",
 		lint : {
 			src: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
 		},
 		requirejs : {
 			dist : {
 				options : {
-					out : "<config:meta.path.bundle>",
+					out : "<config:meta.dist.bundle>",
 					baseUrl : "src",
 					paths : {
 						"compose" : "lib/composejs/compose",
@@ -64,26 +62,26 @@ module.exports = function(grunt) {
 		concat : {
 			dist : {
 				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
-				dest : "<config:meta.path.bundle>"
+				dest : "<config:meta.dist.bundle>"
 			}
 		},
 		min : {
 			dist : {
 				src : [ "<banner>", "<config:concat.dist.dest>" ],
-				dest : "<config:meta.path.min>"
+				dest : "<config:meta.dist.min>"
 			}
 		},
 		upload : {
 			"troopjs-bundle.js" : {
 				repo : "troopjs/troopjs-bundle",
 				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:meta.path.bundle>",
+				file : "<config:meta.dist.bundle>",
 				description : "TroopJS bundle - <%= meta.version %>"
 			},
 			"troopjs-bundle.min.js" : {
 				repo : "troopjs/troopjs-bundle",
 				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:meta.path.min>",
+				file : "<config:meta.dist.min>",
 				description : "TroopJS bundle - <%= meta.version %> (minified)"
 			}
 		}
