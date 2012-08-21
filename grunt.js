@@ -54,11 +54,6 @@ module.exports = function(grunt) {
 				}
 			}
 		},
-		buster : {
-			test : {
-				config : "test/buster.js"
-			}
-		},
 		concat : {
 			dist : {
 				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
