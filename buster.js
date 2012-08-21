@@ -15,10 +15,10 @@ module.exports.tests = {
 		"resources/requirejs/require.js",
 		"resources/config.requirejs.js",
 		"src/lib/composejs/compose.js",
-		"src/lib/troopjs-*/src/**.js"
+		"src/lib/troopjs-*/src/**/*.js"
 	],
 
 	tests : [
-		"src/lib/troopjs-*/test/**.js"
+		"src/lib/troopjs-*/test/**/*.js"
 	]
 };
