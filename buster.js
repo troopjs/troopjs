@@ -7,10 +7,13 @@ module.exports.tests = {
 		"resources/requirejs/require.js"
 	],
 
-	sources : [ "resources/config.requirejs.js" ],
+	sources : [
+		"resources/config.requirejs.js"
+	],
 
 	resources : [
-		"resources/**",
+		"resources/requirejs/require.js",
+		"resources/config.requirejs.js",
 		"src/lib/composejs/compose.js",
 		"src/lib/troopjs-*/src/**.js"
 	],
