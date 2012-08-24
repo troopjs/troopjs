@@ -36,16 +36,12 @@ module.exports = function(grunt) {
 					baseUrl : "src",
 					paths : {
 						"compose" : "lib/composejs/compose",
+						"jquery" : "empty:",
+						"config" : "empty:",
 						"troopjs-core" : "lib/troopjs-core/src",
 						"troopjs-utils" : "lib/troopjs-utils/src",
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
 						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
-					},
-					map : {
-						"*" : {
-							"jquery" : "empty:",
-							"config" : "empty:"
-						}
 					},
 					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
 						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
