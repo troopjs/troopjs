@@ -1,32 +1,15 @@
 /*global module:false*/
 module.exports = function(grunt) {
 
-	var files = {
-		core : [ "troopjs-core/remote/ajax",
-			"troopjs-core/route/router",
-			"troopjs-core/store/local",
-			"troopjs-core/store/session",
-			"troopjs-core/dimensions/service",
-			"troopjs-core/route/router",
-			"troopjs-core/route/placeholder",
-			"troopjs-core/widget/application" ],
-		utils : [ "troopjs-utils/each",
-			"troopjs-utils/grep",
-			"troopjs-utils/merge",
-			"troopjs-utils/tr",
-			"troopjs-utils/unique",
-			"troopjs-utils/when",
-			"troopjs-utils/getargs" ],
-		jquery : [ "troopjs-jquery/action",
-			"troopjs-jquery/destroy",
-			"troopjs-jquery/resize",
-			"troopjs-jquery/dimensions",
-			"troopjs-jquery/hashchange",
-			"troopjs-jquery/weave" ],
-		requirejs : [ "troopjs-requirejs/template" ]
-	};
+	grunt.loadNpmTasks("grunt-contrib");
+	grunt.loadNpmTasks("grunt-buster");
+	grunt.loadNpmTasks("grunt-git-describe");
+	grunt.loadNpmTasks("grunt-github-upload");
 
-	// Project configuration.
+	grunt.registerTask("test", "lint buster");
+	grunt.registerTask("dist", "describe requirejs concat min");
+	grunt.registerTask("default", "test clean dist");
+
 	grunt.config.init({
 		meta : {
 			version : "SNAPSHOT",
@@ -35,61 +18,63 @@ module.exports = function(grunt) {
 				"* http://troopjs.com/\n" +
 				"* Copyright (c) <%= grunt.template.today('yyyy') %> " + "Mikael Karon <mikael@karon.se>\n" +
 				"* Licensed MIT\n" +
-				"*/"
+				"*/",
+			dist : {
+				max : "dist/troopjs-bundle.js",
+				min : "dist/troopjs-bundle.min.js"
+			},
+			auth : "<json:auth.json>"
 		},
-		clean : {
-			dist : [ "dist" ]
-		},
+		clean : "<config:meta.dist>",
 		lint : {
 			src: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
 		},
 		requirejs : {
 			dist : {
 				options : {
-					out : "dist/troopjs-bundle.js",
+					out : "<config:meta.dist.max>",
 					baseUrl : "src",
 					paths : {
 						"compose" : "lib/composejs/compose",
+						"jquery" : "empty:",
+						"config" : "empty:",
 						"troopjs-core" : "lib/troopjs-core/src",
 						"troopjs-utils" : "lib/troopjs-utils/src",
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
 						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
 					},
-					map : {
-						"*" : {
-							"jquery" : "empty:",
-							"config" : "empty:"
-						}
-					},
-					include : Array.prototype.concat(files.core, files.utils, files.jquery, files.requirejs),
+					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
+						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
+					}),
 					optimize : "none"
 				}
-			}
-		},
-		buster : {
-			test : {
-				config : "test/buster.js"
 			}
 		},
 		concat : {
 			dist : {
 				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
-				dest : "dist/troopjs-bundle.js"
+				dest : "<config:meta.dist.max>"
 			}
 		},
 		min : {
 			dist : {
 				src : [ "<banner>", "<config:concat.dist.dest>" ],
-				dest : "dist/troopjs-bundle.min.js"
+				dest : "<config:meta.dist.min>"
+			}
+		},
+		upload : {
+			"troopjs-bundle.js" : {
+				repo : "troopjs/troopjs-bundle",
+				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
+				file : "<config:meta.dist.max>",
+				description : "TroopJS bundle - <%= meta.version %>"
+			},
+			"troopjs-bundle.min.js" : {
+				repo : "troopjs/troopjs-bundle",
+				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
+				file : "<config:meta.dist.min>",
+				description : "TroopJS bundle - <%= meta.version %> (minified)"
 			}
 		}
 	});
-
-	grunt.loadNpmTasks("grunt-contrib");
-	grunt.loadNpmTasks("grunt-buster");
-	grunt.loadNpmTasks("grunt-git-describe");
-
-	grunt.registerTask("test", "lint buster");
-	grunt.registerTask("dist", "describe requirejs concat min");
-	grunt.registerTask("default", "test dist");
 };
