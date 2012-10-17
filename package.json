@@ -1,0 +1,10 @@
+{
+	"name": "troopjs-bundle",
+	"version": "1.0.6",
+	"dependencies": {
+		"grunt-contrib": "> 0.0.1",
+		"grunt-buster": "> 0.0.1",
+		"grunt-git-describe": "https://github.com/mikaelkaron/grunt-git-describe/tarball/master",
+		"grunt-git-upload": "https://github.com/mikaelkaron/grunt-github-upload/tarball/master"
+	}
+}
