@@ -5,6 +5,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-github-upload");
+	grunt.loadNpmTasks("grunt-doxer");
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
@@ -74,6 +75,21 @@ module.exports = function(grunt) {
 				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
 				file : "<config:meta.dist.min>",
 				description : "TroopJS bundle - <%= meta.version %> (minified)"
+			}
+		},
+		doxer: {
+			all: {
+				src: [
+					"src/lib/composejs/compose.js",
+					"src/lib/troopjs-core/src/**/*.js",
+					"src/lib/troopjs-jquery/src/**/*.js",
+					"src/lib/troopjs-requirejs/src/**/*.js",
+					"src/lib/troopjs-utils/src/**/*.js"
+				],
+				dest: "docs",
+				options: {
+					format: "api"
+				}
 			}
 		}
 	});
