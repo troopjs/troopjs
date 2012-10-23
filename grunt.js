@@ -81,10 +81,7 @@ module.exports = function(grunt) {
 			all: {
 				src: [
 					"src/lib/composejs/compose.js",
-					"src/lib/troopjs-core/src/**/*.js",
-					"src/lib/troopjs-jquery/src/**/*.js",
-					"src/lib/troopjs-requirejs/src/**/*.js",
-					"src/lib/troopjs-utils/src/**/*.js"
+					"src/lib/troopjs-*/src/**/*.js"
 				],
 				dest: "docs",
 				options: {
