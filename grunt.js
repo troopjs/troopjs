@@ -38,7 +38,6 @@ module.exports = function(grunt) {
 					paths : {
 						"compose" : "lib/composejs/compose",
 						"jquery" : "empty:",
-						"config" : "empty:",
 						"troopjs-core" : "lib/troopjs-core/src",
 						"troopjs-utils" : "lib/troopjs-utils/src",
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
