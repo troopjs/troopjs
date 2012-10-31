@@ -1,6 +1,6 @@
 {
 	"name": "troopjs-bundle",
-	"version": "1.0.7",
+	"version": "2.0.0",
 	"dependencies": {
 		"grunt-contrib": "> 0.0.1",
 		"grunt-buster": "> 0.0.1",

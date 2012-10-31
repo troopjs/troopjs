@@ -40,6 +40,7 @@ module.exports = function(grunt) {
 						"jquery" : "empty:",
 						"troopjs-core" : "lib/troopjs-core/src",
 						"troopjs-utils" : "lib/troopjs-utils/src",
+						"troopjs-browser" : "lib/troopjs-browser/src",
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
 						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
 					},

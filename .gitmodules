@@ -16,3 +16,6 @@
 [submodule "resources/requirejs"]
 	path = resources/requirejs
 	url = https://github.com/jrburke/requirejs.git
+[submodule "src/lib/troopjs-browser"]
+	path = src/lib/troopjs-browser
+	url = https://github.com/troopjs/troopjs-browser.git
