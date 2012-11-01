@@ -34,16 +34,30 @@ module.exports = function(grunt) {
 			dist : {
 				options : {
 					out : "<config:meta.dist.max>",
-					baseUrl : "src",
-					paths : {
-						"compose" : "lib/composejs/compose",
-						"jquery" : "empty:",
-						"troopjs-core" : "lib/troopjs-core/src",
-						"troopjs-utils" : "lib/troopjs-utils/src",
-						"troopjs-browser" : "lib/troopjs-browser/src",
-						"troopjs-jquery" : "lib/troopjs-jquery/src",
-						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
-					},
+					baseUrl : "src/lib",
+					"packages" : [{
+						"name" : "jquery",
+						"location" : "empty:"
+					}, {
+						"name" : "compose",
+						"location" : "composejs",
+						"main" : "compose"
+					}, {
+						"name" : "troopjs-core",
+						"location" : "troopjs-core/src"
+					}, {
+						"name" : "troopjs-browser",
+						"location" : "troopjs-browser/src"
+					}, {
+						"name" : "troopjs-jquery",
+						"location" : "troopjs-jquery/src"
+					}, {
+						"name" : "troopjs-requirejs",
+						"location" : "troopjs-requirejs/src"
+					}, {
+						"name" : "troopjs-utils",
+						"location" : "troopjs-utils/src"
+					}],
 					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
 						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
 					}),
