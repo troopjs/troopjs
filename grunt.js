@@ -40,7 +40,7 @@ module.exports = function(grunt) {
 						"location" : "empty:"
 					}, {
 						"name" : "compose",
-						"location" : "composejs",
+						"location" : "compose",
 						"main" : "compose"
 					}, {
 						"name" : "troopjs-core",

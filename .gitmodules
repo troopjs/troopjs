@@ -7,8 +7,8 @@
 [submodule "src/lib/troopjs-requirejs"]
 	path = src/lib/troopjs-requirejs
 	url = https://github.com/troopjs/troopjs-requirejs.git
-[submodule "src/lib/composejs"]
-	path = src/lib/composejs
+[submodule "src/lib/compose"]
+	path = src/lib/compose
 	url = https://github.com/kriszyp/compose.git
 [submodule "src/lib/troopjs-utils"]
 	path = src/lib/troopjs-utils
