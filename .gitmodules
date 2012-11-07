@@ -19,3 +19,6 @@
 [submodule "src/lib/troopjs-browser"]
 	path = src/lib/troopjs-browser
 	url = https://github.com/troopjs/troopjs-browser.git
+[submodule "src/lib/when"]
+	path = src/lib/when
+	url = https://github.com/cujojs/when.git
