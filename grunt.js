@@ -43,6 +43,10 @@ module.exports = function(grunt) {
 						"location" : "compose",
 						"main" : "compose"
 					}, {
+						"name" : "when",
+						"location" : "when",
+						"main" : "when"
+					}, {
 						"name" : "troopjs-core",
 						"location" : "troopjs-core/src"
 					}, {
