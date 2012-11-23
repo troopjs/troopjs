@@ -2,10 +2,10 @@
 	"name": "troopjs-bundle",
 	"version": "2.0.0",
 	"dependencies": {
-		"grunt-contrib": "> 0.0.1",
-		"grunt-buster": "> 0.0.1",
+		"grunt-contrib": ">= 0.3.0",
+		"grunt-buster": ">= 0.1.2",
 		"grunt-git-describe": "https://github.com/mikaelkaron/grunt-git-describe/tarball/master",
 		"grunt-git-upload": "https://github.com/mikaelkaron/grunt-github-upload/tarball/master",
-		"grunt-lexicon": "https://github.com/kates/grunt-lexicon/tarball/master"
+		"grunt-lexicon": ">= 0.1.2"
 	}
 }
