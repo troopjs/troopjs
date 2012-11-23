@@ -6,6 +6,6 @@
 		"grunt-buster": "> 0.0.1",
 		"grunt-git-describe": "https://github.com/mikaelkaron/grunt-git-describe/tarball/master",
 		"grunt-git-upload": "https://github.com/mikaelkaron/grunt-github-upload/tarball/master",
-		"grunt-doxer": "https://github.com/kates/grunt-doxer/tarball/master"
+		"grunt-lexicon": "https://github.com/kates/grunt-lexicon/tarball/master"
 	}
 }

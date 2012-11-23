@@ -11,4 +11,5 @@ node_modules
 
 # dist
 dist/
+docs/
 auth.json

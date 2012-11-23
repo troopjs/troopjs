@@ -5,7 +5,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-github-upload");
-	grunt.loadNpmTasks("grunt-doxer");
+	grunt.loadNpmTasks("grunt-lexicon");
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
@@ -95,7 +95,7 @@ module.exports = function(grunt) {
 				description : "TroopJS bundle - <%= meta.version %> (minified)"
 			}
 		},
-		doxer: {
+		lexicon: {
 			all: {
 				src: [
 					"src/lib/composejs/compose.js",
@@ -103,7 +103,7 @@ module.exports = function(grunt) {
 				],
 				dest: "docs",
 				options: {
-					format: "api"
+					format: "html"
 				}
 			}
 		}
