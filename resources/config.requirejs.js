@@ -1,10 +1,37 @@
 require.config({
 	baseUrl : (buster.env.contextPath || "") + "src",
-	paths : {
-		"compose" : "lib/composejs/compose",
-		"troopjs-core" : "lib/troopjs-core/src",
-		"troopjs-utils" : "lib/troopjs-utils/src",
-		"troopjs-jquery" : "lib/troopjs-jquery/src",
-		"troopjs-requirejs" : "lib/troopjs-requirejs/src"
+	"packages" : [{
+		"name" : "compose",
+		"location" : "lib/compose",
+		"main" : "compose"
+	}, {
+		"name" : "when",
+		"location" : "lib/when",
+		"main" : "when"
+	}, {
+		"name" : "troopjs-core",
+		"location" : "lib/troopjs-core/src"
+	}, {
+		"name" : "troopjs-browser",
+		"location" : "lib/troopjs-browser/src"
+	}, {
+		"name" : "troopjs-jquery",
+		"location" : "lib/troopjs-jquery/src"
+	}, {
+		"name" : "troopjs-requirejs",
+		"location" : "lib/troopjs-requirejs/src"
+	}, {
+		"name" : "troopjs-utils",
+		"location" : "lib/troopjs-utils/src"
+	}],
+	"map" : {
+		"*" : {
+			"template" : "troopjs-requirejs/template"
+		}
+	},
+	"config" : {
+		"when" : {
+			"paranoid" : false
+		}
 	}
 });
