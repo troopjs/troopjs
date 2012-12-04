@@ -22,3 +22,6 @@
 [submodule "src/lib/when"]
 	path = src/lib/when
 	url = https://github.com/cujojs/when.git
+[submodule "src/lib/troopjs-data"]
+	path = src/lib/troopjs-data
+	url = https://github.com/troopjs/troopjs-data
