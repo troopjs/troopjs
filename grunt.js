@@ -50,6 +50,9 @@ module.exports = function(grunt) {
 						"name" : "troopjs-core",
 						"location" : "troopjs-core/src"
 					}, {
+						"name" : "troopjs-data",
+						"location" : "troopjs-data/src"
+					}, {
 						"name" : "troopjs-browser",
 						"location" : "troopjs-browser/src"
 					}, {
