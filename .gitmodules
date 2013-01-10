@@ -25,3 +25,6 @@
 [submodule "src/lib/troopjs-data"]
 	path = src/lib/troopjs-data
 	url = https://github.com/troopjs/troopjs-data
+[submodule "src/lib/poly"]
+	path = src/lib/poly
+	url = https://github.com/cujojs/poly.git

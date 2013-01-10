@@ -47,6 +47,10 @@ module.exports = function(grunt) {
 						"location" : "when",
 						"main" : "when"
 					}, {
+						"name" : "poly",
+						"location" : "poly",
+						"main" : "poly"
+					}, {
 						"name" : "troopjs-core",
 						"location" : "troopjs-core/src"
 					}, {
