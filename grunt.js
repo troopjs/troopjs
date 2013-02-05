@@ -39,10 +39,6 @@ module.exports = function(grunt) {
 						"name" : "jquery",
 						"location" : "empty:"
 					}, {
-						"name" : "compose",
-						"location" : "compose",
-						"main" : "compose"
-					}, {
 						"name" : "when",
 						"location" : "when",
 						"main" : "when"
@@ -105,7 +101,6 @@ module.exports = function(grunt) {
 		lexicon: {
 			all: {
 				src: [
-					"src/lib/composejs/compose.js",
 					"src/lib/troopjs-*/src/**/*.js"
 				],
 				dest: "docs",

@@ -1,10 +1,6 @@
 require.config({
 	baseUrl : (buster.env.contextPath || "") + "src",
 	"packages" : [{
-		"name" : "compose",
-		"location" : "lib/compose",
-		"main" : "compose"
-	}, {
 		"name" : "when",
 		"location" : "lib/when",
 		"main" : "when"
