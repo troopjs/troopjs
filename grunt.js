@@ -68,7 +68,8 @@ module.exports = function(grunt) {
 					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
 						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
 					}),
-					optimize : "none"
+					optimize : "none",
+					normalizeDirDefines : "all"
 				}
 			}
 		},
