@@ -5,7 +5,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-github-upload");
-	grunt.loadNpmTasks("grunt-doxer");
+	grunt.loadNpmTasks("grunt-lexicon");
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
@@ -34,20 +34,42 @@ module.exports = function(grunt) {
 			dist : {
 				options : {
 					out : "<config:meta.dist.max>",
-					baseUrl : "src",
-					paths : {
-						"compose" : "lib/composejs/compose",
-						"jquery" : "empty:",
-						"config" : "empty:",
-						"troopjs-core" : "lib/troopjs-core/src",
-						"troopjs-utils" : "lib/troopjs-utils/src",
-						"troopjs-jquery" : "lib/troopjs-jquery/src",
-						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
-					},
+					baseUrl : "src/lib",
+					"packages" : [{
+						"name" : "jquery",
+						"location" : "empty:"
+					}, {
+						"name" : "when",
+						"location" : "when",
+						"main" : "when"
+					}, {
+						"name" : "poly",
+						"location" : "poly",
+						"main" : "poly"
+					}, {
+						"name" : "troopjs-core",
+						"location" : "troopjs-core/src"
+					}, {
+						"name" : "troopjs-data",
+						"location" : "troopjs-data/src"
+					}, {
+						"name" : "troopjs-browser",
+						"location" : "troopjs-browser/src"
+					}, {
+						"name" : "troopjs-jquery",
+						"location" : "troopjs-jquery/src"
+					}, {
+						"name" : "troopjs-requirejs",
+						"location" : "troopjs-requirejs/src"
+					}, {
+						"name" : "troopjs-utils",
+						"location" : "troopjs-utils/src"
+					}],
 					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
 						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
 					}),
-					optimize : "none"
+					optimize : "none",
+					normalizeDirDefines : "all"
 				}
 			}
 		},
@@ -77,15 +99,14 @@ module.exports = function(grunt) {
 				description : "TroopJS bundle - <%= meta.version %> (minified)"
 			}
 		},
-		doxer: {
+		lexicon: {
 			all: {
 				src: [
-					"src/lib/composejs/compose.js",
 					"src/lib/troopjs-*/src/**/*.js"
 				],
 				dest: "docs",
 				options: {
-					format: "api"
+					format: "html"
 				}
 			}
 		}
