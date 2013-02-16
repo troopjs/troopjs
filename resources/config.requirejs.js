@@ -5,6 +5,10 @@ require.config({
 		"location" : "lib/when",
 		"main" : "when"
 	}, {
+		"name" : "poly",
+		"location" : "lib/poly",
+		"main" : "poly"
+	}, {
 		"name" : "troopjs-core",
 		"location" : "lib/troopjs-core/src"
 	}, {
@@ -26,11 +30,6 @@ require.config({
 	"map" : {
 		"*" : {
 			"template" : "troopjs-requirejs/template"
-		}
-	},
-	"config" : {
-		"when" : {
-			"paranoid" : false
 		}
 	}
 });
