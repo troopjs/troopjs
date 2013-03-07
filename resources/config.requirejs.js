@@ -1,5 +1,6 @@
-require.config({
-	baseUrl : (buster.env.contextPath || "") + "src",
+require = {
+	baseUrl : "src",
+
 	"packages" : [{
 		"name" : "when",
 		"location" : "lib/when",
@@ -27,9 +28,10 @@ require.config({
 		"name" : "troopjs-utils",
 		"location" : "lib/troopjs-utils/src"
 	}],
+
 	"map" : {
 		"*" : {
 			"template" : "troopjs-requirejs/template"
 		}
 	}
-});
+};
