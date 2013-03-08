@@ -2,6 +2,11 @@ define([
 	"./mini",
 	"troopjs-browser/store/local",
 	"troopjs-browser/store/session",
+	"troopjs-utils/filter",
+	"troopjs-utils/getargs",
+	"troopjs-utils/merge",
+	"troopjs-utils/tr",
+	"troopjs-utils/unique",
 	"troopjs-jquery/action",
 	"troopjs-jquery/resize"
 ]);
