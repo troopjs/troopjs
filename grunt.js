@@ -4,8 +4,6 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-contrib");
 	grunt.loadNpmTasks("grunt-buster");
 	grunt.loadNpmTasks("grunt-git-describe");
-	grunt.loadNpmTasks("grunt-github-upload");
-	grunt.loadNpmTasks("grunt-doxer");
 
 	grunt.registerTask("test", "lint buster");
 	grunt.registerTask("dist", "describe requirejs concat min");
@@ -13,7 +11,8 @@ module.exports = function(grunt) {
 
 	grunt.config.init({
 		meta : {
-			version : "SNAPSHOT",
+			package : "<json:package.json>",
+			version : "<config:meta.package.version>",
 			banner : "/*!\n" +
 				"* TroopJS Bundle - <%= meta.version %>\n" +
 				"* http://troopjs.com/\n" +
@@ -23,8 +22,7 @@ module.exports = function(grunt) {
 			dist : {
 				max : "dist/troopjs-bundle.js",
 				min : "dist/troopjs-bundle.min.js"
-			},
-			auth : "<json:auth.json>"
+			}
 		},
 		clean : "<config:meta.dist>",
 		lint : {
@@ -61,32 +59,6 @@ module.exports = function(grunt) {
 			dist : {
 				src : [ "<banner>", "<config:concat.dist.dest>" ],
 				dest : "<config:meta.dist.min>"
-			}
-		},
-		upload : {
-			"troopjs-bundle.js" : {
-				repo : "troopjs/troopjs-bundle",
-				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:meta.dist.max>",
-				description : "TroopJS bundle - <%= meta.version %>"
-			},
-			"troopjs-bundle.min.js" : {
-				repo : "troopjs/troopjs-bundle",
-				auth : "<%= [ meta.auth.username, meta.auth.password ].join(':') %>",
-				file : "<config:meta.dist.min>",
-				description : "TroopJS bundle - <%= meta.version %> (minified)"
-			}
-		},
-		doxer: {
-			all: {
-				src: [
-					"src/lib/composejs/compose.js",
-					"src/lib/troopjs-*/src/**/*.js"
-				],
-				dest: "docs",
-				options: {
-					format: "api"
-				}
 			}
 		}
 	});
