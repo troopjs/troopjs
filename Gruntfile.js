@@ -74,6 +74,14 @@ module.exports = function(grunt) {
 			}
 		},
 
+		"git-describe" : {
+			"me" : {
+				"options" : {
+					"prop" : "pkg.version"
+				}
+			}
+		},
+
 		"concat" : {
 			"options" : {
 				"stripBanners" : true,
@@ -99,8 +107,9 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
+	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-contrib-concat");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("default", [ "requirejs", "uglify", "concat" ]);
+	grunt.registerTask("default", [ "requirejs", "uglify", "git-describe", "concat" ]);
 };
