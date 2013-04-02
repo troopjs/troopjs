@@ -2,9 +2,9 @@
   "name": "troopjs-bundle",
   "version": "1.0.8-SNAPSHOT",
   "devDependencies": {
-    "grunt-git-describe": "https://github.com/mikaelkaron/grunt-git-describe/tarball/master",
-    "grunt-buster": "~0.1.2",
+    "grunt": "~0.3.17",
     "grunt-contrib": "~0.3.0",
-    "grunt": "~0.3.17"
+    "grunt-buster": "~0.1.2",
+    "grunt-git-describe": "https://github.com/mikaelkaron/grunt-git-describe/archive/1.0.0.tar.gz"
   }
 }

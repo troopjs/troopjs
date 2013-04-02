@@ -19,14 +19,14 @@ module.exports = function(grunt) {
 				"* Copyright (c) <%= grunt.template.today('yyyy') %> " + "Mikael Karon <mikael@karon.se>\n" +
 				"* Licensed MIT\n" +
 				"*/",
-			"dist" : {
-				"max" : "dist/troopjs-bundle.js",
-				"min" : "dist/troopjs-bundle.min.js"
+			dist : {
+				max : "dist/troopjs-bundle.js",
+				min : "dist/troopjs-bundle.min.js"
 			}
 		},
-		"clean" : "<config:meta.dist>",
-		"lint" : {
-			"src" : [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
+		clean : "<config:meta.dist>",
+		lint : {
+			src: [ "grunt.js", "src/lib/troopjs-*/src/**/*.js" ]
 		},
 		"requirejs" : {
 			"dist" : {
@@ -42,17 +42,17 @@ module.exports = function(grunt) {
 						"troopjs-jquery" : "lib/troopjs-jquery/src",
 						"troopjs-requirejs" : "lib/troopjs-requirejs/src"
 					},
-					"include" : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
+					include : grunt.file.expandFiles("src/lib/troopjs-*/src/**/*.js").map(function (file) {
 						return file.replace(/.*\/(troopjs-\w+)\/src\/(.+)\.js$/, "$1/$2");
 					}),
-					"optimize" : "none"
+					optimize : "none"
 				}
 			}
 		},
-		"concat" : {
-			"dist" : {
-				"src" : [ "<banner>", "<config:requirejs.dist.options.out>" ],
-				"dest" : "<config:meta.dist.max>"
+		concat : {
+			dist : {
+				src : [ "<banner>", "<config:requirejs.dist.options.out>" ],
+				dest : "<config:meta.dist.max>"
 			}
 		},
 		"min" : {
