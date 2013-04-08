@@ -16,6 +16,8 @@ module.exports = function(grunt) {
 					"dir" : "<%= build.dist %>",
 					"optimize" : "none",
 					"skipDirOptimize" : true,
+					"keepBuildDir" : true,
+					"fileExclusionRegExp": /^\./,
 
 					"packages" : [{
 						"name" : "jquery",
