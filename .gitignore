@@ -9,7 +9,6 @@
 # Node
 node_modules
 
-# dist
-dist/
+# Artifacts
+build/
 docs/
-auth.json
