@@ -1,5 +1,5 @@
 /**
- * troopjs-bundle - 2.0.0-51-ga5396a6
+ * troopjs-bundle - 2.0.0-54-g1104751
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 /*global define:false */
@@ -5602,7 +5602,7 @@ define('troopjs-browser/store/base',[ "troopjs-core/component/gadget", "when" ],
 
 		"set" : function set(key, value) {
 			// JSON encoded 'value' then store as 'key'
-			return when(this[STORAGE].setItem(key, JSON.stringify(value)));
+			return when(this[STORAGE].setItem(key, JSON.stringify(value))).yield(value);
 		},
 
 		"get" : function get(key) {
