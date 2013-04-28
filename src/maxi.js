@@ -1,7 +1,7 @@
 define([
 	"./mini",
-	"troopjs-browser/store/local",
-	"troopjs-browser/store/session",
+	"troopjs-browser/store/adapter/local",
+	"troopjs-browser/store/adapter/session",
 	"troopjs-utils/filter",
 	"troopjs-utils/getargs",
 	"troopjs-utils/merge",
