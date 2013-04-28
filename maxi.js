@@ -1,5 +1,5 @@
 /**
- * troopjs-bundle - 2.0.0-54-g1104751
+ * troopjs-bundle - 2.0.0-56-gfbd0f51
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 /*global define:false */
@@ -4617,6 +4617,48 @@ define('troopjs-bundle/micro',[
 	"troopjs-requirejs/template"
 ]);
 /**
+ * TroopJS data/store/component module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+/*global define:false */
+define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when" ], function StoreModule(Gadget, when) {
+	var UNDEFINED;
+	var ADAPTER = "adapter";
+	var LOCK = "lock";
+
+	return Gadget.extend(function StoreComponent(adapter) {
+		if (adapter === UNDEFINED) {
+			throw new Error("No adapter provided");
+
+			this[ADAPTER] = adapter;
+		}
+	}, {
+		"displayName" : "data/store/component",
+
+		"lock" : function lock() {
+			var self = this;
+
+			return self[LOCK] = when(self[LOCK]);
+		},
+
+		"set" : function set(key, value) {
+			return when(this[ADAPTER].setItem(key, value));
+		},
+
+		"get" : function get(key) {
+			return when(this[ADAPTER].getItem(key));
+		},
+
+		"remove" : function remove(key) {
+			return when(this[ADAPTER].removeItem(key));
+		},
+
+		"clear" : function clear() {
+			return when(this[ADAPTER].clear());
+		}
+	});
+});
+/**
  * TroopJS data/cache/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -5585,65 +5627,64 @@ define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], f
 
 define('troopjs-bundle/mini',[
 	"./micro",
+	"troopjs-data/store/component",
 	"troopjs-data/cache/component",
 	"troopjs-data/query/service",
 	"troopjs-data/component/widget"
 ]);
 /**
- * TroopJS browser/store/base module
+ * TroopJS browser/store/adapter/base module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 /*global define:false */
-define('troopjs-browser/store/base',[ "troopjs-core/component/gadget", "when" ], function StoreModule(Gadget, when) {
+define('troopjs-browser/store/adapter/base',[ "troopjs-core/component/gadget" ], function BaseAdapterModule(Gadget) {
 	var STORAGE = "storage";
 
 	return Gadget.extend({
-		"displayName" : "browser/store/base",
+		"displayName" : "browser/store/adapter/base",
 
 		"set" : function set(key, value) {
-			// JSON encoded 'value' then store as 'key'
-			return when(this[STORAGE].setItem(key, JSON.stringify(value))).yield(value);
+			this[STORAGE].setItem(key, JSON.stringify(value));
+
+			return value;
 		},
 
 		"get" : function get(key) {
-			// Get value from 'key', parse JSON
-			return when(JSON.parse(this[STORAGE].getItem(key)));
+			return JSON.parse(this[STORAGE].getItem(key));
 		},
 
 		"remove" : function remove(key) {
-			// Remove key
-			return when(this[STORAGE].removeItem(key));
+			return this[STORAGE].removeItem(key);
 		},
 
 		"clear" : function clear() {
-			// Clear
-			return when(this[STORAGE].clear());
+			return this[STORAGE].clear();
 		}
 	});
 });
 /**
- * TroopJS browser/store/local module
+ * TroopJS browser/store/adapter/local module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 /*global define:false */
-define('troopjs-browser/store/local',[ "./base" ], function StoreLocalModule(Store) {
+define('troopjs-browser/store/adapter/local',[ "./base" ], function LocalAdapterModule(Store) {
 	return Store.extend({
-		"displayName" : "browser/store/local",
+		"displayName" : "browser/store/adapter/local",
 
 		"storage" : window.localStorage
-	})();
+	});
 });
 /**
- * TroopJS browser/store/session module
+ * TroopJS browser/store/adapter/session module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 /*global define:false */
-define('troopjs-browser/store/session',[ "./base" ], function StoreSessionModule(Store) {
+define('troopjs-browser/store/adapter/session',[ "./base" ], function SessionAdapterModule(Store) {
 	return Store.extend({
-		"displayName" : "browser/store/session",
+		"displayName" : "browser/store/adapter/session",
 
 		"storage": window.sessionStorage
-	})();
+	});
 });
 
 /**
@@ -5970,8 +6011,8 @@ define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
 
 define('troopjs-bundle/maxi',[
 	"./mini",
-	"troopjs-browser/store/local",
-	"troopjs-browser/store/session",
+	"troopjs-browser/store/adapter/local",
+	"troopjs-browser/store/adapter/session",
 	"troopjs-utils/filter",
 	"troopjs-utils/getargs",
 	"troopjs-utils/merge",

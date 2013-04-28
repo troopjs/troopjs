@@ -1,5 +1,5 @@
 /**
- * troopjs-bundle - 2.0.0-54-g1104751
+ * troopjs-bundle - 2.0.0-56-gfbd0f51
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 /*global define:false */
@@ -4617,6 +4617,48 @@ define('troopjs-bundle/micro',[
 	"troopjs-requirejs/template"
 ]);
 /**
+ * TroopJS data/store/component module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+/*global define:false */
+define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when" ], function StoreModule(Gadget, when) {
+	var UNDEFINED;
+	var ADAPTER = "adapter";
+	var LOCK = "lock";
+
+	return Gadget.extend(function StoreComponent(adapter) {
+		if (adapter === UNDEFINED) {
+			throw new Error("No adapter provided");
+
+			this[ADAPTER] = adapter;
+		}
+	}, {
+		"displayName" : "data/store/component",
+
+		"lock" : function lock() {
+			var self = this;
+
+			return self[LOCK] = when(self[LOCK]);
+		},
+
+		"set" : function set(key, value) {
+			return when(this[ADAPTER].setItem(key, value));
+		},
+
+		"get" : function get(key) {
+			return when(this[ADAPTER].getItem(key));
+		},
+
+		"remove" : function remove(key) {
+			return when(this[ADAPTER].removeItem(key));
+		},
+
+		"clear" : function clear() {
+			return when(this[ADAPTER].clear());
+		}
+	});
+});
+/**
  * TroopJS data/cache/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -5585,6 +5627,7 @@ define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], f
 
 define('troopjs-bundle/mini',[
 	"./micro",
+	"troopjs-data/store/component",
 	"troopjs-data/cache/component",
 	"troopjs-data/query/service",
 	"troopjs-data/component/widget"
