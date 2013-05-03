@@ -10,5 +10,5 @@
 node_modules
 
 # Artifacts
-build/
+dist/
 docs/

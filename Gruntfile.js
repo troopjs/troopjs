@@ -6,14 +6,14 @@ module.exports = function(grunt) {
 
 		"build" : {
 			"src" : "src",
-			"build" : "build"
+			"dist" : "dist"
 		},
 
 		"requirejs" : {
 			"compile" : {
 				"options" : {
 					"baseUrl" : "<%= build.src %>",
-					"dir" : "<%= build.build %>",
+					"dir" : "<%= build.dist %>",
 					"optimize" : "none",
 					"skipDirOptimize" : true,
 					"keepBuildDir" : true,
@@ -68,9 +68,9 @@ module.exports = function(grunt) {
 			"bundles" : {
 				"files" : [{
 					"expand" : true,
-					"cwd" : "<%= build.build %>",
+					"cwd" : "<%= build.dist %>",
 					"src" : "*.js",
-					"dest" : "<%= build.build %>",
+					"dest" : "<%= build.dist %>",
 					"ext" : ".min.js"
 				}]
 			}
@@ -95,9 +95,9 @@ module.exports = function(grunt) {
 			"bundles" : {
 				"files" : [{
 					"expand" : true,
-					"cwd" : "<%= build.build %>",
+					"cwd" : "<%= build.dist %>",
 					"src" : "*.js",
-					"dest" : "<%= build.build %>"
+					"dest" : "<%= build.dist %>"
 				}]
 			}
 		},
