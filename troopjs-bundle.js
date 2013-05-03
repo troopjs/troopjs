@@ -1,5 +1,5 @@
 /*!
-* TroopJS Bundle - 1.0.9-8-g9493af8
+* TroopJS Bundle - 1.0.9-9-g30bc887
 * http://troopjs.com/
 * Copyright (c) 2013 Mikael Karon <mikael@karon.se>
 * Licensed MIT
@@ -1423,6 +1423,53 @@ define('troopjs-core/dimensions/service',[ "../component/service" ], function Di
 			if (deferred) {
 				deferred.resolve();
 			}
+		}
+	});
+});
+/**
+ * TroopJS core/logger/console
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+/*global define:false */
+define('troopjs-core/logger/console',[ "compose", "../component/base" ], function ConsoleLogger(Compose, Component) {
+	var CONSOLE = console;
+
+	return Compose.create(Component, {
+		"log" : CONSOLE.log.bind(CONSOLE),
+		"warn" : CONSOLE.warn.bind(CONSOLE),
+		"debug" : CONSOLE.debug.bind(CONSOLE),
+		"info" : CONSOLE.info.bind(CONSOLE)
+	});
+});
+/**
+ * TroopJS core/logger/pubsub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+/*global define:false */
+define('troopjs-core/logger/pubsub',[ "compose", "../component/base", "../pubsub/hub" ], function PubSubLogger(Compose, Component, hub) {
+	var ARRAY_PUSH = Array.prototype.push;
+	var PUBLISH = hub.publish;
+
+	return Compose.create(Component, {
+		"log": function log(){
+			var args = [ "logger/log" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+		"warn" : function warn() {
+			var args = [ "logger/warn" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+		"debug" : function debug() {
+			var args = [ "logger/debug" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+		"info" : function info() {
+			var args = [ "logger/info" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
 		}
 	});
 });
