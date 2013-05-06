@@ -102,6 +102,21 @@ module.exports = function(grunt) {
 			}
 		},
 
+		"json-replace" : {
+			"options" : {
+				"space" : "\t",
+				"replace" : {
+					"version" : "<%= pkg.version %>"
+				}
+			},
+			"bundles" : {
+				"files" : [{
+					"src" : "./package.json",
+					"dest" : "<%= build.dist %>/package.json"
+				}]
+			}
+		},
+
 		"buster" : {
 			"troopjs-bundle" : {}
 		}
@@ -109,9 +124,10 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
-	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-contrib-concat");
+	grunt.loadNpmTasks("grunt-git-describe");
+	grunt.loadNpmTasks("grunt-json-replace");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("default", [ "requirejs", "uglify", "git-describe", "concat" ]);
+	grunt.registerTask("default", [ "requirejs", "uglify", "git-describe", "json-replace", "concat" ]);
 };
