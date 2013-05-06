@@ -129,5 +129,5 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-json-replace");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("default", [ "requirejs", "uglify", "git-describe", "json-replace", "concat" ]);
+	grunt.registerTask("default", [ "requirejs", "uglify", "git-describe", "concat", "json-replace" ]);
 };
