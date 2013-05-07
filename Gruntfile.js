@@ -6,7 +6,11 @@ module.exports = function(grunt) {
 
 		"build" : {
 			"src" : "src",
-			"dist" : "dist"
+			"dist" : "dist",
+			"banner" : "/**\n" +
+				" * <%= pkg.name %> - <%= pkg.version %>\n" +
+				" * @license <%= pkg.licenses[0].type %> <%= pkg.licenses[0].url %> © <%= pkg.author.name %> mailto:<%= pkg.author.email%>\n" +
+				" */\n"
 		},
 
 		"requirejs" : {
@@ -64,8 +68,13 @@ module.exports = function(grunt) {
 			}
 		},
 
+		"clean" :[ "<%= build.dist %> "],
+
 		"uglify" : {
 			"bundles" : {
+				"options" : {
+					"banner" : "<%= build.banner %>"
+				},
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
@@ -77,7 +86,7 @@ module.exports = function(grunt) {
 		},
 
 		"git-describe" : {
-			"me" : {
+			"bundles" : {
 				"options" : {
 					"prop" : "pkg.version"
 				}
@@ -85,14 +94,11 @@ module.exports = function(grunt) {
 		},
 
 		"concat" : {
-			"options" : {
-				"stripBanners" : true,
-				"banner" : "/**\n" +
-					" * <%= pkg.name %> - <%= pkg.version %>\n" +
-					" * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se\n" +
-					" */\n"
-			},
 			"bundles" : {
+				"options" : {
+					"stripBanners" : true,
+					"banner" : "<%= build.banner %>"
+				},
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
@@ -103,17 +109,30 @@ module.exports = function(grunt) {
 		},
 
 		"json-replace" : {
-			"options" : {
-				"space" : "\t",
-				"replace" : {
-					"version" : "<%= pkg.version %>"
-				}
-			},
 			"bundles" : {
+				"options" : {
+					"space" : "  ",
+					"replace" : {
+						"version" : "<%= pkg.version %>"
+					}
+				},
 				"files" : [{
 					"src" : "./package.json",
 					"dest" : "<%= build.dist %>/package.json"
 				}]
+			}
+		},
+
+		"git-dist" : {
+			"bundles" : {
+				"options" : {
+					"url" : "<%= pkg.repository.url %>",
+					"branch" : "build/2.x",
+					"dir" : "<%= build.dist %>",
+					"message" : "<%= pkg.name %> - <%= pkg.version %>",
+					"name" : "<%= pkg.author.name %>",
+					"email" : "<%= pkg.author.email %>"
+				}
 			}
 		},
 
@@ -122,12 +141,16 @@ module.exports = function(grunt) {
 		}
 	});
 
+
+	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
 	grunt.loadNpmTasks("grunt-contrib-concat");
 	grunt.loadNpmTasks("grunt-git-describe");
+	grunt.loadNpmTasks("grunt-git-dist");
 	grunt.loadNpmTasks("grunt-json-replace");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("default", [ "requirejs", "uglify", "git-describe", "concat", "json-replace" ]);
+	grunt.registerTask("default", [ "requirejs", "git-describe", "concat" ]);
+	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "default", "uglify", "json-replace", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
 };
