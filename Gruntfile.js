@@ -5,7 +5,7 @@ module.exports = function(grunt) {
 		"pkg": grunt.file.readJSON('package.json'),
 
 		"build" : {
-			"src" : "src",
+			"src" : ".",
 			"dist" : "dist",
 			"banner" : "/**\n" +
 				" * <%= pkg.name %> - <%= pkg.version %>\n" +
@@ -21,7 +21,7 @@ module.exports = function(grunt) {
 					"optimize" : "none",
 					"skipDirOptimize" : true,
 					"keepBuildDir" : true,
-					"fileExclusionRegExp": /^\./,
+					"fileExclusionRegExp": /^\.|^(?:node_modules|dist)$/,
 
 					"packages" : [{
 						"name" : "jquery",
@@ -78,7 +78,7 @@ module.exports = function(grunt) {
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
-					"src" : "*.js",
+					"src" : "{maxi,mini,micro}.js",
 					"dest" : "<%= build.dist %>",
 					"ext" : ".min.js"
 				}]
@@ -102,7 +102,7 @@ module.exports = function(grunt) {
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
-					"src" : "*.js",
+					"src" : "{maxi,mini,micro}.js",
 					"dest" : "<%= build.dist %>"
 				}]
 			}
@@ -117,7 +117,7 @@ module.exports = function(grunt) {
 					}
 				},
 				"files" : [{
-					"src" : "./package.json",
+					"src" : "<%= build.dist %>/package.json",
 					"dest" : "<%= build.dist %>/package.json"
 				}]
 			}
