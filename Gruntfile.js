@@ -21,7 +21,7 @@ module.exports = function(grunt) {
 					"optimize" : "none",
 					"skipDirOptimize" : true,
 					"keepBuildDir" : true,
-					"fileExclusionRegExp": /^\.|^(?:node_modules|dist)$/,
+					"fileExclusionRegExp": /^(?:.git|.gitignore|.gitmodules|node_modules|dist)$/,
 
 					"packages" : [{
 						"name" : "jquery",
@@ -39,22 +39,22 @@ module.exports = function(grunt) {
 						"location" : "."
 					}, {
 						"name" : "troopjs-core",
-						"location" : "lib/troopjs-core/src"
+						"location" : "lib/troopjs-core"
 					}, {
 						"name" : "troopjs-browser",
-						"location" : "lib/troopjs-browser/src"
+						"location" : "lib/troopjs-browser"
 					}, {
 						"name" : "troopjs-data",
-						"location" : "lib/troopjs-data/src"
+						"location" : "lib/troopjs-data"
 					}, {
 						"name" : "troopjs-utils",
-						"location" : "lib/troopjs-utils/src"
+						"location" : "lib/troopjs-utils"
 					}, {
 						"name" : "troopjs-jquery",
-						"location" : "lib/troopjs-jquery/src"
+						"location" : "lib/troopjs-jquery"
 					}, {
 						"name" : "troopjs-requirejs",
-						"location" : "lib/troopjs-requirejs/src"
+						"location" : "lib/troopjs-requirejs"
 					}],
 
 					"modules" : [{
