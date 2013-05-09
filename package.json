@@ -25,7 +25,7 @@
     "grunt-plugin-buster": "~2.0.0",
     "grunt-git-describe": "~2.0.1",
     "grunt-git-dist": "~0.1.1",
-    "grunt-json-replace": "~0.1.1",
+    "grunt-json-replace": "~0.1.2",
     "grunt-lexicon": "~0.1.8",
     "buster": "~0.6.12"
   }
