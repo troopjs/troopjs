@@ -13,6 +13,7 @@ module.exports.tests = {
 
 	resources : [
 		"resources/requirejs/require.js",
+		"resources/jquery/dist/jquery.js",
 		"resources/config.requirejs.js",
 		"src/**/*.*"
 	],

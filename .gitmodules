@@ -16,3 +16,6 @@
 [submodule "resources/requirejs"]
 	path = resources/requirejs
 	url = https://github.com/jrburke/requirejs.git
+[submodule "resources/jquery"]
+	path = resources/jquery
+	url = https://github.com/jquery/jquery.git
