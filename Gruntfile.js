@@ -154,7 +154,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
 	grunt.registerTask("compile", [ "requirejs", "git-describe", "concat", "json-replace" ]);
-	grunt.registerTask("minify", [ "uglify" ]);
-	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "minify", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
+	grunt.registerTask("compress", [ "uglify" ]);
+	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
 	grunt.registerTask("default", [ "compile" ])
 };
