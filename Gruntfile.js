@@ -1,5 +1,6 @@
 /*global module:false*/
 module.exports = function(grunt) {
+	var UNDEFINED;
 
 	grunt.initConfig({
 		"pkg": grunt.file.readJSON('package.json'),
@@ -113,7 +114,8 @@ module.exports = function(grunt) {
 				"options" : {
 					"space" : "  ",
 					"replace" : {
-						"version" : "<%= pkg.version %>"
+						"version" : "<%= pkg.version %>",
+						"devDependencies" : UNDEFINED
 					}
 				},
 				"files" : [{
