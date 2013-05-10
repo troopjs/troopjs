@@ -22,7 +22,7 @@ module.exports = function(grunt) {
 					"optimize" : "none",
 					"skipDirOptimize" : true,
 					"keepBuildDir" : true,
-					"fileExclusionRegExp": /^(?:.git|.gitignore|.gitmodules|node_modules|Gruntfile.js|dist|test)$/,
+					"fileExclusionRegExp": /^(?:.git|.gitignore|.gitmodules|node_modules|Gruntfile.js|support|test|dist)$/,
 
 					"packages" : [{
 						"name" : "jquery",
