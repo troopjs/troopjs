@@ -10,9 +10,6 @@
 [submodule "lib/troopjs-utils"]
 	path = lib/troopjs-utils
 	url = https://github.com/troopjs/troopjs-utils.git
-[submodule "test/lib/requirejs"]
-	path = test/lib/requirejs
-	url = https://github.com/jrburke/requirejs.git
 [submodule "lib/troopjs-browser"]
 	path = lib/troopjs-browser
 	url = https://github.com/troopjs/troopjs-browser.git
@@ -25,3 +22,9 @@
 [submodule "lib/poly"]
 	path = lib/poly
 	url = https://github.com/troopjs/poly.git
+[submodule "support/requirejs"]
+	path = support/requirejs
+	url = https://github.com/jrburke/requirejs.git
+[submodule "support/jquery"]
+	path = support/jquery
+	url = https://github.com/jquery/jquery.git

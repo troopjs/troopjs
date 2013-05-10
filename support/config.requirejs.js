@@ -1,7 +1,9 @@
 require = {
-	baseUrl : "src",
-
 	"packages" : [{
+		"name" : "jquery",
+		"location" : "jquery",
+		"main" : "dist/jquery"
+	}, {
 		"name" : "when",
 		"location" : "lib/when",
 		"main" : "when"
@@ -11,27 +13,28 @@ require = {
 		"main" : "poly"
 	}, {
 		"name" : "troopjs-core",
-		"location" : "lib/troopjs-core/src"
+		"location" : "lib/troopjs-core"
 	}, {
 		"name" : "troopjs-data",
-		"location" : "lib/troopjs-data/src"
+		"location" : "lib/troopjs-data"
 	}, {
 		"name" : "troopjs-browser",
-		"location" : "lib/troopjs-browser/src"
+		"location" : "lib/troopjs-browser"
 	}, {
 		"name" : "troopjs-jquery",
-		"location" : "lib/troopjs-jquery/src"
+		"location" : "lib/troopjs-jquery"
 	}, {
 		"name" : "troopjs-requirejs",
-		"location" : "lib/troopjs-requirejs/src"
+		"location" : "lib/troopjs-requirejs"
 	}, {
 		"name" : "troopjs-utils",
-		"location" : "lib/troopjs-utils/src"
+		"location" : "lib/troopjs-utils"
 	}],
 
 	"map" : {
 		"*" : {
-			"template" : "troopjs-requirejs/template"
+			"template" : "troopjs-requirejs/template",
+			"logger" : "troopjs-core/logger/console"
 		}
 	}
 };

@@ -6,15 +6,15 @@ config["troopjs-bundle"] = {
 	"rootPath" : "../",
 
 	"libs" : [
-		"resources/config.requirejs.js",
-		"resources/requirejs/require.js"
+		"support/config.requirejs.js",
+		"support/requirejs/require.js"
 	],
 
 	"resources" : [
-		"src/**/*.*"
+		"lib/**/*.*"
 	],
 
 	"tests" : [
-		"src/lib/troopjs-*/test/**/*.js"
+		"lib/troopjs-*/test/**/*.js"
 	]
 };
