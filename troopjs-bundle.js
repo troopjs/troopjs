@@ -1,5 +1,5 @@
 /*!
-* TroopJS Bundle - 1.0.9-9-g30bc887
+* TroopJS Bundle - 1.0.9-11-g942a1e7
 * http://troopjs.com/
 * Copyright (c) 2013 Mikael Karon <mikael@karon.se>
 * Licensed MIT
@@ -1438,7 +1438,8 @@ define('troopjs-core/logger/console',[ "compose", "../component/base" ], functio
 		"log" : CONSOLE.log.bind(CONSOLE),
 		"warn" : CONSOLE.warn.bind(CONSOLE),
 		"debug" : CONSOLE.debug.bind(CONSOLE),
-		"info" : CONSOLE.info.bind(CONSOLE)
+		"info" : CONSOLE.info.bind(CONSOLE),
+		"error" : CONSOLE.error.bind(CONSOLE)
 	});
 });
 /**
@@ -1470,6 +1471,179 @@ define('troopjs-core/logger/pubsub',[ "compose", "../component/base", "../pubsub
 			var args = [ "logger/info" ];
 			ARRAY_PUSH.apply(args, arguments);
 			PUBLISH.apply(hub, args);
+		},
+		"error" : function info() {
+			var args = [ "logger/error" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		}
+	});
+});
+/*!
+ * TroopJS Utils merge module
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-utils/merge',[],function MergeModule() {
+	var ARRAY = Array;
+	var OBJECT = Object;
+
+	return function merge(source) {
+		var target = this;
+		var key = null;
+		var i;
+		var iMax;
+		var value;
+		var constructor;
+
+		for (i = 0, iMax = arguments.length; i < iMax; i++) {
+			source = arguments[i];
+
+			for (key in source) {
+				value = source[key];
+				constructor = value.constructor;
+	
+				if (!(key in target)) {
+					target[key] = value;
+				}
+				else if (constructor === ARRAY) {
+					target[key] = target[key].concat(value);
+				}
+				else if (constructor === OBJECT) {
+					merge.call(target[key], value);
+				}
+				else {
+					target[key] = value;
+				}
+			}
+		}
+
+		return target;
+	};
+});
+/*!
+ * TroopJS Utils tr component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-utils/tr',[],function TrModule() {
+	var TYPEOF_NUMBER = typeof Number();
+
+	return function tr(callback) {
+		var self = this;
+		var result = [];
+		var i;
+		var length = self.length;
+		var key;
+
+		// Is this an array? Basically, is length a number, is it 0 or is it greater than 0 and that we have index 0 and index length-1
+		if (typeof length === TYPEOF_NUMBER && length === 0 || length > 0 && 0 in self && length - 1 in self) {
+			for (i = 0; i < length; i++) {
+				result.push(callback.call(self, self[i], i));
+			}
+		// Otherwise we'll iterate it as an object
+		} else if (self){
+			for (key in self) {
+				result.push(callback.call(self, self[key], key));
+			}
+		}
+
+		return result;
+	};
+});
+/*!
+ * TroopJS Utils when component
+ * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
+ * Released under the MIT license.
+ */
+define('troopjs-utils/when',[ "jquery" ], function WhenModule($) {
+	return $.when;
+});
+/**
+ * TroopJS core/logger/pubsub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+/*global define:false */
+define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge",  "troopjs-utils/tr", "troopjs-utils/when", "troopjs-utils/deferred" ], function logger(Service, merge, tr, when, Deferred) {
+	var ARRAY_SLICE = Array.prototype.slice;
+	var OBJECT_TOSTRING = String.prototype.toString;
+	var TOSTRING_OBJECT = "[object Object]";
+	var LENGTH = "length";
+	var APPENDERS = "appenders";
+	var BROWSER = navigator.userAgent;
+
+	function forward(signal, deferred) {
+		var self = this;
+
+		var appenders = tr.call(self[APPENDERS], function (appender) {
+			return Deferred(function (dfd) {
+				appender.signal(signal, dfd);
+			});
+		});
+
+		if (deferred) {
+			when.apply(null, appenders).then(deferred.resolve, deferred.reject, deferred.notify);
+		}
+
+		return self;
+	}
+
+	function convert(cat, message) {
+		var result = {
+			"cat" : cat,
+			"href": window.location.href,
+			"browser" : BROWSER,
+			"time": new Date().getTime()
+		};
+
+		if (OBJECT_TOSTRING.call(message) === TOSTRING_OBJECT) {
+			merge.call(result, message);
+		}
+		else {
+			result.msg = message;
+		}
+
+		return result;
+	}
+
+	function append(obj) {
+		var self = this;
+		var appenders = self[APPENDERS];
+		var i;
+		var iMax;
+
+		for (i = 0, iMax = appenders[LENGTH]; i < iMax; i++) {
+			appenders[i].append(obj);
+		}
+	}
+
+	return Service.extend(function loggerService() {
+		this[APPENDERS] = ARRAY_SLICE.call(arguments);
+	}, {
+		displayName : "core/logger/service",
+		"sig/initialize" : forward,
+		"sig/finalize" : forward,
+		"sig/start" : forward,
+		"sig/stop" : forward,
+
+		"hub/logger/log" : function onLog(topic, message) {
+			append.call(this, convert("log", message));
+		},
+
+		"hub/logger/warn" : function onWarn(topic, message) {
+			append.call(this, convert("warn", message));
+		},
+
+		"hub/logger/debug" : function onDebug(topic, message) {
+			append.call(this, convert("debug", message));
+		},
+
+		"hub/logger/info" : function onInfo(topic, message) {
+			append.call(this, convert("info", message));
+		},
+
+		"hub/logger/error" : function onError(topic, message) {
+			append.call(this, convert("error", message));
 		}
 	});
 });
@@ -1580,48 +1754,6 @@ define('troopjs-core/pubsub/topic',[ "../component/base", "troopjs-utils/unique"
 	return Topic;
 });
 
-/*!
- * TroopJS Utils merge module
- * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-utils/merge',[],function MergeModule() {
-	var ARRAY = Array;
-	var OBJECT = Object;
-
-	return function merge(source) {
-		var target = this;
-		var key = null;
-		var i;
-		var iMax;
-		var value;
-		var constructor;
-
-		for (i = 0, iMax = arguments.length; i < iMax; i++) {
-			source = arguments[i];
-
-			for (key in source) {
-				value = source[key];
-				constructor = value.constructor;
-	
-				if (!(key in target)) {
-					target[key] = value;
-				}
-				else if (constructor === ARRAY) {
-					target[key] = target[key].concat(value);
-				}
-				else if (constructor === OBJECT) {
-					merge.call(target[key], value);
-				}
-				else {
-					target[key] = value;
-				}
-			}
-		}
-
-		return target;
-	};
-});
 /*!
  * TroopJS remote/ajax module
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
@@ -3515,42 +3647,4 @@ define('troopjs-utils/each',[ "jquery" ], function EachModule($) {
  */
 define('troopjs-utils/grep',[ "jquery" ], function GrepModule($) {
 	return $.grep;
-});
-/*!
- * TroopJS Utils tr component
- * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-utils/tr',[],function TrModule() {
-	var TYPEOF_NUMBER = typeof Number();
-
-	return function tr(callback) {
-		var self = this;
-		var result = [];
-		var i;
-		var length = self.length;
-		var key;
-
-		// Is this an array? Basically, is length a number, is it 0 or is it greater than 0 and that we have index 0 and index length-1
-		if (typeof length === TYPEOF_NUMBER && length === 0 || length > 0 && 0 in self && length - 1 in self) {
-			for (i = 0; i < length; i++) {
-				result.push(callback.call(self, self[i], i));
-			}
-		// Otherwise we'll iterate it as an object
-		} else if (self){
-			for (key in self) {
-				result.push(callback.call(self, self[key], key));
-			}
-		}
-
-		return result;
-	};
-});
-/*!
- * TroopJS Utils when component
- * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
- * Released under the MIT license.
- */
-define('troopjs-utils/when',[ "jquery" ], function WhenModule($) {
-	return $.when;
 });
