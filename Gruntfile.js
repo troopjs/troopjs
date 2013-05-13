@@ -70,8 +70,7 @@ module.exports = function(grunt) {
 						"location" : "empty:"
 					}, {
 						"name" : "when",
-						"location" : "lib/when",
-						"main" : "empty:"
+						"location" : "empty:"
 					}, {
 						"name" : "poly",
 						"location" : "lib/poly",
