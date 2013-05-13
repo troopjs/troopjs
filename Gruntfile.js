@@ -136,18 +136,25 @@ module.exports = function(grunt) {
 			}
 		},
 
-		"concat" : {
-			"bundles" : {
-				"options" : {
-					"stripBanners" : true,
-					"banner" : "<%= build.banner %>"
-				},
-				"files" : [{
-					"expand" : true,
-					"cwd" : "<%= build.dist %>",
-					"src" : "{maxi,mini,micro}.js",
-					"dest" : "<%= build.dist %>"
-				}]
+		"usebanner" : {
+			"options" : {
+				"position" : "top",
+				"banner" : "<%= build.banner %>"
+			},
+			"micro" : {
+				"files" : {
+					"src" : [ "<%= build.dist %>/micro.js", "<%= build.dist %>/micro.min.js" ]
+				}
+			},
+			"mini" : {
+				"files" : {
+					"src" : [ "<%= build.dist %>/mini.js", "<%= build.dist %>/mini.min.js" ]
+				}
+			},
+			"maxi" : {
+				"files" : {
+					"src" : [ "<%= build.dist %>/maxi.js", "<%= build.dist %>/maxi.min.js" ]
+				}
 			}
 		},
 
@@ -188,14 +195,15 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
-	grunt.loadNpmTasks("grunt-contrib-concat");
+	grunt.loadNpmTasks("grunt-banner");
 	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-git-dist");
 	grunt.loadNpmTasks("grunt-json-replace");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("compile", [ "requirejs", "git-describe", "concat", "json-replace" ]);
+	grunt.registerTask("compile", [ "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
-	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
+	grunt.registerTask("version", [ "git-describe", "usebanner", "json-replace" ]);
+	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
 	grunt.registerTask("default", [ "compile" ])
 };
