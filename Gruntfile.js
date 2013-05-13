@@ -1,6 +1,28 @@
 /*global module:false*/
 module.exports = function(grunt) {
 	var UNDEFINED;
+	var PACKAGES = [{
+		"name" : "troopjs-bundle",
+		"location" : "."
+	}, {
+		"name" : "troopjs-core",
+		"location" : "lib/troopjs-core"
+	}, {
+		"name" : "troopjs-browser",
+		"location" : "lib/troopjs-browser"
+	}, {
+		"name" : "troopjs-data",
+		"location" : "lib/troopjs-data"
+	}, {
+		"name" : "troopjs-utils",
+		"location" : "lib/troopjs-utils"
+	}, {
+		"name" : "troopjs-jquery",
+		"location" : "lib/troopjs-jquery"
+	}, {
+		"name" : "troopjs-requirejs",
+		"location" : "lib/troopjs-requirejs"
+	}];
 
 	grunt.initConfig({
 		"pkg": grunt.file.readJSON('package.json'),
@@ -11,20 +33,59 @@ module.exports = function(grunt) {
 			"banner" : "/**\n" +
 				" * <%= pkg.name %> - <%= pkg.version %>\n" +
 				" * @license <%= pkg.licenses[0].type %> <%= pkg.licenses[0].url %> © <%= pkg.author.name %> mailto:<%= pkg.author.email%>\n" +
-				" */\n"
+				" */"
 		},
 
 		"requirejs" : {
-			"compile" : {
+			"options" : {
+				"baseUrl" : "<%= build.src %>",
+				"dir" : "<%= build.dist %>",
+				"optimize" : "none",
+				"skipDirOptimize" : true,
+				"keepBuildDir" : true,
+				"fileExclusionRegExp": /^(?:.git|.gitignore|.gitmodules|node_modules|Gruntfile.js|support|test|dist)$/
+			},
+			"micro" : {
 				"options" : {
-					"baseUrl" : "<%= build.src %>",
-					"dir" : "<%= build.dist %>",
-					"optimize" : "none",
-					"skipDirOptimize" : true,
-					"keepBuildDir" : true,
-					"fileExclusionRegExp": /^(?:.git|.gitignore|.gitmodules|node_modules|Gruntfile.js|support|test|dist)$/,
+					"packages" : PACKAGES.concat([{
+						"name" : "jquery",
+						"location" : "empty:"
+					}, {
+						"name" : "when",
+						"location" : "empty:"
+					}, {
+						"name" : "poly",
+						"location" : "empty:"
+					}]),
 
-					"packages" : [{
+					"modules" : [{
+						"name" : "troopjs-bundle/micro"
+					}]
+				}
+			},
+			"mini" : {
+				"options" : {
+					"packages" : PACKAGES.concat([{
+						"name" : "jquery",
+						"location" : "empty:"
+					}, {
+						"name" : "when",
+						"location" : "lib/when",
+						"main" : "empty:"
+					}, {
+						"name" : "poly",
+						"location" : "lib/poly",
+						"main" : "es5"
+					}]),
+
+					"modules" : [{
+						"name" : "troopjs-bundle/mini"
+					}]
+				}
+			},
+			"maxi" : {
+				"options" : {
+					"packages" : PACKAGES.concat([{
 						"name" : "jquery",
 						"location" : "empty:"
 					}, {
@@ -35,34 +96,9 @@ module.exports = function(grunt) {
 						"name" : "poly",
 						"location" : "lib/poly",
 						"main" : "es5"
-					}, {
-						"name" : "troopjs-bundle",
-						"location" : "."
-					}, {
-						"name" : "troopjs-core",
-						"location" : "lib/troopjs-core"
-					}, {
-						"name" : "troopjs-browser",
-						"location" : "lib/troopjs-browser"
-					}, {
-						"name" : "troopjs-data",
-						"location" : "lib/troopjs-data"
-					}, {
-						"name" : "troopjs-utils",
-						"location" : "lib/troopjs-utils"
-					}, {
-						"name" : "troopjs-jquery",
-						"location" : "lib/troopjs-jquery"
-					}, {
-						"name" : "troopjs-requirejs",
-						"location" : "lib/troopjs-requirejs"
-					}],
+					}]),
 
 					"modules" : [{
-						"name" : "troopjs-bundle/micro"
-					}, {
-						"name" : "troopjs-bundle/mini"
-					}, {
 						"name" : "troopjs-bundle/maxi"
 					}]
 				}
