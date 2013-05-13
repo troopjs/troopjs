@@ -108,17 +108,23 @@ module.exports = function(grunt) {
 		"clean" :[ "<%= build.dist %> "],
 
 		"uglify" : {
-			"bundles" : {
-				"options" : {
-					"banner" : "<%= build.banner %>"
-				},
-				"files" : [{
-					"expand" : true,
-					"cwd" : "<%= build.dist %>",
-					"src" : "{maxi,mini,micro}.js",
-					"dest" : "<%= build.dist %>",
-					"ext" : ".min.js"
-				}]
+			"options" : {
+				"preserveComments" : false
+			},
+			"micro" : {
+				"files" : {
+					"<%= build.dist %>/micro.min.js" : "<%= build.dist %>/micro.js"
+				}
+			},
+			"mini" : {
+				"files" : {
+					"<%= build.dist %>/mini.min.js" : "<%= build.dist %>/mini.js"
+				}
+			},
+			"maxi" : {
+				"files" : {
+					"<%= build.dist %>/maxi.min.js" : "<%= build.dist %>/maxi.js"
+				}
 			}
 		},
 
