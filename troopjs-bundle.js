@@ -1,5 +1,5 @@
 /*!
-* TroopJS Bundle - 1.0.9-11-g942a1e7
+* TroopJS Bundle - 1.0.9-13-g38af8b5
 * http://troopjs.com/
 * Copyright (c) 2013 Mikael Karon <mikael@karon.se>
 * Licensed MIT
@@ -1566,7 +1566,7 @@ define('troopjs-utils/when',[ "jquery" ], function WhenModule($) {
 /*global define:false */
 define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge",  "troopjs-utils/tr", "troopjs-utils/when", "troopjs-utils/deferred" ], function logger(Service, merge, tr, when, Deferred) {
 	var ARRAY_SLICE = Array.prototype.slice;
-	var OBJECT_TOSTRING = String.prototype.toString;
+	var OBJECT_TOSTRING = Object.prototype.toString;
 	var TOSTRING_OBJECT = "[object Object]";
 	var LENGTH = "length";
 	var APPENDERS = "appenders";
@@ -1647,6 +1647,7 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
 		}
 	});
 });
+
 /*!
  * TroopJS Utils unique component
  * @license TroopJS Copyright 2012, Mikael Karon <mikael@karon.se>
