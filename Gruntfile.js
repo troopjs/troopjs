@@ -160,10 +160,9 @@ module.exports = function(grunt) {
 						"devDependencies" : UNDEFINED
 					}
 				},
-				"files" : [{
-					"src" : "<%= build.dist %>/package.json",
-					"dest" : "<%= build.dist %>/package.json"
-				}]
+				"files" : {
+					"<%= build.dist %>/package.json" : "<%= build.dist %>/package.json"
+				}
 			}
 		},
 
