@@ -137,14 +137,12 @@ module.exports = function(grunt) {
 
 		"json-replace" : {
 			"options" : {
-				"space" : "  ",
-				"replace" : {
-					"version" : "<%= pkg.version %>"
-				}
+				"space" : "  "
 			},
 			"package.json" : {
 				"options" : {
 					"replace" : {
+						"version" : "<%= pkg.version %>",
 						"devDependencies" : UNDEFINED
 					}
 				},
@@ -153,6 +151,11 @@ module.exports = function(grunt) {
 				}
 			},
 			"bower.json" : {
+				"options" : {
+					"replace" : {
+						"version" : "<%= pkg.version %>"
+					}
+				},
 				"files" : {
 					"<%= build.dist %>/bower.json" : "<%= build.dist %>/bower.json"
 				}
