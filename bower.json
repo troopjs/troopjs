@@ -1,0 +1,8 @@
+{
+  "name": "troopjs",
+  "version": "2.0.1-SNAPSHOT",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ]
+}
