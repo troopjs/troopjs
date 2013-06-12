@@ -4,6 +4,5 @@ define([
 	"troopjs-core/logger/service",
 	"troopjs-browser/ajax/service",
 	"troopjs-browser/application/widget",
-	"troopjs-browser/route/widget",
-	"troopjs-requirejs/template"
+	"troopjs-browser/route/widget"
 ]);

@@ -3,5 +3,8 @@ define([
 	"troopjs-data/store/component",
 	"troopjs-data/cache/component",
 	"troopjs-data/query/service",
-	"troopjs-data/component/widget"
+	"troopjs-data/component/widget",
+	"troopjs-requirejs/template",
+	"troopjs-requirejs/multiversion",
+	"troopjs-jquery/loom"
 ]);
