@@ -1,24 +1,24 @@
 {
 	"name": "troopjs-browser",
-	"version": "2.0.0",
 	"description": "TroopJS browser package",
-	"licenses": [
-		{
-			"type": "MIT",
-			"url": "http://troopjs.mit-license.org"
-		}
-	],
-	"repositories": [
-		{
-			"type": "git",
-			"url": "https://github.com/troopjs/troopjs-browser"
-		}
-	],
-	"bugs": "https://github.com/troopjs/troopjs-browser/issues",
-	"maintainers": [
-		{
-			"name": "Mikael Karon",
-			"web": "http://github.com/mikaelkaron"
-		}
-	]
+	"version": "2.0.1-SNAPSHOT",
+	"author": {
+		"name": "Mikael Karon",
+		"email": "mikael@karon.se"
+	},
+	"maintainers": [{
+		"name": "Mikael Karon",
+		"web": "http://github.com/mikaelkaron"
+	}],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/troopjs/troopjs-browser.git"
+	},
+	"bugs": {
+		"url": "https://github.com/troopjs/troopjs-browser/issues"
+	},
+	"licenses": [{
+		"type": "MIT",
+		"url": "http://troopjs.mit-license.org/"
+	}]
 }

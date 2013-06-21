@@ -17,6 +17,7 @@ API
 	* [when.all](#whenall)
 	* [when.map](#whenmap)
 	* [when.reduce](#whenreduce)
+	* [when.settle](#whensettle)
 1. [Competitive races](#competitive-races)
 	* [when.any](#whenany)
 	* [when.some](#whensome)
@@ -33,6 +34,8 @@ API
 	* [when/sequence](#whensequence)
 	* [when/pipeline](#whenpipeline)
 	* [when/parallel](#whenparallel)
+	* [when/guard](#whenguard)
+	* [Guard conditions](#guard-conditions)
 1. [Polling with promises](#polling-with-promises)
 	* [when/poll](#whenpoll)
 1. [Interacting with non-promise code](#interacting-with-non-promise-code)
@@ -238,6 +241,23 @@ promise.then(function(array) {
 promise.then(apply(variadicOnFulfilled));
 ```
 
+### inspect()
+
+```js
+var status = promise.inspect();
+```
+
+Returns a snapshot descriptor of the current state of `promise`.  This descriptor is *not live* and will not update when `promise`'s state changes.  The descriptor is an object with the following properties.  When promise is:
+
+* pending: `{ state: 'pending' }`
+* fulfilled: `{ state: 'fulfilled', value: <promise's fulfillment value> }`
+* rejected: `{ state: 'rejected', reason: <promise's rejection reason> }`
+
+While there are use cases where synchronously inspecting a promise's state can be helpful, the use of `inspect` is discouraged.  It is almost always preferable to simply use `when()` or `promise.then` to be notified when the promise fulfills or rejects.
+
+#### See also:
+* [when.settle()](#whenall) - settling an Array of promises
+
 ### always()
 
 **DEPRECATED:** Will be removed in an upcoming version
@@ -407,6 +427,7 @@ If any of the promises is rejected, the returned promise will be rejected with t
 
 ### See also:
 * [when.join()](#whenjoin) - joining multiple promises
+* [when.settle()](#whenall) - settling an Array of promises
 
 ## when.map()
 
@@ -418,7 +439,7 @@ Where:
 
 * array is an Array *or a promise for an array*, which may contain promises and/or values.
 
-Traditional map function, similar to `Array.prototype.map()`, but allows input to contain promises and/or values, and mapFunc may return either a value or a promise.
+Traditional array map function, similar to `Array.prototype.map()`, but allows input to contain promises and/or values, and mapFunc may return either a value or a promise.
 
 If any of the promises is rejected, the returned promise will be rejected with the rejection reason of the first promise that was rejected.
 
@@ -442,7 +463,7 @@ Where:
 
 * array is an Array *or a promise for an array*, which may contain promises and/or values.
 
-Traditional reduce function, similar to `Array.prototype.reduce()`, but input may contain promises and/or values, and reduceFunc may return either a value or a promise, *and* initialValue may be a promise for the starting value.
+Traditional array reduce function, similar to `Array.prototype.reduce()`, but input may contain promises and/or values, and reduceFunc may return either a value or a promise, *and* initialValue may be a promise for the starting value.
 
 The reduce function should have the signature:
 
@@ -465,6 +486,48 @@ var sumPromise = when.reduce(inputPromisesOrValues, function (sum, value) {
 ```
 
 If any of the promises is rejected, the returned promise will be rejected with the rejection reason of the first promise that was rejected.
+
+## when.settle()
+
+```js
+var promise = when.settle(array);
+```
+
+Where:
+
+* array is an Array *or a promise for an array*, which may contain promises and/or values.
+
+Returns a promise for an array containing the same number of elements as the input array.  Each element is a descriptor object describing of the outcome of the corresponding element in the input.  The returned promise will only reject if `array` itself is a rejected promise.  Otherwise, it will always fulfill with an array of descriptors.  This is in contrast to [when.all](#whenall), which will reject if any element of `array` rejects.
+
+If the corresponding input promise is:
+
+* fulfilled, the descriptor will be: `{ state: 'fulfilled', value: <fulfillmentValue> }`
+* rejected, the descriptor will be: `{ state: 'rejected', reason: <rejectionReason> }`
+
+```js
+// Process all successful results, and also log all errors
+
+// Input array
+var array = [when.reject(1), 2, when.resolve(3), when.reject(4)];
+
+// Settle all inputs
+var settled = when.settle(array);
+
+// Logs 1 & 4 and processes 2 & 3
+settled.then(function(descriptors) {
+	descriptors.forEach(function(d) {
+		if(d.state === 'rejected') {
+			logError(d.reason);
+		} else {
+			processSuccessfulResult(d.value);
+		}
+	});
+});
+```
+
+### See also:
+* [when.all()](#whenall) - resolving an Array of promises
+* [promise.inspect()](#inspect) - inspecting a promise's state
 
 # Object Keys
 
@@ -728,6 +791,10 @@ unfoldList(unspool, condition, 0).then(console.log.bind(console));
 ## when/delay
 
 ```js
+var delayed = delay(milliseconds [, promiseOrValue]);
+var delayed = delay(milliseconds);
+
+// DEPRECATED, but currently works:
 var delayed = delay(promiseOrValue, milliseconds);
 ```
 
@@ -738,14 +805,25 @@ var delay, delayed;
 
 delay = require('when/delay');
 
-// delayed is an unresolved promise that will become resolved
-// in 1 second with the value 123
-delayed = delay(123, 1000)
+// delayed is a pending promise that will become fulfilled
+// in 1 second (with the value `undefined`)
+// Useful as a timed trigger when the value doesn't matter
+delayed = delay(1000);
 
-// delayed is an unresolved promise that will become resolved
+// delayed is a pending promise that will become fulfilled
+// in 1 second with the value "hello"
+delayed = delay(1000, "hello")
+
+// delayed is a pending promise that will become fulfilled
 // 1 second after anotherPromise resolves, or will become rejected
 // *immediately* after anotherPromise rejects.
-delayed = delay(anotherPromise, 1000);
+delayed = delay(1000, anotherPromise);
+
+// Do something after 1 second, similar to using setTimeout
+delay(1000).then(doSomething);
+
+// Do something 1 second after triggeringPromise resolves
+delay(1000, triggeringPromise).then(doSomething, handleRejection);
 ```
 
 More when/delay [examples on the wiki](https://github.com/cujojs/when/wiki/when-delay)
@@ -754,18 +832,27 @@ More when/delay [examples on the wiki](https://github.com/cujojs/when/wiki/when-
 ## when/timeout
 
 ```js
-var timed = timeout(promiseOrValue, milliseconds);
+var timed = timeout(milliseconds, promiseOrValue);
+
+// DEPRECATED, but currently works:
+var delayed = delay(promiseOrValue, milliseconds);
 ```
 
 Create a promise that will reject after a timeout if promiseOrValue does not resolved or rejected beforehand.  If promiseOrValue is a value, the returned promise will resolve immediately.  More interestingly, if promiseOrValue is a promise, if it resolved before the timeout period, the returned promise will resolve.  If it doesn't, the returned promise will reject.
 
 ```js
-var timeout, timed;
+var timeout, timed, d;
 
 timeout = require('when/timeout');
 
 // timed will reject after 5 seconds unless anotherPromise resolves beforehand.
-timed = timeout(anotherPromise, 5000);
+timed = timeout(5000, anotherPromise);
+
+d = when.defer();
+// Setup d however you need
+
+// return a new promise that will timeout if d doesn't resolve/reject first
+return timeout(1000, d.promise);
 ```
 
 More when/timeout [examples on the wiki](https://github.com/cujojs/when/wiki/when-timeout)
@@ -817,6 +904,76 @@ resultsPromise = parallel(arrayOfTasks, arg1, arg2 /*, ... */);
 Run an array of tasks in "parallel".  The tasks are allowed to execute in any order, and may interleave if they are asynchronous. Each task will be called with the arguments passed to `when.parallel()`, and each may return a promise or a value.
 
 When all tasks have completed, the returned promise will resolve to an array containing the result of each task at the corresponding array position.  The returned promise will reject when any task throws or returns a rejection.
+
+## when/guard
+
+```js
+var guard, guarded;
+
+guard = require('when/guard');
+
+guarded = guard(condition, function() {
+	// .. Do important stuff
+});
+```
+
+Where:
+
+* `condition` is a concurrency limiting condition, such as [guard.n](#guardn)
+
+Limit the concurrency of a function.  Creates a new function whose concurrency is limited by `condition`.  This can be useful with operations such as [when.map](#whenmap), [when/parallel](#whenparallel), etc. that allow tasks to execute in "parallel", to limit the number which can be inflight simultanously.
+
+```js
+// Using when/guard with when.map to limit concurrency
+// of the mapFunc
+
+var guard, guardedAsyncOperation, mapped;
+
+guard = require('when/guard');
+
+// Allow only 1 inflight execution of guarded
+guardedAsyncOperation = guard(guard.n(1), asyncOperation);
+
+mapped = when.map(array, guardedAsyncOperation);
+mapped.then(function(results) {
+	// Handle results as usual
+});
+```
+
+```js
+// Using when/guard with when/parallel to limit concurrency
+// across *all tasks*
+
+var guard, parallel, guardTask, tasks, taskResults;
+
+guard = require('when/guard');
+parallel = require('when/parallel');
+
+tasks = [/* Array of async functions to execute as tasks */];
+
+// Use bind() to create a guard that can be applied to any function
+// Only 2 tasks may execute simultaneously
+guardTask = guard.bind(null, guard.n(2));
+
+// Use guardTask to guard all the tasks.
+tasks = tasks.map(guardTask);
+
+// Execute the tasks with concurrency/"parallelism" limited to 2
+taskResults = parallel(tasks);
+taskResults.then(function(results) {
+	// Handle results as usual
+});
+```
+
+## Guard conditions
+
+### `guard.n`
+
+```js
+var condition = guard.n(number);
+```
+
+Creates a condition that allows at most `number` of simultaneous executions inflight.
 
 # Polling with promises
 

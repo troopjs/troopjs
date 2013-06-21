@@ -1,0 +1,11 @@
+
+./maxi.js
+----------------
+./mini.js
+lib/troopjs-core/pubsub/proxy/to1x.js
+lib/troopjs-core/pubsub/proxy/to2x.js
+lib/troopjs-browser/store/adapter/base.js
+lib/troopjs-browser/store/adapter/local.js
+lib/troopjs-browser/store/adapter/session.js
+lib/troopjs-jquery/dimensions.js
+./maxi.js

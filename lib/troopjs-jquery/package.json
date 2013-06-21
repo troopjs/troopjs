@@ -1,24 +1,24 @@
 {
 	"name": "troopjs-jquery",
-	"version": "2.0.0",
-	"description": "TroopJS extensions to jQuery",
-	"licenses": [
-		{
-			"type": "MIT",
-			"url": "http://troopjs.mit-license.org"
-		}
-	],
-	"repositories": [
-		{
-			"type": "git",
-			"url": "https://github.com/troopjs/troopjs-jquery"
-		}
-	],
-	"bugs": "https://github.com/troopjs/troopjs-jquery/issues",
-	"maintainers": [
-		{
-			"name": "Mikael Karon",
-			"web": "http://github.com/mikaelkaron"
-		}
-	]
+	"description": "TroopJS jquery package",
+	"version": "2.0.1-SNAPSHOT",
+	"author": {
+		"name": "Mikael Karon",
+		"email": "mikael@karon.se"
+	},
+	"maintainers": [{
+		"name": "Mikael Karon",
+		"web": "http://github.com/mikaelkaron"
+	}],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/troopjs/troopjs-jquery.git"
+	},
+	"bugs": {
+		"url": "https://github.com/troopjs/troopjs-jquery/issues"
+	},
+	"licenses": [{
+		"type": "MIT",
+		"url": "http://troopjs.mit-license.org/"
+	}]
 }

@@ -1,10 +1,15 @@
 /**
- * troopjs-bundle - 2.0.0-60-gc0c28d1
+ * troopjs-bundle - 2.0.0-109-g594980c
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
+
+
+/**
+ * TroopJS utils/unique
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
 define('troopjs-utils/unique',[],function UniqueModule() {
-	/*jshint strict:false */
+	"use strict";
 
 	var LENGTH = "length";
 
@@ -49,14 +54,17 @@ define('troopjs-utils/unique',[],function UniqueModule() {
 			}
 		}
 
-		// Assign and return new length
-		return args[LENGTH] = k;
+		// Assign new length
+		args[LENGTH] = k;
+
+		// Return new length
+		return k;
 	};
 });
 /**
  * poly common functions
  *
- * (c) copyright 2011-2012 Brian Cavalier and John Hann
+ * (c) copyright 2011-2013 Brian Cavalier and John Hann
  *
  * This module is part of the cujo.js family of libraries (http://cujojs.com/).
  *
@@ -94,7 +102,7 @@ define('poly/lib/_base',['require','exports','module'],function (require, export
 /**
  * Object polyfill / shims
  *
- * (c) copyright 2011-2012 Brian Cavalier and John Hann
+ * (c) copyright 2011-2013 Brian Cavalier and John Hann
  *
  * This module is part of the cujo.js family of libraries (http://cujojs.com/).
  *
@@ -419,9 +427,8 @@ define('poly/object',['./lib/_base'], function (base) {
  * TroopJS core/component/factory
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:true*/
 define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" ], function ComponentFactoryModule(unique) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var PROTOTYPE = "prototype";
 	var TOSTRING = "toString";
@@ -429,7 +436,7 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var ARRAY_UNSHIFT = ARRAY_PROTO.unshift;
 	var OBJECT_TOSTRING = Object[PROTOTYPE][TOSTRING];
-	var TYPEOF_FUNCTION = typeof function () {};
+	var TYPEOF_FUNCTION = "function";
 	var DISPLAYNAME = "displayName";
 	var LENGTH = "length";
 	var EXTEND = "extend";
@@ -456,6 +463,7 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 	 * @returns {*}
 	 */
 	function create() {
+		/*jshint validthis:true*/
 		return extend.apply(this, arguments)();
 	}
 
@@ -464,7 +472,8 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 	 * @returns {*} New component
 	 */
 	function extend() {
-		var args = [this];
+		/*jshint validthis:true*/
+		var args = [ this ];
 		ARRAY_PUSH.apply(args, arguments);
 		return Factory.apply(null, args);
 	}
@@ -821,9 +830,9 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
  *
  * @author Brian Cavalier
  * @author John Hann
- * @version 2.0.1
+ * @version 2.1.1
  */
-(function(define) { 'use strict';
+(function(define, global) { 'use strict';
 define('when/when',[],function () {
 
 	// Public API
@@ -837,11 +846,14 @@ define('when/when',[],function () {
 	when.all       = all;        // Resolve a list of promises
 	when.map       = map;        // Array.map() for promises
 	when.reduce    = reduce;     // Array.reduce() for promises
+	when.settle    = settle;     // Settle a list of promises
 
 	when.any       = any;        // One-winner race
 	when.some      = some;       // Multi-winner race
 
 	when.isPromise = isPromise;  // Determine if a thing is a promise
+
+	when.promise   = promise;    // EXPERIMENTAL: May change. Use at your own risk
 
 	/**
 	 * Register an observer for a promise or immediate value.
@@ -871,8 +883,9 @@ define('when/when',[],function () {
 	 * @constructor
 	 * @name Promise
 	 */
-	function Promise(then) {
+	function Promise(then, inspect) {
 		this.then = then;
+		this.inspect = inspect;
 	}
 
 	Promise.prototype = {
@@ -896,9 +909,7 @@ define('when/when',[],function () {
 		 * @returns {Promise}
 		 */
 		ensure: function(onFulfilledOrRejected) {
-			var self = this;
-
-			return this.then(injectHandler, injectHandler).yield(self);
+			return this.then(injectHandler, injectHandler)['yield'](this);
 
 			function injectHandler() {
 				return resolve(onFulfilledOrRejected());
@@ -981,6 +992,9 @@ define('when/when',[],function () {
 	 *
 	 * @return {{
 	 * promise: Promise,
+	 * resolve: function:Promise,
+	 * reject: function:Promise,
+	 * notify: function:Promise
 	 * resolver: {
 	 *	resolve: function:Promise,
 	 *	reject: function:Promise,
@@ -1043,7 +1057,7 @@ define('when/when',[],function () {
 		}
 
 		// Return the promise
-		return new Promise(then);
+		return new Promise(then, inspect);
 
 		/**
 		 * Register handlers for this promise.
@@ -1066,6 +1080,10 @@ define('when/when',[],function () {
 						.then(resolve, reject, notify);
 				});
 			});
+		}
+
+		function inspect() {
+			return value ? value.inspect() : toPendingState();
 		}
 
 		/**
@@ -1117,7 +1135,9 @@ define('when/when',[],function () {
 	function coerce(x) {
 		if(x instanceof Promise) {
 			return x;
-		} else if (x !== Object(x)) {
+		}
+
+		if (!(x === Object(x) && 'then' in x)) {
 			return fulfilled(x);
 		}
 
@@ -1157,6 +1177,8 @@ define('when/when',[],function () {
 			} catch (e) {
 				return rejected(e);
 			}
+		}, function() {
+			return toFulfilledState(value);
 		});
 
 		return self;
@@ -1176,6 +1198,8 @@ define('when/when',[],function () {
 			} catch (e) {
 				return rejected(e);
 			}
+		}, function() {
+			return toRejectedState(reason);
 		});
 
 		return self;
@@ -1235,16 +1259,14 @@ define('when/when',[],function () {
 	 * @param {Array} promisesOrValues array of anything, may contain a mix
 	 *      of promises and values
 	 * @param howMany {number} number of promisesOrValues to resolve
-	 * @param {function?} [onFulfilled] resolution handler
-	 * @param {function?} [onRejected] rejection handler
-	 * @param {function?} [onProgress] progress handler
+	 * @param {function?} [onFulfilled] DEPRECATED, use returnedPromise.then()
+	 * @param {function?} [onRejected] DEPRECATED, use returnedPromise.then()
+	 * @param {function?} [onProgress] DEPRECATED, use returnedPromise.then()
 	 * @returns {Promise} promise that will resolve to an array of howMany values that
 	 *  resolved first, or will reject with an array of
 	 *  (promisesOrValues.length - howMany) + 1 rejection reasons.
 	 */
 	function some(promisesOrValues, howMany, onFulfilled, onRejected, onProgress) {
-
-		checkCallbacks(2, arguments);
 
 		return when(promisesOrValues, function(promisesOrValues) {
 
@@ -1269,7 +1291,7 @@ define('when/when',[],function () {
 					rejectOne = function(reason) {
 						reasons.push(reason);
 						if(!--toReject) {
-							fulfillOne = rejectOne = noop;
+							fulfillOne = rejectOne = identity;
 							reject(reasons);
 						}
 					};
@@ -1278,7 +1300,7 @@ define('when/when',[],function () {
 						// This orders the values based on promise resolution order
 						values.push(val);
 						if (!--toResolve) {
-							fulfillOne = rejectOne = noop;
+							fulfillOne = rejectOne = identity;
 							resolve(values);
 						}
 					};
@@ -1308,9 +1330,9 @@ define('when/when',[],function () {
 	 *
 	 * @param {Array|Promise} promisesOrValues array of anything, may contain a mix
 	 *      of {@link Promise}s and values
-	 * @param {function?} [onFulfilled] resolution handler
-	 * @param {function?} [onRejected] rejection handler
-	 * @param {function?} [onProgress] progress handler
+	 * @param {function?} [onFulfilled] DEPRECATED, use returnedPromise.then()
+	 * @param {function?} [onRejected] DEPRECATED, use returnedPromise.then()
+	 * @param {function?} [onProgress] DEPRECATED, use returnedPromise.then()
 	 * @returns {Promise} promise that will resolve to the value that resolved first, or
 	 * will reject with an array of all rejected inputs.
 	 */
@@ -1331,14 +1353,13 @@ define('when/when',[],function () {
 	 *
 	 * @param {Array|Promise} promisesOrValues array of anything, may contain a mix
 	 *      of {@link Promise}s and values
-	 * @param {function?} [onFulfilled] resolution handler
-	 * @param {function?} [onRejected] rejection handler
-	 * @param {function?} [onProgress] progress handler
+	 * @param {function?} [onFulfilled] DEPRECATED, use returnedPromise.then()
+	 * @param {function?} [onRejected] DEPRECATED, use returnedPromise.then()
+	 * @param {function?} [onProgress] DEPRECATED, use returnedPromise.then()
 	 * @returns {Promise}
 	 */
 	function all(promisesOrValues, onFulfilled, onRejected, onProgress) {
-		checkCallbacks(1, arguments);
-		return map(promisesOrValues, identity).then(onFulfilled, onRejected, onProgress);
+		return _map(promisesOrValues, identity).then(onFulfilled, onRejected, onProgress);
 	}
 
 	/**
@@ -1347,22 +1368,43 @@ define('when/when',[],function () {
 	 * have fulfilled, or will reject when *any one* of the input promises rejects.
 	 */
 	function join(/* ...promises */) {
-		return map(arguments, identity);
+		return _map(arguments, identity);
 	}
 
 	/**
-	 * Traditional map function, similar to `Array.prototype.map()`, but allows
-	 * input to contain {@link Promise}s and/or values, and mapFunc may return
-	 * either a value or a {@link Promise}
-	 *
-	 * @param {Array|Promise} array array of anything, may contain a mix
-	 *      of {@link Promise}s and values
-	 * @param {function} mapFunc mapping function mapFunc(value) which may return
-	 *      either a {@link Promise} or value
-	 * @returns {Promise} a {@link Promise} that will resolve to an array containing
-	 *      the mapped output values.
+	 * Settles all input promises such that they are guaranteed not to
+	 * be pending once the returned promise fulfills. The returned promise
+	 * will always fulfill, except in the case where `array` is a promise
+	 * that rejects.
+	 * @param {Array|Promise} array or promise for array of promises to settle
+	 * @returns {Promise} promise that always fulfills with an array of
+	 *  outcome snapshots for each input promise.
+	 */
+	function settle(array) {
+		return _map(array, toFulfilledState, toRejectedState);
+	}
+
+	/**
+	 * Promise-aware array map function, similar to `Array.prototype.map()`,
+	 * but input array may contain promises or values.
+	 * @param {Array|Promise} array array of anything, may contain promises and values
+	 * @param {function} mapFunc map function which may return a promise or value
+	 * @returns {Promise} promise that will fulfill with an array of mapped values
+	 *  or reject if any input promise rejects.
 	 */
 	function map(array, mapFunc) {
+		return _map(array, mapFunc);
+	}
+
+	/**
+	 * Internal map that allows a fallback to handle rejections
+	 * @param {Array|Promise} array array of anything, may contain promises and values
+	 * @param {function} mapFunc map function which may return a promise or value
+	 * @param {function?} fallback function to handle rejected promises
+	 * @returns {Promise} promise that will fulfill with an array of mapped values
+	 *  or reject if any input promise rejects.
+	 */
+	function _map(array, mapFunc, fallback) {
 		return when(array, function(array) {
 
 			return promise(resolveMap);
@@ -1377,25 +1419,25 @@ define('when/when',[],function () {
 
 				if(!toResolve) {
 					resolve(results);
-				} else {
+					return;
+				}
 
-					resolveOne = function(item, i) {
-						when(item, mapFunc).then(function(mapped) {
-							results[i] = mapped;
+				resolveOne = function(item, i) {
+					when(item, mapFunc, fallback).then(function(mapped) {
+						results[i] = mapped;
 
-							if(!--toResolve) {
-								resolve(results);
-							}
-						}, reject, notify);
-					};
-
-					// Since mapFunc may be async, get all invocations of it into flight
-					for(i = 0; i < len; i++) {
-						if(i in array) {
-							resolveOne(array[i], i);
-						} else {
-							--toResolve;
+						if(!--toResolve) {
+							resolve(results);
 						}
+					}, reject, notify);
+				};
+
+				// Since mapFunc may be async, get all invocations of it into flight
+				for(i = 0; i < len; i++) {
+					if(i in array) {
+						resolveOne(array[i], i);
+					} else {
+						--toResolve;
 					}
 				}
 			}
@@ -1437,12 +1479,43 @@ define('when/when',[],function () {
 		});
 	}
 
+	// Snapshot states
+
+	/**
+	 * Creates a fulfilled state snapshot
+	 * @private
+	 * @param {*} x any value
+	 * @returns {{state:'fulfilled',value:*}}
+	 */
+	function toFulfilledState(x) {
+		return { state: 'fulfilled', value: x };
+	}
+
+	/**
+	 * Creates a rejected state snapshot
+	 * @private
+	 * @param {*} x any reason
+	 * @returns {{state:'rejected',reason:*}}
+	 */
+	function toRejectedState(x) {
+		return { state: 'rejected', reason: x };
+	}
+
+	/**
+	 * Creates a pending state snapshot
+	 * @private
+	 * @returns {{state:'pending'}}
+	 */
+	function toPendingState() {
+		return { state: 'pending' };
+	}
+
 	//
 	// Utilities, etc.
 	//
 
 	var reduceArray, slice, fcall, nextTick, handlerQueue,
-		timeout, funcProto, call, arrayProto, undef;
+		setTimeout, funcProto, call, arrayProto, undef;
 
 	//
 	// Shared handler queue processing
@@ -1465,15 +1538,15 @@ define('when/when',[],function () {
 	}
 
 	/**
-	 * Schedule the queue to be drained in the next tick.
+	 * Schedule the queue to be drained after the stack has cleared.
 	 */
 	function scheduleDrainQueue() {
 		nextTick(drainQueue);
 	}
 
 	/**
-	 * Drain the handler queue entirely or partially, being careful to allow
-	 * the queue to be extended while it is being processed, and to continue
+	 * Drain the handler queue entirely, being careful to allow the
+	 * queue to be extended while it is being processed, and to continue
 	 * processing until it is truly empty.
 	 */
 	function drainQueue() {
@@ -1489,17 +1562,15 @@ define('when/when',[],function () {
 	//
 	// Capture function and array utils
 	//
-	/*global setTimeout,setImmediate,window,process*/
+	/*global setImmediate,process,vertx*/
 
 	// capture setTimeout to avoid being caught by fake timers used in time based tests
-	timeout = setTimeout;
-	nextTick = typeof setImmediate === 'function'
-		? typeof window === 'undefined'
-			? setImmediate
-			: setImmediate.bind(window)
-		: typeof process === 'object' && process.nextTick
-			? process.nextTick
-			: function(task) { timeout(task, 0); };
+	setTimeout = global.setTimeout;
+	// Prefer setImmediate, cascade to node, vertx and finally setTimeout
+	nextTick = typeof setImmediate === 'function' ? setImmediate.bind(global)
+		: typeof process === 'object' && process.nextTick ? process.nextTick
+		: typeof vertx === 'object' ? vertx.runOnLoop // vert.x
+			: function(task) { setTimeout(task, 0); }; // fallback
 
 	// Safe function calls
 	funcProto = Function.prototype;
@@ -1560,34 +1631,6 @@ define('when/when',[],function () {
 			return reduced;
 		};
 
-	//
-	// Utility functions
-	//
-
-	/**
-	 * Helper that checks arrayOfCallbacks to ensure that each element is either
-	 * a function, or null or undefined.
-	 * @private
-	 * @param {number} start index at which to start checking items in arrayOfCallbacks
-	 * @param {Array} arrayOfCallbacks array to check
-	 * @throws {Error} if any element of arrayOfCallbacks is something other than
-	 * a functions, null, or undefined.
-	 */
-	function checkCallbacks(start, arrayOfCallbacks) {
-		// TODO: Promises/A+ update type checking and docs
-		var arg, i = arrayOfCallbacks.length;
-
-		while(i > start) {
-			arg = arrayOfCallbacks[--i];
-
-			if (arg != null && typeof arg != 'function') {
-				throw new Error('arg '+i+' must be a function');
-			}
-		}
-	}
-
-	function noop() {}
-
 	function identity(x) {
 		return x;
 	}
@@ -1595,7 +1638,8 @@ define('when/when',[],function () {
 	return when;
 });
 })(
-	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(); }
+	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(); },
+	this
 );
 
 define('when', ['when/when'], function (main) { return main; });
@@ -1604,9 +1648,8 @@ define('when', ['when/when'], function (main) { return main; });
  * TroopJS utils/merge module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
-	/*jshint strict:false */
+	"use strict";
 
 	var LENGTH = "length";
 	var ARRAY_PROTO = Array.prototype;
@@ -1675,9 +1718,8 @@ define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
  * TroopJS core/component/base
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
-define('troopjs-core/component/base',[ "../component/factory", "when", "troopjs-utils/merge" ], function ComponentModule(Factory, when, merge) {
-	/*jshint laxbreak:true */
+define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge" ], function ComponentModule(Factory, when, merge) {
+	"use strict";
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
@@ -1686,6 +1728,8 @@ define('troopjs-core/component/base',[ "../component/factory", "when", "troopjs-
 	var CONFIGURATION = "configuration";
 	var PHASE = "phase";
 	var VALUE = "value";
+	var INITIALIZE = "initialize";
+	var STOP = "stop";
 	var SIG = "sig";
 	var COUNT = 0;
 
@@ -1751,7 +1795,10 @@ define('troopjs-core/component/base',[ "../component/factory", "when", "troopjs-
 		"start" : function start() {
 			var self = this;
 			var signal = self.signal;
-			var args = [ self[PHASE] = "initialize" ];
+			var args = [ INITIALIZE ];
+
+			// Set phase
+			self[PHASE] = INITIALIZE;
 
 			// Add signal to arguments
 			ARRAY_PUSH.apply(args, arguments);
@@ -1777,7 +1824,10 @@ define('troopjs-core/component/base',[ "../component/factory", "when", "troopjs-
 		"stop" : function stop() {
 			var self = this;
 			var signal = self.signal;
-			var args = [ self[PHASE] = "stop" ];
+			var args = [ STOP ];
+
+			// Set phase
+			self[PHASE] = STOP;
 
 			// Add signal to arguments
 			ARRAY_PUSH.apply(args, arguments);
@@ -1808,11 +1858,42 @@ define('troopjs-core/component/base',[ "../component/factory", "when", "troopjs-
 	});
 });
 
+/**
+ * TroopJS core/logger/console
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/logger/console',[ "../component/base" ], function ConsoleLogger(Component) {
+	"use strict";
+
+	/*jshint devel:true*/
+	var CONSOLE = console;
+
+	function noop() {}
+
+	return Component.create({
+			"displayName" : "core/logger/console"
+		},
+		CONSOLE
+			? {
+			"log" : CONSOLE.log.bind(CONSOLE),
+			"warn" : CONSOLE.warn.bind(CONSOLE),
+			"debug" : CONSOLE.debug.bind(CONSOLE),
+			"info" : CONSOLE.info.bind(CONSOLE),
+			"error" : CONSOLE.error.bind(CONSOLE)
+		}
+			: {
+			"log" : noop,
+			"warn" : noop,
+			"debug" : noop,
+			"info" : noop,
+			"error" : noop
+		});
+});
 /*
 	Array -- a stand-alone module for using Javascript 1.6 array features
 	in lame-o browsers that don't support Javascript 1.6
 
-	(c) copyright 2011-2012 Brian Cavalier and John Hann
+	(c) copyright 2011-2013 Brian Cavalier and John Hann
 
 	This module is part of the cujo.js family of libraries (http://cujojs.com/).
 
@@ -2113,9 +2194,8 @@ define('poly/array',['./lib/_base'], function (base) {
  * TroopJS core/event/emitter
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" ], function EventEmitterModule(Component, when) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var UNDEFINED;
 	var NULL = null;
@@ -2159,6 +2239,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 		 * @return {Promise} promise of next handler callback execution
 		 */
 		var next = function (args) {
+			/*jshint curly:false*/
 			var context;
 			var handler;
 
@@ -2208,6 +2289,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 		 * @return {Promise} promise of next handler callback execution
 		 */
 		var next = function (args) {
+			/*jshint curly:false*/
 			var context;
 			var handler;
 
@@ -2605,9 +2687,8 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
  * TroopJS core/pubsub/hub
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-core/pubsub/hub',[ "../event/emitter" ], function HubModule(Emitter) {
-	/*jshint strict:false */
+	"use strict";
 
 	var COMPONENT_PROTOTYPE = Emitter.prototype;
 
@@ -2621,12 +2702,55 @@ define('troopjs-core/pubsub/hub',[ "../event/emitter" ], function HubModule(Emit
 });
 
 /**
+ * TroopJS core/logger/pubsub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], function PubSubLogger(Component, hub) {
+	"use strict";
+
+	var ARRAY_PUSH = Array.prototype.push;
+	var PUBLISH = hub.publish;
+
+	return Component.create({
+		"displayName" : "core/logger/pubsub",
+
+		"log": function log() {
+			var args = [ "logger/log" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"warn" : function warn() {
+			var args = [ "logger/warn" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"debug" : function debug() {
+			var args = [ "logger/debug" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"info" : function info() {
+			var args = [ "logger/info" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"error" : function info() {
+			var args = [ "logger/error" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		}
+	});
+});
+/**
  * TroopJS core/component/gadget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/hub" ], function GadgetModule(Emitter, when, hub) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
@@ -2709,11 +2833,8 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 				results[resultsLength++] = REPUBLISH.call(hub, subscription[TYPE], false, self, subscription[VALUE]);
 			}
 
-			// Return promise that will be fulfilled when all results are
-			return when.all(results, function () {
-				// Return original arguments
-				return args;
-			});
+			// Return promise that will be fulfilled when all results are, and yield args
+			return when.all(results).yield(args);
 		},
 
 		/**
@@ -2860,8 +2981,9 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
  * TroopJS core/component/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
+	"use strict";
+
 	return Gadget.extend({
 		"displayName" : "core/component/service",
 
@@ -2879,11 +3001,116 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 	});
 });
 /**
+ * TroopJS core/logger/pubsub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge", "when" ], function logger(Service, merge, when) {
+	"use strict";
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_OBJECT = "[object Object]";
+	var LENGTH = "length";
+	var APPENDERS = "appenders";
+
+	function forward(_signal, _args) {
+		/*jshint validthis:true*/
+		var self = this;
+		var signal = self.signal;
+		var args = [ _signal ];
+		var appenders = self[APPENDERS];
+		var index = 0;
+
+		ARRAY_PUSH.apply(args, _args);
+
+		var next = function () {
+			var appender;
+
+			return (appender = appenders[index++])
+				? when(signal.apply(appender, args), next)
+				: when.resolve(_args);
+		};
+
+		return next();
+	}
+
+	function convert(cat, message) {
+		var result = {
+			"cat" : cat,
+			"time": new Date().getTime()
+		};
+
+		if (OBJECT_TOSTRING.call(message) === TOSTRING_OBJECT) {
+			merge.call(result, message);
+		}
+		else {
+			result.msg = message;
+		}
+
+		return result;
+	}
+
+	function append(obj) {
+		/*jshint validthis:true*/
+		var self = this;
+		var appenders = self[APPENDERS];
+		var i;
+		var iMax;
+
+		for (i = 0, iMax = appenders[LENGTH]; i < iMax; i++) {
+			appenders[i].append(obj);
+		}
+	}
+
+	return Service.extend(function LoggerService() {
+		this[APPENDERS] = ARRAY_SLICE.call(arguments);
+	}, {
+		displayName : "core/logger/service",
+
+		"sig/initialize" : function onInitialize() {
+			return forward.call(this, "initialize", arguments);
+		},
+		"sig/start" : function onStart() {
+			return forward.call(this, "start", arguments);
+		},
+		"sig/stop" : function onStop() {
+			return forward.call(this, "stop", arguments);
+		},
+		"sig/finalize" : function onFinalize() {
+			return forward.call(this, "finalize", arguments);
+		},
+
+		"hub/logger/log" : function onLog(message) {
+			append.call(this, convert("log", message));
+		},
+
+		"hub/logger/warn" : function onWarn(message) {
+			append.call(this, convert("warn", message));
+		},
+
+		"hub/logger/debug" : function onDebug(message) {
+			append.call(this, convert("debug", message));
+		},
+
+		"hub/logger/info" : function onInfo(message) {
+			append.call(this, convert("info", message));
+		},
+
+		"hub/logger/error" : function onError(message) {
+			append.call(this, convert("error", message));
+		}
+	});
+});
+
+/**
  * TroopJS browser/ajax/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquery", "troopjs-utils/merge", "when" ], function AjaxModule(Service, $, merge, when) {
+	"use strict";
+
 	var ARRAY_SLICE = Array.prototype.slice;
 
 	return Service.extend({
@@ -2905,12 +3132,26 @@ define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquer
 	});
 });
 /**
+ * TroopJS browser/loom/config
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], function LoomConfigModule(module, merge) {
+	"use strict";
+
+	return merge.call({
+		"$warp" : "$warp",
+		"$weft" : "$weft",
+		"weave" : "data-weave",
+		"unweave" : "data-unweave",
+		"woven" : "data-woven"
+	}, module.config());
+});
+/**
  * TroopJS utils/getargs
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-utils/getargs',[],function GetArgsModule() {
-	/*jshint strict:false */
+	"use strict";
 
 	var PUSH = Array.prototype.push;
 	var SUBSTRING = String.prototype.substring;
@@ -2936,6 +3177,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 
 			switch(c) {
 				case "\"" :
+				/* falls through */
 				case "'" :
 					// If we are currently quoted...
 					if (q === c) {
@@ -2982,6 +3224,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 					break;
 
 				case " " :
+				/* falls through */
 				case "\t" :
 					// Continue if we're quoted
 					if (q) {
@@ -3020,48 +3263,273 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 	};
 });
 /**
- * TroopJS utils/filter
+ * TroopJS browser/loom/weave
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
-define('troopjs-utils/filter',[],function FilterModule() {
-	/*jshint strict:false */
+define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "troopjs-utils/getargs", "poly/array" ], function WeaveModule(config, parentRequire, when, $, getargs) {
+	"use strict";
 
-	var LENGTH = "length";
+	var UNDEFINED;
+	var NULL = null;
+	var ARRAY_PUSH = Array.prototype.push;
+	var WEAVE = "weave";
+	var WOVEN = "woven";
+	var $WARP = config["$warp"];
+	var $WEFT = config["$weft"];
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var RE_SEPARATOR = /[\s,]+/;
 
 	/**
-	 * Reduces array to only contain filtered values (evals left-right)
-	 * @returns {Number} New length of array
+	 * Weaves elements
+	 * @returns {Promise} of weaving
 	 */
-	return function filter(callback) {
-		var arg;
-		var args = this;
-		var i;
-		var j;
-		var iMax = args[LENGTH];
+	return function weave() {
+		// Store start_args for later
+		var start_args = arguments;
 
-		for (i = j = 0; i < iMax; i++) {
-			arg = args[i];
+		// Map elements
+		return when.map(this, function (element) {
+			var $element = $(element);
+			var $data = $element.data();
+			var $warp = $data[$WARP] || ($data[$WARP] = []);
+			var $weave = [];
+			var weave_attr = $element.attr(ATTR_WEAVE) || "";
+			var weave_args;
+			var re = /[\s,]*(([\w_\-\/\.]+)(?:\(([^\)]+)\))?)/g;
+			var matches;
 
-			if (callback.call(args, arg, i) === false) {
-				continue;
+			/**
+			 * Updated attributes
+			 * @param {object} widget Widget
+			 * @private
+			 */
+			var update_attr = function (widget) {
+				var woven = widget[$WEFT][WOVEN];
+
+				$element.attr(ATTR_WOVEN, function (index, attr) {
+					var result = [ woven ];
+
+					if (attr !== UNDEFINED) {
+						ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
+					}
+
+					return result.join(" ");
+				});
+			};
+
+			// Make sure to remove ATTR_WEAVE (so we don't try processing this again)
+			$element.removeAttr(ATTR_WEAVE);
+
+			// Iterate weave_attr (while re matches)
+			// matches[1] : widget name and arguments - "widget/name(1, 'string', false)"
+			// matches[2] : widget name - "widget/name"
+			// matches[3] : widget arguments - "1, 'string', false"
+			while ((matches = re.exec(weave_attr)) !== NULL) {
+				/*jshint loopfunc:true*/
+				// Create weave_args
+				weave_args = [ $element, matches[2] ];
+
+				// Store matches[1] as WEAVE on weave_args
+				weave_args[WEAVE] = matches[1];
+
+				// If there were additional arguments
+				if (matches[3] !== UNDEFINED) {
+					// Parse matches[2] using getargs, map the values and append to weave_args
+					ARRAY_PUSH.apply(weave_args, getargs.call(matches[3]).map(function (value) {
+						// If value from $data if key exist
+						return value in $data
+							? $data[value]
+							: value;
+					}));
+				}
+
+				// Push on $weave
+				ARRAY_PUSH.call($weave, weave_args);
 			}
 
-			args[j++] = arg;
-		}
+			// Return promise of mapped $weave
+			return when.map($weave, function (widget_args) {
+				// Create deferred
+				var deferred = when.defer();
+				var resolver = deferred.resolver;
+				var promise = deferred.promise;
 
-		// Assign and return new length
-		return args[LENGTH] = j;
+				// Copy WEAVE
+				promise[WEAVE] = widget_args[WEAVE];
+
+				// Add promise to $warp
+				ARRAY_PUSH.call($warp, promise);
+
+				// Add deferred update of attr
+				when(promise, update_attr);
+
+				// Require module, add error handler
+				parentRequire([ widget_args[1] ], function (Widget) {
+					var widget;
+
+					try {
+						// Create widget instance
+						widget = Widget.apply(Widget, widget_args);
+
+						// Add $WEFT to widget
+						widget[$WEFT] = promise;
+
+						// Add WOVEN to promise
+						promise[WOVEN] = widget.toString();
+
+						// Resolve with start yielding widget
+						resolver.resolve(widget.start.apply(widget, start_args).yield(widget));
+					}
+					catch (e) {
+						resolver.reject(e);
+					}
+				}, resolver.reject);
+
+				// Return promise
+				return promise;
+			});
+		});
 	};
 });
+/**
+ * TroopJS browser/loom/unweave
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/array" ], function UnweaveModule(config, when, $) {
+	"use strict";
 
+	var UNDEFINED;
+	var NULL = null;
+	var ARRAY_PUSH = Array.prototype.push;
+	var WEAVE = "weave";
+	var UNWEAVE = "unweave";
+	var WOVEN = "woven";
+	var LENGTH = "length";
+	var $WARP = config["$warp"];
+	var $WEFT = config["$weft"];
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var ATTR_UNWEAVE = config[UNWEAVE];
+	var RE_SEPARATOR = /[\s,]+/;
+
+	/**
+	 * Unweaves elements
+	 * @returns {Promise} of unweaving
+	 */
+	return function unweave() {
+		// Store stop_args for later
+		var stop_args = arguments;
+
+		// Map elements
+		return when.map(this, function (element) {
+			var $element = $(element);
+			var $data = $element.data();
+			var $warp = $data[$WARP] || ($data[$WARP] = []);
+			var $unweave = [];
+			var unweave_attr = $element.attr(ATTR_UNWEAVE) || "";
+			var unweave_re = [];
+			var re = /[\s,]*([\w_\-\/\.]+)(?:@(\d+))?/g;
+			var matches;
+			var $weft;
+			var iMax;
+			var i;
+			var j;
+
+			/**
+			 * Updated attributes
+			 * @param {object} widget Widget
+			 * @private
+			 */
+			var update_attr = function (widget) {
+				var $promise = widget[$WEFT];
+				var woven = $promise[WOVEN];
+				var weave = $promise[WEAVE];
+
+				$element
+					.attr(ATTR_WOVEN, function (index, attr) {
+						var result = [];
+
+						if (attr !== UNDEFINED) {
+							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR).filter(function (part) {
+								return part !== woven;
+							}));
+						}
+
+						return result[LENGTH] === 0
+							? null
+							: result.join(" ");
+					})
+					.attr(ATTR_WEAVE, function (index, attr) {
+						var result = [ weave ];
+
+						if (attr !== UNDEFINED) {
+							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
+						}
+
+						return result.join(" ");
+					});
+			};
+
+			// Make sure to remove ATTR_UNWEAVE (so we don't try processing this again)
+			$element.removeAttr(ATTR_UNWEAVE);
+
+			// Check if we should remove all widgets
+			if (unweave_attr === UNDEFINED) {
+				// Copy from $warp to $unweave
+				ARRAY_PUSH.apply($unweave, $warp);
+
+				// Truncate $warp
+				$warp[LENGTH] = 0;
+			} else {
+				// Iterate unweave_attr (while re matches)
+				// matches[1] : widget name - "widget/name"
+				// matches[2] : widget instance id - "123"
+				while ((matches = re.exec(unweave_attr)) !== NULL) {
+					ARRAY_PUSH.call(unweave_re, "^" + matches[1] + "@" + (matches[2] || "\\d+") + "$");
+				}
+
+				// Redefine unweave_re as a regexp
+				unweave_re = new RegExp(unweave_re.join("|"));
+
+				// Move matching promises from $warp to $unweave
+				for (i = j = 0, iMax = $warp[LENGTH]; i < iMax; i++) {
+					$weft = $warp[i];
+
+					if (!unweave_re.test($weft[WOVEN])) {
+						// Move to new index
+						$warp[j++] = $weft;
+					}
+					else {
+						// Push on $weave
+						ARRAY_PUSH.call($unweave, $weft);
+					}
+				}
+
+				// Truncate $warp
+				$warp[LENGTH] = j;
+			}
+
+			// Return promise of mapped $unweave
+			return when.map($unweave, function (widget) {
+				// Store promise of stop yielding widget
+				var promise = widget.stop.apply(widget, stop_args).yield(widget);
+
+				// Add deferred update of attr
+				when(promise, update_attr);
+
+				// Return promise
+				return promise;
+			});
+		});
+	};
+});
 /**
  * TroopJS jquery/destroy
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	/*jshint strict:false, smarttabs:true */
+	"use strict";
 
 	var DESTROY = "destroy";
 
@@ -3088,560 +3556,26 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 });
 
 /**
- * String polyfill / shims
- *
- * (c) copyright 2011-2012 Brian Cavalier and John Hann
- *
- * This module is part of the cujo.js family of libraries (http://cujojs.com/).
- *
- * Licensed under the MIT License at:
- * 		http://www.opensource.org/licenses/mit-license.php
- *
- * Adds str.trim(), str.trimRight(), and str.trimLeft()
- *
- * Note: we don't bother trimming all possible ES5 white-space characters.
- * If you truly need strict ES5 whitespace compliance in all browsers,
- * create your own trim function.
- * from http://perfectionkills.com/whitespace-deviations/
- * '\x09-\x0D\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000\u2028\u2029'
- */
-define ('poly/string',['./lib/_base'], function (base) {
-	"use strict";
-
-	var proto = String.prototype,
-		featureMap,
-		has,
-		toString;
-
-	featureMap = {
-		'string-trim': 'trim',
-		'string-trimleft': 'trimLeft',
-		'string-trimright': 'trimRight'
-	};
-
-	function checkFeature (feature) {
-		var prop = featureMap[feature];
-		return base.isFunction(proto[prop]);
-	}
-
-	function neg () { return false; }
-
-	has = checkFeature;
-
-	// compressibility helper
-	function remove (str, rx) {
-		return str.replace(rx, '');
-	}
-
-	toString = base.createCaster(String, 'String');
-
-	var trimRightRx, trimLeftRx;
-
-	trimRightRx = /\s+$/;
-	trimLeftRx = /^\s+/;
-
-	function checkShims () {
-		if (!has('string-trim')) {
-			proto.trim = function trim () {
-				return remove(remove(toString(this), trimLeftRx), trimRightRx);
-			};
-		}
-
-		if (!has('string-trimleft')) {
-			proto.trimLeft = function trimLeft () {
-				return remove(toString(this), trimLeftRx);
-			};
-		}
-
-		if (!has('string-trimright')) {
-			proto.trimRight = function trimRight () {
-				return remove(toString(this), trimRightRx);
-			};
-		}
-
-	}
-
-	checkShims();
-
-	return {
-		setWhitespaceChars: function (wsc) {
-			trimRightRx = new RegExp(wsc + '$');
-			trimLeftRx = new RegExp('^' + wsc);
-			// fail all has() checks and check shims again
-			has = neg;
-			checkShims();
-		}
-	};
-
-});
-
-/**
- * TroopJS jquery/weave
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-/*global define:false */
-define('troopjs-jquery/weave',[ "require", "jquery", "when", "troopjs-utils/getargs", "troopjs-utils/filter", "./destroy", "poly/array", "poly/string" ], function WeaveModule(parentRequire, $, when, getargs, filter) {
-	/*jshint strict:false, laxbreak:true, newcap:false, es5:true */
-
-	var UNDEFINED;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_MAP = ARRAY_PROTO.map;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var $FN = $.fn;
-	var $EXPR = $.expr;
-	var $CREATEPSEUDO = $EXPR.createPseudo;
-	var WIDGETS = "widgets";
-	var WEAVE = "weave";
-	var UNWEAVE = "unweave";
-	var WOVEN = "woven";
-	var DESTROY = "destroy";
-	var LENGTH = "length";
-	var DATA = "data-";
-	var DATA_WEAVE = DATA + WEAVE;
-	var DATA_WOVEN = DATA + WOVEN;
-	var DATA_UNWEAVE = DATA + UNWEAVE;
-	var SELECTOR_WEAVE = "[" + DATA_WEAVE + "]";
-	var SELECTOR_UNWEAVE = "[" + DATA_WOVEN + "]";
-	var RE_SEPARATOR = /[\s,]+/;
-
-	/**
-	 * Generic destroy handler.
-	 * Simply makes sure that unweave has been called
-	 */
-	function onDestroy() {
-		$(this).unweave();
-	}
-
-	/**
-	 * Tests if element has a data-weave attribute
-	 * @param element to test
-	 * @returns {boolean}
-	 * @private
-	 */
-	function hasDataWeaveAttr(element) {
-		return $(element).attr(DATA_WEAVE) !== UNDEFINED;
-	}
-
-	/**
-	 * Tests if element has a data-woven attribute
-	 * @param element to test
-	 * @returns {boolean}
-	 * @private
-	 */
-	function hasDataWovenAttr(element) {
-		return $(element).attr(DATA_WOVEN) !== UNDEFINED;
-	}
-
-	/**
-	 * :weave expression
-	 * @type {*}
-	 */
-	$EXPR[":"][WEAVE] = $CREATEPSEUDO
-		// If we have jQuery >= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don't have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWeaveAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = RegExp(getargs.call(widgets).map(function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Return expression
-			return function (element) {
-				// Get weave attribute
-				var weave = $(element).attr(DATA_WEAVE);
-
-				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
-				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var weave = $(element).attr(DATA_WEAVE);
-
-			return weave === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: RegExp(getargs.call(match[3]).map(function (widget) {
-							return "^" + widget;
-						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
-			};
-
-	/**
-	 * :woven expression
-	 * @type {*}
-	 */
-	$EXPR[":"][WOVEN] = $CREATEPSEUDO
-		// If we have jQuery >= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don't have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWovenAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = RegExp(getargs.call(widgets).map(function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Return expression
-			return function (element) {
-				// Get woven attribute
-				var woven = $(element).attr(DATA_WOVEN);
-
-				// Check that woven is not UNDEFINED, and that widgets test against a processed woven
-				return woven !== UNDEFINED && widgets.test(woven.replace(RE_SEPARATOR, "\n"));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var woven = $(element).attr(DATA_WOVEN);
-
-			return woven === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: RegExp(getargs.call(match[3]).map(function (widget) {
-						return "^" + widget;
-					}).join("|"), "m").test(woven.replace(RE_SEPARATOR, "\n"));
-		};
-
-	/**
-	 * Weaves elements
-	 * @returns {Promise} of weaving
-	 */
-	$FN[WEAVE] = function () {
-		var $elements = $(this);
-		var weave_args = arguments;
-		var woven = [];
-		var wovenLength = 0;
-
-		// Prepare $elements for weaving
-		$elements
-			// Reduce to only elements that can be woven
-			.filter(SELECTOR_WEAVE)
-				// Reduce to only elements that don't have a the destroy handler attached
-				.filter(function () {
-					// Get events
-					var events = $._data(this, "events");
-
-					// Check if we can find the onDestroy event handler in events
-					var found = events && $.grep(events[DESTROY] || false, function (handleObj) {
-						return handleObj.handler === onDestroy;
-					}).length > 0;
-
-					// Return true if not found, false if we did
-					return !found;
-				})
-				// Attach onDestroy event
-				.on(DESTROY, onDestroy)
-				// Back to previous filtering
-				.end()
-			// Iterate
-			.each(function (index, element) {
-				var $element = $(element);
-				var $data = $element.data();
-				var $widgets = $data[WIDGETS] || ($data[WIDGETS] = []);
-				var $widgetsLength = $widgets[LENGTH];
-				var $woven = [];
-				var $wovenLength = 0;
-				var matches;
-				var attr_weave = $element.attr(DATA_WEAVE);
-				var attr_args;
-				var i;
-				var iMax;
-				var value;
-				var re = /[\s,]*([\w_\-\/\.]+)(?:\(([^\)]+)\))?/g;
-
-				// Make sure to remove DATA_WEAVE (so we don't try processing this again)
-				$element.removeAttr(DATA_WEAVE);
-
-				// Iterate attr_weave (while re matches)
-				// matches[0] : original matching string - " widget/name(1, 'string', false)"
-				// matches[2] : widget name - "widget/name"
-				// matches[3] : widget arguments - "1, 'string', false"
-				while ((matches = re.exec(attr_weave)) !== null) {
-					// Create attr_args
-					attr_args = [ $element, matches[1] ];
-
-					// Store trimmed matches[0] as WEAVE on attr_args
-					attr_args[WEAVE] = matches[0].trim();
-
-					// Transfer arguments from getargs (if any exist)
-					if (matches[2]) {
-						ARRAY_PUSH.apply(attr_args, getargs.call(matches[2]));
-					}
-
-					// Iterate end of attr_args to copy from $data
-					for (i = 2, iMax = attr_args[LENGTH]; i < iMax; i++) {
-						// Get value
-						value = attr_args[i];
-
-						// Override if value is in $data
-						attr_args[i] = value in $data
-							? $data[value]
-							: value;
-					}
-
-					// Store $woven arguments
-					$woven[$wovenLength++] = attr_args;
-				}
-
-				// Iterate $woven
-				$woven.forEach(function (widget_args, $wovenIndex) {
-					// Create deferred and resolver
-					var deferred = when.defer();
-					var resolver = deferred.resolver;
-					var promise = $widgets[$widgetsLength++] = $woven[$wovenIndex] = deferred.promise;
-
-					// Copy WEAVE
-					promise[WEAVE] = widget_args[WEAVE];
-
-					// Require module, add error handler
-					parentRequire([ widget_args[1] ], function (Widget) {
-						var widget;
-
-						try {
-							// Create widget instance
-							widget = Widget.apply(Widget, widget_args);
-
-							// Add WOVEN to promise
-							promise[WOVEN] = widget.toString();
-
-							// Resolve with start yielding widget
-							resolver.resolve(widget.start.apply(widget, weave_args).yield(widget));
-						}
-						catch (e) {
-							// Reject resolver
-							resolver.reject(e);
-						}
-					}, resolver.reject);
-				});
-
-				// Add promise to woven (and for legacy to $data[WOVEN])
-				$data[WOVEN] = woven[wovenLength++] = when.all($woven, function (widgets) {
-					// Get current DATA_WOVEN attribute
-					var attr_woven = $element.attr(DATA_WOVEN);
-
-					// Convert to array
-					attr_woven = attr_woven === UNDEFINED
-						? []
-						: [ attr_woven ];
-
-					// Push orinal weave
-					ARRAY_PUSH.apply(attr_woven, widgets.map(function (widget) { return widget.toString(); }));
-
-					// Either set or remove DATA_WOVEN attribute
-					if (attr_woven[LENGTH] !== 0) {
-						$element.attr(DATA_WOVEN, attr_woven.join(" "));
-					}
-					else {
-						$element.removeAttr(DATA_WOVEN);
-					}
-
-					// Trigger event on $element indicating widget(s) were woven
-					$element.triggerHandler(WEAVE, widgets);
-
-					// Return widgets
-					return widgets;
-				});
-			});
-
-		// Return promise of all woven
-		return when.all(woven);
-	};
-
-	/**
-	 * Unweaves elements
-	 * @returns {Promise} of unweaving
-	 */
-	$FN[UNWEAVE] = function () {
-		var $elements = $(this);
-		var unweave_args = arguments;
-		var unwoven = [];
-		var unwovenLength = 0;
-
-		// Prepare $elements for unweaving
-		$elements
-			// Reduce to only elements that can be unwoven
-			.filter(SELECTOR_UNWEAVE)
-			// Iterate
-			.each(function (index, element) {
-				var $element = $(element);
-				var $data = $element.data();
-				var $widgets = $data[WIDGETS] || ($data[WIDGETS] = []);
-				var $unwoven = [];
-				var $unwovenLength = 0;
-				var attr_unweave = $element.attr(DATA_UNWEAVE);
-				var i;
-				var iMax;
-				var re;
-
-				// Remove DATA_UNWEAVE attribute
-				$element.removeAttr(DATA_UNWEAVE);
-
-				// If we have attr_unweave, we need to filter
-				if (attr_unweave) {
-					// Create regexp to match widgets
-					re = RegExp(attr_unweave.split(RE_SEPARATOR).map(function (widget) {
-						return "^" + widget;
-					}).join("|"), "m");
-
-					// Filter $widgets
-					filter.call($widgets, function ($widget) {
-						var filtered = re.test($widget[WOVEN]);
-
-						if (filtered) {
-							$unwoven[$unwovenLength++] = $widget;
-						}
-
-						return !filtered;
-					});
-
-					// When all $widgets are fulfilled
-					when.all($widgets, function (widgets) {
-						// Either set or remove DATA_WOVEN argument
-						if (widgets[LENGTH] !== 0) {
-							$element.attr(DATA_WOVEN, widgets.join(" "));
-						}
-						else {
-							$element.removeAttr(DATA_WOVEN);
-						}
-
-						// Return widgets
-						return widgets;
-					});
-				}
-				// Otherwise unweave all widgets
-				else {
-					// Copy from $widgets to $unwoven
-					for (i = 0, iMax = $widgets[LENGTH]; i < iMax; i++) {
-						$unwoven[$unwovenLength++] = $widgets[i];
-					}
-
-					// Truncate $widgets
-					$widgets[LENGTH] = 0;
-
-					// Remove DATA_WOVEN attribute
-					$element.removeAttr(DATA_WOVEN);
-				}
-
-				// Iterate $unwoven
-				$unwoven.forEach(function ($widget, $unwovenIndex) {
-					// Redefine $unwoven
-					$unwoven[$unwovenIndex] = when($widget, function (widget) {
-						// Chain deferred to stop, resolve with widget
-						var promise = widget.stop.apply(widget, unweave_args).yield(widget);
-
-						// Copy WEAVE
-						promise[WEAVE] = $widget[WEAVE];
-
-						// Return promise
-						return promise;
-					});
-				});
-
-				// Add to unwoven
-				unwoven[unwovenLength++] = when.all($unwoven, function (widgets) {
-					// Get current DATA_WEAVE attribute
-					var attr_weave = $element.attr(DATA_WEAVE);
-
-					// Convert to array
-					attr_weave = attr_weave === UNDEFINED
-						? []
-						: [ attr_weave ];
-
-					// Push orinal weave
-					ARRAY_PUSH.apply(attr_weave, $unwoven.map(function ($widget) { return $widget[WEAVE]; }));
-
-					// Either set or remove DATA_WEAVE attribute
-					if (attr_weave[LENGTH] !== 0) {
-						$element.attr(DATA_WEAVE, attr_weave.join(" "));
-					}
-					else {
-						$element.removeAttr(DATA_WEAVE);
-					}
-
-					// Trigger event on $element indicating widget(s) were unwoven
-					$element.triggerHandler(UNWEAVE, widgets);
-
-					// Return widgets
-					return widgets;
-				});
-			});
-
-		// Return promise of all unwoven
-		return when.all(unwoven);
-	};
-
-	/**
-	 * Gets woven widgets
-	 * @returns {Promise} of woven widgets
-	 */
-	$FN[WOVEN] = function () {
-		var woven = [];
-		var wovenLength = 0;
-		var re;
-
-		// If we have arguments we have convert and filter
-		if (arguments[LENGTH] > 0) {
-			// Map arguments to a regexp
-			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Iterate
-			$(this).each(function (index, element) {
-				// Filter widget promises
-				var $widgets = ($.data(element, WIDGETS) || []).filter(function ($widget) {
-					return re.test($widget[WOVEN]);
-				});
-
-				// Add promise of widgets to woven
-				woven[wovenLength++] = when.all($widgets);
-			});
-		}
-		// Otherwise we can use a faster approach
-		else {
-			// Iterate
-			$(this).each(function (index, element) {
-				// Add promise of widgets to woven
-				woven[wovenLength++] = when.all($.data(element, WIDGETS));
-			});
-		}
-
-		// Return promise of woven
-		return when.all(woven);
-	};
-});
-
-/**
  * TroopJS browser/component/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
-define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "troopjs-jquery/weave" ], function WidgetModule(Gadget, $) {
+define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
+	"use strict";
 
 	var UNDEFINED;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var TYPEOF_FUNCTION = typeof function () {};
-	var $WEAVE = $.fn.weave;
-	var $UNWEAVE = $.fn.unweave;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var TYPEOF_FUNCTION = "function";
 	var $ELEMENT = "$element";
 	var $HANDLERS = "$handlers";
-	var ATTR_WEAVE = "[data-weave]";
-	var ATTR_WOVEN = "[data-woven]";
-	var LENGTH = "length";
 	var FEATURES = "features";
 	var TYPE = "type";
 	var VALUE = "value";
 	var PROXY = "proxy";
 	var GUID = "guid";
+	var LENGTH = "length";
+	var SELECTOR_WEAVE = "[" + config["weave"] + "]";
+	var SELECTOR_UNWEAVE = "[" + config["unweave"] + "]";
+
 
 	/**
 	 * Creates a proxy that executes 'handler' in 'widget' scope
@@ -3676,19 +3610,18 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		 * @returns {Object} self
 		 */
 		function render(contents, data) {
+			/*jshint validthis:true*/
 			var self = this;
 			var args = ARRAY_SLICE.call(arguments, 1);
 
 			// Call render with contents (or result of contents if it's a function)
-			return $fn.call(self[$ELEMENT], typeof contents === TYPEOF_FUNCTION ? contents.apply(self, args) : contents)
-				.find(ATTR_WEAVE)
-				.weave();
+			return weave.call($fn.call(self[$ELEMENT], typeof contents === TYPEOF_FUNCTION ? contents.apply(self, args) : contents).find(SELECTOR_WEAVE));
 		}
 
 		return render;
 	}
 
-	return Gadget.extend(function Widget($element, displayName) {
+	return Gadget.extend(function ($element, displayName) {
 		var self = this;
 
 		if ($element === UNDEFINED) {
@@ -3707,7 +3640,7 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		/**
 		 * Signal handler for 'initialize'
 		 */
-		"sig/initialize" : function initialize() {
+		"sig/initialize" : function () {
 			var self = this;
 			var $element = self[$ELEMENT];
 			var $handler;
@@ -3739,14 +3672,14 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 				$element.on(type, features, self, proxy);
 
 				// Copy GUID from proxy to value (so you can use .off to remove it)
-				value[GUID] = proxy[GUID]
+				value[GUID] = proxy[GUID];
 			}
 		},
 
 		/**
 		 * Signal handler for 'finalize'
 		 */
-		"sig/finalize" : function finalize() {
+		"sig/finalize" : function () {
 			var self = this;
 			var $element = self[$ELEMENT];
 			var $handler;
@@ -3766,18 +3699,25 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 
 		/**
 		 * Weaves all children of $element
-		 * @returns {Promise} from $WEAVE
+		 * @returns {Promise} from weave
 		 */
-		"weave" : function weave() {
-			return $WEAVE.apply(this[$ELEMENT].find(ATTR_WEAVE), arguments);
+		"weave" : function () {
+			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
 		},
 
 		/**
 		 * Unweaves all children of $element _and_ self
-		 * @returns {Promise} from $UNWEAVE
+		 * @returns {Promise} from unweave
 		 */
-		"unweave" : function unweave() {
-			return $UNWEAVE.apply(this[$ELEMENT].find(ATTR_WOVEN).addBack(), arguments);
+		"unweave" : function () {
+			return unweave.apply(this[$ELEMENT].find(SELECTOR_UNWEAVE).addBack(), arguments);
+		},
+
+		/**
+		 * Destroy DOM handler
+		 */
+		"dom/destroy" : function () {
+			this.unweave();
 		},
 
 		/**
@@ -3816,8 +3756,9 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
  * TroopJS core/registry/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-core/registry/service',[ "../component/service", "poly/object", "poly/array" ], function RegistryServiceModule(Service) {
+	"use strict";
+
 	var SERVICES = "services";
 
 	return Service.extend(function RegistryService() {
@@ -3867,9 +3808,8 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
  * TroopJS browser/application/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-browser/application/widget',[ "module", "../component/widget", "when", "troopjs-core/registry/service", "poly/array" ], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
@@ -3884,6 +3824,7 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 	 * @returns {Function}
 	 */
 	function forward(_signal, _args) {
+		/*jshint validthis:true*/
 		var self = this;
 		var signal = self.signal;
 		var args = [ _signal ];
@@ -3950,9 +3891,8 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
  *
  * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  */
-/*global define:false */
 define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], function URIModule(Factory) {
-	/*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false, forin:false, loopfunc:true */
+	"use strict";
 
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
@@ -3984,6 +3924,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 		ANCHOR ];
 
 	function Query(arg) {
+		/*jshint forin:false*/
 		var result = {};
 		var matches;
 		var key = NULL;
@@ -4020,6 +3961,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 	}
 
 	Query.toString = function QueryToString() {
+		/*jshint forin:false*/
 		var self = this;
 		var key;
 		var value;
@@ -4166,9 +4108,8 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
  * Normalized hashchange event, ripped a _lot_ of code from
  * https://github.com/millermedeiros/Hasher
  */
-/*global define:false */
 define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
-	/*jshint strict:false, smarttabs:true, laxbreak:true, evil:true */
+	"use strict";
 
 	var INTERVAL = "interval";
 	var HASHCHANGE = "hashchange";
@@ -4209,6 +4150,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 		},
 
 		"update" : function (hash) {
+			/*jshint evil:true*/
 			var self = this;
 			var document = self.element.contentWindow.document;
 
@@ -4226,16 +4168,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	};
 
 	$.event.special[HASHCHANGE] = {
-		/**
-		 * @param data (Anything) Whatever eventData (optional) was passed in
-		 *        when binding the event.
-		 * @param namespaces (Array) An array of namespaces specified when
-		 *        binding the event.
-		 * @param eventHandle (Function) The actual function that will be bound
-		 *        to the browser’s native event (this is used internally for the
-		 *        beforeunload event, you’ll never use it).
-		 */
-		"setup" : function onHashChangeSetup(data, namespaces, eventHandle) {
+		"setup" : function onHashChangeSetup() {
 			var window = this;
 
 			// Quick return if we support onHashChange natively
@@ -4315,11 +4248,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 				}, 25));
 		},
 
-		/**
-		 * @param namespaces (Array) An array of namespaces specified when
-		 *        binding the event.
-		 */
-		"teardown" : function onHashChangeTeardown(namespaces) {
+		"teardown" : function onHashChangeTeardown() {
 			var window = this;
 
 			// Quick return if we support onHashChange natively
@@ -4336,8 +4265,8 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  * TroopJS browser/route/widget module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs-jquery/hashchange" ], function RouteWidgetModule(Widget, URI) {
+	"use strict";
 	var $ELEMENT = "$element";
 	var HASHCHANGE = "hashchange";
 	var ROUTE = "route";
@@ -4380,281 +4309,380 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		}
 	});
 });
-/**
- * TroopJS requirejs/template
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Parts of code from require-cs 0.4.0+ Copyright (c) 2010-2011, The Dojo Foundation
- */
-/*global define:false, require:false*/
-define('troopjs-requirejs/template',[],function TemplateModule() {
-	/*jshint strict:false, smarttabs:true, laxbreak:true, newcap:false, loopfunc:true */
-
-	var FACTORIES = {
-		"node" : function () {
-			// Using special require.nodeRequire, something added by r.js.
-			var fs = require.nodeRequire("fs");
-
-			return function fetchText(path, callback) {
-				var file = fs.readFileSync(path, 'utf8');
-				//Remove BOM (Byte Mark Order) from utf8 files if it is there.
-				if (file.indexOf('\uFEFF') === 0) {
-					file = file.substring(1);
-				}
-				callback(file);
-			};
-		},
-
-		"browser" : function () {
-			// Would love to dump the ActiveX crap in here. Need IE 6 to die first.
-			var progIds = [ "Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
-			var progId;
-			var XHR;
-			var i;
-
-			if (typeof XMLHttpRequest !== "undefined") {
-				XHR = XMLHttpRequest;
-			}
-			else {
-				for (i = 0; i < 3; i++) {
-					progId = progIds[i];
-
-					try {
-						new ActiveXObject(progId);
-						XHR = function(){
-							return new ActiveXObject(progId);
-						};
-						break;
-					}
-					catch (e) {
-					}
-				}
-
-				if (!XHR){
-					throw new Error("XHR: XMLHttpRequest not available");
-				}
-			}
-
-			return function fetchText(url, callback) {
-				var xhr = new XHR();
-				xhr.open('GET', url, true);
-				xhr.onreadystatechange = function (evt) {
-					// Do not explicitly handle errors, those should be
-					// visible via console output in the browser.
-					if (xhr.readyState === 4) {
-						callback(xhr.responseText);
-					}
-				};
-				xhr.send(null);
-			};
-		},
-
-		"rhino" : function () {
-			var encoding = "utf-8";
-			var lineSeparator = java.lang.System.getProperty("line.separator");
-
-			// Why Java, why is this so awkward?
-			return function fetchText(path, callback) {
-				var file = new java.io.File(path);
-				var input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding));
-				var stringBuffer = new java.lang.StringBuffer();
-				var line;
-				var content = "";
-
-				try {
-					line = input.readLine();
-
-					// Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
-					// http://www.unicode.org/faq/utf_bom.html
-
-					// Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
-					// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
-					if (line && line.length() && line.charAt(0) === 0xfeff) {
-						// Eat the BOM, since we've already found the encoding on this file,
-						// and we plan to concatenating this buffer with others; the BOM should
-						// only appear at the top of a file.
-						line = line.substring(1);
-					}
-
-					stringBuffer.append(line);
-
-					while ((line = input.readLine()) !== null) {
-						stringBuffer.append(lineSeparator);
-						stringBuffer.append(line);
-					}
-					// Make sure we return a JavaScript string and not a Java string.
-					content = String(stringBuffer.toString()); // String
-				} finally {
-					input.close();
-				}
-
-				callback(content);
-			};
-		},
-
-		"borked" : function () {
-			return function fetchText() {
-				throw new Error("Environment unsupported.");
-			};
-		}
-	};
-
-	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
-	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
-	var RE_TOKENS = /<%(\d+)%>/gm;
-	var RE_REPLACE = /(["\n\t\r])/gm;
-	var RE_CLEAN = /o \+= "";| \+ ""/gm;
-	var EMPTY = "";
-	var REPLACE = {
-		"\"" : "\\\"",
-		"\n" : "\\n",
-		"\t" : "\\t",
-		"\r" : "\\r"
-	};
-
-	/**
-	 * Compiles template
-	 *
-	 * @param body Template body
-	 * @returns {Function}
-	 */
-	function compile(body) {
-		var blocks = [];
-		var length = 0;
-
-		function blocksTokens(original, prefix, block) {
-			blocks[length] = prefix
-				? "\" +" + block + "+ \""
-				: "\";" + block + "o += \"";
-			return "<%" + String(length++) + "%>";
-		}
-
-		function tokensBlocks(original, token) {
-			return blocks[token];
-		}
-
-		function replace(original, token) {
-			return REPLACE[token] || token;
-		}
-
-		return ("function template(data) { var o = \""
-		// Sanitize body before we start templating
-		+ body.replace(RE_SANITIZE, "")
-
-		// Replace script blocks with tokens
-		.replace(RE_BLOCK, blocksTokens)
-
-		// Replace unwanted tokens
-		.replace(RE_REPLACE, replace)
-
-		// Replace tokens with script blocks
-		.replace(RE_TOKENS, tokensBlocks)
-
-		+ "\"; return o; }")
-
-		// Clean
-		.replace(RE_CLEAN, EMPTY);
-	}
-
-	var buildMap = {};
-	var fetchText = FACTORIES[ typeof process !== "undefined" && process.versions && !!process.versions.node
-		? "node"
-		: (typeof window !== "undefined" && window.navigator && window.document) || typeof importScripts !== "undefined"
-			? "browser"
-			: typeof Packages !== "undefined"
-				? "rhino"
-				: "borked" ]();
-
-	return {
-		load: function (name, parentRequire, load, config) {
-			var path = parentRequire.toUrl(name);
-
-			fetchText(path, function (text) {
-				try {
-					text = "define(function() { return " + compile(text, name, path, config.template) + "; })";
-				}
-				catch (err) {
-					err.message = "In " + path + ", " + err.message;
-					throw(err);
-				}
-
-				if (config.isBuild) {
-					buildMap[name] = text;
-				}
-
-				// IE with conditional comments on cannot handle the
-				// sourceURL trick, so skip it if enabled
-				/*@if (@_jscript) @else @*/
-				else {
-					text += "\n//@ sourceURL='" + path +"'";
-				}
-				/*@end@*/
-
-				load.fromText(name, text);
-
-				// Give result to load. Need to wait until the module
-				// is fully parse, which will happen after this
-				// execution.
-				parentRequire([name], function (value) {
-					load(value);
-				});
-			});
-		},
-
-		write: function (pluginName, name, write) {
-			if (buildMap.hasOwnProperty(name)) {
-				write.asModule(pluginName + "!" + name, buildMap[name]);
-			}
-		}
-	};
-});
-
 define('troopjs-bundle/micro',[
-	"troopjs-core/component/service",
+	"troopjs-core/logger/console",
+	"troopjs-core/logger/pubsub",
+	"troopjs-core/logger/service",
 	"troopjs-browser/ajax/service",
 	"troopjs-browser/application/widget",
-	"troopjs-browser/route/widget",
-	"troopjs-requirejs/template"
+	"troopjs-browser/route/widget"
 ]);
+/** @license MIT License (c) copyright B Cavalier & J Hann */
+
+/**
+ * apply.js
+ * Helper for using arguments-based and variadic callbacks with any
+ * {@link Promise} that resolves to an array.
+ *
+ * @author brian@hovercraftstudios.com
+ */
+
+(function(define) {
+define('when/apply',[],function() {
+
+    var toString = Object.prototype.toString;
+
+    /**
+     * Creates a function that accepts a function that takes individual
+     * arguments (it can be variadic, too), and returns a new function that
+     * takes a single array as its only param:
+     *
+     * function argBased(a, b, c) {
+     *   return a + b + c;
+     * }
+     *
+     * argBased(1, 2, 3); // 6
+     *
+     * // Create an array-based version of argBased
+     * var arrayBased = apply(argBased);
+     * var inputs = [1, 2, 3];
+     *
+     * arrayBased(inputs); // 6
+     *
+     * With promises:
+     *
+     * var d = when.defer();
+     * d.promise.then(arrayBased);
+     *
+     * d.resolve([1, 2, 3]); // arrayBased called with args 1, 2, 3 -> 6
+     *
+     * @param f {Function} arguments-based function
+     *
+     * @returns {Function} a new function that accepts an array
+     */
+    return function(f) {
+        /**
+         * @param array {Array} must be an array of arguments to use to apply the original function
+         *
+         * @returns the result of applying f with the arguments in array.
+         */
+        return function(array) {
+            // It better be an array
+            if(toString.call(array) != '[object Array]') {
+                throw new Error('apply called with non-array arg');
+            }
+
+            return f.apply(null, array);
+        };
+    };
+
+});
+})(
+	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); }
+	// Boilerplate for AMD and Node
+);
+
+
+
 /**
  * TroopJS data/store/component module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
-define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when" ], function StoreModule(Gadget, when) {
-	var UNDEFINED;
-	var ADAPTER = "adapter";
-	var LOCK = "lock";
+define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when", "when/apply", "poly/array" ], function StoreModule(Gadget, when, apply) {
+	"use strict";
 
-	return Gadget.extend(function StoreComponent(adapter) {
-		if (adapter === UNDEFINED) {
-			throw new Error("No adapter provided");
+	var UNDEFINED;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARRAY = "[object Array]";
+	var TOSTRING_OBJECT = "[object Object]";
+	var TOSTRING_FUNCTION = "[object Function]";
+	var TOSTRING_STRING = "[object String]";
+	var ARRAY_SLICE = Array.prototype.slice;
+	var LENGTH = "length";
+	var ADAPTERS = "adapters";
+	var STORAGE = "storage";
+	var BEFORE_GET = "beforeGet";
+	var AFTER_PUT = "afterPut";
+	var CLEAR = "clear";
+	var LOCKS = "locks";
+
+	/**
+	 * Applies method to this (if it exists)
+	 * @param {string} method Method name
+	 * @returns {boolean|*}
+	 * @private
+	 */
+	function applyMethod(method) {
+		/*jshint validthis:true*/
+		var me = this;
+
+		return method in me && me[method].apply(me, ARRAY_SLICE.call(arguments, 1));
+	}
+
+	/**
+	 * Puts value
+	 * @param {string|null} key Key - can be dot separated for sub keys
+	 * @param {*} value Value
+	 * @returns {Promise} Promise of put
+	 * @private
+	 */
+	function put(key, value) {
+		/*jshint validthis:true*/
+		var self = this;
+		var node = self[STORAGE];
+		var parts = key
+			? key.split(".")
+			: [];
+		var part;
+		var last = parts.pop();
+
+		while (node && (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = node[part] = {};
+			}
 		}
 
-		this[ADAPTER] = adapter;
+		// Evaluate value if needed
+		if (OBJECT_TOSTRING.call(value) === TOSTRING_FUNCTION) {
+			value = value.call(self, {
+				"get" : function () {
+					return get.apply(self, arguments);
+				},
+				"has" : function () {
+					return has.apply(self, arguments);
+				}
+			}, key);
+		}
+
+		return last !== UNDEFINED
+			// First store the promise, then override with the true value once resolved
+			? when(value, function (result) {
+				node[last] = result;
+
+				return result;
+			})
+			// No key provided, just return a promise of the value
+			: when(value);
+	}
+
+	/**
+	 * Gets value
+	 * @param {string} key Key - can be dot separated for sub keys
+	 * @returns {*} Value
+	 * @private
+	 */
+	function get(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(".");
+		var part;
+
+		while (node && (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node;
+	}
+
+	/**
+	 * Check is key exists
+	 * @param key {string} key Key - can be dot separated for sub keys
+	 * @returns {boolean}
+	 * @private
+	 */
+	function has(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(".");
+		var part;
+		var last = parts.pop();
+
+		while (node && (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node !== UNDEFINED && last in node;
+	}
+
+	return Gadget.extend(function StoreComponent(adapter) {
+		if (arguments[LENGTH] === 0) {
+			throw new Error("No adapter(s) provided");
+		}
+
+		var self = this;
+
+		self[ADAPTERS] = ARRAY_SLICE.call(arguments);
+		self[STORAGE] = {};
+		self[LOCKS] = {};
 	}, {
 		"displayName" : "data/store/component",
 
-		"ready" : function ready(onFulfilled, onRejected, onProgress) {
+		/**
+		 * Waits for store to be "locked"
+		 * @param {string} key Key
+		 * @param {function} [onFulfilled] onFulfilled callback
+		 * @param {function} [onRejected] onRejected callback
+		 * @param {function} [onProgress] onProgress callback
+		 * @returns {Promise} Promise of ready
+		 */
+		"lock" : function (key, onFulfilled, onRejected, onProgress) {
+			var locks = this[LOCKS];
+			var result;
+
+			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
+				throw new Error("key has to be of type string");
+			}
+
+			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
+
+			return result;
+		},
+
+		/**
+		 * Gets state value
+		 * @param {string..} key Key - can be dot separated for sub keys
+		 * @param {function} [onFulfilled] onFulfilled callback
+		 * @param {function} [onRejected] onRejected callback
+		 * @param {function} [onProgress] onProgress callback
+		 * @returns {Promise} Promise of value
+		 */
+		"get" : function (key, onFulfilled, onRejected, onProgress) {
+			/*jshint curly:false*/
+			var self = this;
+			var keys = ARRAY_SLICE.call(arguments);
+			var i;
+			var iMax;
+
+			// Step until we hit the end or keys[i] is not a string
+			for (i = 0, iMax = keys[LENGTH]; i < iMax && OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
+
+			// Update callbacks
+			onFulfilled = keys[i];
+			onRejected = keys[i+1];
+			onProgress = keys[i+2];
+
+			// Set the new length of keys
+			keys[LENGTH] = i;
+
+			return when
+				.map(keys, function (key) {
+					return when
+						// Map adapters and BEFORE_GET on each adapter
+						.map(self[ADAPTERS], function (adapter) {
+							return when(applyMethod.call(adapter, BEFORE_GET, self, key));
+						})
+						// Get value from STORAGE
+						.then(function () {
+							return get.call(self, key);
+						});
+				})
+				// Add callbacks
+				.then(onFulfilled && apply(onFulfilled), onRejected, onProgress);
+		},
+
+		/**
+		 * Puts state value
+		 * @param {string} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {function} [onFulfilled] onFulfilled callback
+		 * @param {function} [onRejected] onRejected callback
+		 * @param {function} [onProgress] onProgress callback
+		 * @returns {Promise} Promise of value
+		 */
+		"put" : function (key, value, onFulfilled, onRejected, onProgress) {
 			var self = this;
 
-			return self[LOCK] = when(self[LOCK], onFulfilled, onRejected, onProgress);
+			return when(put.call(self, key, value), function (result) {
+				return when
+					// Map adapters and AFTER_PUT on each adapter
+					.map(self[ADAPTERS], function (adapter) {
+						return when(applyMethod.call(adapter, AFTER_PUT, self, key, result));
+					})
+					.yield(result);
+			})
+				// Add callbacks
+				.then(onFulfilled, onRejected, onProgress);
 		},
 
-		"set" : function set(key, value, onFulfilled, onRejected, onProgress) {
-			return when(this[ADAPTER].set(key, value), onFulfilled, onRejected, onProgress);
+		/**
+		 * Puts state value if key is UNDEFINED
+		 * @param {string} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {function} [onFulfilled] onFulfilled callback
+		 * @param {function} [onRejected] onRejected callback
+		 * @param {function} [onProgress] onProgress callback
+		 * @returns {Promise} Promise of value
+		 */
+		"putIfNotHas" : function (key, value, onFulfilled, onRejected, onProgress) {
+			var self = this;
+
+			return !self.has(key)
+				? self.put(key, value, onFulfilled, onRejected, onProgress)
+				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
 		},
 
-		"get" : function get(key, onFulfilled, onRejected, onProgress) {
-			return when(this[ADAPTER].get(key), onFulfilled, onRejected, onProgress);
+		/**
+		 * Checks if key exists
+		 * @param {string} key Key - can be dot separated for sub keys
+		 * @returns {boolean} True if key exists, otherwise false
+		 */
+		"has" : function (key) {
+			return has.call(this, key);
 		},
 
-		"remove" : function remove(key, onFulfilled, onRejected, onProgress) {
-			return when(this[ADAPTER].remove(key), onFulfilled, onRejected, onProgress);
-		},
+		/**
+		 * Clears all adapters
+		 * @param {function} [onFulfilled] onFulfilled callback
+		 * @param {function} [onRejected] onRejected callback
+		 * @param {function} [onProgress] onProgress callback
+		 * @returns {Promise} Promise of clear
+		 */
+		"clear" : function (onFulfilled, onRejected, onProgress) {
+			var self = this;
 
-		"clear" : function clear(onFulfilled, onRejected, onProgress) {
-			return when(this[ADAPTER].clear(), onFulfilled, onRejected, onProgress);
+			return when
+				.map(self[ADAPTERS], function (adapter) {
+					return when(applyMethod.call(adapter, CLEAR, self));
+				})
+				// Add callbacks
+				.then(onFulfilled && apply(onFulfilled), onRejected, onProgress);
 		}
 	});
 });
@@ -4662,9 +4690,8 @@ define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when" 
  * TroopJS data/cache/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], function CacheModule(Component) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var UNDEFINED;
 	var FALSE = false;
@@ -4696,6 +4723,7 @@ define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], functi
 	 * @returns Cached node
 	 */
 	function _put(node, _constructor, now) {
+		/*jshint validthis:true, forin:false, curly:false, -W086*/
 		var self = this;
 		var result;
 		var id;
@@ -4875,6 +4903,7 @@ define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], functi
 			self[INTERVAL] = INTERVAL in self
 				? self[INTERVAL]
 				: setInterval(function sweep() {
+				/*jshint forin:false*/
 				// Calculate expiration of this generation
 				var expires = 0 | new Date().getTime() / SECOND;
 
@@ -4931,6 +4960,7 @@ define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], functi
 		},
 
 		"sig/finalize" : function finalize() {
+			/*jshint forin:false*/
 			var self = this;
 			var property;
 
@@ -4971,9 +5001,8 @@ define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], functi
  * TroopJS data/query/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-data/query/component', [ "troopjs-core/component/base" ], function QueryModule(Component) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var UNDEFINED;
 	var TRUE = true;
@@ -5034,6 +5063,7 @@ define('troopjs-data/query/component', [ "troopjs-core/component/base" ], functi
 
 				switch (c) {
 					case "\"" : // Double quote
+					/* falls through */
 					case "'" :  // Single quote
 						// Set / unset quote char
 						q = q === c
@@ -5053,6 +5083,7 @@ define('troopjs-data/query/component', [ "troopjs-core/component/base" ], functi
 						break;
 
 					case OP_PROPERTY :
+					/* falls through */
 					case OP_PATH :
 						// Break fast if we're quoted
 						if (q !== UNDEFINED) {
@@ -5074,9 +5105,13 @@ define('troopjs-data/query/component', [ "troopjs-core/component/base" ], functi
 						break;
 
 					case OP_QUERY :
+					/* falls through */
 					case " " :  // Space
+					/* falls through */
 					case "\t" : // Horizontal tab
+					/* falls through */
 					case "\r" : // Carriage return
+					/* falls through */
 					case "\n" : // Newline
 						// Break fast if we're quoted
 						if (q !== UNDEFINED) {
@@ -5314,80 +5349,12 @@ define('troopjs-data/query/component', [ "troopjs-core/component/base" ], functi
 		}
 	});
 });
-/** @license MIT License (c) copyright B Cavalier & J Hann */
-
-/**
- * apply.js
- * Helper for using arguments-based and variadic callbacks with any
- * {@link Promise} that resolves to an array.
- *
- * @author brian@hovercraftstudios.com
- */
-
-(function(define) {
-define('when/apply',[],function() {
-
-    var toString = Object.prototype.toString;
-
-    /**
-     * Creates a function that accepts a function that takes individual
-     * arguments (it can be variadic, too), and returns a new function that
-     * takes a single array as its only param:
-     *
-     * function argBased(a, b, c) {
-     *   return a + b + c;
-     * }
-     *
-     * argBased(1, 2, 3); // 6
-     *
-     * // Create an array-based version of argBased
-     * var arrayBased = apply(argBased);
-     * var inputs = [1, 2, 3];
-     *
-     * arrayBased(inputs); // 6
-     *
-     * With promises:
-     *
-     * var d = when.defer();
-     * d.promise.then(arrayBased);
-     *
-     * d.resolve([1, 2, 3]); // arrayBased called with args 1, 2, 3 -> 6
-     *
-     * @param f {Function} arguments-based function
-     *
-     * @returns {Function} a new function that accepts an array
-     */
-    return function(f) {
-        /**
-         * @param array {Array} must be an array of arguments to use to apply the original function
-         *
-         * @returns the result of applying f with the arguments in array.
-         */
-        return function(array) {
-            // It better be an array
-            if(toString.call(array) != '[object Array]') {
-                throw new Error('apply called with non-array arg');
-            }
-
-            return f.apply(null, array);
-        };
-    };
-
-});
-})(
-	typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); }
-	// Boilerplate for AMD and Node
-);
-
-
-
 /**
  * TroopJS data/query/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-data/query/service',[ "module", "troopjs-core/component/service", "./component", "troopjs-utils/merge", "when", "when/apply" ], function QueryServiceModule(module, Service, Query, merge, when, apply) {
-	/*jshint laxbreak:true */
+	"use strict";
 
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
@@ -5602,8 +5569,8 @@ define('troopjs-data/query/service',[ "module", "troopjs-core/component/service"
  * TroopJS data/component/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-/*global define:false */
 define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], function WidgetModule(Widget) {
+	"use strict";
 
 	var ARRAY_PUSH = Array.prototype.push;
 
@@ -5625,10 +5592,462 @@ define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], f
 	});
 });
 
+/**
+ * TroopJS requirejs/template
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ *
+ * Parts of code from require-cs 0.4.0+ Copyright (c) 2010-2011, The Dojo Foundation
+ */
+define('troopjs-requirejs/template',[],function TemplateModule() {
+	"use strict";
+
+	/*jshint rhino:true, node:true, wsh:true*/
+	var FACTORIES = {
+		"node" : function () {
+			// Using special require.nodeRequire, something added by r.js.
+			var fs = require.nodeRequire("fs");
+
+			return function fetchText(path, callback) {
+				var file = fs.readFileSync(path, "utf8");
+				//Remove BOM (Byte Mark Order) from utf8 files if it is there.
+				if (file.indexOf("\uFEFF") === 0) {
+					file = file.substring(1);
+				}
+				callback(file);
+			};
+		},
+
+		"browser" : function () {
+			/*jshint nonew:false, loopfunc:true*/
+			// Would love to dump the ActiveX crap in here. Need IE 6 to die first.
+			var progIds = [ "Msxml2.XMLHTTP", "Microsoft.XMLHTTP", "Msxml2.XMLHTTP.4.0"];
+			var progId;
+			var XHR;
+			var i;
+
+			if (typeof XMLHttpRequest !== "undefined") {
+				XHR = XMLHttpRequest;
+			}
+			else {
+				for (i = 0; i < 3; i++) {
+					progId = progIds[i];
+
+					try {
+						new ActiveXObject(progId);
+						XHR = function(){
+							return new ActiveXObject(progId);
+						};
+						break;
+					}
+					catch (e) {
+					}
+				}
+
+				if (!XHR){
+					throw new Error("XHR: XMLHttpRequest not available");
+				}
+			}
+
+			return function fetchText(url, callback) {
+				var xhr = new XHR();
+				xhr.open("GET", url, true);
+				xhr.onreadystatechange = function () {
+					// Do not explicitly handle errors, those should be
+					// visible via console output in the browser.
+					if (xhr.readyState === 4) {
+						callback(xhr.responseText);
+					}
+				};
+				xhr.send(null);
+			};
+		},
+
+		"rhino" : function () {
+			var encoding = "utf-8";
+			var lineSeparator = java.lang.System.getProperty("line.separator");
+
+			// Why Java, why is this so awkward?
+			return function fetchText(path, callback) {
+				var file = new java.io.File(path);
+				var input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding));
+				var stringBuffer = new java.lang.StringBuffer();
+				var line;
+				var content = "";
+
+				try {
+					line = input.readLine();
+
+					// Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
+					// http://www.unicode.org/faq/utf_bom.html
+
+					// Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
+					// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
+					if (line && line.length() && line.charAt(0) === 0xfeff) {
+						// Eat the BOM, since we've already found the encoding on this file,
+						// and we plan to concatenating this buffer with others; the BOM should
+						// only appear at the top of a file.
+						line = line.substring(1);
+					}
+
+					stringBuffer.append(line);
+
+					while ((line = input.readLine()) !== null) {
+						stringBuffer.append(lineSeparator);
+						stringBuffer.append(line);
+					}
+					// Make sure we return a JavaScript string and not a Java string.
+					content = String(stringBuffer.toString()); // String
+				} finally {
+					input.close();
+				}
+
+				callback(content);
+			};
+		},
+
+		"borked" : function () {
+			return function fetchText() {
+				throw new Error("Environment unsupported.");
+			};
+		}
+	};
+
+	var RE_SANITIZE = /^[\n\t\r]+|[\n\t\r]+$/g;
+	var RE_BLOCK = /<%(=)?([\S\s]*?)%>/g;
+	var RE_TOKENS = /<%(\d+)%>/gm;
+	var RE_REPLACE = /(["\n\t\r])/gm;
+	var RE_CLEAN = /o \+= "";| \+ ""/gm;
+	var EMPTY = "";
+	var REPLACE = {
+		"\"" : "\\\"",
+		"\n" : "\\n",
+		"\t" : "\\t",
+		"\r" : "\\r"
+	};
+
+	/**
+	 * Compiles template
+	 *
+	 * @param body Template body
+	 * @returns {String}
+	 */
+	function compile(body) {
+		var blocks = [];
+		var length = 0;
+
+		function blocksTokens(original, prefix, block) {
+			blocks[length] = prefix
+				? "\" +" + block + "+ \""
+				: "\";" + block + "o += \"";
+			return "<%" + String(length++) + "%>";
+		}
+
+		function tokensBlocks(original, token) {
+			return blocks[token];
+		}
+
+		function replace(original, token) {
+			return REPLACE[token] || token;
+		}
+
+		return ("function template(data) { var o = \""
+		// Sanitize body before we start templating
+		+ body.replace(RE_SANITIZE, "")
+
+		// Replace script blocks with tokens
+		.replace(RE_BLOCK, blocksTokens)
+
+		// Replace unwanted tokens
+		.replace(RE_REPLACE, replace)
+
+		// Replace tokens with script blocks
+		.replace(RE_TOKENS, tokensBlocks)
+
+		+ "\"; return o; }")
+
+		// Clean
+		.replace(RE_CLEAN, EMPTY);
+	}
+
+	var buildMap = {};
+	var fetchText = FACTORIES[ typeof process !== "undefined" && process.versions && !!process.versions.node
+		? "node"
+		: (typeof window !== "undefined" && window.navigator && window.document) || typeof importScripts !== "undefined"
+			? "browser"
+			: typeof Packages !== "undefined"
+				? "rhino"
+				: "borked" ]();
+
+	return {
+		load: function (name, parentRequire, load, config) {
+			var path = parentRequire.toUrl(name);
+
+			fetchText(path, function (text) {
+				try {
+					text = "define(function() { return " + compile(text, name, path, config.template) + "; })";
+				}
+				catch (err) {
+					err.message = "In " + path + ", " + err.message;
+					throw(err);
+				}
+
+				if (config.isBuild) {
+					buildMap[name] = text;
+				}
+
+				// IE with conditional comments on cannot handle the
+				// sourceURL trick, so skip it if enabled
+				/*@if (@_jscript) @else @*/
+				else {
+					text += "\n//@ sourceURL='" + path +"'";
+				}
+				/*@end@*/
+
+				load.fromText(name, text);
+
+				// Give result to load. Need to wait until the module
+				// is fully parse, which will happen after this
+				// execution.
+				parentRequire([name], function (value) {
+					load(value);
+				});
+			});
+		},
+
+		write: function (pluginName, name, write) {
+			if (buildMap.hasOwnProperty(name)) {
+				write.asModule(pluginName + "!" + name, buildMap[name]);
+			}
+		}
+	};
+});
+
+/**
+ * TroopJS requirejs/multiversion
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
+	"use strict";
+
+	var RE = /(.+?)#(.+)$/;
+	var CONTEXTS = require.s.contexts;
+
+	return {
+		"load" : function (name, parentRequire, onload) {
+			var context;
+			var matches;
+
+			// if name matches RE
+			// matches[0] : module name with context - "module/name#context"
+			// matches[1] : module name - "module/name"
+			// matches[2] : context name - "context"
+			if ((matches = RE.exec(name)) !== null) {
+				name = matches[1];
+				context = matches[2];
+
+				if (context in CONTEXTS) {
+					parentRequire = CONTEXTS[context].require;
+				}
+			}
+
+			parentRequire([ name ], function (module) {
+				onload(module);
+			}, onload.error);
+		}
+	};
+});
+/**
+ * TroopJS browser/loom/woven
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
+	"use strict";
+	var ARRAY_MAP = Array.prototype.map;
+	var LENGTH = "length";
+	var WOVEN = "woven";
+	var $WARP = config["$warp"];
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	return function woven() {
+		var $woven = [];
+		var $wovenLength = 0;
+		var re;
+
+		// If we have arguments we have convert and filter
+		if (arguments[LENGTH] > 0) {
+			// Map arguments to a regexp
+			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Iterate
+			$(this).each(function (index, element) {
+				// Filter widget promises
+				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
+					return re.test($weft[WOVEN]);
+				});
+
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($widgets);
+			});
+		}
+		// Otherwise we can use a faster approach
+		else {
+			// Iterate
+			$(this).each(function (index, element) {
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($.data(element, $WARP));
+			});
+		}
+
+		// Return promise of $woven
+		return when.all($woven);
+	};
+});
+/**
+ * TroopJS jquery/loom
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", "troopjs-browser/loom/weave", "troopjs-browser/loom/unweave", "troopjs-browser/loom/woven", "troopjs-utils/getargs", "poly/array" ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
+	"use strict";
+
+	var UNDEFINED;
+	var $FN = $.fn;
+	var $EXPR = $.expr;
+	var $CREATEPSEUDO = $EXPR.createPseudo;
+	var WEAVE = "weave";
+	var UNWEAVE = "unweave";
+	var WOVEN = "woven";
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var RE_SEPARATOR = /[\s,]+/;
+
+	/**
+	 * Tests if element has a data-weave attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWeaveAttr(element) {
+		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
+	}
+
+	/**
+	 * Tests if element has a data-woven attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWovenAttr(element) {
+		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
+	}
+
+	/**
+	 * :weave expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WEAVE] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWeaveAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				// Get weave attribute
+				var weave = $(element).attr(ATTR_WEAVE);
+
+				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
+				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var weave = $(element).attr(ATTR_WEAVE);
+
+			return weave === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+							return "^" + widget;
+						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+
+	/**
+	 * :woven expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WOVEN] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWovenAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				var attr_woven = $(element).attr(ATTR_WOVEN);
+
+				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
+				return attr_woven !== UNDEFINED && widgets.test(attr_woven.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var attr_woven = $(element).attr(ATTR_WOVEN);
+
+			return attr_woven === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+						return "^" + widget;
+					}).join("|"), "m").test(attr_woven.replace(RE_SEPARATOR, "\n"));
+		};
+
+	/**
+	 * Weaves elements
+	 * @returns {Promise} of weaving
+	 */
+	$FN[WEAVE] = weave;
+
+	/**
+	 * Unweaves elements
+	 * @returns {Promise} of unweaving
+	 */
+	$FN[UNWEAVE] = unweave;
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	$FN[WOVEN] = woven;
+});
+
 define('troopjs-bundle/mini',[
 	"./micro",
 	"troopjs-data/store/component",
 	"troopjs-data/cache/component",
 	"troopjs-data/query/service",
-	"troopjs-data/component/widget"
+	"troopjs-data/component/widget",
+	"troopjs-requirejs/template",
+	"troopjs-requirejs/multiversion",
+	"troopjs-jquery/loom"
 ]);

@@ -1,24 +1,24 @@
 {
 	"name": "troopjs-requirejs",
-	"version": "2.0.0",
-	"description": "TroopJS extensions to require.js",
-	"licenses": [
-		{
-			"type": "MIT",
-			"url": "http://troopjs.mit-license.org"
-		}
-	],
-	"repositories": [
-		{
-			"type": "git",
-			"url": "https://github.com/troopjs/troopjs-requirejs"
-		}
-	],
-	"bugs": "https://github.com/troopjs/troopjs-requirejs/issues",
-	"maintainers": [
-		{
-			"name": "Mikael Karon",
-			"web": "http://github.com/mikaelkaron"
-		}
-	]
+	"description": "TroopJS requirejs package",
+	"version": "2.0.1-SNAPSHOT",
+	"author": {
+		"name": "Mikael Karon",
+		"email": "mikael@karon.se"
+	},
+	"maintainers": [{
+		"name": "Mikael Karon",
+		"web": "http://github.com/mikaelkaron"
+	}],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/troopjs/troopjs-requirejs.git"
+	},
+	"bugs": {
+		"url": "https://github.com/troopjs/troopjs-requirejs/issues"
+	},
+	"licenses": [{
+		"type": "MIT",
+		"url": "http://troopjs.mit-license.org/"
+	}]
 }
