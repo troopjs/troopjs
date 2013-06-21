@@ -1,6 +1,5 @@
-var config = module.exports;
-
-config["troopjs-bundle"] = {
+/*jshint node:true*/
+module.exports["troopjs-bundle"] = {
 	"environment" : "browser",
 
 	"rootPath" : "../",

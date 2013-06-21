@@ -1,9 +1,10 @@
-/*global module:false*/
+/*jshint node:true*/
 module.exports = function(grunt) {
+	"use strict";
 	var UNDEFINED;
 
 	grunt.initConfig({
-		"pkg": grunt.file.readJSON('package.json'),
+		"pkg": grunt.file.readJSON("package.json"),
 
 		"build" : {
 			"src" : ".",
@@ -21,7 +22,7 @@ module.exports = function(grunt) {
 				"optimize" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:.git|.gitignore|.gitmodules|node_modules|Gruntfile.js|support|test|dist)$/,
+				"fileExclusionRegExp": /^(?:\..+|node_modules|Gruntfile\.js|support|test|dist)$/,
 				"packages" : [{
 					"name" : "jquery",
 					"location" : "empty:"
@@ -194,5 +195,5 @@ module.exports = function(grunt) {
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("version", [ "git-describe", "usebanner", "json-replace" ]);
 	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
-	grunt.registerTask("default", [ "compile" ])
+	grunt.registerTask("default", [ "compile" ]);
 };
