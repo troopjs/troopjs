@@ -166,7 +166,6 @@ module.exports = function(grunt) {
 		"git-dist" : {
 			"bundles" : {
 				"options" : {
-					"url" : "<%= pkg.repository.url %>",
 					"branch" : "build/2.x",
 					"dir" : "<%= build.dist %>",
 					"message" : "<%= pkg.name %> - <%= pkg.version %>",
