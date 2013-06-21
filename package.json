@@ -1,6 +1,6 @@
 {
 	"name": "troopjs-bundle",
-	  "description": "TroopJS bundle package",
+	"description": "TroopJS bundle package",
 	"version": "2.0.1-SNAPSHOT",
 	"author": {
 		"name": "Mikael Karon",
