@@ -1,5 +1,5 @@
 /**
- * troopjs-bundle - 2.0.0-109-g594980c
+ * troopjs-bundle - 2.0.0-109-g594980c-dirty
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
