@@ -4,5 +4,5 @@ define([
 	"troopjs-core/pubsub/proxy/to2x",
 	"troopjs-browser/store/adapter/local",
 	"troopjs-browser/store/adapter/session",
-	"troopjs-jquery/dimensions"
+	"troopjs-browser/dimensions/widget"
 ]);
