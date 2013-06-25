@@ -90,6 +90,7 @@ module.exports = function(grunt) {
 				"files" : [{
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
+					"cwd" : "<%= build.dist %>",
 					"src" : [ "{micro,mini,maxi}.js" ],
 					"ext" : ".min.js"
 				}]
