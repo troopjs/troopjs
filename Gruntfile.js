@@ -28,15 +28,14 @@ module.exports = function(grunt) {
 					"location" : "empty:"
 				}, {
 					"name" : "when",
-					"location" : "lib/when",
-					"main" : "when"
+					"location" : "empty:"
 				}, {
 					"name" : "poly",
-					"location" : "lib/poly",
-					"main" : "es5"
+					"location" : "empty:"
 				}, {
 					"name" : "troopjs-bundle",
-					"location" : "."
+					"location" : ".",
+					"main" : "package"
 				}, {
 					"name" : "troopjs-core",
 					"location" : "lib/troopjs-core"
@@ -55,54 +54,45 @@ module.exports = function(grunt) {
 				}, {
 					"name" : "troopjs-requirejs",
 					"location" : "lib/troopjs-requirejs"
-				}]
+				}],
+				"rawText" : {
+					"troopjs-bundle/package" : "define(<%= JSON.stringify(pkg) %>);"
+				},
+				"removeCombined" : true
 			},
-			"micro" : {
+
+			"bundles" : {
 				"options" : {
-					"exclude" : [ "jquery", "when", "poly" ],
 					"modules" : [{
-						"name" : "troopjs-bundle/micro"
-					}]
-				}
-			},
-			"mini" : {
-				"options" : {
-					"exclude" : [ "jquery", "when" ],
-					"modules" : [{
-						"name" : "troopjs-bundle/mini"
-					}]
-				}
-			},
-			"maxi" : {
-				"options" : {
-					"exclude" : [ "jquery" ],
-					"modules" : [{
-						"name" : "troopjs-bundle/maxi"
+						"name" : "troopjs-bundle/maxi",
+						"include" : [ "troopjs-bundle" ],
+						"excludeShallow" : [ "troopjs-bundle/maxi" ]
+					}, {
+						"name" : "troopjs-bundle/mini",
+						"include" : [ "troopjs-bundle" ],
+						"excludeShallow" : [ "troopjs-bundle/mini" ]
+					}, {
+						"name" : "troopjs-bundle/micro",
+						"include" : [ "troopjs-bundle" ],
+						"excludeShallow" : [ "troopjs-bundle/micro" ]
 					}]
 				}
 			}
 		},
 
-		"clean" :[ "<%= build.dist %> "],
+		"clean" : [ "<%= build.dist %>" ],
 
 		"uglify" : {
 			"options" : {
 				"preserveComments" : false
 			},
-			"micro" : {
-				"files" : {
-					"<%= build.dist %>/micro.min.js" : "<%= build.dist %>/micro.js"
-				}
-			},
-			"mini" : {
-				"files" : {
-					"<%= build.dist %>/mini.min.js" : "<%= build.dist %>/mini.js"
-				}
-			},
-			"maxi" : {
-				"files" : {
-					"<%= build.dist %>/maxi.min.js" : "<%= build.dist %>/maxi.js"
-				}
+			"bundles" : {
+				"files" : [{
+					"expand" : true,
+					"dest" : "<%= build.dist %>",
+					"src" : [ "{micro,mini,maxi}.js" ],
+					"ext" : ".min.js"
+				}]
 			}
 		},
 
@@ -119,20 +109,12 @@ module.exports = function(grunt) {
 				"position" : "top",
 				"banner" : "<%= build.banner %>"
 			},
-			"micro" : {
-				"files" : {
-					"src" : [ "<%= build.dist %>/micro.js", "<%= build.dist %>/micro.min.js" ]
-				}
-			},
-			"mini" : {
-				"files" : {
-					"src" : [ "<%= build.dist %>/mini.js", "<%= build.dist %>/mini.min.js" ]
-				}
-			},
-			"maxi" : {
-				"files" : {
-					"src" : [ "<%= build.dist %>/maxi.js", "<%= build.dist %>/maxi.min.js" ]
-				}
+			"bundles" : {
+				"files" : [{
+					"expand" : true,
+					"cwd" : "<%= build.dist %>",
+					"src" : [ "{micro,mini,maxi}.js", "{micro,mini,maxi}.min.js" ]
+				}]
 			}
 		},
 
@@ -194,5 +176,5 @@ module.exports = function(grunt) {
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("version", [ "git-describe", "usebanner", "json-replace" ]);
 	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
-	grunt.registerTask("default", [ "compile" ]);
+	grunt.registerTask("default", [ "compile", "compress" ]);
 };
