@@ -1,5 +1,5 @@
 /**
- * troopjs-bundle - 2.0.0-114-gf74e81d
+ * troopjs-bundle - 2.0.0-115-g7331c15
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -2820,14 +2820,6 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		}
 	});
 });
-define('troopjs-bundle/micro',[
-	"troopjs-core/logger/console",
-	"troopjs-core/logger/pubsub",
-	"troopjs-core/logger/service",
-	"troopjs-browser/ajax/service",
-	"troopjs-browser/application/widget",
-	"troopjs-browser/route/widget"
-]);
 /**
  * TroopJS data/store/component module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -4485,16 +4477,6 @@ define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", 
 	$FN[WOVEN] = woven;
 });
 
-define('troopjs-bundle/mini',[
-	"./micro",
-	"troopjs-data/store/component",
-	"troopjs-data/cache/component",
-	"troopjs-data/query/service",
-	"troopjs-data/component/widget",
-	"troopjs-requirejs/template",
-	"troopjs-requirejs/multiversion",
-	"troopjs-jquery/loom"
-]);
 /**
  * TroopJS core/pubsub/proxy/to1x
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se

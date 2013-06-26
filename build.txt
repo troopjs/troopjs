@@ -24,7 +24,6 @@ lib/troopjs-browser/application/widget.js
 lib/troopjs-browser/route/uri.js
 lib/troopjs-jquery/hashchange.js
 lib/troopjs-browser/route/widget.js
-./micro.js
 lib/troopjs-data/store/component.js
 lib/troopjs-data/cache/component.js
 lib/troopjs-data/query/component.js
@@ -34,7 +33,6 @@ lib/troopjs-requirejs/template.js
 lib/troopjs-requirejs/multiversion.js
 lib/troopjs-browser/loom/woven.js
 lib/troopjs-jquery/loom.js
-./mini.js
 lib/troopjs-core/pubsub/proxy/to1x.js
 lib/troopjs-core/pubsub/proxy/to2x.js
 lib/troopjs-browser/store/adapter/base.js
@@ -70,7 +68,6 @@ lib/troopjs-browser/application/widget.js
 lib/troopjs-browser/route/uri.js
 lib/troopjs-jquery/hashchange.js
 lib/troopjs-browser/route/widget.js
-./micro.js
 lib/troopjs-data/store/component.js
 lib/troopjs-data/cache/component.js
 lib/troopjs-data/query/component.js
