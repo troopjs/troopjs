@@ -1,28 +1,28 @@
 {
-  "name": "troopjs-bundle",
-  "description": "TroopJS bundle package",
-  "version": "2.0.0-115-g7331c15",
-  "author": {
-    "name": "Mikael Karon",
-    "email": "mikael@karon.se"
-  },
-  "maintainers": [
-    {
-      "name": "Mikael Karon",
-      "web": "http://github.com/mikaelkaron"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/troopjs/troopjs-bundle.git"
-  },
-  "bugs": {
-    "url": "https://github.com/troopjs/troopjs-bundle/issues"
-  },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://troopjs.mit-license.org/"
-    }
-  ]
+	"name": "troopjs-bundle",
+	"description": "TroopJS bundle package",
+	"version": "2.0.0-116-gd2603f3",
+	"author": {
+		"name": "Mikael Karon",
+		"email": "mikael@karon.se"
+	},
+	"maintainers": [
+		{
+			"name": "Mikael Karon",
+			"web": "http://github.com/mikaelkaron"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/troopjs/troopjs-bundle.git"
+	},
+	"bugs": {
+		"url": "https://github.com/troopjs/troopjs-bundle/issues"
+	},
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "http://troopjs.mit-license.org/"
+		}
+	]
 }
