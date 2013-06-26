@@ -66,11 +66,18 @@ module.exports = function(grunt) {
 					"modules" : [{
 						"name" : "troopjs-bundle/maxi",
 						"include" : [ "troopjs-bundle" ],
-						"excludeShallow" : [ "troopjs-bundle/maxi" ]
+						"excludeShallow" : [
+							"troopjs-bundle/maxi",
+							"troopjs-bundle/mini",
+							"troopjs-bundle/micro"
+						]
 					}, {
 						"name" : "troopjs-bundle/mini",
 						"include" : [ "troopjs-bundle" ],
-						"excludeShallow" : [ "troopjs-bundle/mini" ]
+						"excludeShallow" : [
+							"troopjs-bundle/mini",
+							"troopjs-bundle/micro"
+						]
 					}, {
 						"name" : "troopjs-bundle/micro",
 						"include" : [ "troopjs-bundle" ],
