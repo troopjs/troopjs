@@ -10,7 +10,8 @@ module.exports["troopjs-bundle"] = {
 	],
 
 	"resources" : [
-		"lib/**/*.*"
+		"lib/**/*.*",
+		"support/**/*.*"
 	],
 
 	"tests" : [

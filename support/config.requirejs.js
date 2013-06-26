@@ -1,15 +1,15 @@
-require = {
+var require = {
 	"packages" : [{
 		"name" : "jquery",
-		"location" : "jquery",
-		"main" : "dist/jquery"
+		"location" : "support/jquery",
+		"main" : "jquery"
 	}, {
 		"name" : "when",
-		"location" : "lib/when",
+		"location" : "support/when",
 		"main" : "when"
 	}, {
 		"name" : "poly",
-		"location" : "lib/poly",
+		"location" : "support/poly",
 		"main" : "poly"
 	}, {
 		"name" : "troopjs-core",

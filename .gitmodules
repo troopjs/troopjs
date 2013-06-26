@@ -27,4 +27,4 @@
 	url = https://github.com/jrburke/requirejs.git
 [submodule "support/jquery"]
 	path = support/jquery
-	url = https://github.com/jquery/jquery.git
+	url = https://github.com/components/jquery.git

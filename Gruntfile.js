@@ -22,7 +22,7 @@ module.exports = function(grunt) {
 				"optimize" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.\w+|node_modules|Gruntfile\.js|support|test|dist)$/,
+				"fileExclusionRegExp": /^(?:\.\w+|node_modules|support|test|dist|Gruntfile\.js)$/,
 				"packages" : [{
 					"name" : "jquery",
 					"location" : "empty:"
@@ -121,14 +121,17 @@ module.exports = function(grunt) {
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
-					"src" : [ "{micro,mini,maxi}.js", "{micro,mini,maxi}.min.js" ]
+					"src" : [
+						"{micro,mini,maxi}.js",
+						"{micro,mini,maxi}.min.js"
+					]
 				}]
 			}
 		},
 
 		"json-replace" : {
 			"options" : {
-				"space" : "  "
+				"space" : "\t"
 			},
 			"package.json" : {
 				"options" : {
@@ -183,6 +186,7 @@ module.exports = function(grunt) {
 	grunt.registerTask("compile", [ "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("version", [ "git-describe", "usebanner", "json-replace" ]);
+	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
 	grunt.registerTask("default", [ "compile", "compress" ]);
 };
