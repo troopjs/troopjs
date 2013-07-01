@@ -165,8 +165,10 @@ module.exports = function(grunt) {
 					"branch" : "build/2.x",
 					"dir" : "<%= build.dist %>",
 					"message" : "<%= pkg.name %> - <%= pkg.version %>",
-					"name" : "<%= pkg.author.name %>",
-					"email" : "<%= pkg.author.email %>"
+					"config" : {
+						"user.name" : UNDEFINED,
+						"user.email" : UNDEFINED
+					}
 				}
 			}
 		},
@@ -189,6 +191,6 @@ module.exports = function(grunt) {
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("version", [ "git-describe", "usebanner", "json-replace" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:configure", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
+	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
 	grunt.registerTask("default", [ "compile", "compress" ]);
 };

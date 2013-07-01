@@ -33,7 +33,7 @@
 		"grunt-banner": "~0.1.4",
 		"grunt-plugin-buster": "~2.0.0",
 		"grunt-git-describe": "~2.0.2",
-		"grunt-git-dist": "~0.2.2",
+		"grunt-git-dist": "~0.2.3",
 		"grunt-json-replace": "~0.1.2",
 		"grunt-lexicon": "~0.1.9",
 		"buster": "~0.6.12"
