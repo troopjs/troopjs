@@ -33,6 +33,7 @@ lib/troopjs-requirejs/template.js
 lib/troopjs-requirejs/multiversion.js
 lib/troopjs-browser/loom/woven.js
 lib/troopjs-jquery/loom.js
+./mini.js
 lib/troopjs-core/pubsub/proxy/to1x.js
 lib/troopjs-core/pubsub/proxy/to2x.js
 lib/troopjs-browser/store/adapter/base.js
