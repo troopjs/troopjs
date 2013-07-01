@@ -1,7 +1,7 @@
 {
 	"name": "troopjs-bundle",
 	"description": "TroopJS bundle package",
-	"version": "2.0.0-116-gd2603f3",
+	"version": "2.0.0-118-g1acebc1",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -14,10 +14,10 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/troopjs/troopjs-bundle.git"
+		"url": "https://github.com/troopjs/troopjs.git"
 	},
 	"bugs": {
-		"url": "https://github.com/troopjs/troopjs-bundle/issues"
+		"url": "https://github.com/troopjs/troopjs/issues"
 	},
 	"licenses": [
 		{

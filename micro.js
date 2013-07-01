@@ -1,5 +1,5 @@
 /**
- * troopjs-bundle - 2.0.0-116-gd2603f3
+ * troopjs-bundle - 2.0.0-118-g1acebc1
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -158,9 +158,9 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 
 		descriptor[VALUE] = next
 			? function () {
-			var self = this;
+			var me = this;
 			var args = arguments;
-			return next.apply(self, args = previous.apply(self, args) || args);
+			return next.apply(me, args = previous.apply(me, args) || args);
 		}
 			: previous;
 
@@ -188,9 +188,9 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 
 		descriptor[VALUE] = previous
 			? function () {
-			var self = this;
+			var me = this;
 			var args = arguments;
-			return next.apply(self, args = previous.apply(self, args) || args);
+			return next.apply(me, args = previous.apply(me, args) || args);
 		}
 			: next;
 
@@ -222,12 +222,12 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 	 * @returns {String}
 	 */
 	function ConstructorToString() {
-		var self = this;
-		var prototype = self[PROTOTYPE];
+		var me = this;
+		var prototype = me[PROTOTYPE];
 
 		return DISPLAYNAME in prototype
 			? prototype[DISPLAYNAME]
-			: OBJECT_TOSTRING.call(self);
+			: OBJECT_TOSTRING.call(me);
 	}
 
 	/**
@@ -551,11 +551,11 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	 * @constructor
 	 */
 	function Component() {
-		var self = this;
+		var me = this;
 
 		// Update instance count
-		self[INSTANCE_COUNT] = ++COUNT;
-		self[CONFIGURATION] = {};
+		me[INSTANCE_COUNT] = ++COUNT;
+		me[CONFIGURATION] = {};
 	}, {
 		"instanceCount" : COUNT,
 
@@ -575,9 +575,9 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 		 * @return {*}
 		 */
 		"signal" : function onSignal(_signal) {
-			var self = this;
+			var me = this;
 			var args = ARRAY_SLICE.call(arguments, 1);
-			var specials = self.constructor.specials;
+			var specials = me.constructor.specials;
 			var signals = (SIG in specials && specials[SIG][_signal]) || [];
 			var signal;
 			var index = 0;
@@ -592,7 +592,7 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 
 				// Return a chained promise of next callback, or a promise resolved with _signal
 				return (signal = signals[index++])
-					? when(signal[VALUE].apply(self, args), next)
+					? when(signal[VALUE].apply(me, args), next)
 					: when.resolve(result);
 			}
 
@@ -605,23 +605,23 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 		 * @return {*}
 		 */
 		"start" : function start() {
-			var self = this;
-			var signal = self.signal;
+			var me = this;
+			var signal = me.signal;
 			var args = [ INITIALIZE ];
 
 			// Set phase
-			self[PHASE] = INITIALIZE;
+			me[PHASE] = INITIALIZE;
 
 			// Add signal to arguments
 			ARRAY_PUSH.apply(args, arguments);
 
-			return signal.apply(self, args).then(function initialized(_initialized) {
+			return signal.apply(me, args).then(function initialized(_initialized) {
 				// Modify args to change signal (and store in PHASE)
-				args[0] = self[PHASE] = "start";
+				args[0] = me[PHASE] = "start";
 
-				return signal.apply(self, args).then(function started(_started) {
+				return signal.apply(me, args).then(function started(_started) {
 					// Update phase
-					self[PHASE] = "started";
+					me[PHASE] = "started";
 
 					// Return concatenated result
 					return ARRAY_PROTO.concat(_initialized, _started);
@@ -634,23 +634,23 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 		 * @return {*}
 		 */
 		"stop" : function stop() {
-			var self = this;
-			var signal = self.signal;
+			var me = this;
+			var signal = me.signal;
 			var args = [ STOP ];
 
 			// Set phase
-			self[PHASE] = STOP;
+			me[PHASE] = STOP;
 
 			// Add signal to arguments
 			ARRAY_PUSH.apply(args, arguments);
 
-			return signal.apply(self, args).then(function stopped(_stopped) {
+			return signal.apply(me, args).then(function stopped(_stopped) {
 				// Modify args to change signal (and store in PHASE)
-				args[0] = self[PHASE] = "finalize";
+				args[0] = me[PHASE] = "finalize";
 
-				return signal.apply(self, args).then(function finalized(_finalized) {
+				return signal.apply(me, args).then(function finalized(_finalized) {
 					// Update phase
-					self[PHASE] = "finalized";
+					me[PHASE] = "finalized";
 
 					// Return concatenated result
 					return ARRAY_PROTO.concat(_stopped, _finalized);
@@ -663,9 +663,9 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 		 * @returns {string} displayName and instanceCount
 		 */
 		"toString" : function _toString() {
-			var self = this;
+			var me = this;
 
-			return self.displayName + "@" + self[INSTANCE_COUNT];
+			return me.displayName + "@" + me[INSTANCE_COUNT];
 		}
 	});
 });
@@ -847,9 +847,9 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 		 * @returns {Object} instance of this
 		 */
 		"on" : function on(event, context, callback) {
-			var self = this;
+			var me = this;
 			var args = arguments;
-			var handlers = self[HANDLERS];
+			var handlers = me[HANDLERS];
 			var handler;
 			var head;
 			var tail;
@@ -943,7 +943,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 				handlers[HANDLED] = 0;
 			}
 
-			return self;
+			return me;
 		},
 
 		/**
@@ -954,10 +954,10 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 		 * @returns {Object} instance of this
 		 */
 		"off" : function off(event, context, callback) {
-			var self = this;
+			var me = this;
 			var args = arguments;
 			var argsLength = args[LENGTH];
-			var handlers = self[HANDLERS];
+			var handlers = me[HANDLERS];
 			var handler;
 			var head;
 			var tail;
@@ -966,7 +966,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 
 			// Return fast if we don't have subscribers
 			if (!(event in handlers)) {
-				return self;
+				return me;
 			}
 
 			// Get handlers
@@ -974,7 +974,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 
 			// Return fast if there's no HEAD
 			if (!(HEAD in handlers)) {
-				return self;
+				return me;
 			}
 
 			// Get first handler
@@ -1034,7 +1034,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 				delete handlers[TAIL];
 			}
 
-			return self;
+			return me;
 		},
 
 		/**
@@ -1043,9 +1043,9 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 		 * @returns {Promise} promise that resolves with results from all listeners
 		 */
 		"emit" : function emit(event) {
-			var self = this;
+			var me = this;
 			var args = ARRAY_SLICE.call(arguments, 1);
-			var handlers = self[HANDLERS];
+			var handlers = me[HANDLERS];
 			var handler;
 			var candidates;
 			var candidatesCount;
@@ -1111,10 +1111,10 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 		 * @returns {Object} instance of this
 		 */
 		"reemit" : function reemit(event, senile, context, callback) {
-			var self = this;
+			var me = this;
 			var args = arguments;
 			var argsLength = args[LENGTH];
-			var handlers = self[HANDLERS];
+			var handlers = me[HANDLERS];
 			var handler;
 			var handled;
 			var candidates;
@@ -1289,11 +1289,11 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * Signal handler for 'initialize'
 		 */
 		"sig/initialize" : function initialize() {
-			var self = this;
+			var me = this;
 			var subscription;
-			var subscriptions = self[SUBSCRIPTIONS];
+			var subscriptions = me[SUBSCRIPTIONS];
 			var special;
-			var specials = self.constructor.specials.hub;
+			var specials = me.constructor.specials.hub;
 			var i;
 			var iMax;
 			var type;
@@ -1313,7 +1313,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 				subscription[VALUE] = value = special[VALUE];
 
 				// Subscribe
-				SUBSCRIBE.call(hub, type, self, value);
+				SUBSCRIBE.call(hub, type, me, value);
 			}
 		},
 
@@ -1321,10 +1321,10 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * Signal handler for 'start'
 		 */
 		"sig/start" : function start() {
-			var self = this;
+			var me = this;
 			var args = arguments;
 			var subscription;
-			var subscriptions = self[SUBSCRIPTIONS];
+			var subscriptions = me[SUBSCRIPTIONS];
 			var results = [];
 			var resultsLength = 0;
 			var i;
@@ -1341,7 +1341,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 				}
 
 				// Republish, store result
-				results[resultsLength++] = REPUBLISH.call(hub, subscription[TYPE], false, self, subscription[VALUE]);
+				results[resultsLength++] = REPUBLISH.call(hub, subscription[TYPE], false, me, subscription[VALUE]);
 			}
 
 			// Return promise that will be fulfilled when all results are, and yield args
@@ -1352,9 +1352,9 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * Signal handler for 'finalize'
 		 */
 		"sig/finalize" : function finalize() {
-			var self = this;
+			var me = this;
 			var subscription;
-			var subscriptions = self[SUBSCRIPTIONS];
+			var subscriptions = me[SUBSCRIPTIONS];
 			var i;
 			var iMax;
 
@@ -1364,7 +1364,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 				subscription = subscriptions[i];
 
 				// Unsubscribe
-				UNSUBSCRIBE.call(hub, subscription[TYPE], self, subscription[VALUE]);
+				UNSUBSCRIBE.call(hub, subscription[TYPE], me, subscription[VALUE]);
 			}
 		},
 
@@ -1376,14 +1376,14 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * @returns {Promise}
 		 */
 		"reemit" : function reemit(event, senile, callback) {
-			var self = this;
-			var args = [ event, senile, self ];
+			var me = this;
+			var args = [ event, senile, me ];
 
 			// Add args
 			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 2));
 
 			// Forward
-			return REEMITT.apply(self, args);
+			return REEMITT.apply(me, args);
 		},
 
 		/**
@@ -1393,14 +1393,14 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * @returns {Object} instance of this
 		 */
 		"on": function on(event, callback) {
-			var self = this;
-			var args = [ event, self ];
+			var me = this;
+			var args = [ event, me ];
 
 			// Add args
 			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
 
 			// Forward
-			return ON.apply(self, args);
+			return ON.apply(me, args);
 		},
 
 		/**
@@ -1410,14 +1410,14 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * @returns {Object} instance of this
 		 */
 		"off" : function off(event, callback) {
-			var self = this;
-			var args = [ event, self ];
+			var me = this;
+			var args = [ event, me ];
 
 			// Add args
 			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
 
 			// Forward
-			return OFF.apply(self, args);
+			return OFF.apply(me, args);
 		},
 
 		/**
@@ -1438,8 +1438,8 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * @returns {Promise}
 		 */
 		"republish" : function republish(event, senile, callback) {
-			var self = this;
-			var args = [ event, senile, self ];
+			var me = this;
+			var args = [ event, senile, me ];
 
 			// Add args
 			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 2));
@@ -1455,8 +1455,8 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * @returns {Object} instance of this
 		 */
 		"subscribe" : function subscribe(event, callback) {
-			var self = this;
-			var args = [ event, self ];
+			var me = this;
+			var args = [ event, me ];
 
 			// Add args
 			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
@@ -1464,7 +1464,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 			// Subscribe
 			SUBSCRIBE.apply(hub, args);
 
-			return self;
+			return me;
 		},
 
 		/**
@@ -1474,8 +1474,8 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		 * @returns {Object} instance of this
 		 */
 		"unsubscribe" : function unsubscribe(event, callback) {
-			var self = this;
-			var args = [ event, self ];
+			var me = this;
+			var args = [ event, me ];
 
 			// Add args
 			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
@@ -1483,7 +1483,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 			// Unsubscribe
 			UNSUBSCRIBE.apply(hub, args);
 
-			return self;
+			return me;
 		}
 	});
 });
@@ -1499,15 +1499,15 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 		"displayName" : "core/component/service",
 
 		"sig/initialize" : function onStart() {
-			var self = this;
+			var me = this;
 
-			return self.publish("registry/add", self);
+			return me.publish("registry/add", me);
 		},
 
 		"sig/finalize" : function onFinalize() {
-			var self = this;
+			var me = this;
 
-			return self.publish("registry/remove", self);
+			return me.publish("registry/remove", me);
 		}
 	});
 });
@@ -1528,10 +1528,10 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
 
 	function forward(_signal, _args) {
 		/*jshint validthis:true*/
-		var self = this;
-		var signal = self.signal;
+		var me = this;
+		var signal = me.signal;
 		var args = [ _signal ];
-		var appenders = self[APPENDERS];
+		var appenders = me[APPENDERS];
 		var index = 0;
 
 		ARRAY_PUSH.apply(args, _args);
@@ -1565,8 +1565,8 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
 
 	function append(obj) {
 		/*jshint validthis:true*/
-		var self = this;
-		var appenders = self[APPENDERS];
+		var me = this;
+		var appenders = me[APPENDERS];
 		var i;
 		var iMax;
 
@@ -1671,7 +1671,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 	var RE_DIGIT = /^\d+$/;
 
 	return function getargs() {
-		var self = this;
+		var me = this;
 		var result = [];
 		var length;
 		var from;
@@ -1682,9 +1682,9 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 		var q = false;
 
 		// Iterate over string
-		for (from = to = i = 0, length = self.length; i < length; i++) {
+		for (from = to = i = 0, length = me.length; i < length; i++) {
 			// Get char
-			c = self.charAt(i);
+			c = me.charAt(i);
 
 			switch(c) {
 				case "\"" :
@@ -1696,7 +1696,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 						q = false;
 
 						// Store result (no need to convert, we know this is a string)
-						PUSH.call(result, SUBSTRING.call(self, from, to));
+						PUSH.call(result, SUBSTRING.call(me, from, to));
 					}
 					// Otherwise
 					else {
@@ -1717,7 +1717,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 
 					// If we captured something...
 					if (from !== to) {
-						a = SUBSTRING.call(self, from, to);
+						a = SUBSTRING.call(me, from, to);
 
 						if (RE_BOOLEAN.test(a)) {
 							a = RE_BOOLEAN_TRUE.test(a);
@@ -1757,7 +1757,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 
 		// If we captured something...
 		if (from !== to) {
-			a = SUBSTRING.call(self, from, to);
+			a = SUBSTRING.call(me, from, to);
 
 			if (RE_BOOLEAN.test(a)) {
 				a = RE_BOOLEAN_TRUE.test(a);
@@ -2052,14 +2052,14 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 		},
 
 		"remove" : function onDestroyRemove(handleObj) {
-			var self = this;
+			var me = this;
 
 			if (handleObj) {
-				handleObj.handler.call(self, $.Event({
+				handleObj.handler.call(me, $.Event({
 					"type" : handleObj.type,
 					"data" : handleObj.data,
 					"namespace" : handleObj.namespace,
-					"target" : self
+					"target" : me
 				}));
 			}
 		}
@@ -2118,32 +2118,32 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		 * @private
 		 * @param {Function|String} contents Template/String to render
 		 * @param {Object..} [data] If contents is a template - template data
-		 * @returns {Object} self
+		 * @returns {Object} me
 		 */
 		function render(contents, data) {
 			/*jshint validthis:true*/
-			var self = this;
+			var me = this;
 			var args = ARRAY_SLICE.call(arguments, 1);
 
 			// Call render with contents (or result of contents if it's a function)
-			return weave.call($fn.call(self[$ELEMENT], typeof contents === TYPEOF_FUNCTION ? contents.apply(self, args) : contents).find(SELECTOR_WEAVE));
+			return weave.call($fn.call(me[$ELEMENT], typeof contents === TYPEOF_FUNCTION ? contents.apply(me, args) : contents).find(SELECTOR_WEAVE));
 		}
 
 		return render;
 	}
 
 	return Gadget.extend(function ($element, displayName) {
-		var self = this;
+		var me = this;
 
 		if ($element === UNDEFINED) {
 			throw new Error("No $element provided");
 		}
 
-		self[$ELEMENT] = $element;
-		self[$HANDLERS] = [];
+		me[$ELEMENT] = $element;
+		me[$HANDLERS] = [];
 
 		if (displayName !== UNDEFINED) {
-			self.displayName = displayName;
+			me.displayName = displayName;
 		}
 	}, {
 		"displayName" : "browser/component/widget",
@@ -2152,12 +2152,12 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		 * Signal handler for 'initialize'
 		 */
 		"sig/initialize" : function () {
-			var self = this;
-			var $element = self[$ELEMENT];
+			var me = this;
+			var $element = me[$ELEMENT];
 			var $handler;
-			var $handlers = self[$HANDLERS];
+			var $handlers = me[$HANDLERS];
 			var special;
-			var specials = self.constructor.specials.dom;
+			var specials = me.constructor.specials.dom;
 			var type;
 			var features;
 			var value;
@@ -2177,10 +2177,10 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 				$handler[TYPE] = type = special[TYPE];
 				$handler[FEATURES] = features = special[FEATURES];
 				$handler[VALUE] = value = special[VALUE];
-				$handler[PROXY] = proxy = eventProxy(self, value);
+				$handler[PROXY] = proxy = eventProxy(me, value);
 
 				// Attach proxy
-				$element.on(type, features, self, proxy);
+				$element.on(type, features, me, proxy);
 
 				// Copy GUID from proxy to value (so you can use .off to remove it)
 				value[GUID] = proxy[GUID];
@@ -2191,10 +2191,10 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		 * Signal handler for 'finalize'
 		 */
 		"sig/finalize" : function () {
-			var self = this;
-			var $element = self[$ELEMENT];
+			var me = this;
+			var $element = me[$ELEMENT];
 			var $handler;
-			var $handlers = self[$HANDLERS];
+			var $handlers = me[$HANDLERS];
 			var i;
 			var iMax;
 
@@ -2217,7 +2217,7 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		},
 
 		/**
-		 * Unweaves all children of $element _and_ self
+		 * Unweaves all children of $element _and_ me
 		 * @returns {Promise} from unweave
 		 */
 		"unweave" : function () {
@@ -2273,11 +2273,11 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
 	var SERVICES = "services";
 
 	return Service.extend(function RegistryService() {
-		var self = this;
+		var me = this;
 
-		self[SERVICES] = {};
+		me[SERVICES] = {};
 
-		self.add(self);
+		me.add(me);
 	},{
 		"displayName" : "core/registry/service",
 
@@ -2336,10 +2336,10 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 	 */
 	function forward(_signal, _args) {
 		/*jshint validthis:true*/
-		var self = this;
-		var signal = self.signal;
+		var me = this;
+		var signal = me.signal;
 		var args = [ _signal ];
-		var components = self[REGISTRY].get();
+		var components = me[REGISTRY].get();
 		var index = 0;
 
 		ARRAY_PUSH.apply(args, _args);
@@ -2372,22 +2372,22 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 		},
 
 		"sig/start" : function onStart() {
-			var self = this;
-			var weave = self.weave;
+			var me = this;
+			var weave = me.weave;
 			var args = arguments;
 
-			return forward.call(self, "start", args).then(function started() {
-				return weave.apply(self, args);
+			return forward.call(me, "start", args).then(function started() {
+				return weave.apply(me, args);
 			});
 		},
 
 		"sig/stop" : function onStop() {
-			var self = this;
-			var unweave = self.unweave;
+			var me = this;
+			var unweave = me.unweave;
 			var args = arguments;
 
-			return unweave.apply(self, args).then(function stopped() {
-				return forward.call(self, "stop", args);
+			return unweave.apply(me, args).then(function stopped() {
+				return forward.call(me, "stop", args);
 			});
 		},
 
@@ -2473,7 +2473,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 
 	Query.toString = function QueryToString() {
 		/*jshint forin:false*/
-		var self = this;
+		var me = this;
 		var key;
 		var value;
 		var values;
@@ -2481,8 +2481,8 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 		var i = 0;
 		var j;
 
-		for (key in self) {
-			if (TOSTRING.call(self[key]) === TOSTRING_FUNCTION) {
+		for (key in me) {
+			if (TOSTRING.call(me[key]) === TOSTRING_FUNCTION) {
 				continue;
 			}
 
@@ -2493,7 +2493,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 
 		while (i--) {
 			key = query[i];
-			value = self[key];
+			value = me[key];
 
 			if (TOSTRING.call(value) === TOSTRING_ARRAY) {
 				values = value.slice(0);
@@ -2540,7 +2540,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 	};
 
 	var URI = Factory(function URI(str) {
-		var self = this;
+		var me = this;
 		var value;
 		var matches;
 		var i;
@@ -2552,44 +2552,44 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 				value = matches[i];
 
 				if (value) {
-					self[KEYS[i]] = value;
+					me[KEYS[i]] = value;
 				}
 			}
 		}
 
-		if (QUERY in self) {
-			self[QUERY] = Query(self[QUERY]);
+		if (QUERY in me) {
+			me[QUERY] = Query(me[QUERY]);
 		}
 
-		if (PATH in self) {
-			self[PATH] = Path(self[PATH]);
+		if (PATH in me) {
+			me[PATH] = Path(me[PATH]);
 		}
 	}, {
 		"displayName" : "browser/route/uri",
 
 		"toString" : function URIToString() {
-			var self = this;
+			var me = this;
 			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
 			var i;
 			var key;
 
-			if (!(PROTOCOL in self)) {
+			if (!(PROTOCOL in me)) {
 				uri[0] = uri[1] = "";
 			}
 
-			if (!(AUTHORITY in self)) {
+			if (!(AUTHORITY in me)) {
 				uri[2] = "";
 			}
 
-			if (!(PATH in self)) {
+			if (!(PATH in me)) {
 				uri[3] = "";
 			}
 
-			if (!(QUERY in self)) {
+			if (!(QUERY in me)) {
 				uri[4] = uri[5] = "";
 			}
 
-			if (!(ANCHOR in self)) {
+			if (!(ANCHOR in me)) {
 				uri[6] = uri[7] = "";
 			}
 
@@ -2598,8 +2598,8 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 			while (i--) {
 				key = uri[i];
 
-				if (key in self) {
-					uri[i] = self[key];
+				if (key in me) {
+					uri[i] = me[key];
 				}
 			}
 
@@ -2643,10 +2643,10 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 	}
 
 	function Frame(document) {
-		var self = this;
+		var me = this;
 		var element;
 
-		self.element = element = document.createElement("iframe");
+		me.element = element = document.createElement("iframe");
 		element.src = "about:blank";
 		element.style.display = "none";
 	}
@@ -2662,11 +2662,11 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 
 		"update" : function (hash) {
 			/*jshint evil:true*/
-			var self = this;
-			var document = self.element.contentWindow.document;
+			var me = this;
+			var document = me.element.contentWindow.document;
 
 			// Quick return if hash has not changed
-			if (self.getHash() === hash) {
+			if (me.getHash() === hash) {
 				return;
 			}
 
@@ -2784,7 +2784,7 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 	var RE = /^#/;
 
 	function onHashChange($event) {
-		var self = $event.data;
+		var me = $event.data;
 
 		// Create URI
 		var uri = URI($event.target.location.hash.replace(RE, ""));
@@ -2793,12 +2793,12 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		var route = uri.toString();
 
 		// Did anything change?
-		if (route !== self[ROUTE]) {
+		if (route !== me[ROUTE]) {
 			// Store new value
-			self[ROUTE] = route;
+			me[ROUTE] = route;
 
 			// Publish route
-			self.publish(self.displayName, uri, $event);
+			me.publish(me.displayName, uri, $event);
 		}
 	}
 
@@ -2806,9 +2806,9 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		"displayName" :"browser/route/widget",
 
 		"sig/initialize" : function initialize() {
-			var self = this;
+			var me = this;
 
-			self[$ELEMENT].on(HASHCHANGE, self, onHashChange);
+			me[$ELEMENT].on(HASHCHANGE, me, onHashChange);
 		},
 
 		"sig/start" : function start() {
@@ -2820,5 +2820,5 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		}
 	});
 });
-define('troopjs-bundle/package',{"name":"troopjs-bundle","description":"TroopJS bundle package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs-bundle.git"},"bugs":{"url":"https://github.com/troopjs/troopjs-bundle/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.0.2","grunt-git-dist":"~0.2.2","grunt-json-replace":"~0.1.2","grunt-lexicon":"~0.1.9","buster":"~0.6.12"}});
+define('troopjs-bundle/package',{"name":"troopjs-bundle","description":"TroopJS bundle package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.0.2","grunt-git-dist":"~0.2.2","grunt-json-replace":"~0.1.2","grunt-lexicon":"~0.1.9","buster":"~0.6.12"}});
 define('troopjs-bundle', ['troopjs-bundle/package'], function (main) { return main; });
