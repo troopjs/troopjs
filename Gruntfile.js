@@ -33,7 +33,7 @@ module.exports = function(grunt) {
 					"name" : "poly",
 					"location" : "empty:"
 				}, {
-					"name" : "troopjs-bundle",
+					"name" : "troopjs",
 					"location" : ".",
 					"main" : "package"
 				}, {
@@ -56,32 +56,35 @@ module.exports = function(grunt) {
 					"location" : "lib/troopjs-requirejs"
 				}],
 				"rawText" : {
-					"troopjs-bundle/package" : "define(<%= JSON.stringify(pkg) %>);"
+					"troopjs/package" : "define(<%= JSON.stringify(pkg) %>);\n"
 				},
-				"removeCombined" : true
+				"removeCombined" : true,
+				"wrap" : {
+					"end" : "define(['troopjs/package'], function (main) { return main; });"
+				}
 			},
 
 			"bundles" : {
 				"options" : {
 					"modules" : [{
-						"name" : "troopjs-bundle/maxi",
-						"include" : [ "troopjs-bundle" ],
+						"name" : "troopjs/maxi",
+						"include" : [ "troopjs/package" ],
 						"excludeShallow" : [
-							"troopjs-bundle/maxi",
-							"troopjs-bundle/mini",
-							"troopjs-bundle/micro"
+							"troopjs/maxi",
+							"troopjse/mini",
+							"troopjs/micro"
 						]
 					}, {
-						"name" : "troopjs-bundle/mini",
-						"include" : [ "troopjs-bundle" ],
+						"name" : "troopjs/mini",
+						"include" : [ "troopjs/package" ],
 						"excludeShallow" : [
-							"troopjs-bundle/mini",
-							"troopjs-bundle/micro"
+							"troopjs/mini",
+							"troopjs/micro"
 						]
 					}, {
-						"name" : "troopjs-bundle/micro",
-						"include" : [ "troopjs-bundle" ],
-						"excludeShallow" : [ "troopjs-bundle/micro" ]
+						"name" : "troopjs/micro",
+						"include" : [ "troopjs/package" ],
+						"excludeShallow" : [ "troopjs/micro" ]
 					}]
 				}
 			}
@@ -169,7 +172,7 @@ module.exports = function(grunt) {
 		},
 
 		"buster" : {
-			"troopjs-bundle" : {}
+			"troopjs" : {}
 		}
 	});
 
