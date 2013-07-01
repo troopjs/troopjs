@@ -14,10 +14,10 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/troopjs/troopjs-bundle.git"
+		"url": "https://github.com/troopjs/troopjs.git"
 	},
 	"bugs": {
-		"url": "https://github.com/troopjs/troopjs-bundle/issues"
+		"url": "https://github.com/troopjs/troopjs/issues"
 	},
 	"licenses": [
 		{
