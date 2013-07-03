@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-121-g4cb6bcd
+ * troopjs - 2.0.0-122-g7005a78
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -91,7 +91,7 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 	var FEATURES = "features";
 	var TYPE = "type";
 	var NAME = "name";
-	var RE_SPECIAL = /^(\w+)(?::([^\/]+))?\/(.+)/;
+	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/([\.\/\d\w\s]+)$/;
 	var NOOP = function noop () {};
 	var factoryDescriptors = {};
 
