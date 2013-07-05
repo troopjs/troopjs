@@ -1,5 +1,3 @@
-lib/poly
-lib/when
 lib/troopjs-data/cache/component.js
 node_modules
 support
