@@ -1,5 +1,5 @@
 /*!
-* TroopJS Bundle - 1.0.9-14-g1cdcf6a
+* TroopJS Bundle - 1.0.9-15-g88aead2
 * http://troopjs.com/
 * Copyright (c) 2013 Mikael Karon <mikael@karon.se>
 * Licensed MIT
@@ -1827,6 +1827,9 @@ define('troopjs-core/widget/placeholder',[ "jquery", "../component/widget" ], fu
 				// Store widget in holding
 				self[HOLDING] = widget;
 
+				// Tell the world
+				$element.triggerHandler("released", [ widget ]);
+
 				// Resolve deferred with widget
 				deferred.resolve(widget);
 			}, deferred.reject, deferred.progress);
@@ -1868,6 +1871,9 @@ define('troopjs-core/widget/placeholder',[ "jquery", "../component/widget" ], fu
 					.unweave.apply($element, unweave_args);
 			})
 			.then(function () {
+				// Tell the world
+				$element.triggerHandler("held", [ widget ]);
+
 				deferred.resolve(widget);
 			}, deferred.reject, deferred.progress);
 		}
