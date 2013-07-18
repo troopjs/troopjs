@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-123-g10f04a0
+ * troopjs - 2.0.0-127-g60cb6c9
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -1782,7 +1782,9 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 
 	var UNDEFINED;
 	var NULL = null;
-	var ARRAY_PUSH = Array.prototype.push;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_MAP = ARRAY_PROTO.map;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var WEAVE = "weave";
 	var WOVEN = "woven";
 	var $WARP = config["$warp"];
@@ -1800,7 +1802,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 		var start_args = arguments;
 
 		// Map elements
-		return when.map(this, function (element) {
+		return when.all(ARRAY_MAP.call(this, function (element) {
 			var $element = $(element);
 			var $data = $element.data();
 			var $warp = $data[$WARP] || ($data[$WARP] = []);
@@ -1900,7 +1902,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 				// Return promise
 				return promise;
 			});
-		});
+		}));
 	};
 });
 /**
@@ -1912,7 +1914,9 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 
 	var UNDEFINED;
 	var NULL = null;
-	var ARRAY_PUSH = Array.prototype.push;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_MAP = ARRAY_PROTO.map;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
 	var WOVEN = "woven";
@@ -1933,12 +1937,12 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 		var stop_args = arguments;
 
 		// Map elements
-		return when.map(this, function (element) {
+		return when.all(ARRAY_MAP.call(this, function (element) {
 			var $element = $(element);
 			var $data = $element.data();
 			var $warp = $data[$WARP] || ($data[$WARP] = []);
 			var $unweave = [];
-			var unweave_attr = $element.attr(ATTR_UNWEAVE) || "";
+			var unweave_attr = $element.attr(ATTR_UNWEAVE);
 			var unweave_re = [];
 			var re = /[\s,]*([\w_\-\/\.]+)(?:@(\d+))?/g;
 			var matches;
@@ -2032,7 +2036,7 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 				// Return promise
 				return promise;
 			});
-		});
+		}));
 	};
 });
 /**

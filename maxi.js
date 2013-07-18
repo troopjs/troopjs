@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-123-g10f04a0
+ * troopjs - 2.0.0-127-g60cb6c9
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -1782,7 +1782,9 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 
 	var UNDEFINED;
 	var NULL = null;
-	var ARRAY_PUSH = Array.prototype.push;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_MAP = ARRAY_PROTO.map;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var WEAVE = "weave";
 	var WOVEN = "woven";
 	var $WARP = config["$warp"];
@@ -1800,7 +1802,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 		var start_args = arguments;
 
 		// Map elements
-		return when.map(this, function (element) {
+		return when.all(ARRAY_MAP.call(this, function (element) {
 			var $element = $(element);
 			var $data = $element.data();
 			var $warp = $data[$WARP] || ($data[$WARP] = []);
@@ -1900,7 +1902,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 				// Return promise
 				return promise;
 			});
-		});
+		}));
 	};
 });
 /**
@@ -1912,7 +1914,9 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 
 	var UNDEFINED;
 	var NULL = null;
-	var ARRAY_PUSH = Array.prototype.push;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_MAP = ARRAY_PROTO.map;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var WEAVE = "weave";
 	var UNWEAVE = "unweave";
 	var WOVEN = "woven";
@@ -1933,12 +1937,12 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 		var stop_args = arguments;
 
 		// Map elements
-		return when.map(this, function (element) {
+		return when.all(ARRAY_MAP.call(this, function (element) {
 			var $element = $(element);
 			var $data = $element.data();
 			var $warp = $data[$WARP] || ($data[$WARP] = []);
 			var $unweave = [];
-			var unweave_attr = $element.attr(ATTR_UNWEAVE) || "";
+			var unweave_attr = $element.attr(ATTR_UNWEAVE);
 			var unweave_re = [];
 			var re = /[\s,]*([\w_\-\/\.]+)(?:@(\d+))?/g;
 			var matches;
@@ -2032,7 +2036,7 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 				// Return promise
 				return promise;
 			});
-		});
+		}));
 	};
 });
 /**
@@ -4631,7 +4635,7 @@ define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "wh
 
 						// Create callback
 						var callback = subscribe[source] = function () {
-							// Initialize args with target as the first argument
+							// Initialize args with topic as the first argument
 							var args = [ topic ];
 							var deferred;
 							var result;
@@ -4682,12 +4686,12 @@ define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "wh
 
 					// Iterate publish keys and unsubscribe
 					OBJECT_KEYS(publish).forEach(function (source) {
-						me.unsubscribe(source, publish[source][TOPIC]);
+						me.unsubscribe(source, publish[source]);
 					});
 
 					// Iterate subscribe keys and unsubscribe
 					OBJECT_KEYS(subscribe).forEach(function (source) {
-						hub.unsubscribe(source, me, subscribe[source][TOPIC]);
+						hub.unsubscribe(source, me, subscribe[source]);
 					});
 				});
 			}
@@ -4697,17 +4701,21 @@ define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "wh
  * TroopJS core/pubsub/proxy/to2x
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "poly/array", "poly/object" ], function To2xModule(Service) {
+define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "poly/array", "poly/object" ], function To2xModule(Service, when) {
 	"use strict";
 
-	var PUBLISH = "publish";
-	var SUBSCRIBE = "subscribe";
-	var HUB = "hub";
-	var SETTINGS = "settings";
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var OBJECT_KEYS = Object.keys;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_STRING = "[object String]";
+	var PUBLISH = "publish";
+	var SUBSCRIBE = "subscribe";
+	var HUB = "hub";
+	var SETTINGS = "settings";
+	var TOPIC = "topic";
+	var REPUBLISH = "republish";
 
 	return Service.extend(
 		/**
@@ -4737,17 +4745,36 @@ define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "poly/array
 					OBJECT_KEYS(publish).forEach(function (source) {
 						// Extract target
 						var target = publish[source];
+						var topic;
+
+						// If target is a string set topic to target
+						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+							topic = target;
+						}
+						// Otherwise just grab topic from target
+						else {
+							// Make sure we have a topic
+							if (!(TOPIC in target)) {
+								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
+							}
+
+							// Get topic
+							topic = target[TOPIC];
+						}
 
 						// Create callback
 						var callback = publish[source] = function () {
-							// Initialize args with target as the first argument
-							var args = [ target ];
+							// Initialize args with topic as the first argument
+							var args = [ topic ];
 
 							// Push original arguments on args
 							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
 
 							return hub.publish.apply(hub, args);
 						};
+
+						// Transfer topic to callback
+						callback[TOPIC] = topic;
 
 						me.subscribe(source, callback);
 					});
@@ -4756,11 +4783,31 @@ define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "poly/array
 					OBJECT_KEYS(subscribe).forEach(function (source) {
 						// Extract target
 						var target = subscribe[source];
+						var topic;
+						var republish;
+
+						// If target is a string set topic to target and republish to false
+						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+							topic = target;
+							republish = false;
+						}
+						// Otherwise just grab topic and republish from target
+						else {
+							// Make sure we have a topic
+							if (!(TOPIC in target)) {
+								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
+							}
+
+							// Get topic
+							topic = target[TOPIC];
+							// Make sure republish is a boolean
+							republish = !!target[REPUBLISH];
+						}
 
 						// Create callback
 						var callback = subscribe[source] = function () {
-							// Initialize args with target as the first argument
-							var args = [ target ];
+							// Initialize args with topic as the first argument
+							var args = [ topic ];
 
 							// Push original arguments on args
 							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
@@ -4769,9 +4816,42 @@ define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "poly/array
 							return me.publish.apply(me, args);
 						};
 
+						// Transfer topic and republish to callback
+						callback[TOPIC] = topic;
+						callback[REPUBLISH] = republish;
+
 						hub.subscribe(source, me, callback);
 					});
 				});
+			},
+
+			"sig/start" : function () {
+				var me = this;
+				var results = [];
+
+				// Iterate SETTINGS
+				me[SETTINGS].forEach(function (setting) {
+					if (!(HUB in setting)) {
+						throw new Error("'" + HUB + "' is missing from setting");
+					}
+
+					var subscribe = setting[SUBSCRIBE] || {};
+					var hub = setting[HUB];
+
+					// Iterate subscribe keys
+					OBJECT_KEYS(subscribe).forEach(function (source) {
+						var callback = subscribe[source];
+
+						// Check if we should republish
+						if (callback[REPUBLISH] === true) {
+							// Push result from republish on results
+							results.push(hub.republish(source, false, me, callback));
+						}
+					});
+				});
+
+				// Return promise that will resolve once all results are resolved
+				return when.all(results);
 			},
 
 			"sig/finalize" : function () {
