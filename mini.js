@@ -6,5 +6,7 @@ define([
 	"troopjs-data/component/widget",
 	"troopjs-requirejs/template",
 	"troopjs-requirejs/multiversion",
-	"troopjs-jquery/loom"
+	"troopjs-requirejs/shadow",
+	"troopjs-jquery/loom",
+	"troopjs-jquery/noconflict"
 ]);
