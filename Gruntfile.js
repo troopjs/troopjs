@@ -24,6 +24,9 @@ module.exports = function(grunt) {
 				"keepBuildDir" : true,
 				"fileExclusionRegExp": /^(?:\.\w+|node_modules|support|test|dist|Gruntfile\.js)$/,
 				"packages" : [{
+					"name" : "text",
+					"location" : "empty:"
+				}, {
 					"name" : "jquery",
 					"location" : "empty:"
 				}, {
