@@ -31,8 +31,10 @@ lib/troopjs-data/query/service.js
 lib/troopjs-data/component/widget.js
 lib/troopjs-requirejs/template.js
 lib/troopjs-requirejs/multiversion.js
+lib/troopjs-requirejs/shadow.js
 lib/troopjs-browser/loom/woven.js
 lib/troopjs-jquery/loom.js
+lib/troopjs-jquery/noconflict.js
 ./mini.js
 lib/troopjs-core/pubsub/proxy/to1x.js
 lib/troopjs-core/pubsub/proxy/to2x.js
@@ -76,8 +78,10 @@ lib/troopjs-data/query/service.js
 lib/troopjs-data/component/widget.js
 lib/troopjs-requirejs/template.js
 lib/troopjs-requirejs/multiversion.js
+lib/troopjs-requirejs/shadow.js
 lib/troopjs-browser/loom/woven.js
 lib/troopjs-jquery/loom.js
+lib/troopjs-jquery/noconflict.js
 ./package.js
 
 ./micro.js

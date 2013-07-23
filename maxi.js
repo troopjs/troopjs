@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-127-g60cb6c9
+ * troopjs - 2.0.0-129-g3f1a449
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -4297,6 +4297,61 @@ define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
 	};
 });
 /**
+* TroopJS requirejs/shadow
+* @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
+*/
+define('troopjs-requirejs/shadow',[ "text" ], function (text) {
+	"use strict";
+
+	var EXPORTS = "exports";
+	var EXTENSION = ".js";
+	var PATTERN = /(.+?)#(.+)$/;
+
+	function amdify (scriptText, hashVal) {
+		var pattern = /([^=&]+)=([^&]+)/g;
+		var deps = [];
+		var args = [];
+		var m;
+
+		while (m = pattern.exec(hashVal)) {
+			if (m[1] === EXPORTS) {
+				scriptText += ";\nreturn " + m[2] + ";\n";
+			}
+			else {
+				deps.push("'" + m[2] + "'");
+				args.push(m[1]);
+			}
+		}
+
+		return "define([ " + deps.join(", ") + " ], function (" + args.join(", ") + ") {\n"
+			+ scriptText
+			+ "});"
+	}
+
+	return {
+		load : function (name, req, onLoad, config) {
+
+			var hashVal;
+			var m;
+
+			if (m = PATTERN.exec(name)) {
+				name = m[1];
+				hashVal = m[2];
+
+				text.get(req.toUrl(name + EXTENSION), function(data) {
+					onLoad.fromText(name, amdify(data, hashVal));
+				});
+			}
+			else {
+				req([ name ], function (module) {
+					onLoad(module);
+				}, onLoad.error);
+			}
+		}
+	};
+});
+
+/**
  * TroopJS browser/loom/woven
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -4481,6 +4536,16 @@ define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", 
 	$FN[WOVEN] = woven;
 });
 
+/**
+* TroopJS jquery/noconflict
+* @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
+*/
+define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
+	"use strict";
+
+	return $.noConflict(true);
+});
+
 define('troopjs/mini',[
 	"./micro",
 	"troopjs-data/store/component",
@@ -4489,8 +4554,11 @@ define('troopjs/mini',[
 	"troopjs-data/component/widget",
 	"troopjs-requirejs/template",
 	"troopjs-requirejs/multiversion",
-	"troopjs-jquery/loom"
+	"troopjs-requirejs/shadow",
+	"troopjs-jquery/loom",
+	"troopjs-jquery/noconflict"
 ]);
+
 /**
  * TroopJS core/pubsub/proxy/to1x
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -5179,5 +5247,5 @@ define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jqu
 		}
 	});
 });
-define('troopjs/package',{"name":"troopjs","description":"TroopJS package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.0.2","grunt-git-dist":"~0.2.3","grunt-json-replace":"~0.1.2","grunt-lexicon":"~0.1.9","buster":"~0.6.12"}});
+define('troopjs/package',{"name":"troopjs","description":"TroopJS package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.0.2","grunt-git-dist":"~0.3.0","grunt-json-replace":"~0.1.2","grunt-lexicon":"~0.1.9","buster":"~0.6.12"}});
 define(['troopjs/package'], function (main) { return main; });
