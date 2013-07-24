@@ -74,7 +74,7 @@ module.exports = function(grunt) {
 						"include" : [ "troopjs/package" ],
 						"excludeShallow" : [
 							"troopjs/maxi",
-							"troopjse/mini",
+							"troopjs/mini",
 							"troopjs/micro"
 						]
 					}, {
