@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-129-g3f1a449
+ * troopjs - 2.0.0-130-g76d5068
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -4306,6 +4306,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 	var EXPORTS = "exports";
 	var EXTENSION = ".js";
 	var PATTERN = /(.+?)#(.+)$/;
+	var REQUIRE_VERSION = require.version;
 
 	function amdify (scriptText, hashVal) {
 		var pattern = /([^=&]+)=([^&]+)/g;
@@ -4339,13 +4340,14 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 				hashVal = m[2];
 
 				text.get(req.toUrl(name + EXTENSION), function(data) {
-					onLoad.fromText(name, amdify(data, hashVal));
+					onLoad.fromText(name, amdify(data, hashVal));  
+					if (REQUIRE_VERSION < "2.1.0") {
+						req([ name ], onLoad);
+					}	
 				});
 			}
 			else {
-				req([ name ], function (module) {
-					onLoad(module);
-				}, onLoad.error);
+				req([ name ], onLoad);
 			}
 		}
 	};
