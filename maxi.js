@@ -3130,7 +3130,7 @@ define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when",
  * TroopJS data/cache/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], function CacheModule(Component) {
+define( 'troopjs-data/cache/component',[ "troopjs-core/component/base" ], function CacheModule(Component) {
 	"use strict";
 
 	var UNDEFINED;
@@ -3441,7 +3441,7 @@ define('troopjs-data/cache/component', [ "troopjs-core/component/base" ], functi
  * TroopJS data/query/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-data/query/component', [ "troopjs-core/component/base" ], function QueryModule(Component) {
+define( 'troopjs-data/query/component',[ "troopjs-core/component/base" ], function QueryModule(Component) {
 	"use strict";
 
 	var UNDEFINED;
@@ -4546,7 +4546,7 @@ define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
 	return $.noConflict(true);
 });
 
-define('troopjs/mini',[
+define([
 	"./micro",
 	"troopjs-data/store/component",
 	"troopjs-data/cache/component",
