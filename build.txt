@@ -35,7 +35,6 @@ lib/troopjs-requirejs/shadow.js
 lib/troopjs-browser/loom/woven.js
 lib/troopjs-jquery/loom.js
 lib/troopjs-jquery/noconflict.js
-./mini.js
 lib/troopjs-core/pubsub/proxy/to1x.js
 lib/troopjs-core/pubsub/proxy/to2x.js
 lib/troopjs-browser/store/adapter/base.js

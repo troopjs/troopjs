@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-130-g76d5068
+ * troopjs - 2.0.0-134-g191472c
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -543,7 +543,8 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var INITIALIZE = "initialize";
 	var STOP = "stop";
 	var SIG = "sig";
-	var COUNT = 0;
+	var INSTANCE_COUNTER = 0;
+	var TASK_COUNTER = 0;
 
 	return Factory(
 	/**
@@ -554,10 +555,12 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 		var me = this;
 
 		// Update instance count
-		me[INSTANCE_COUNT] = ++COUNT;
+		me[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
+
+		// Set configuration
 		me[CONFIGURATION] = {};
 	}, {
-		"instanceCount" : COUNT,
+		"instanceCount" : INSTANCE_COUNTER,
 
 		"displayName" : "core/component/base",
 
@@ -655,6 +658,27 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 					// Return concatenated result
 					return ARRAY_PROTO.concat(_stopped, _finalized);
 				});
+			});
+		},
+
+		/**
+		 * Creates new task
+		 * @param {Function} resolver
+		 * @param {String} [name]
+		 * @returns {Promise}
+		 */
+		"task" : function task(resolver, name) {
+			var me = this;
+			var id = ++TASK_COUNTER;
+
+			// Signal task start
+			return me.signal("task/start", id, name).then(function () {
+				return when
+					.promise(resolver)
+					.ensure(function () {
+						// Signal task finish
+						return me.signal("task/finish", id, name);
+					});
 			});
 		},
 
@@ -1366,6 +1390,30 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 				// Unsubscribe
 				UNSUBSCRIBE.call(hub, subscription[TYPE], me, subscription[VALUE]);
 			}
+		},
+
+		/**
+		 * Signal handler for 'task/start'
+		 * @param {Number} id
+		 * @param {String} [name]
+		 * @returns {Promise}
+		 */
+		"sig/task/start" : function taskStart(id, name) {
+			var me = this;
+
+			return me.publish("task/start", me, id, name);
+		},
+
+		/**
+		 * Signal handler for 'task/finish'
+		 * @param {Number} id
+		 * @param {String} [name]
+		 * @returns {Promise}
+		 */
+		"sig/task/finish" : function taskFinish(id, name) {
+			var me = this;
+
+			return me.publish("task/finish", me, id, name);
 		},
 
 		/**
@@ -2210,6 +2258,29 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 				// Detach event handler
 				$element.off($handler[TYPE], $handler[FEATURES], $handler[PROXY]);
 			}
+		},
+
+
+		/**
+		 * Signal handler for 'task/start'
+		 * @param {Number} id
+		 * @param {String} [name]
+		 */
+		"sig/task/start" : function (id, name) {
+			var me = this;
+
+			me[$ELEMENT].trigger("task/start", [ me, id, name ]);
+		},
+
+		/**
+		 * Signal handler for 'task/finish'
+		 * @param {Number} id
+		 * @param {String} [name]
+		 */
+		"sig/task/finish" : function (id, name) {
+			var me = this;
+
+			me[$ELEMENT].trigger("task/finish", [ me, id, name ]);
 		},
 
 		/**
@@ -3130,7 +3201,7 @@ define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when",
  * TroopJS data/cache/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define( 'troopjs-data/cache/component',[ "troopjs-core/component/base" ], function CacheModule(Component) {
+define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], function CacheModule(Component) {
 	"use strict";
 
 	var UNDEFINED;
@@ -3441,7 +3512,7 @@ define( 'troopjs-data/cache/component',[ "troopjs-core/component/base" ], functi
  * TroopJS data/query/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define( 'troopjs-data/query/component',[ "troopjs-core/component/base" ], function QueryModule(Component) {
+define('troopjs-data/query/component',[ "troopjs-core/component/base" ], function QueryModule(Component) {
 	"use strict";
 
 	var UNDEFINED;
