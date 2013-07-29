@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-134-g191472c
+ * troopjs - 2.0.0-136-g2521ef5
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -538,8 +538,13 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var INSTANCE_COUNT = "instanceCount";
 	var CONFIGURATION = "configuration";
-	var PHASE = "phase";
+	var CONTEXT = "context";
+	var ID = "id";
+	var NAME = "name";
 	var VALUE = "value";
+	var PHASE = "phase";
+	var STARTED = "started";
+	var FINISHED = "finished";
 	var INITIALIZE = "initialize";
 	var STOP = "stop";
 	var SIG = "sig";
@@ -669,16 +674,20 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 		 */
 		"task" : function task(resolver, name) {
 			var me = this;
-			var id = ++TASK_COUNTER;
 
-			// Signal task start
-			return me.signal("task/start", id, name).then(function () {
-				return when
-					.promise(resolver)
-					.ensure(function () {
-						// Signal task finish
-						return me.signal("task/finish", id, name);
-					});
+			var promise = when
+				.promise(resolver)
+				.ensure(function () {
+					promise[FINISHED] = new Date();
+				});
+
+			promise[ID] = ++TASK_COUNTER;
+			promise[CONTEXT] = me;
+			promise[STARTED] = new Date();
+			promise[NAME] = name;
+
+			return me.signal("task", promise).then(function () {
+				return promise;
 			});
 		},
 
@@ -1312,7 +1321,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		/**
 		 * Signal handler for 'initialize'
 		 */
-		"sig/initialize" : function initialize() {
+		"sig/initialize" : function onInitialize() {
 			var me = this;
 			var subscription;
 			var subscriptions = me[SUBSCRIPTIONS];
@@ -1344,7 +1353,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		/**
 		 * Signal handler for 'start'
 		 */
-		"sig/start" : function start() {
+		"sig/start" : function onStart() {
 			var me = this;
 			var args = arguments;
 			var subscription;
@@ -1375,7 +1384,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		/**
 		 * Signal handler for 'finalize'
 		 */
-		"sig/finalize" : function finalize() {
+		"sig/finalize" : function onFinalize() {
 			var me = this;
 			var subscription;
 			var subscriptions = me[SUBSCRIPTIONS];
@@ -1393,27 +1402,12 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 		},
 
 		/**
-		 * Signal handler for 'task/start'
-		 * @param {Number} id
-		 * @param {String} [name]
+		 * Signal handler for 'task'
+		 * @param {Promise} task
 		 * @returns {Promise}
 		 */
-		"sig/task/start" : function taskStart(id, name) {
-			var me = this;
-
-			return me.publish("task/start", me, id, name);
-		},
-
-		/**
-		 * Signal handler for 'task/finish'
-		 * @param {Number} id
-		 * @param {String} [name]
-		 * @returns {Promise}
-		 */
-		"sig/task/finish" : function taskFinish(id, name) {
-			var me = this;
-
-			return me.publish("task/finish", me, id, name);
+		"sig/task" : function onTask(task) {
+			return this.publish("task", task);
 		},
 
 		/**
@@ -2203,7 +2197,7 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		/**
 		 * Signal handler for 'initialize'
 		 */
-		"sig/initialize" : function () {
+		"sig/initialize" : function onInitialize() {
 			var me = this;
 			var $element = me[$ELEMENT];
 			var $handler;
@@ -2242,7 +2236,7 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 		/**
 		 * Signal handler for 'finalize'
 		 */
-		"sig/finalize" : function () {
+		"sig/finalize" : function onFinalize() {
 			var me = this;
 			var $element = me[$ELEMENT];
 			var $handler;
@@ -2260,27 +2254,12 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 			}
 		},
 
-
 		/**
-		 * Signal handler for 'task/start'
-		 * @param {Number} id
-		 * @param {String} [name]
+		 * Signal handler for 'task'
+		 * @param {Promise} task
 		 */
-		"sig/task/start" : function (id, name) {
-			var me = this;
-
-			me[$ELEMENT].trigger("task/start", [ me, id, name ]);
-		},
-
-		/**
-		 * Signal handler for 'task/finish'
-		 * @param {Number} id
-		 * @param {String} [name]
-		 */
-		"sig/task/finish" : function (id, name) {
-			var me = this;
-
-			me[$ELEMENT].trigger("task/finish", [ me, id, name ]);
+		"sig/task" : function onTask(task) {
+			this[$ELEMENT].trigger("task", [ task ]);
 		},
 
 		/**
