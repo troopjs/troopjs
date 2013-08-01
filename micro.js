@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-136-g2521ef5
+ * troopjs - 2.0.0-138-g6262b5a
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -188,10 +188,10 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 
 		descriptor[VALUE] = previous
 			? function () {
-			var me = this;
-			var args = arguments;
-			return next.apply(me, args = previous.apply(me, args) || args);
-		}
+				var me = this;
+				var args = arguments;
+				return next.apply(me, args = previous.apply(me, args) || args);
+			}
 			: next;
 
 		return descriptor;

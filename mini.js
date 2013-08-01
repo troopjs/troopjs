@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-136-g2521ef5
+ * troopjs - 2.0.0-138-g6262b5a
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -188,10 +188,10 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 
 		descriptor[VALUE] = previous
 			? function () {
-			var me = this;
-			var args = arguments;
-			return next.apply(me, args = previous.apply(me, args) || args);
-		}
+				var me = this;
+				var args = arguments;
+				return next.apply(me, args = previous.apply(me, args) || args);
+			}
 			: next;
 
 		return descriptor;
@@ -4357,6 +4357,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 	var EXTENSION = ".js";
 	var PATTERN = /(.+?)#(.+)$/;
 	var REQUIRE_VERSION = require.version;
+	var buildMap = {};
 
 	function amdify (scriptText, hashVal) {
 		var pattern = /([^=&]+)=([^&]+)/g;
@@ -4381,7 +4382,6 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 
 	return {
 		load : function (name, req, onLoad, config) {
-
 			var hashVal;
 			var m;
 
@@ -4390,7 +4390,14 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 				hashVal = m[2];
 
 				text.get(req.toUrl(name + EXTENSION), function(data) {
-					onLoad.fromText(name, amdify(data, hashVal));  
+					var compiled = amdify(data, hashVal);
+
+					if (config.isBuild) {
+						buildMap[name] = compiled;
+					}
+
+					onLoad.fromText(name, compiled);
+
 					if (REQUIRE_VERSION < "2.1.0") {
 						req([ name ], onLoad);
 					}	
@@ -4398,6 +4405,12 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 			}
 			else {
 				req([ name ], onLoad);
+			}
+		},
+
+		write : function (pluginName, moduleName, write) {
+			if (moduleName in buildMap) {
+				write("define('" + pluginName + "!" + moduleName + "', function () { return '" + buildMap[moduleName].toString() + "';});\n");
 			}
 		}
 	};
