@@ -1,5 +1,5 @@
 /*!
-* TroopJS Bundle - 1.0.9-15-g88aead2
+* TroopJS Bundle - 1.0.9-16-ge9bb6e1
 * http://troopjs.com/
 * Copyright (c) 2013 Mikael Karon <mikael@karon.se>
 * Licensed MIT
@@ -1434,13 +1434,28 @@ define('troopjs-core/dimensions/service',[ "../component/service" ], function Di
 define('troopjs-core/logger/console',[ "compose", "../component/base" ], function ConsoleLogger(Compose, Component) {
 	var CONSOLE = console;
 
+	// adapted from Mozilla Developer Network example at
+	// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind
+	var bind = Function.prototype.bind || function (obj) {
+		var args = slice.call(arguments, 1),
+			self = this,
+			nop = function () {},
+			bound = function () {
+				return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)));
+			};
+		nop.prototype = this.prototype || {}; // Firefox cries sometimes if prototype is undefined
+		bound.prototype = new nop();
+		return bound;
+	};
+
 	return Compose.create(Component, {
-		"log" : CONSOLE.log.bind(CONSOLE),
-		"warn" : CONSOLE.warn.bind(CONSOLE),
-		"debug" : CONSOLE.debug.bind(CONSOLE),
-		"info" : CONSOLE.info.bind(CONSOLE),
-		"error" : CONSOLE.error.bind(CONSOLE)
+		"log" : bind.call(CONSOLE.log, CONSOLE),
+		"warn" : bind.call(CONSOLE.warn || CONSOLE.log, CONSOLE),
+		"debug" : bind.call(CONSOLE.debug || CONSOLE.log, CONSOLE),
+		"info" : bind.call(CONSOLE.info || CONSOLE.log, CONSOLE),
+		"error" : bind.call(CONSOLE.error || CONSOLE.log, CONSOLE)
 	});
+	
 });
 /**
  * TroopJS core/logger/pubsub
