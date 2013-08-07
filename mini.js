@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.0-139-g85da07c
+ * troopjs - 2.0.0-140-g3d3b765
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
@@ -707,7 +707,7 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
  * TroopJS core/logger/console
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-core/logger/console',[ "../component/base" ], function ConsoleLogger(Component) {
+define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], function ConsoleLogger(Component) {
 	"use strict";
 
 	/*jshint devel:true*/
