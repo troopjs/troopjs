@@ -1,15 +1,15 @@
 var require = {
 	"packages" : [{
 		"name" : "jquery",
-		"location" : "support/jquery",
+		"location" : "bower_components/jquery",
 		"main" : "jquery"
 	}, {
 		"name" : "when",
-		"location" : "support/when",
+		"location" : "bower_components/when",
 		"main" : "when"
 	}, {
 		"name" : "poly",
-		"location" : "support/poly",
+		"location" : "bower_components/poly",
 		"main" : "poly"
 	}, {
 		"name" : "troopjs-core",

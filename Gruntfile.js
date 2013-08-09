@@ -22,7 +22,7 @@ module.exports = function(grunt) {
 				"optimize" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.\w+|node_modules|support|test|dist|Gruntfile\.js)$/,
+				"fileExclusionRegExp": /^(?:\.\w+|Gruntfile\.js|node_modules|bower_components|test|dist)$/,
 				"packages" : [{
 					"name" : "text",
 					"location" : "empty:"

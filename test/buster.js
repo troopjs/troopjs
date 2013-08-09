@@ -5,13 +5,17 @@ module.exports["troopjs"] = {
 	"rootPath" : "../",
 
 	"libs" : [
-		"support/config.requirejs.js",
-		"support/requirejs/require.js"
+		"test/require.js",
+		"bower_components/requirejs/require.js"
 	],
 
 	"resources" : [
 		"lib/**/*.*",
-		"support/**/*.*"
+		"bower_components/jquery/jquery.js",
+		"bower_components/when/when.js",
+		"bower_components/requirejs/require.js",
+		"bower_components/poly/*.js",
+		"bower_components/poly/lib/*.js"
 	],
 
 	"tests" : [

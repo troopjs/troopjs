@@ -16,15 +16,3 @@
 [submodule "lib/troopjs-data"]
 	path = lib/troopjs-data
 	url = https://github.com/troopjs/troopjs-data.git
-[submodule "support/when"]
-	path = support/when
-	url = https://github.com/cujojs/when.git
-[submodule "support/poly"]
-	path = support/poly
-	url = https://github.com/cujojs/poly.git
-[submodule "support/requirejs"]
-	path = support/requirejs
-	url = https://github.com/jrburke/requirejs.git
-[submodule "support/jquery"]
-	path = support/jquery
-	url = https://github.com/components/jquery.git
