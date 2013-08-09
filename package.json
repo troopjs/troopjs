@@ -25,10 +25,6 @@
 		  "url": "http://troopjs.mit-license.org/"
 		}
 	],
-	"scripts": {
-		"postinstall": "bower install",
-		"test": "grunt test"
-	},
 	"devDependencies": {
 		"grunt": "~0.4.1",
 		"grunt-contrib-requirejs": "~0.4.1",
@@ -39,8 +35,6 @@
 		"grunt-git-describe": "~2.0.2",
 		"grunt-git-dist": "~0.3.0",
 		"grunt-json-replace": "~0.1.2",
-		"grunt-lexicon": "~0.1.9",
-		"buster": "~0.6.12",
-		"bower": "~1"
+		"grunt-bump": "~0.0.11"
 	}
 }
