@@ -135,30 +135,20 @@ module.exports = function(grunt) {
 			}
 		},
 
-		"json-replace" : {
-			"options" : {
-				"space" : "\t"
+		"semver": {
+			"bundles": {
+				"files": [{
+					"expand": true,
+					"src" : [ "package.json", "bower.json" ]
+				}]
 			},
-			"package.json" : {
-				"options" : {
-					"replace" : {
-						"version" : "<%= pkg.version %>",
-						"devDependencies" : UNDEFINED
-					}
-				},
-				"files" : {
-					"<%= build.dist %>/package.json" : "<%= build.dist %>/package.json"
-				}
-			},
-			"bower.json" : {
-				"options" : {
-					"replace" : {
-						"version" : "<%= pkg.version %>"
-					}
-				},
-				"files" : {
-					"<%= build.dist %>/bower.json" : "<%= build.dist %>/bower.json"
-				}
+			"dist": {
+				"files": [{
+					"expand": true,
+					"cwd" : "<%= build.dist %>",
+					"dest" : "<%= build.dist %>",
+					"src" : [ "package.json", "bower.json" ]
+				}]
 			}
 		},
 
@@ -187,13 +177,14 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-banner");
 	grunt.loadNpmTasks("grunt-git-describe");
 	grunt.loadNpmTasks("grunt-git-dist");
-	grunt.loadNpmTasks("grunt-json-replace");
+	grunt.loadNpmTasks("grunt-semver");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
+	grunt.registerTask("version", [ "git-describe", "semver:dist:set::{%=pkg.version.object%}" ]);
 	grunt.registerTask("compile", [ "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
-	grunt.registerTask("version", [ "git-describe", "usebanner", "json-replace" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "compile", "compress", "version", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
-	grunt.registerTask("default", [ "compile", "compress" ]);
+
+	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "default", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
+	grunt.registerTask("default", [ "compile", "compress", "version" ]);
 };

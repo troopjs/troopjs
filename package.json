@@ -8,8 +8,8 @@
 	},
 	"maintainers": [
 		{
-		  "name": "Mikael Karon",
-		  "web": "http://github.com/mikaelkaron"
+			"name": "Mikael Karon",
+			"web": "http://github.com/mikaelkaron"
 		}
 	],
 	"repository": {
@@ -21,8 +21,8 @@
 	},
 	"licenses": [
 		{
-		  "type": "MIT",
-		  "url": "http://troopjs.mit-license.org/"
+			"type": "MIT",
+			"url": "http://troopjs.mit-license.org/"
 		}
 	],
 	"devDependencies": {
@@ -32,9 +32,8 @@
 		"grunt-contrib-clean": "~0.4.1",
 		"grunt-banner": "~0.1.4",
 		"grunt-plugin-buster": "~2.0.0",
-		"grunt-git-describe": "~2.0.2",
+		"grunt-git-describe": "~2.1.0",
 		"grunt-git-dist": "~0.3.0",
-		"grunt-json-replace": "~0.1.2",
-		"grunt-bump": "~0.0.11"
+		"grunt-semver": "~0.1.2"
 	}
 }
