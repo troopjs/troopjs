@@ -184,7 +184,24 @@ module.exports = function(grunt) {
 	grunt.registerTask("compile", [ "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
-
-	grunt.registerTask("dist", [ "clean", "git-dist:bundles:clone", "default", "git-dist:bundles:commit", "git-dist:bundles:push" ]);
 	grunt.registerTask("default", [ "compile", "compress", "version" ]);
+
+	grunt.registerTask("release", "Package and release", function (phase) {
+		var name = this.name;
+
+		switch (phase) {
+			case "prepare":
+				grunt.log.subhead("Preparing release");
+				grunt.task.run([ "clean", "git-dist:bundles:clone", "default" ]);
+				break;
+
+			case "perform":
+				grunt.log.subhead("Performing release");
+				grunt.task.run([ "git-dist:bundles:commit", "git-dist:bundles:push" ]);
+				break;
+
+			default:
+				grunt.task.run([ name + ":prepare", name + ":perform" ]);
+		}
+	});
 };
