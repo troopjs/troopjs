@@ -10,7 +10,7 @@ module.exports = function(grunt) {
 			"src" : ".",
 			"dist" : "dist",
 			"banner" : "/**\n" +
-				" * <%= pkg.name %> - <%= pkg.version %>\n" +
+				" * <%= build.pkg.name %> - <%= build.pkg.version %>\n" +
 				" * @license <%= pkg.licenses[0].type %> <%= pkg.licenses[0].url %> © <%= pkg.author.name %> mailto:<%= pkg.author.email%>\n" +
 				" */"
 		},
@@ -113,7 +113,7 @@ module.exports = function(grunt) {
 		"git-describe" : {
 			"bundles" : {
 				"options" : {
-					"prop" : "pkg.version"
+					"prop" : "build.pkg.version"
 				}
 			}
 		},
@@ -171,6 +171,12 @@ module.exports = function(grunt) {
 		}
 	});
 
+	function reload(version, src, dest) {
+		if (grunt.file.isMatch([ grunt.config("build.dist") + "/package.json" ], [ dest ])) {
+			grunt.config("build.pkg", grunt.file.readJSON(dest));
+		}
+	}
+
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
@@ -180,11 +186,14 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-semver");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("version", [ "git-describe", "semver:dist:set::{%=pkg.version.object%}" ]);
+	grunt.event.on("semver.set", reload);
+	grunt.event.on("semver.bump", reload);
+
+	grunt.registerTask("version", [ "git-describe", "semver:dist:set::{%=build.pkg.version.object%}" ]);
 	grunt.registerTask("compile", [ "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("default", [ "compile", "compress", "version" ]);
+	grunt.registerTask("default", [ "compile", "compress", "version", "usebanner" ]);
 
 	grunt.registerTask("release", "Package and release", function (phase) {
 		var name = this.name;
