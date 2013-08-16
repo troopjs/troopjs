@@ -1,7 +1,3 @@
-/**
- * troopjs - 2.0.0-140-g3d3b765
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
 
 /**
  * TroopJS utils/unique
@@ -2874,5 +2870,5 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		}
 	});
 });
-define('troopjs/package',{"name":"troopjs","description":"TroopJS package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.0.2","grunt-git-dist":"~0.3.0","grunt-json-replace":"~0.1.2","grunt-lexicon":"~0.1.9","buster":"~0.6.12"}});
+define('troopjs/package',{"name":"troopjs","description":"TroopJS package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.1.0","grunt-git-dist":"~0.3.0","grunt-semver":"~0.1.2"}});
 define(['troopjs/package'], function (main) { return main; });

@@ -1,7 +1,3 @@
-/**
- * troopjs - 2.0.0-140-g3d3b765
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
 
 /**
  * TroopJS utils/unique
@@ -4379,25 +4375,25 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 
 		return "define([ " + deps.join(", ") + " ], function (" + args.join(", ") + ") {\n"
 			+ scriptText
-			+ "});"
+			+ "});";
 	}
 
 	function cmpVersion(a, b) {
-	    var result;
-	    var len;
-	    var i;
+		var result;
+		var len;
+		var i;
 
-	    a = a.split(".");
-	    b = b.split(".");
-	    len = Math.min(a.length, b.length);
+		a = a.split(".");
+		b = b.split(".");
+		len = Math.min(a.length, b.length);
 
-	    for (i = 0; i < len; i++) {
-	        result = parseInt(a[i]) - parseInt(b[i]);
-	        if (result !== 0) {
-	            return result;
-	        }
-	    }
-	    return a.length - b.length;
+		for (i = 0; i < len; i++) {
+			result = parseInt(a[i], null) - parseInt(b[i], null);
+			if (result !== 0) {
+				return result;
+			}
+		}
+		return a.length - b.length;
 	}
 
 	return {
@@ -4406,14 +4402,15 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 			var hashVal;
 			var content;
 			var url;
+			var realName = name;
 
 			// The name is like 'jquery.form#$=jquery&exports=$',
 			// So, if macthed, m[1] is 'jquery.form', m[2] is '$=jquery&exports=$'
-			if (m = PATTERN.exec(name)) {
-				name = m[1];
+			if ((m = PATTERN.exec(name))) {
+				realName = m[1];
 				hashVal = m[2];
 			}
-			url = req.toUrl(name + EXTENSION);
+			url = req.toUrl(realName + EXTENSION);
 
 			// For Optimization. The url is "empty:" if excluded.
 			if (RE_EMPTY.test(url)) {
@@ -4437,15 +4434,10 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 		},
 
 		write : function (pluginName, moduleName, write) { 
-			var m;
 			var content;
 
-			if (m = PATTERN.exec(moduleName)) {
-				moduleName = m[1];
-			}
-
 			if (moduleName in buildMap) {
-				content = text.jsEscape(buildMap[moduleName]);
+				content = buildMap[moduleName];
 				write.asModule(pluginName + "!" + moduleName, content);
 			}
 		}
@@ -5335,5 +5327,5 @@ define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jqu
 		}
 	});
 });
-define('troopjs/package',{"name":"troopjs","description":"TroopJS package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.0.2","grunt-git-dist":"~0.3.0","grunt-json-replace":"~0.1.2","grunt-lexicon":"~0.1.9","buster":"~0.6.12"}});
+define('troopjs/package',{"name":"troopjs","description":"TroopJS package","version":"2.0.1-SNAPSHOT","author":{"name":"Mikael Karon","email":"mikael@karon.se"},"maintainers":[{"name":"Mikael Karon","web":"http://github.com/mikaelkaron"}],"repository":{"type":"git","url":"https://github.com/troopjs/troopjs.git"},"bugs":{"url":"https://github.com/troopjs/troopjs/issues"},"licenses":[{"type":"MIT","url":"http://troopjs.mit-license.org/"}],"devDependencies":{"grunt":"~0.4.1","grunt-contrib-requirejs":"~0.4.1","grunt-contrib-uglify":"~0.2.2","grunt-contrib-clean":"~0.4.1","grunt-banner":"~0.1.4","grunt-plugin-buster":"~2.0.0","grunt-git-describe":"~2.1.0","grunt-git-dist":"~0.3.0","grunt-semver":"~0.1.2"}});
 define(['troopjs/package'], function (main) { return main; });
