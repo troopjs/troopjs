@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.1-SNAPSHOT+deb2668 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.1+e92448b © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -4643,5 +4643,5 @@ define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
 	return $.noConflict(true);
 });
 
-define('troopjs/version',[],function () { return "2.0.1-SNAPSHOT+deb2668"; });
+define('troopjs/version',[],function () { return "2.0.1+e92448b"; });
 define(['troopjs/version'], function (main) { return main; });
