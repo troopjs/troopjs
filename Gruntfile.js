@@ -175,7 +175,7 @@ module.exports = function(grunt) {
 	});
 
 	function reload(version, src, dest) {
-		if (grunt.file.isMatch([ grunt.config("build.dist") + "/package.json" ], [ dest ])) {
+		if (grunt.file.arePathsEquivalent(grunt.config("build.dist") + "/package.json", dest)) {
 			grunt.config("build.pkg", grunt.file.readJSON(dest));
 		}
 	}
