@@ -5,6 +5,22 @@ module.exports = function(grunt) {
 	var semver = require("semver");
 	var UNDEFINED;
 
+	/**
+	 * Formats a semver
+	 * @param {semver} version
+	 * @return {string} Formatted semver
+	 */
+	function format(version) {
+		var build = version.build;
+		var result = version.format();
+
+		if (build && build.length) {
+			result += "+" + build.join(".");
+		}
+
+		return result;
+	}
+
 	grunt.initConfig({
 		"pkg": grunt.file.readJSON("package.json"),
 
@@ -171,17 +187,6 @@ module.exports = function(grunt) {
 			"troopjs" : {}
 		}
 	});
-
-	function format(version) {
-		var build = version.build;
-		var result = version.format();
-
-		if (build && build.length) {
-			result += "+" + build.join(".");
-		}
-
-		return result;
-	}
 
 	grunt.event.on("git-describe", function (git_version) {
 		grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + git_version.object)));
