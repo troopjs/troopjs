@@ -9,9 +9,8 @@ module.exports = function(grunt) {
 			"src" : ".",
 			"dist" : "dist",
 			"banner" : "/**\n" +
-				" * <%= build.pkg.name %> - <%= build.pkg.version %>\n" +
-				" * <%= _.pluck(build.pkg.licenses, 'type').join(', ') %> <%= _.pluck(build.pkg.licenses, 'url').join(', ') %>\n" +
-				" * © <%= build.pkg.author.name %> mailto:<%= build.pkg.author.email%>\n" +
+				" * <%= build.pkg.name %> - <%= build.pkg.version %> © <%= build.pkg.author.name %> mailto:<%= build.pkg.author.email%>\n" +
+				" * @license <%= _.pluck(build.pkg.licenses, 'type').join(', ') %> <%= _.pluck(build.pkg.licenses, 'url').join(', ') %>\n" +
 				" */"
 		},
 
