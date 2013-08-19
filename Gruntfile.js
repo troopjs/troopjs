@@ -1,17 +1,17 @@
 /*jshint node:true*/
 module.exports = function(grunt) {
 	"use strict";
+
 	var UNDEFINED;
 
 	grunt.initConfig({
-		"pkg": grunt.file.readJSON("package.json"),
-
 		"build" : {
 			"src" : ".",
 			"dist" : "dist",
 			"banner" : "/**\n" +
 				" * <%= build.pkg.name %> - <%= build.pkg.version %>\n" +
-				" * @license <%= pkg.licenses[0].type %> <%= pkg.licenses[0].url %> © <%= pkg.author.name %> mailto:<%= pkg.author.email%>\n" +
+				" * <%= _.pluck(build.pkg.licenses, 'type').join(', ') %> <%= _.pluck(build.pkg.licenses, 'url').join(', ') %>\n" +
+				" * © <%= build.pkg.author.name %> mailto:<%= build.pkg.author.email%>\n" +
 				" */"
 		},
 
@@ -59,7 +59,7 @@ module.exports = function(grunt) {
 					"location" : "lib/troopjs-requirejs"
 				}],
 				"rawText" : {
-					"troopjs/package" : "define(<%= JSON.stringify(pkg) %>);\n"
+					"troopjs/package" : "define(<%= JSON.stringify(build.pkg) %>);\n"
 				},
 				"removeCombined" : true,
 				"wrap" : {
@@ -93,13 +93,15 @@ module.exports = function(grunt) {
 			}
 		},
 
-		"clean" : [ "<%= build.dist %>" ],
+		"clean" : {
+			"dist" : [ "<%= build.dist %>" ]
+		},
 
 		"uglify" : {
 			"options" : {
 				"preserveComments" : false
 			},
-			"bundles" : {
+			"dist" : {
 				"files" : [{
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
@@ -123,7 +125,7 @@ module.exports = function(grunt) {
 				"position" : "top",
 				"banner" : "<%= build.banner %>"
 			},
-			"bundles" : {
+			"dist" : {
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
@@ -153,15 +155,17 @@ module.exports = function(grunt) {
 		},
 
 		"git-dist" : {
-			"bundles" : {
+			"options" : {
+				"message" : "<%= build.pkg.name %> - <%= build.pkg.version %>",
+				"config" : {
+					"user.name" : UNDEFINED,
+					"user.email" : UNDEFINED
+				}
+			},
+			"dist" : {
 				"options" : {
 					"branch" : "build/2.x",
-					"dir" : "<%= build.dist %>",
-					"message" : "<%= pkg.name %> - <%= pkg.version %>",
-					"config" : {
-						"user.name" : UNDEFINED,
-						"user.email" : UNDEFINED
-					}
+					"dir" : "<%= build.dist %>"
 				}
 			}
 		},
@@ -177,6 +181,9 @@ module.exports = function(grunt) {
 		}
 	}
 
+	grunt.event.on("semver.set", reload);
+	grunt.event.on("semver.bump", reload);
+
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
@@ -186,14 +193,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-semver");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.event.on("semver.set", reload);
-	grunt.event.on("semver.bump", reload);
-
 	grunt.registerTask("version", [ "git-describe", "semver:dist:set::{%=build.pkg.version.object%}" ]);
 	grunt.registerTask("compile", [ "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("default", [ "compile", "compress", "version", "usebanner" ]);
+	grunt.registerTask("default", [ "version", "compile", "compress", "usebanner" ]);
 
 	grunt.registerTask("release", "Package and release", function (phase) {
 		var name = this.name;
@@ -201,12 +205,12 @@ module.exports = function(grunt) {
 		switch (phase) {
 			case "prepare":
 				grunt.log.subhead("Preparing release");
-				grunt.task.run([ "clean", "git-dist:bundles:clone", "default" ]);
+				grunt.task.run([ "clean", "git-dist:dist:clone", "default" ]);
 				break;
 
 			case "perform":
 				grunt.log.subhead("Performing release");
-				grunt.task.run([ "git-dist:bundles:commit", "git-dist:bundles:push" ]);
+				grunt.task.run([ "git-dist:dist:commit", "git-dist:dist:push" ]);
 				break;
 
 			default:
