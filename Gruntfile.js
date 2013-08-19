@@ -2,15 +2,18 @@
 module.exports = function(grunt) {
 	"use strict";
 
+	var semver = require("semver");
 	var UNDEFINED;
 
 	grunt.initConfig({
+		"pkg": grunt.file.readJSON("package.json"),
+
 		"build" : {
 			"src" : ".",
 			"dist" : "dist",
 			"banner" : "/**\n" +
-				" * <%= build.pkg.name %> - <%= build.pkg.version %> © <%= build.pkg.author.name %> mailto:<%= build.pkg.author.email%>\n" +
-				" * @license <%= _.pluck(build.pkg.licenses, 'type').join(', ') %> <%= _.pluck(build.pkg.licenses, 'url').join(', ') %>\n" +
+				" * <%= pkg.name %> - <%= pkg.version %> © <%= pkg.author.name %> mailto:<%= pkg.author.email%>\n" +
+				" * @license <%= _.pluck(pkg.licenses, 'type').join(', ') %> <%= _.pluck(pkg.licenses, 'url').join(', ') %>\n" +
 				" */"
 		},
 
@@ -36,8 +39,7 @@ module.exports = function(grunt) {
 					"location" : "empty:"
 				}, {
 					"name" : "troopjs",
-					"location" : ".",
-					"main" : "package"
+					"location" : "."
 				}, {
 					"name" : "troopjs-core",
 					"location" : "lib/troopjs-core"
@@ -58,11 +60,11 @@ module.exports = function(grunt) {
 					"location" : "lib/troopjs-requirejs"
 				}],
 				"rawText" : {
-					"troopjs/package" : "define(<%= JSON.stringify(build.pkg) %>);\n"
+					"troopjs/version" : "define(function () { return <%= JSON.stringify(pkg.version) %>; });\n"
 				},
 				"removeCombined" : true,
 				"wrap" : {
-					"end" : "define(['troopjs/package'], function (main) { return main; });"
+					"end" : "define(['troopjs/version'], function (main) { return main; });"
 				}
 			},
 
@@ -70,7 +72,7 @@ module.exports = function(grunt) {
 				"options" : {
 					"modules" : [{
 						"name" : "troopjs/maxi",
-						"include" : [ "troopjs/package" ],
+						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
 							"troopjs/maxi",
 							"troopjs/mini",
@@ -78,14 +80,14 @@ module.exports = function(grunt) {
 						]
 					}, {
 						"name" : "troopjs/mini",
-						"include" : [ "troopjs/package" ],
+						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
 							"troopjs/mini",
 							"troopjs/micro"
 						]
 					}, {
 						"name" : "troopjs/micro",
-						"include" : [ "troopjs/package" ],
+						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [ "troopjs/micro" ]
 					}]
 				}
@@ -112,11 +114,7 @@ module.exports = function(grunt) {
 		},
 
 		"git-describe" : {
-			"bundles" : {
-				"options" : {
-					"prop" : "build.pkg.version"
-				}
-			}
+			"bundles" : {}
 		},
 
 		"usebanner" : {
@@ -155,7 +153,7 @@ module.exports = function(grunt) {
 
 		"git-dist" : {
 			"options" : {
-				"message" : "<%= build.pkg.name %> - <%= build.pkg.version %>",
+				"message" : "<%= pkg.name %> - <%= pkg.version %>",
 				"config" : {
 					"user.name" : UNDEFINED,
 					"user.email" : UNDEFINED
@@ -174,14 +172,9 @@ module.exports = function(grunt) {
 		}
 	});
 
-	function reload(version, src, dest) {
-		if (grunt.file.arePathsEquivalent(grunt.config("build.dist") + "/package.json", dest)) {
-			grunt.config("build.pkg", grunt.file.readJSON(dest));
-		}
-	}
-
-	grunt.event.on("semver.set", reload);
-	grunt.event.on("semver.bump", reload);
+	grunt.event.on("git-describe", function (version) {
+		grunt.config("pkg.version", semver(grunt.config("pkg.version")) + "+" + version.object);
+	});
 
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-requirejs");
@@ -192,11 +185,10 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-semver");
 	grunt.loadNpmTasks("grunt-plugin-buster");
 
-	grunt.registerTask("version", [ "git-describe", "semver:dist:set::{%=build.pkg.version.object%}" ]);
-	grunt.registerTask("compile", [ "requirejs" ]);
+	grunt.registerTask("compile", [ "git-describe", "requirejs", "semver:dist:set:{%= pkg.version %}" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("default", [ "version", "compile", "compress", "usebanner" ]);
+	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
 
 	grunt.registerTask("release", "Package and release", function (phase) {
 		var name = this.name;
