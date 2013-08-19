@@ -172,8 +172,19 @@ module.exports = function(grunt) {
 		}
 	});
 
-	grunt.event.on("git-describe", function (version) {
-		grunt.config("pkg.version", semver(grunt.config("pkg.version")) + "+" + version.object);
+	function format(version) {
+		var build = version.build;
+		var result = version.format();
+
+		if (build && build.length) {
+			result += "+" + build.join(".");
+		}
+
+		return result;
+	}
+
+	grunt.event.on("git-describe", function (git_version) {
+		grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + git_version.object)));
 	});
 
 	grunt.loadNpmTasks("grunt-contrib-clean");
