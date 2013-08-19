@@ -6,10 +6,10 @@
 .settings
 .externalToolBuilders
 
-# Node
+# Packages
 node_modules
+bower_components
 
-# dist
+# Artifacts
 dist/
 docs/
-auth.json

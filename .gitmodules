@@ -1,27 +1,18 @@
-[submodule "src/lib/troopjs-core"]
-	path = src/lib/troopjs-core
+[submodule "lib/troopjs-core"]
+	path = lib/troopjs-core
 	url = https://github.com/troopjs/troopjs-core.git
-[submodule "src/lib/troopjs-jquery"]
-	path = src/lib/troopjs-jquery
+[submodule "lib/troopjs-jquery"]
+	path = lib/troopjs-jquery
 	url = https://github.com/troopjs/troopjs-jquery.git
-[submodule "src/lib/troopjs-requirejs"]
-	path = src/lib/troopjs-requirejs
+[submodule "lib/troopjs-requirejs"]
+	path = lib/troopjs-requirejs
 	url = https://github.com/troopjs/troopjs-requirejs.git
-[submodule "src/lib/troopjs-utils"]
-	path = src/lib/troopjs-utils
+[submodule "lib/troopjs-utils"]
+	path = lib/troopjs-utils
 	url = https://github.com/troopjs/troopjs-utils.git
-[submodule "resources/requirejs"]
-	path = resources/requirejs
-	url = https://github.com/jrburke/requirejs.git
-[submodule "src/lib/troopjs-browser"]
-	path = src/lib/troopjs-browser
+[submodule "lib/troopjs-browser"]
+	path = lib/troopjs-browser
 	url = https://github.com/troopjs/troopjs-browser.git
-[submodule "src/lib/troopjs-data"]
-	path = src/lib/troopjs-data
-	url = https://github.com/troopjs/troopjs-data
-[submodule "src/lib/when"]
-	path = src/lib/when
-	url = https://github.com/cujojs/when.git
-[submodule "src/lib/poly"]
-	path = src/lib/poly
-	url = https://github.com/troopjs/poly.git
+[submodule "lib/troopjs-data"]
+	path = lib/troopjs-data
+	url = https://github.com/troopjs/troopjs-data.git
