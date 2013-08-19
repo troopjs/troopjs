@@ -43,7 +43,7 @@ lib/troopjs-browser/store/adapter/session.js
 lib/troopjs-jquery/dimensions.js
 lib/troopjs-jquery/resize.js
 lib/troopjs-browser/dimensions/widget.js
-./package.js
+./version.js
 
 ./mini.js
 ----------------
@@ -81,7 +81,7 @@ lib/troopjs-requirejs/shadow.js
 lib/troopjs-browser/loom/woven.js
 lib/troopjs-jquery/loom.js
 lib/troopjs-jquery/noconflict.js
-./package.js
+./version.js
 
 ./micro.js
 ----------------
@@ -108,4 +108,4 @@ lib/troopjs-browser/application/widget.js
 lib/troopjs-browser/route/uri.js
 lib/troopjs-jquery/hashchange.js
 lib/troopjs-browser/route/widget.js
-./package.js
+./version.js

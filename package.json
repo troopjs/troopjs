@@ -1,7 +1,7 @@
 {
 	"name": "troopjs",
 	"description": "TroopJS package",
-	"version": "2.0.1-SNAPSHOT+cb1d579",
+	"version": "2.0.1-SNAPSHOT+da33ac2",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -29,11 +29,12 @@
 		"grunt": "~0.4.1",
 		"grunt-contrib-requirejs": "~0.4.1",
 		"grunt-contrib-uglify": "~0.2.2",
-		"grunt-contrib-clean": "~0.4.1",
+		"grunt-contrib-clean": "~0.5.0",
 		"grunt-banner": "~0.1.4",
 		"grunt-plugin-buster": "~2.0.0",
-		"grunt-git-describe": "~2.1.0",
+		"grunt-git-describe": "~2.2.0",
 		"grunt-git-dist": "~0.3.0",
-		"grunt-semver": "~0.1.2"
+		"grunt-semver": "~0.1.2",
+		"semver": "~2.1"
 	}
 }
