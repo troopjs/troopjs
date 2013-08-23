@@ -21,6 +21,7 @@ module.exports = function(grunt) {
 		return result;
 	}
 
+	// Configure grunt
 	grunt.initConfig({
 		"pkg": grunt.file.readJSON("package.json"),
 
@@ -192,14 +193,10 @@ module.exports = function(grunt) {
 		grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + git_version.object)));
 	});
 
-	grunt.loadNpmTasks("grunt-contrib-clean");
-	grunt.loadNpmTasks("grunt-contrib-requirejs");
-	grunt.loadNpmTasks("grunt-contrib-uglify");
-	grunt.loadNpmTasks("grunt-banner");
-	grunt.loadNpmTasks("grunt-git-describe");
-	grunt.loadNpmTasks("grunt-git-dist");
-	grunt.loadNpmTasks("grunt-semver");
-	grunt.loadNpmTasks("grunt-plugin-buster");
+	// Load all grunt tasks
+	require("matchdep")
+		.filterDev("grunt-*")
+		.forEach(grunt.loadNpmTasks);
 
 	grunt.registerTask("compile", [ "git-describe", "requirejs", "semver:dist:set:{%= pkg.version %}" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
