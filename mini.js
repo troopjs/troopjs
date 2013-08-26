@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-0+0728d19 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-0+c6e655d © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -4643,5 +4643,5 @@ define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
 	return $.noConflict(true);
 });
 
-define('troopjs/version',[],function () { return "2.0.2-0+0728d19"; });
+define('troopjs/version',[],function () { return "2.0.2-0+c6e655d"; });
 define(['troopjs/version'], function (main) { return main; });
