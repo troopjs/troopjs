@@ -171,6 +171,7 @@ module.exports = function(grunt) {
 		"git-dist" : {
 			"options" : {
 				"message" : "<%= pkg.name %> - <%= pkg.version %>",
+				"tag" : "<%= pkg.version %>",
 				"config" : {
 					"user.name" : UNDEFINED,
 					"user.email" : UNDEFINED
