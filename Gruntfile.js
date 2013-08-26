@@ -29,7 +29,7 @@ module.exports = function(grunt) {
 			"src" : ".",
 			"dist" : "dist",
 			"banner" : "/**\n" +
-				" * <%= pkg.name %> - <%= pkg.version %> © <%= pkg.author.name %> mailto:<%= pkg.author.email%>\n" +
+				" * <%= pkg.name %> - <%= pkg.version %> © <%= pkg.author.name %> mailto:<%= pkg.author.email %>\n" +
 				" * @license <%= _.pluck(pkg.licenses, 'type').join(', ') %> <%= _.pluck(pkg.licenses, 'url').join(', ') %>\n" +
 				" */"
 		},
