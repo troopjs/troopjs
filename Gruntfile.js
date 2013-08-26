@@ -214,7 +214,7 @@ module.exports = function(grunt) {
 
 			case "perform":
 				grunt.log.subhead("Performing release");
-				grunt.task.run([ "git-dist:dist:commit", "git-dist:dist:push" ]);
+				grunt.task.run([ "git-dist:dist:commit", "git-dist:dist:tag", "git-dist:dist:push" ]);
 				break;
 
 			default:
