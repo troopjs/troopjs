@@ -1,7 +1,7 @@
 {
 	"name": "troopjs",
 	"description": "TroopJS package",
-	"version": "2.0.2-0+c6e655d",
+	"version": "2.0.2-1+1c5c802",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -34,8 +34,8 @@
 		"grunt-banner": "~0.1.4",
 		"grunt-plugin-buster": "~2.0.0",
 		"grunt-git-describe": "~2.3.1",
-		"grunt-git-dist": "~0.3.0",
-		"grunt-semver": "~0.1.2",
+		"grunt-git-dist": "~0.3.1",
+		"grunt-semver": "~0.1.6",
 		"semver": "~2.1"
 	}
 }
