@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-2+0fc04a5 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-2+09bc3e9 © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -2874,5 +2874,5 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		}
 	});
 });
-define('troopjs/version',[],function () { return "2.0.2-2+0fc04a5"; });
+define('troopjs/version',[],function () { return "2.0.2-2+09bc3e9"; });
 define(['troopjs/version'], function (main) { return main; });
