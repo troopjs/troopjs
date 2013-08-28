@@ -223,25 +223,35 @@ module.exports = function(grunt) {
 				grunt.warn(new Error("Unknown phase '" + phase + "'"));
 		}
 
-		grunt.task.run(args.join(":"));
+		grunt.task.run([ args.join(":") ]);
 	});
 
 	grunt.registerTask("release", "Package and release", function (phase) {
 		var name = this.name;
+		var args = [];
 
 		switch (phase) {
 			case "prepare":
 				grunt.log.subhead("Preparing release");
-				grunt.task.run([ "clean", "git-dist:dist:clone", "default" ]);
+				args.push("clean", "git-dist:dist:clone", "default");
 				break;
 
 			case "perform":
 				grunt.log.subhead("Performing release");
-				grunt.task.run([ "git-dist:dist:commit", "git-dist:dist:tag", "git-dist:dist:push" ]);
+				args.push("git-dist:dist:commit");
+				if (grunt.option("no-tag")) {
+					grunt.log.verbose.writeln("Not tagging as " + "--no-tag".cyan + " was passed");
+				}
+				else {
+					args.push("git-dist:dist:tag");
+				}
+				args.push("git-dist:dist:push");
 				break;
 
 			default:
-				grunt.task.run([ name + ":prepare", name + ":perform" ]);
+				args.push(name + ":prepare", name + ":perform");
 		}
+
+		grunt.task.run(args);
 	});
 };
