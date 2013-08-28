@@ -204,6 +204,15 @@ module.exports = function(grunt) {
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
 
+	grunt.registerTask("bump", "Bump version(s)", function (part) {
+		if (grunt.util.kindOf(part) === "undefined") {
+			part = "prerelease";
+		}
+
+		grunt.log.subhead("Bumping versions");
+		grunt.task.run([ "semver:bundles:bump:" + part ]);
+	});
+
 	grunt.registerTask("release", "Package and release", function (phase) {
 		var name = this.name;
 
