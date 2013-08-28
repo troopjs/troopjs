@@ -204,13 +204,26 @@ module.exports = function(grunt) {
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
 
-	grunt.registerTask("bump", "Bump version(s)", function (part) {
-		if (grunt.util.kindOf(part) === "undefined") {
-			part = "prerelease";
+	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
+		var args = [ "semver", "bundles" ];
+
+		switch (phase) {
+			case "bump" :
+			case "strip" :
+				if (grunt.util.kindOf(part) === "undefined") {
+					part = "prerelease";
+				}
+				/* falls through */
+
+			case "set" :
+				args.push(phase, part, build);
+				break;
+
+			default :
+				grunt.warn(new Error("Unknown phase '" + phase + "'"));
 		}
 
-		grunt.log.subhead("Bumping versions");
-		grunt.task.run([ "semver:bundles:bump:" + part ]);
+		grunt.task.run(args.join(":"));
 	});
 
 	grunt.registerTask("release", "Package and release", function (phase) {
