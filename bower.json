@@ -6,9 +6,9 @@
 		"node_modules"
 	],
 	"devDependencies": {
-		"jquery": "~2.0",
+		"jquery": "~2",
 		"poly": "~0.6",
 		"requirejs": "~2.1",
-		"when": "~2.2"
+		"when": "~2.3"
 	}
 }
