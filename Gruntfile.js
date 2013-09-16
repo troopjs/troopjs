@@ -41,7 +41,7 @@ module.exports = function(grunt) {
 				"optimize" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.\w+|Gruntfile\.js|node_modules|bower_components|test|dist)$/,
+				"fileExclusionRegExp": /^(?:\.\w+|node_modules|dist|Gruntfile\.js)$/,
 				"packages" : [{
 					"name" : "text",
 					"location" : "empty:"
@@ -59,27 +59,26 @@ module.exports = function(grunt) {
 					"location" : "."
 				}, {
 					"name" : "troopjs-core",
-					"location" : "lib/troopjs-core"
+					"location" : "bower_components/troopjs-core"
 				}, {
 					"name" : "troopjs-browser",
-					"location" : "lib/troopjs-browser"
+					"location" : "bower_components/troopjs-browser"
 				}, {
 					"name" : "troopjs-data",
-					"location" : "lib/troopjs-data"
+					"location" : "bower_components/troopjs-data"
 				}, {
 					"name" : "troopjs-utils",
-					"location" : "lib/troopjs-utils"
+					"location" : "bower_components/troopjs-utils"
 				}, {
 					"name" : "troopjs-jquery",
-					"location" : "lib/troopjs-jquery"
+					"location" : "bower_components/troopjs-jquery"
 				}, {
 					"name" : "troopjs-requirejs",
-					"location" : "lib/troopjs-requirejs"
+					"location" : "bower_components/troopjs-requirejs"
 				}],
 				"rawText" : {
 					"troopjs/version" : "define(function () { return <%= JSON.stringify(pkg.version) %>; });\n"
 				},
-				"removeCombined" : true,
 				"wrap" : {
 					"end" : "define(['troopjs/version'], function (main) { return main; });"
 				}
