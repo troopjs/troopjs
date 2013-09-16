@@ -188,14 +188,7 @@ module.exports = function(grunt) {
 	});
 
 	// Load all grunt tasks
-	require("matchdep")
-		.filterDev("grunt-*")
-		.forEach(grunt.loadNpmTasks);
-
-	grunt.registerTask("compile", [ "requirejs", "git-describe", "rewrite" ]);
-	grunt.registerTask("compress", [ "uglify" ]);
-	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
+	require("matchdep").filterDev("grunt-*").forEach(grunt.loadNpmTasks);
 
 	grunt.registerTask("rewrite", "Rewrite package files", function () {
 		var _ = grunt.util._;
@@ -290,4 +283,9 @@ module.exports = function(grunt) {
 
 		grunt.task.run(args);
 	});
+
+	grunt.registerTask("compile", [ "requirejs", "git-describe", "rewrite" ]);
+	grunt.registerTask("compress", [ "uglify" ]);
+	grunt.registerTask("test", [ "buster" ]);
+	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
 };
