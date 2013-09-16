@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-4+1a5a0af © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-4+49bba8c © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
