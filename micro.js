@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-2+7bf18d2 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-4+4435b5e © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -756,9 +756,6 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 	var RE_HINT = /^(\w+)(?::(pipeline|sequence))/;
 	var RE_PHASE = /^(?:initi|fin)alized?$/;
 	var ARRAY_SLICE = Array.prototype.slice;
-	var ARRAY_ISARRAY = Array.isArray;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_FUNCTION = OBJECT_TOSTRING.call(Function.prototype);
 
 	/**
 	 * Constructs a function that executes handlers in sequence without overlap
@@ -786,11 +783,6 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 			/*jshint curly:false*/
 			var context;
 			var handler;
-
-			// Check that args is an array
-			if (!ARRAY_ISARRAY(args)) {
-				throw new Error("Result from handler has to be of type array");
-			}
 
 			// Store result
 			if (resultCount++ >= resultLength) {
@@ -839,11 +831,6 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 
 			// Check that we have args
 			if (args !== UNDEFINED) {
-
-				if (!ARRAY_ISARRAY(args)) {
-					throw new Error("Result from handler has to be of type array");
-				}
-
 				// Update memory and result
 				anchor[MEMORY] = result = args;
 			}
@@ -893,11 +880,6 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 				throw new Error("no callback provided");
 			}
 
-			// Test if callback is a function
-			if (OBJECT_TOSTRING.call(callback) !== TOSTRING_FUNCTION) {
-				throw new Error(OBJECT_TOSTRING.call(callback) + " is not a function");
-			}
-
 			// Have handlers
 			if (event in handlers) {
 				// Get handlers
@@ -921,11 +903,6 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 
 				// Iterate callbacks
 				while ((callback = args[offset++]) !== UNDEFINED) {
-					// Test if callback is a function
-					if (OBJECT_TOSTRING.call(callback) !== TOSTRING_FUNCTION) {
-						throw new Error(OBJECT_TOSTRING.call(callback) + " is not a function");
-					}
-
 					// Set tail -> tail[NEXT] -> handler
 					tail = tail[NEXT] = handler = {};
 
@@ -952,11 +929,6 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
 
 				// Iterate callbacks
 				while ((callback = args[offset++]) !== UNDEFINED) {
-					// Test if callback is a function
-					if (OBJECT_TOSTRING.call(callback) !== TOSTRING_FUNCTION) {
-						throw new Error(OBJECT_TOSTRING.call(callback) + " is not a function");
-					}
-
 					// Set tail -> tail[NEXT] -> handler
 					tail = tail[NEXT] = handler = {};
 
@@ -2835,6 +2807,7 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 	var $ELEMENT = "$element";
 	var HASHCHANGE = "hashchange";
 	var ROUTE = "route";
+	var SET = "/set";
 	var RE = /^#/;
 
 	function onHashChange($event) {
@@ -2856,13 +2829,21 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		}
 	}
 
+	function setRoute(uri) {
+		this[$ELEMENT].get(0).location.hash = uri.toString();
+	}
+
 	return Widget.extend({
-		"displayName" :"browser/route/widget",
+		"displayName" : "browser/route/widget",
 
 		"sig/initialize" : function initialize() {
 			var me = this;
 
+			// Add DOM event handler
 			me[$ELEMENT].on(HASHCHANGE, me, onHashChange);
+
+			// Add HUB event handler
+			me.subscribe(me.displayName + SET, setRoute);
 		},
 
 		"sig/start" : function start() {
@@ -2870,9 +2851,13 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
 		},
 
 		"sig/finalize" : function finalize() {
+			// Remove DOM event handler
 			this[$ELEMENT].off(HASHCHANGE, onHashChange);
+
+			// Remove HUB event handler
+			me.unsubscribe(me.displayName + SET, setRoute);
 		}
 	});
 });
-define('troopjs/version',[],function () { return "2.0.2-2+7bf18d2"; });
+define('troopjs/version',[],function () { return "2.0.2-4+4435b5e"; });
 define(['troopjs/version'], function (main) { return main; });
