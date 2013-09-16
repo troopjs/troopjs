@@ -13,22 +13,22 @@ var require = {
 		"main" : "poly"
 	}, {
 		"name" : "troopjs-core",
-		"location" : "lib/troopjs-core"
+		"location" : "bower_components/troopjs-core"
 	}, {
 		"name" : "troopjs-data",
-		"location" : "lib/troopjs-data"
+		"location" : "bower_components/troopjs-data"
 	}, {
 		"name" : "troopjs-browser",
-		"location" : "lib/troopjs-browser"
+		"location" : "bower_components/troopjs-browser"
 	}, {
 		"name" : "troopjs-jquery",
-		"location" : "lib/troopjs-jquery"
+		"location" : "bower_components/troopjs-jquery"
 	}, {
 		"name" : "troopjs-requirejs",
-		"location" : "lib/troopjs-requirejs"
+		"location" : "bower_components/troopjs-requirejs"
 	}, {
 		"name" : "troopjs-utils",
-		"location" : "lib/troopjs-utils"
+		"location" : "bower_components/troopjs-utils"
 	}],
 
 	"map" : {

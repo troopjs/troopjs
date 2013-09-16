@@ -3,6 +3,7 @@ module.exports = function(grunt) {
 	"use strict";
 
 	var semver = require("semver");
+	var path = require("path");
 	var UNDEFINED;
 
 	/**
@@ -39,9 +40,10 @@ module.exports = function(grunt) {
 				"baseUrl" : "<%= build.src %>",
 				"dir" : "<%= build.dist %>",
 				"optimize" : "none",
+				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.\w+|node_modules|dist|Gruntfile\.js)$/,
+				"fileExclusionRegExp": /^(?:dist|node_modules|test|Gruntfile\.js|\.(?!travis\.yml|gitignore))/,
 				"packages" : [{
 					"name" : "text",
 					"location" : "empty:"
@@ -156,14 +158,6 @@ module.exports = function(grunt) {
 					"expand": true,
 					"src" : [ "package.json", "bower.json" ]
 				}]
-			},
-			"dist": {
-				"files": [{
-					"expand": true,
-					"cwd" : "<%= build.dist %>",
-					"dest" : "<%= build.dist %>",
-					"src" : [ "package.json", "bower.json" ]
-				}]
 			}
 		},
 
@@ -198,10 +192,39 @@ module.exports = function(grunt) {
 		.filterDev("grunt-*")
 		.forEach(grunt.loadNpmTasks);
 
-	grunt.registerTask("compile", [ "git-describe", "requirejs", "semver:dist:set:{%= pkg.version %}" ]);
+	grunt.registerTask("compile", [ "requirejs", "git-describe", "rewrite" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
+
+	grunt.registerTask("rewrite", "Rewrite package files", function () {
+		var _ = grunt.util._;
+		var re = /^troopjs-\w+/;
+
+		var replacer = function (key, value) {
+			return _.isEmpty(value) ? UNDEFINED : value;
+		}
+
+		// Get paths
+		var bower_path = path.join(grunt.config("build.dist"), "bower.json");
+		var package_path = path.join(grunt.config("build.dist"), "package.json");
+
+		// Read JSON
+		var bower_json = grunt.file.readJSON(bower_path);
+		var package_json = grunt.file.readJSON(package_path);
+
+		// Remove troopjs dependencies
+		bower_json.dependencies = _.omit(bower_json.dependencies, function (value, key) {
+			return re.test(key);
+		});
+
+		// Update versions
+		package_json.version = bower_json.version = grunt.config("pkg.version");
+
+		// Write files
+		grunt.file.write(bower_path, JSON.stringify(bower_json, replacer, "\t"));
+		grunt.file.write(package_path, JSON.stringify(package_json, replacer, "\t"));
+	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
 		var args = [ "semver", "bundles" ];
