@@ -205,25 +205,40 @@ module.exports = function(grunt) {
 			return _.isEmpty(value) ? UNDEFINED : value;
 		}
 
-		// Get paths
 		var bower_path = path.join(grunt.config("build.dist"), "bower.json");
 		var package_path = path.join(grunt.config("build.dist"), "package.json");
 
-		// Read JSON
-		var bower_json = grunt.file.readJSON(bower_path);
-		var package_json = grunt.file.readJSON(package_path);
+		try {
+			grunt.log.write("Reading " + bower_path + "...");
+			var bower_json = grunt.file.readJSON(bower_path);
+			grunt.log.ok();
 
-		// Remove troopjs dependencies
-		bower_json.dependencies = _.omit(bower_json.dependencies, function (value, key) {
-			return re.test(key);
-		});
+			grunt.log.write("Omitting troop dependencies...");
+			bower_json.dependencies = _.omit(bower_json.dependencies, function (value, key) {
+				return re.test(key);
+			});
+			grunt.log.ok();
 
-		// Update versions
-		package_json.version = bower_json.version = grunt.config("pkg.version");
+			grunt.log.write("Reading " + package_path + "...");
+			var package_json = grunt.file.readJSON(package_path);
+			grunt.log.ok();
 
-		// Write files
-		grunt.file.write(bower_path, JSON.stringify(bower_json, replacer, "\t"));
-		grunt.file.write(package_path, JSON.stringify(package_json, replacer, "\t"));
+			grunt.log.write("Updating versions...");
+			package_json.version = bower_json.version = grunt.config("pkg.version");
+			grunt.log.ok();
+
+			grunt.log.write("Writing " + bower_path + "...");
+			grunt.file.write(bower_path, JSON.stringify(bower_json, replacer, "\t"));
+			grunt.log.ok();
+
+			grunt.log.write("Writing " + package_path + "...");
+			grunt.file.write(package_path, JSON.stringify(package_json, replacer, "\t"));
+			grunt.log.ok();
+		}
+		catch (e) {
+			grunt.fatal(e);
+		}
+
 	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
