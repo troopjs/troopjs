@@ -238,7 +238,6 @@ module.exports = function(grunt) {
 		catch (e) {
 			grunt.fatal(e);
 		}
-
 	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
