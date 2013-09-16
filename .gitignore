@@ -1,3 +1,15 @@
+# IDEA
+.idea
+
+# Eclipse
+.project
+.settings
+.externalToolBuilders
+
 # Packages
 node_modules
 bower_components
+
+# Artifacts
+dist/
+docs/
