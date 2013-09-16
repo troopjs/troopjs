@@ -267,7 +267,7 @@ module.exports = function(grunt) {
 
 			case "perform":
 				grunt.log.subhead("Performing release");
-				args.push("git-dist:dist:commit");
+				args.push("git-dist:dist:add", "git-dist:dist:commit");
 				if (grunt.option("no-tag")) {
 					grunt.log.writeln("Not tagging as " + "--no-tag".cyan + " was passed");
 				}
