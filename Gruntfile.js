@@ -4,7 +4,6 @@ module.exports = function(grunt) {
 
 	var semver = require("semver");
 	var path = require("path");
-	var shell = require("shelljs");
 	var UNDEFINED;
 
 	/**
@@ -240,9 +239,8 @@ module.exports = function(grunt) {
 
 	grunt.registerTask("jsduck", "Build API Documentation with JSDuck.",function () {
 
-		// Check JSDuck existence.
-		if (shell.exec("command -v jsduck", {silent: true}).code)
-			grunt.fail.warn("Check JSDuck installation.");
+		// Makes the task async.
+		var done = this.async();
 
 		var _ = grunt.util._;
 
@@ -379,14 +377,21 @@ module.exports = function(grunt) {
 			};
 		}
 
-		var cleanup = generate_guides_json();
-		grunt.log.subhead("Running JSDuck...");
+		// Check JSDuck existence.
+		grunt.util.spawn({cmd: "command", args: ["-v", "jsduck"]}, function(error) {
+			if (error) grunt.fail.warn("Check JSDuck installation.");
 
-		// Launch the JSDuck build process.
-		if (shell.exec("jsduck").code)
-			grunt.fail.warn("JSDuck run wasnt completed");
+			var cleanup = generate_guides_json();
+			grunt.log.subhead("Running JSDuck...");
 
-		cleanup();
+			// Launch the JSDuck build process.
+			grunt.util.spawn({cmd: "jsduck"}, function(error,result) {
+				if (error) grunt.fail.warn("JSDuck run wasnt completed");
+
+				cleanup();
+				done();
+			});
+		});
 	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
