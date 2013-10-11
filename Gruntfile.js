@@ -378,14 +378,14 @@ module.exports = function(grunt) {
 		}
 
 		// Check JSDuck existence.
-		grunt.util.spawn({cmd: "command", args: ["-v", "jsduck"]}, function(error) {
-			if (error) grunt.fail.warn("Check JSDuck installation.");
+		grunt.util.spawn({cmd: "jsduck", args: ["--version"]}, function(error, result,code) {
+			if (error && code > 100) grunt.fail.warn("Check JSDuck installation.");
 
 			var cleanup = generate_guides_json();
 			grunt.log.subhead("Running JSDuck...");
 
 			// Launch the JSDuck build process.
-			grunt.util.spawn({cmd: "jsduck"}, function(error,result) {
+			grunt.util.spawn({cmd: "jsduck"}, function(error) {
 				if (error) grunt.fail.warn("JSDuck run wasnt completed");
 
 				cleanup();
