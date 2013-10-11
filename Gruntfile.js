@@ -448,6 +448,6 @@ module.exports = function(grunt) {
 	grunt.registerTask("compile", [ "requirejs", "git-describe", "rewrite" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("default", [ "compile", "compress", "usebanner", "docs" ]);
+	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
 	grunt.registerTask("docs", [ "jsduck" ]);
 };
