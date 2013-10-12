@@ -256,8 +256,8 @@ module.exports = function(grunt) {
 
 				// Skeletons.
 				var HEADER = "// This file is generated from the grunt build, DO NOT MAKE manual modification.",
-					FOLDER = { title: '',items: [] },
-					NODE = { name: '',title: '',url: '' };
+					FOLDER = { title: '', items: [] },
+					NODE = { name: '', title: '', url: '' };
 
 				// UI Labels.
 				var ROOT_SECTION_NAME = "General",
@@ -265,21 +265,21 @@ module.exports = function(grunt) {
 					GUIDE_TITLE = "TroopJS Developer Guides";
 
 				function makeFolder(spec) {
-					return _.extend(_.clone(FOLDER,true),spec);
+					return _.extend(_.clone(FOLDER, true), spec);
 				}
 
 				function makeNode(spec) {
-					return _.extend(_.clone(NODE,true),spec);
+					return _.extend(_.clone(NODE, true), spec);
 				}
 
 				function capitalize(string) {
-					return string.charAt(0).toUpperCase()+string.slice(1).toLowerCase();
+					return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 				}
 
 				function deepSortItems(entry) {
 					if (entry && "items" in entry) {
 						var items = entry.items;
-						entry.items = _.sortBy(items,function(section) {
+						entry.items = _.sortBy(items, function(section) {
 							var order = section.order;
 							delete section.order;
 							return order;
@@ -295,7 +295,7 @@ module.exports = function(grunt) {
 				// Make a copy of the root README in 'guides' directory,
 				// to work around a JSDuck limitation.
 				if (grunt.file.exists("README.md"))
-					grunt.file.copy("README.md",path.join(GUIDES_TMP_DIR,"README.md"));
+					grunt.file.copy("README.md", path.join(GUIDES_TMP_DIR, "README.md"));
 
 				// Blob the MD files from all sub modules.
 				var module_guides = grunt.file.expand({
@@ -314,7 +314,7 @@ module.exports = function(grunt) {
 
 				var sections = {};
 
-				grunt.util.recurse(module_guides,function(doc_path) {
+				grunt.util.recurse(module_guides, function(doc_path) {
 					grunt.log.ok("located doc: ", doc_path);
 
 					var section_name,
@@ -367,7 +367,9 @@ module.exports = function(grunt) {
 
 				var root = makeFolder({ title: GUIDE_TITLE});
 				var items = root.items;
-				_.forOwn(sections, function(section) { items.push(section); });
+				_.forOwn(sections, function(section) {
+					items.push(section);
+				});
 
 				// Make sure entries are placed at the right order.
 				deepSortItems(root);
