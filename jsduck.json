@@ -1,0 +1,9 @@
+{
+	"--title": "TroopJS API Documentation",
+	"--warnings": [
+		"-nodoc(class,public)","-nodoc(member,public)"
+	],
+	"--external": [
+		"Promise"
+	]
+}
