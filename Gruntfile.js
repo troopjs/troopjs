@@ -244,136 +244,178 @@ module.exports = function(grunt) {
 
 		var _ = grunt.util._;
 
-		// Generate a guides.json file that indices the markdown docs from sub modules as JSDuck guides.
-		// https://github.com/senchalabs/jsduck/wiki/Guides
-		function generate_guides_json() {
+		function generate_config_files() {
 
-			// Skeletons.
-			var HEADER = "// This file is generated from the grunt build, DO NOT MAKE manual modification.",
-				FOLDER = { title: '',items: [] },
-				NODE = { name: '',title: '',url: '' };
+			var GUIDES_FILE = "guides.json",
+				CONFIG_FILE = "jsduck.json",
+				GUIDES_TMP_DIR = "guides/overview";
 
-			// UI Labels.
-			var ROOT_SECTION_NAME = "General",
-				OVERVIEW_TITLE = "Overview",
-				GUIDE_TITLE = "TroopJS Developer Guides";
+			// Generate a guides.json file that indices the markdown docs from sub modules as JSDuck guides.
+			// https://github.com/senchalabs/jsduck/wiki/Guides
+			(function guides_json() {
 
-			function makeFolder(spec) {
-				return _.extend(_.clone(FOLDER,true),spec);
-			}
+				// Skeletons.
+				var HEADER = "// This file is generated from the grunt build, DO NOT MAKE manual modification.",
+					FOLDER = { title: '', items: [] },
+					NODE = { name: '', title: '', url: '' };
 
-			function makeNode(spec) {
-				return _.extend(_.clone(NODE,true),spec);
-			}
+				// UI Labels.
+				var ROOT_SECTION_NAME = "General",
+					OVERVIEW_TITLE = "Overview",
+					GUIDE_TITLE = "TroopJS Developer Guides";
 
-			function capitalize(string) {
-				return string.charAt(0).toUpperCase()+string.slice(1).toLowerCase();
-			}
-
-			function deepSortItems(entry) {
-				if (entry && "items" in entry) {
-					var items = entry.items;
-					entry.items = _.sortBy(items,function(section) {
-						var order = section.order;
-						delete section.order;
-						return order;
-					});
-
-					items = entry.items;
-					for (var i = 0, l = items.length; i < l; i++) {
-						deepSortItems(items[i]);
-					}
-				}
-			}
-
-			// Make a copy of the root README in 'guides' directory,
-			// to work around a JSDuck limitation.
-			var tmp_dir = "guides/overview";
-			if (grunt.file.exists("README.md"))
-				grunt.file.copy("README.md",path.join(tmp_dir,"README.md"));
-
-			// Blob the MD files from all sub modules.
-			var module_guides = grunt.file.expand({
-					// Avoid adding README files from sub module dependencies.
-					filter: function(path) {
-						return path.lastIndexOf("bower_components") <= 0;
-					}
-				},
-				// Module README.
-				'**/troopjs-*/**/README.md',
-				// Additional Guidelines.
-				'**/guides/**/README.md',
-				// Excludes the dist.
-				'!' + grunt.config('build.dist') + '/**/*'
-			);
-
-			var sections = {};
-
-			grunt.util.recurse(module_guides,function(doc_path) {
-				grunt.log.ok("located doc: ", doc_path);
-
-				var section_name,
-					directory,
-					id, title, order;
-
-				var parts = doc_path.split(path.sep);
-
-				// Where the doc file resides.
-				directory = parts.slice(0, parts.length - 1).join(path.sep);
-
-				// Is it a sub module?
-				section_name = /troopjs-/.test(doc_path) ? parts[1] : ROOT_SECTION_NAME;
-
-				// Generate titles for the menu.
-				// TODO: Allow title override from markdown file meta.
-				id = parts.slice(1, parts.length - 1).join("_").replace(/[-.]/g, "_");
-				title = capitalize(parts[parts.length - 2].replace(/[-_]/g, ' '));
-				// Is it the module's root README?
-				if (/troopjs-\w+$/.test(directory)) title = OVERVIEW_TITLE;
-
-				// Make a folder for the section.
-				if (!(section_name in sections)) {
-					var module_title, match;
-					match = /^troopjs-([^-]*)/.exec(section_name);
-					// Is it a section for sub module?
-					module_title = match ? match[1] + ' module' : section_name;
-
-					// Raise the order of generic and core sections.
-					order = section_name == ROOT_SECTION_NAME ? 1 : section_name == "troopjs-core" ? 2 : 10;
-					sections[section_name] = makeFolder({title: module_title, order: order});
+				function makeFolder(spec) {
+					return _.extend(_.clone(FOLDER, true), spec);
 				}
 
-				// Put the ones from guides folder at the end, put overview at the head.
-				order = /guides/.test(directory) ? 10 : 2;
-				if (section_name == ROOT_SECTION_NAME && title == OVERVIEW_TITLE)
-					order = 1;
+				function makeNode(spec) {
+					return _.extend(_.clone(NODE, true), spec);
+				}
 
-				// Make a node for the doc file.
-				var section = sections[section_name].items;
-				section.push(makeNode(
-					{
-						name: id,
-						title: title,
-						url: directory,
-						order: order
+				function capitalize(string) {
+					return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+				}
+
+				function deepSortItems(entry) {
+					if (entry && "items" in entry) {
+						var items = entry.items;
+						entry.items = _.sortBy(items, function(section) {
+							var order = section.order;
+							delete section.order;
+							return order;
+						});
+
+						items = entry.items;
+						for (var i = 0, l = items.length; i < l; i++) {
+							deepSortItems(items[i]);
+						}
 					}
-				));
-			});
+				}
 
-			var root = makeFolder({ title: GUIDE_TITLE});
-			var items = root.items;
-			_.forOwn(sections, function(section) { items.push(section); });
+				// Make a copy of the root README in 'guides' directory,
+				// to work around a JSDuck limitation.
+				if (grunt.file.exists("README.md"))
+					grunt.file.copy("README.md", path.join(GUIDES_TMP_DIR, "README.md"));
 
-			// Make sure entries are placed at the right order.
-			deepSortItems(root);
+				// Blob the MD files from all sub modules.
+				var module_guides = grunt.file.expand({
+						// Avoid adding README files from sub module dependencies.
+						filter: function(path) {
+							return path.lastIndexOf("bower_components") <= 0;
+						}
+					},
+					// Module README.
+					'**/troopjs-*/**/README.md',
+					// Additional Guidelines.
+					'**/guides/**/README.md',
+					// Excludes the dist.
+					'!' + grunt.config('build.dist') + '/**/*'
+				);
 
-			var config_file = grunt.config("jsduck.guides");
-			grunt.file.write(config_file,[HEADER,JSON.stringify([root],null,2)].join('\n'));
+				var sections = {};
+
+				grunt.util.recurse(module_guides, function(doc_path) {
+					grunt.log.ok("located doc: ", doc_path);
+
+					var section_name,
+						directory,
+						id, title, order;
+
+					var parts = doc_path.split(path.sep);
+
+					// Where the doc file resides.
+					directory = parts.slice(0, parts.length - 1).join(path.sep);
+
+					// Is it a sub module?
+					section_name = /troopjs-/.test(doc_path) ? parts[1] : ROOT_SECTION_NAME;
+
+					// Generate titles for the menu.
+					// TODO: Allow title override from markdown file meta.
+					id = parts.slice(1, parts.length - 1).join("_").replace(/[-.]/g, "_");
+					title = capitalize(parts[parts.length - 2].replace(/[-_]/g, ' '));
+					// Is it the module's root README?
+					if (/troopjs-\w+$/.test(directory)) title = OVERVIEW_TITLE;
+
+					// Make a folder for the section.
+					if (!(section_name in sections)) {
+						var module_title, match;
+						match = /^troopjs-([^-]*)/.exec(section_name);
+						// Is it a section for sub module?
+						module_title = match ? match[1] + ' module' : section_name;
+
+						// Raise the order of generic and core sections.
+						order = section_name == ROOT_SECTION_NAME ? 1 : section_name == "troopjs-core" ? 2 : 10;
+						sections[section_name] = makeFolder({title: module_title, order: order});
+					}
+
+					// Put the ones from guides folder at the end, put overview at the head.
+					order = /guides/.test(directory) ? 10 : 2;
+					if (section_name == ROOT_SECTION_NAME && title == OVERVIEW_TITLE)
+						order = 1;
+
+					// Make a node for the doc file.
+					var section = sections[section_name].items;
+					section.push(makeNode(
+						{
+							name: id,
+							title: title,
+							url: directory,
+							order: order
+						}
+					));
+				});
+
+				var root = makeFolder({ title: GUIDE_TITLE});
+				var items = root.items;
+				_.forOwn(sections, function(section) {
+					items.push(section);
+				});
+
+				// Make sure entries are placed at the right order.
+				deepSortItems(root);
+
+				grunt.file.write(GUIDES_FILE, [HEADER, JSON.stringify([root], null, 2)].join('\n'));
+			})();
+
+			// Generate the JSDuck config file jsduck.json:
+			// https://github.com/senchalabs/jsduck/wiki/Config-file
+			(function config_json() {
+				var config = {
+					"--title": "TroopJS API Documentation",
+					"--": [],
+					"--exclude": [],
+					"--warnings": [
+						"-nodoc(class,public)", "-nodoc(member,public)"
+					],
+					"--external": [
+						"Promise"
+					],
+					"--guides": GUIDES_FILE,
+					"--output": path.join(grunt.config("build.dist"), "/docs")
+				};
+
+				var troop_modules = grunt.file.expand(
+					'bower_components/troopjs-*'
+				);
+
+				config["--"] = troop_modules;
+				// Excludes non-source files from JSDuck run.
+				config["--exclude"] = _.reduce(troop_modules, function(excludes, module_path) {
+					// Ignore tests.
+					excludes.push(path.join(module_path, "test"));
+					return excludes;
+				}, []);
+
+				// Guarantees the existence of output folder.
+				grunt.file.mkdir(config["--output"]);
+				grunt.file.write(CONFIG_FILE, JSON.stringify(config, null, 2));
+			})();
 
 			// Discard the temporary files after the JSDuck run.
 			return function cleanUp() {
-				grunt.file.delete(tmp_dir);
-				grunt.file.delete(config_file);
+				grunt.file.delete(GUIDES_TMP_DIR);
+				grunt.file.delete(GUIDES_FILE);
+				grunt.file.delete(CONFIG_FILE);
 			};
 		}
 
@@ -381,7 +423,7 @@ module.exports = function(grunt) {
 		grunt.util.spawn({cmd: "jsduck", args: ["--version"]}, function(error, result,code) {
 			if (error && code > 100) grunt.fail.warn("Check JSDuck installation.");
 
-			var cleanup = generate_guides_json();
+			var cleanup = generate_config_files();
 			grunt.log.subhead("Running JSDuck...");
 
 			// Launch the JSDuck build process.
