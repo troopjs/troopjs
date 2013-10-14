@@ -6,8 +6,9 @@ module.exports = function JSDuckTask(grunt) {
 	"use strict";
 
 	var path = require("path");
+	var _ = grunt.util._;
+
 	grunt.registerTask("jsduck", "Build TroopJS Documentation with JSDuck.", function() {
-		var _ = grunt.util._;
 
 		var GUIDES_FILE = "grunt-jsduck-guides.json",
 			CONFIG_FILE = "grunt-jsduck.json",
@@ -49,10 +50,7 @@ module.exports = function JSDuckTask(grunt) {
 							return order;
 						});
 
-						items = entry.items;
-						for (var i = 0, l = items.length; i < l; i++) {
-							deepSortItems(items[i]);
-						}
+						_.forEach(items, deepSortItems);
 					}
 				}
 
@@ -171,9 +169,10 @@ module.exports = function JSDuckTask(grunt) {
 
 			// Discard the temporary files after the JSDuck run.
 			return function cleanUp() {
-				grunt.file["delete"](GUIDES_TMP_DIR);
-				grunt.file["delete"](GUIDES_FILE);
-				grunt.file["delete"](CONFIG_FILE);
+				/*jshint -W024 */
+				grunt.file.delete(GUIDES_TMP_DIR);
+				grunt.file.delete(GUIDES_FILE);
+				grunt.file.delete(CONFIG_FILE);
 			};
 		}
 
