@@ -84,7 +84,7 @@ module.exports = function JSDuckTask(grunt) {
 						directory,
 						id, title, order;
 
-					var parts = doc_path.split(path.sep);
+					var parts = doc_path.split("/");
 
 					// Where the doc file resides.
 					directory = parts.slice(0, parts.length - 1).join(path.sep);
