@@ -43,7 +43,7 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:dist|node_modules|test|Gruntfile\.js|\.(?!travis\.yml|gitignore))/,
+				"fileExclusionRegExp": /^(?:dist|node_modules|test|tasks|guides|Gruntfile\.js|jsduck\.json|\.(?!travis\.yml|gitignore))/,
 				"packages" : [{
 					"name" : "text",
 					"location" : "empty:"
