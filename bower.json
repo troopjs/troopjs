@@ -1,22 +1,16 @@
 {
 	"name": "troopjs",
-	"version": "2.1.0-2",
+	"version": "2.1.0-3",
 	"ignore": [
 		"**/.*",
 		"node_modules"
 	],
 	"dependencies": {
-		"troopjs-core": "2.1.0-1",
-		"troopjs-browser": "2.1.0-1",
-		"troopjs-data": "2.0.2-1",
-		"troopjs-requirejs": "2.0.2-1",
-		"troopjs-jquery": "2.0.2-1",
-		"troopjs-utils": "2.0.2-1"
-	},
-	"devDependencies": {
-		"jquery": "~2",
-		"poly": "~0.6",
-		"requirejs": "~2.1",
-		"when": "~2.5"
+		"troopjs-core": "2.1.0-2",
+		"troopjs-browser": "2.1.0-2",
+		"troopjs-data": "2.1.0-2",
+		"troopjs-requirejs": "2.1.0-2",
+		"troopjs-jquery": "2.1.0-2",
+		"troopjs-utils": "2.1.0-2"
 	}
 }
