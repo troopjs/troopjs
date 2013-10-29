@@ -7,6 +7,5 @@ define([
 	"troopjs-requirejs/template",
 	"troopjs-requirejs/multiversion",
 	"troopjs-requirejs/shadow",
-	"troopjs-jquery/loom",
 	"troopjs-jquery/noconflict"
 ]);
