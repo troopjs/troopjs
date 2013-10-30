@@ -93,20 +93,14 @@ module.exports = function(grunt) {
 						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
 							"troopjs/maxi",
-							"troopjs/mini",
-							"troopjs/micro"
+							"troopjs/mini"
 						]
 					}, {
 						"name" : "troopjs/mini",
 						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
-							"troopjs/mini",
-							"troopjs/micro"
+							"troopjs/mini"
 						]
-					}, {
-						"name" : "troopjs/micro",
-						"include" : [ "troopjs/version" ],
-						"excludeShallow" : [ "troopjs/micro" ]
 					}]
 				}
 			}
@@ -125,7 +119,7 @@ module.exports = function(grunt) {
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
 					"cwd" : "<%= build.dist %>",
-					"src" : [ "{micro,mini,maxi}.js" ],
+					"src" : [ "{mini,maxi}.js" ],
 					"ext" : ".min.js"
 				}]
 			}
@@ -145,8 +139,8 @@ module.exports = function(grunt) {
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
 					"src" : [
-						"{micro,mini,maxi}.js",
-						"{micro,mini,maxi}.min.js"
+						"{mini,maxi}.js",
+						"{mini,maxi}.min.js"
 					]
 				}]
 			}

@@ -1,8 +1,19 @@
 define([
 	"./mini",
+	"troopjs-core/logger/console",
+	"troopjs-core/logger/pubsub",
+	"troopjs-core/logger/service",
 	"troopjs-core/pubsub/proxy/to1x",
 	"troopjs-core/pubsub/proxy/to2x",
+	"troopjs-browser/mvc/controller/widget",
 	"troopjs-browser/store/adapter/local",
 	"troopjs-browser/store/adapter/session",
-	"troopjs-browser/dimensions/widget"
+	"troopjs-browser/dimensions/widget",
+	"troopjs-data/cache/component",
+	"troopjs-data/query/service",
+	"troopjs-data/component/widget",
+	"troopjs-jquery/noconflict",
+	"troopjs-requirejs/template",
+	"troopjs-requirejs/multiversion",
+	"troopjs-requirejs/shadow"
 ]);
