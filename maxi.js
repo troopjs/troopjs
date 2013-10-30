@@ -9,6 +9,7 @@ define([
 	"troopjs-browser/store/adapter/local",
 	"troopjs-browser/store/adapter/session",
 	"troopjs-browser/dimensions/widget",
+	"troopjs-data/ajax/service",
 	"troopjs-data/cache/component",
 	"troopjs-data/query/service",
 	"troopjs-data/component/widget",
