@@ -1,11 +1,6 @@
 define([
-	"./micro",
-	"troopjs-data/store/component",
-	"troopjs-data/cache/component",
-	"troopjs-data/query/service",
-	"troopjs-data/component/widget",
-	"troopjs-requirejs/template",
-	"troopjs-requirejs/multiversion",
-	"troopjs-requirejs/shadow",
-	"troopjs-jquery/noconflict"
+	"troopjs-browser/application/widget",
+	"troopjs-browser/ajax/service",
+	"troopjs-browser/hash/widget",
+	"troopjs-browser/mvc/route/widget"
 ]);
