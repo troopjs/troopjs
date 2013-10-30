@@ -7,10 +7,10 @@
 	],
 	"dependencies": {
 		"troopjs-core": "2.1.0-2",
-		"troopjs-browser": "2.1.0-3",
-		"troopjs-data": "2.1.0-2",
+		"troopjs-browser": "2.1.0-4",
+		"troopjs-data": "2.1.0-3",
 		"troopjs-requirejs": "2.1.0-2",
-		"troopjs-jquery": "2.1.0-3",
+		"troopjs-jquery": "2.1.0-4",
 		"troopjs-utils": "2.1.0-2"
 	}
 }
