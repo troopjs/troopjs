@@ -9,7 +9,21 @@
 	"maintainers": [
 		{
 			"name": "Mikael Karon",
-			"web": "http://github.com/mikaelkaron"
+			"web": "https://github.com/mikaelkaron"
+		},
+		{
+			"name": "Garry Yao",
+			"web": "https://github.com/garryyao"
+		}
+	],
+	"contributors": [
+		{
+			"name": "Kates Gasis",
+			"web": "https://github.com/kates"
+		},
+		{
+			"name": "Norman Xu",
+			"web": "https://github.com/normanzb"
 		}
 	],
 	"repository": {
