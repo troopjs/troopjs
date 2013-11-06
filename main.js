@@ -6,16 +6,18 @@ define(["module"], function(thisModule) {
 	// List of current sub module names.
 	var MODULE_NAMES = ["core", "browser", "data", "jquery", "requirejs", "utils"];
 
-	var dir = thisModule.uri + "/../bower_components/";
-	var pathMap = {};
+	var base = thisModule.uri + "/../bower_components";
+	var packages = [];
 	for (var i = 0, name, module, length = MODULE_NAMES.length;
 		name = MODULE_NAMES[ i ], i < length; i++) {
 		module = "troopjs-" + name;
-		pathMap[module] = dir + module;
+		packages.push({
+			"name": module,
+			"location": base + "/" + module
+		});
 	}
 
-	var config = { "paths": pathMap }, moduleCfg = thisModule.config();
-
+	var config = { "packages": packages }, moduleCfg = thisModule.config();
 
 	// Enter the appropriate require context when necessary.
 	if (moduleCfg.context)
