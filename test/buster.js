@@ -10,7 +10,8 @@ module.exports["troopjs"] = {
 	],
 
 	"resources" : [
-		"lib/**/*.*",
+		"*.js",
+		"bower_components/troopjs-*/**/*.*",
 		"bower_components/jquery/jquery.js",
 		"bower_components/when/when.js",
 		"bower_components/requirejs/require.js",
@@ -19,6 +20,6 @@ module.exports["troopjs"] = {
 	],
 
 	"tests" : [
-		"lib/troopjs-*/test/**/*.js"
+		"bower_components/troopjs-*/test/**/*.js"
 	]
 };
