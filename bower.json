@@ -1,6 +1,6 @@
 {
 	"name": "troopjs",
-	"version": "2.0.2-4+1a1f731",
+	"version": "2.0.2-5+2fe4eef",
 	"ignore": [
 		"**/.*",
 		"node_modules"
