@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-5+2fe4eef © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-6+9137d51 © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -3222,6 +3222,9 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
 				break cache;
 			}
 
+			// Update _INDEXED
+			node[_INDEXED] = now;
+
 			// Get _ID
 			id = node[_ID];
 
@@ -3233,9 +3236,6 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
 
 			// Not in cache, add it!
 			result = me[id] = node;   // Reuse ref to node (avoids object creation)
-
-			// Update _INDEXED
-			result[_INDEXED] = now;
 		}
 
 		// We have to deep traverse the graph before we do any expiration (as more data for this object can be available)
@@ -3262,6 +3262,14 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
 
 		// Check that this is an OBJECT
 		else if (_constructor === OBJECT) {
+			// Prune properties from result
+			for (property in result) {
+				// If property is _not_ present in node
+				if (!(property in node)) {
+					delete result[property];
+				}
+			}
+
 			// Index all properties
 			for (property in node) {
 				// Except the _ID property
@@ -5320,5 +5328,5 @@ define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jqu
 		}
 	});
 });
-define('troopjs/version',[],function () { return "2.0.2-5"; });
+define('troopjs/version',[],function () { return "2.0.2-6"; });
 define(['troopjs/version'], function (main) { return main; });
