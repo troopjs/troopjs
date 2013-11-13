@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-6+9137d51 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-7+81310fb © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -8,7 +8,7 @@
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/unique',[],function UniqueModule() {
-	"use strict";
+	
 
 	var LENGTH = "length";
 
@@ -65,7 +65,7 @@ define('troopjs-utils/unique',[],function UniqueModule() {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" ], function ComponentFactoryModule(unique) {
-	"use strict";
+	
 
 	var PROTOTYPE = "prototype";
 	var TOSTRING = "toString";
@@ -461,7 +461,7 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
-	"use strict";
+	
 
 	var LENGTH = "length";
 	var ARRAY_PROTO = Array.prototype;
@@ -531,7 +531,7 @@ define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge" ], function ComponentModule(Factory, when, merge) {
-	"use strict";
+	
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
@@ -708,7 +708,7 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], function ConsoleLogger(Component) {
-	"use strict";
+	
 
 	/*jshint devel:true*/
 	var CONSOLE = console;
@@ -739,7 +739,7 @@ define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], f
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" ], function EventEmitterModule(Component, when) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var NULL = null;
@@ -1204,7 +1204,7 @@ define('troopjs-core/event/emitter',[ "../component/base", "when", "poly/array" 
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/pubsub/hub',[ "../event/emitter" ], function HubModule(Emitter) {
-	"use strict";
+	
 
 	var COMPONENT_PROTOTYPE = Emitter.prototype;
 
@@ -1222,7 +1222,7 @@ define('troopjs-core/pubsub/hub',[ "../event/emitter" ], function HubModule(Emit
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], function PubSubLogger(Component, hub) {
-	"use strict";
+	
 
 	var ARRAY_PUSH = Array.prototype.push;
 	var PUBLISH = hub.publish;
@@ -1266,7 +1266,7 @@ define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], fu
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/hub" ], function GadgetModule(Emitter, when, hub) {
-	"use strict";
+	
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
@@ -1507,7 +1507,7 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	"use strict";
+	
 
 	return Gadget.extend({
 		"displayName" : "core/component/service",
@@ -1530,7 +1530,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge", "when" ], function logger(Service, merge, when) {
-	"use strict";
+	
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
@@ -1634,7 +1634,7 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquery", "troopjs-utils/merge", "when" ], function AjaxModule(Service, $, merge, when) {
-	"use strict";
+	
 
 	var ARRAY_SLICE = Array.prototype.slice;
 
@@ -1661,7 +1661,7 @@ define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquer
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], function LoomConfigModule(module, merge) {
-	"use strict";
+	
 
 	return merge.call({
 		"$warp" : "$warp",
@@ -1676,7 +1676,7 @@ define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], functi
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/getargs',[],function GetArgsModule() {
-	"use strict";
+	
 
 	var PUSH = Array.prototype.push;
 	var SUBSTRING = String.prototype.substring;
@@ -1792,7 +1792,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "troopjs-utils/getargs", "poly/array" ], function WeaveModule(config, parentRequire, when, $, getargs) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var NULL = null;
@@ -1924,7 +1924,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/array" ], function UnweaveModule(config, when, $) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var NULL = null;
@@ -2058,7 +2058,7 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	"use strict";
+	
 
 	var DESTROY = "destroy";
 
@@ -2089,7 +2089,7 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
@@ -2294,7 +2294,7 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/registry/service',[ "../component/service", "poly/object", "poly/array" ], function RegistryServiceModule(Service) {
-	"use strict";
+	
 
 	var SERVICES = "services";
 
@@ -2346,7 +2346,7 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/application/widget',[ "module", "../component/widget", "when", "troopjs-core/registry/service", "poly/array" ], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
-	"use strict";
+	
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
@@ -2429,7 +2429,7 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
  * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  */
 define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], function URIModule(Factory) {
-	"use strict";
+	
 
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
@@ -2646,7 +2646,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
  * https://github.com/millermedeiros/Hasher
  */
 define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
-	"use strict";
+	
 
 	var INTERVAL = "interval";
 	var HASHCHANGE = "hashchange";
@@ -2803,7 +2803,7 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs-jquery/hashchange" ], function RouteWidgetModule(Widget, URI) {
-	"use strict";
+	
 	var $ELEMENT = "$element";
 	var HASHCHANGE = "hashchange";
 	var ROUTE = "route";
@@ -2864,7 +2864,7 @@ define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when", "when/apply", "poly/array" ], function StoreModule(Gadget, when, apply) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var OBJECT_TOSTRING = Object.prototype.toString;
@@ -3166,7 +3166,7 @@ define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when",
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], function CacheModule(Component) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var FALSE = false;
@@ -3262,11 +3262,20 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
 
 		// Check that this is an OBJECT
 		else if (_constructor === OBJECT) {
-			// Prune properties from result
-			for (property in result) {
-				// If property is _not_ present in node
-				if (!(property in node)) {
-					delete result[property];
+			// Check if _not_ _COLLAPSED
+			if (node[_COLLAPSED] === FALSE) {
+				// Prune properties from result
+				for (property in result) {
+					// Except the _ID property
+					// or the _COLLAPSED property
+					// or the _EXPIRES property
+					// if property is _not_ present in node
+					if (property !== _ID
+						&& property !== _COLLAPSED
+						&& property !== _EXPIRES
+						&& !(property in node)) {
+						delete result[property];
+					}
 				}
 			}
 
@@ -3485,7 +3494,7 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/query/component',[ "troopjs-core/component/base" ], function QueryModule(Component) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var TRUE = true;
@@ -3841,7 +3850,7 @@ define('troopjs-data/query/component',[ "troopjs-core/component/base" ], functio
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/query/service',[ "module", "troopjs-core/component/service", "./component", "troopjs-utils/merge", "when", "when/apply" ], function QueryServiceModule(module, Service, Query, merge, when, apply) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
@@ -4057,7 +4066,7 @@ define('troopjs-data/query/service',[ "module", "troopjs-core/component/service"
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], function WidgetModule(Widget) {
-	"use strict";
+	
 
 	var ARRAY_PUSH = Array.prototype.push;
 
@@ -4086,7 +4095,7 @@ define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], f
  * Parts of code from require-cs 0.4.0+ Copyright (c) 2010-2011, The Dojo Foundation
  */
 define('troopjs-requirejs/template',[],function TemplateModule() {
-	"use strict";
+	
 
 	/*jshint rhino:true, node:true, wsh:true*/
 	var FACTORIES = {
@@ -4314,7 +4323,7 @@ define('troopjs-requirejs/template',[],function TemplateModule() {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
-	"use strict";
+	
 
 	var RE = /(.+?)#(.+)$/;
 	var CONTEXTS = require.s.contexts;
@@ -4348,7 +4357,7 @@ define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
 * @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
 */
 define('troopjs-requirejs/shadow',[ "text" ], function (text) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var EXPORTS = "exports";
@@ -4450,7 +4459,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
-	"use strict";
+	
 	var ARRAY_MAP = Array.prototype.map;
 	var LENGTH = "length";
 	var WOVEN = "woven";
@@ -4501,7 +4510,7 @@ define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array"
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", "troopjs-browser/loom/weave", "troopjs-browser/loom/unweave", "troopjs-browser/loom/woven", "troopjs-utils/getargs", "poly/array" ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var $FN = $.fn;
@@ -4635,7 +4644,7 @@ define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", 
 * @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
 */
 define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
-	"use strict";
+	
 
 	return $.noConflict(true);
 });
@@ -4645,7 +4654,7 @@ define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "when/apply", "poly/array", "poly/object" ], function To1xModule(Service, when, apply) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
@@ -4851,7 +4860,7 @@ define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "wh
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "poly/array", "poly/object" ], function To2xModule(Service, when) {
-	"use strict";
+	
 
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
@@ -5034,7 +5043,7 @@ define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "po
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/store/adapter/base',[ "troopjs-core/component/gadget" ], function BaseAdapterModule(Gadget) {
-	"use strict";
+	
 	var STORAGE = "storage";
 
 	return Gadget.extend({
@@ -5058,7 +5067,7 @@ define('troopjs-browser/store/adapter/base',[ "troopjs-core/component/gadget" ],
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/store/adapter/local',[ "./base" ], function LocalAdapterModule(Store) {
-	"use strict";
+	
 
 	return Store.extend({
 		"displayName" : "browser/store/adapter/local",
@@ -5071,7 +5080,7 @@ define('troopjs-browser/store/adapter/local',[ "./base" ], function LocalAdapter
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/store/adapter/session',[ "./base" ], function SessionAdapterModule(Store) {
-	"use strict";
+	
 
 	return Store.extend({
 		"displayName" : "browser/store/adapter/session",
@@ -5085,7 +5094,7 @@ define('troopjs-browser/store/adapter/session',[ "./base" ], function SessionAda
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
-	"use strict";
+	
 
 	var NULL = null;
 	var DIMENSIONS = "dimensions";
@@ -5194,7 +5203,7 @@ define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
  * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
  */
 define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
-	"use strict";
+	
 
 	var NULL = null;
 	var RESIZE = "resize";
@@ -5290,7 +5299,7 @@ define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jquery/dimensions", "troopjs-jquery/resize" ], function DimensionsModule(Widget) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var $ELEMENT = "$element";
@@ -5328,5 +5337,5 @@ define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jqu
 		}
 	});
 });
-define('troopjs/version',[],function () { return "2.0.2-6"; });
+define('troopjs/version',[],function () { return "2.0.2-7"; });
 define(['troopjs/version'], function (main) { return main; });
