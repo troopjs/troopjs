@@ -29,10 +29,16 @@ module.exports = function(grunt) {
 		"build" : {
 			"src" : ".",
 			"dist" : "dist",
-			"banner" : "/**\n" +
-				" * <%= pkg.name %> - <%= pkg.version %> © <%= pkg.author.name %> mailto:<%= pkg.author.email %>\n" +
-				" * @license <%= _.pluck(pkg.licenses, 'type').join(', ') %> <%= _.pluck(pkg.licenses, 'url').join(', ') %>\n" +
-				" */"
+			"banner" : "/**\n\
+ *   ____ .     ____  ____  ____    ____.\n\
+ *   \\   (/_\\___\\  (__\\  (__\\  (\\___\\  (/\n\
+ *   / ._/  ( . _   \\  . /   . /  . _   \\_\n\
+ * _/    ___/   /____ /  \\_ /  \\_    ____/\n\
+ * \\   _/ \\____/   \\____________/   /\n\
+ *  \\_t:_____r:_______o:____o:___p:/ [ <%= pkg.name %> - <%= pkg.version %> ]\n\
+ *\n\
+ * @license <%= _.pluck(pkg.licenses, 'type').join(', ') %> <%= _.pluck(pkg.licenses, 'url').join(', ') %> © <%= pkg.author.name %> mailto:<%= pkg.author.email %>\n\
+ */"
 		},
 
 		"requirejs" : {
