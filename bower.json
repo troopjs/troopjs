@@ -1,14 +1,8 @@
 {
 	"name": "troopjs",
-	"version": "2.0.2-7+b3f2f1e",
+	"version": "2.1.0-4+3ca61e7",
 	"ignore": [
 		"**/.*",
 		"node_modules"
-	],
-	"devDependencies": {
-		"jquery": "~2",
-		"poly": "~0.6",
-		"requirejs": "~2.1",
-		"when": "~2.3"
-	}
+	]
 }

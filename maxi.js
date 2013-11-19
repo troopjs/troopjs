@@ -1,6 +1,12 @@
 /**
- * troopjs - 2.0.2-7+b3f2f1e © Mikael Karon mailto:mikael@karon.se
- * @license MIT http://troopjs.mit-license.org/
+ *   ____ .     ____  ____  ____    ____.
+ *   \   (/_\___\  (__\  (__\  (\___\  (/
+ *   / ._/  ( . _   \  . /   . /  . _   \_
+ * _/    ___/   /____ /  \_ /  \_    ____/
+ * \   _/ \____/   \____________/   /
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 2.1.0-4+3ca61e7 ]
+ *
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 
 /**
@@ -64,7 +70,11 @@ define('troopjs-utils/unique',[],function UniqueModule() {
  * TroopJS core/component/factory
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" ], function ComponentFactoryModule(unique) {
+define('troopjs-core/component/factory',[
+	"module",
+	"troopjs-utils/unique",
+	"poly/object"
+], function ComponentFactoryModule(module, unique) {
 	"use strict";
 
 	var PROTOTYPE = "prototype";
@@ -93,6 +103,8 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 	var NAME = "name";
 	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/([-_./\d\w\s]+)$/;
 	var NOOP = function noop () {};
+	var PRAGMAS = module.config().pragmas || [];
+	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
 	var factoryDescriptors = {};
 
 	/**
@@ -245,10 +257,13 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 		var constructors = [];
 		var constructorsLength;
 		var name;
+		var nameRaw;
 		var names;
 		var namesLength;
 		var i;
 		var j;
+		var k;
+		var pragma;
 		var group;
 		var type;
 		var matches;
@@ -294,7 +309,18 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 			// Iterate names
 			for (j = 0, namesLength = names[LENGTH]; j < namesLength; j++) {
 				// Get name
-				name = names[j];
+				name = nameRaw = names[j];
+
+				// Iterate PRAGMAS
+				for (k = 0; k < PRAGMAS_LENGTH; k++) {
+					// Get pragma
+					pragma = PRAGMAS[k];
+
+					// Process name with pragma, break if replacement occurred
+					if ((name = name.replace(pragma.pattern, pragma.replace)) !== nameRaw) {
+						break;
+					}
+				}
 
 				// Check if this matches a SPECIAL signature
 				if ((matches = RE_SPECIAL.exec(name))) {
@@ -306,7 +332,7 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 					special[FEATURES] = matches[2];
 					special[TYPE] = type = matches[3];
 					special[NAME] = group + "/" + type;
-					special[VALUE] = arg[name];
+					special[VALUE] = arg[nameRaw];
 
 					// Unshift special onto specials
 					ARRAY_UNSHIFT.call(specials, special);
@@ -314,7 +340,7 @@ define('troopjs-core/component/factory',[ "troopjs-utils/unique", "poly/object" 
 				// Otherwise just add to prototypeDescriptors
 				else {
 					// Get descriptor for arg
-					descriptor = Object.getOwnPropertyDescriptor(arg, name);
+					descriptor = Object.getOwnPropertyDescriptor(arg, nameRaw);
 
 					// Get value
 					value = descriptor[VALUE];
@@ -539,7 +565,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var INSTANCE_COUNT = "instanceCount";
 	var CONFIGURATION = "configuration";
 	var CONTEXT = "context";
-	var ID = "id";
 	var NAME = "name";
 	var VALUE = "value";
 	var PHASE = "phase";
@@ -549,7 +574,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var STOP = "stop";
 	var SIG = "sig";
 	var INSTANCE_COUNTER = 0;
-	var TASK_COUNTER = 0;
 
 	return Factory(
 	/**
@@ -681,14 +705,11 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 					promise[FINISHED] = new Date();
 				});
 
-			promise[ID] = ++TASK_COUNTER;
 			promise[CONTEXT] = me;
 			promise[STARTED] = new Date();
 			promise[NAME] = name;
 
-			return me.signal("task", promise).then(function () {
-				return promise;
-			});
+			return me.signal("task", promise).yield(promise);
 		},
 
 		/**
@@ -703,37 +724,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	});
 });
 
-/**
- * TroopJS core/logger/console
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], function ConsoleLogger(Component) {
-	"use strict";
-
-	/*jshint devel:true*/
-	var CONSOLE = console;
-
-	function noop() {}
-
-	return Component.create({
-			"displayName" : "core/logger/console"
-		},
-		CONSOLE
-			? {
-			"log" : CONSOLE.log.bind(CONSOLE),
-			"warn" : CONSOLE.warn.bind(CONSOLE),
-			"debug" : CONSOLE.debug.bind(CONSOLE),
-			"info" : CONSOLE.info.bind(CONSOLE),
-			"error" : CONSOLE.error.bind(CONSOLE)
-		}
-			: {
-			"log" : noop,
-			"warn" : noop,
-			"debug" : noop,
-			"info" : noop,
-			"error" : noop
-		});
-});
 /**
  * TroopJS core/event/emitter
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -1218,50 +1208,6 @@ define('troopjs-core/pubsub/hub',[ "../event/emitter" ], function HubModule(Emit
 });
 
 /**
- * TroopJS core/logger/pubsub
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], function PubSubLogger(Component, hub) {
-	"use strict";
-
-	var ARRAY_PUSH = Array.prototype.push;
-	var PUBLISH = hub.publish;
-
-	return Component.create({
-		"displayName" : "core/logger/pubsub",
-
-		"log": function log() {
-			var args = [ "logger/log" ];
-			ARRAY_PUSH.apply(args, arguments);
-			PUBLISH.apply(hub, args);
-		},
-
-		"warn" : function warn() {
-			var args = [ "logger/warn" ];
-			ARRAY_PUSH.apply(args, arguments);
-			PUBLISH.apply(hub, args);
-		},
-
-		"debug" : function debug() {
-			var args = [ "logger/debug" ];
-			ARRAY_PUSH.apply(args, arguments);
-			PUBLISH.apply(hub, args);
-		},
-
-		"info" : function info() {
-			var args = [ "logger/info" ];
-			ARRAY_PUSH.apply(args, arguments);
-			PUBLISH.apply(hub, args);
-		},
-
-		"error" : function info() {
-			var args = [ "logger/error" ];
-			ARRAY_PUSH.apply(args, arguments);
-			PUBLISH.apply(hub, args);
-		}
-	});
-});
-/**
  * TroopJS core/component/gadget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -1502,160 +1448,6 @@ define('troopjs-core/component/gadget',[ "../event/emitter", "when", "../pubsub/
 	});
 });
 
-/**
- * TroopJS core/component/service
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	"use strict";
-
-	return Gadget.extend({
-		"displayName" : "core/component/service",
-
-		"sig/initialize" : function onStart() {
-			var me = this;
-
-			return me.publish("registry/add", me);
-		},
-
-		"sig/finalize" : function onFinalize() {
-			var me = this;
-
-			return me.publish("registry/remove", me);
-		}
-	});
-});
-/**
- * TroopJS core/logger/pubsub
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge", "when" ], function logger(Service, merge, when) {
-	"use strict";
-
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_OBJECT = "[object Object]";
-	var LENGTH = "length";
-	var APPENDERS = "appenders";
-
-	function forward(_signal, _args) {
-		/*jshint validthis:true*/
-		var me = this;
-		var signal = me.signal;
-		var args = [ _signal ];
-		var appenders = me[APPENDERS];
-		var index = 0;
-
-		ARRAY_PUSH.apply(args, _args);
-
-		var next = function () {
-			var appender;
-
-			return (appender = appenders[index++])
-				? when(signal.apply(appender, args), next)
-				: when.resolve(_args);
-		};
-
-		return next();
-	}
-
-	function convert(cat, message) {
-		var result = {
-			"cat" : cat,
-			"time": new Date().getTime()
-		};
-
-		if (OBJECT_TOSTRING.call(message) === TOSTRING_OBJECT) {
-			merge.call(result, message);
-		}
-		else {
-			result.msg = message;
-		}
-
-		return result;
-	}
-
-	function append(obj) {
-		/*jshint validthis:true*/
-		var me = this;
-		var appenders = me[APPENDERS];
-		var i;
-		var iMax;
-
-		for (i = 0, iMax = appenders[LENGTH]; i < iMax; i++) {
-			appenders[i].append(obj);
-		}
-	}
-
-	return Service.extend(function LoggerService() {
-		this[APPENDERS] = ARRAY_SLICE.call(arguments);
-	}, {
-		displayName : "core/logger/service",
-
-		"sig/initialize" : function onInitialize() {
-			return forward.call(this, "initialize", arguments);
-		},
-		"sig/start" : function onStart() {
-			return forward.call(this, "start", arguments);
-		},
-		"sig/stop" : function onStop() {
-			return forward.call(this, "stop", arguments);
-		},
-		"sig/finalize" : function onFinalize() {
-			return forward.call(this, "finalize", arguments);
-		},
-
-		"hub/logger/log" : function onLog(message) {
-			append.call(this, convert("log", message));
-		},
-
-		"hub/logger/warn" : function onWarn(message) {
-			append.call(this, convert("warn", message));
-		},
-
-		"hub/logger/debug" : function onDebug(message) {
-			append.call(this, convert("debug", message));
-		},
-
-		"hub/logger/info" : function onInfo(message) {
-			append.call(this, convert("info", message));
-		},
-
-		"hub/logger/error" : function onError(message) {
-			append.call(this, convert("error", message));
-		}
-	});
-});
-
-/**
- * TroopJS browser/ajax/service
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquery", "troopjs-utils/merge", "when" ], function AjaxModule(Service, $, merge, when) {
-	"use strict";
-
-	var ARRAY_SLICE = Array.prototype.slice;
-
-	return Service.extend({
-		"displayName" : "browser/ajax/service",
-
-		"hub/ajax" : function ajax(settings) {
-			// Request
-			var request = $.ajax(merge.call({
-				"headers": {
-					"x-request-id": new Date().getTime()
-				}
-			}, settings));
-
-			// Wrap and return
-			return when(request, function () {
-				return ARRAY_SLICE.call(arguments);
-			});
-		}
-	});
-});
 /**
  * TroopJS browser/loom/config
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -2054,6 +1846,200 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 	};
 });
 /**
+ * TroopJS browser/loom/woven
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
+	"use strict";
+	var ARRAY_MAP = Array.prototype.map;
+	var LENGTH = "length";
+	var WOVEN = "woven";
+	var $WARP = config["$warp"];
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	return function woven() {
+		var $woven = [];
+		var $wovenLength = 0;
+		var re;
+
+		// If we have arguments we have convert and filter
+		if (arguments[LENGTH] > 0) {
+			// Map arguments to a regexp
+			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Iterate
+			$(this).each(function (index, element) {
+				// Filter widget promises
+				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
+					return re.test($weft[WOVEN]);
+				});
+
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($widgets);
+			});
+		}
+		// Otherwise we can use a faster approach
+		else {
+			// Iterate
+			$(this).each(function (index, element) {
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($.data(element, $WARP));
+			});
+		}
+
+		// Return promise of $woven
+		return when.all($woven);
+	};
+});
+/**
+ * TroopJS browser/loom/plugin
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/plugin',[
+	"jquery",
+	"when",
+	"./config",
+	"./weave",
+	"./unweave",
+	"./woven",
+	"troopjs-utils/getargs",
+	"poly/array"
+], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
+	"use strict";
+
+	var UNDEFINED;
+	var $FN = $.fn;
+	var $EXPR = $.expr;
+	var $CREATEPSEUDO = $EXPR.createPseudo;
+	var WEAVE = "weave";
+	var UNWEAVE = "unweave";
+	var WOVEN = "woven";
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var RE_SEPARATOR = /[\s,]+/;
+
+	/**
+	 * Tests if element has a data-weave attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWeaveAttr(element) {
+		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
+	}
+
+	/**
+	 * Tests if element has a data-woven attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWovenAttr(element) {
+		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
+	}
+
+	/**
+	 * :weave expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WEAVE] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWeaveAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				// Get weave attribute
+				var weave = $(element).attr(ATTR_WEAVE);
+
+				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
+				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var weave = $(element).attr(ATTR_WEAVE);
+
+			return weave === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+							return "^" + widget;
+						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+
+	/**
+	 * :woven expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WOVEN] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWovenAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				var attr_woven = $(element).attr(ATTR_WOVEN);
+
+				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
+				return attr_woven !== UNDEFINED && widgets.test(attr_woven.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var attr_woven = $(element).attr(ATTR_WOVEN);
+
+			return attr_woven === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+						return "^" + widget;
+					}).join("|"), "m").test(attr_woven.replace(RE_SEPARATOR, "\n"));
+		};
+
+	/**
+	 * Weaves elements
+	 * @returns {Promise} of weaving
+	 */
+	$FN[WEAVE] = weave;
+
+	/**
+	 * Unweaves elements
+	 * @returns {Promise} of unweaving
+	 */
+	$FN[UNWEAVE] = unweave;
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	$FN[WOVEN] = woven;
+});
+
+/**
  * TroopJS jquery/destroy
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -2088,7 +2074,7 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * TroopJS browser/component/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
+define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "../loom/plugin", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
 	"use strict";
 
 	var UNDEFINED;
@@ -2290,6 +2276,29 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 });
 
 /**
+ * TroopJS core/component/service
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
+	"use strict";
+
+	return Gadget.extend({
+		"displayName" : "core/component/service",
+
+		"sig/initialize" : function onStart() {
+			var me = this;
+
+			return me.publish("registry/add", me);
+		},
+
+		"sig/finalize" : function onFinalize() {
+			var me = this;
+
+			return me.publish("registry/remove", me);
+		}
+	});
+});
+/**
  * TroopJS core/registry/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -2423,12 +2432,12 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 	});
 });
 /**
- * TroopJS browser/route/uri
+ * TroopJS core/net/uri
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  *
  * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  */
-define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], function URIModule(Factory) {
+define('troopjs-core/net/uri',[ "../component/factory" ], function URIModule(Factory) {
 	"use strict";
 
 	var NULL = null;
@@ -2551,7 +2560,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 	// Extend on the instance of array rather than subclass it
 	function Path(arg) {
 		var result = [];
-		
+
 		result.toString = Path.toString;
 
 		ARRAY_PUSH.apply(result, TOSTRING.call(arg) === TOSTRING_ARRAY
@@ -2799,365 +2808,1095 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 });
 
 /**
- * TroopJS browser/route/widget module
+ * TroopJS browser/hash/widget module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs-jquery/hashchange" ], function RouteWidgetModule(Widget, URI) {
+define('troopjs-browser/hash/widget',[
+	"../component/widget",
+	"troopjs-core/net/uri",
+	"troopjs-jquery/hashchange"
+], function (Widget, URI) {
 	"use strict";
+
 	var $ELEMENT = "$element";
-	var HASHCHANGE = "hashchange";
-	var ROUTE = "route";
-	var SET = "/set";
+	var HASH = "_hash";
 	var RE = /^#/;
 
-	function onHashChange($event) {
-		var me = $event.data;
-
-		// Create URI
-		var uri = URI($event.target.location.hash.replace(RE, ""));
-
-		// Convert to string
-		var route = uri.toString();
-
-		// Did anything change?
-		if (route !== me[ROUTE]) {
-			// Store new value
-			me[ROUTE] = route;
-
-			// Publish route
-			me.publish(me.displayName, uri, $event);
-		}
-	}
-
-	function setRoute(uri) {
-		this[$ELEMENT].get(0).location.hash = uri.toString();
-	}
-
 	return Widget.extend({
-		"displayName" : "browser/route/widget",
+		"displayName" : "browser/hash/widget",
 
-		"sig/initialize" : function initialize() {
+		"sig/start" : function () {
+			this[$ELEMENT].trigger("hashchange");
+		},
+
+		"dom/hashchange" : function ($event) {
 			var me = this;
+			var $element = me[$ELEMENT];
 
-			// Add DOM event handler
-			me[$ELEMENT].on(HASHCHANGE, me, onHashChange);
+			// Create URI
+			var uri = URI($element.get(0).location.hash.replace(RE, ""));
 
-			// Add HUB event handler
-			me.subscribe(me.displayName + SET, setRoute);
+			// Convert to string
+			var hash = uri.toString();
+
+			// Did anything change?
+			if (hash !== me[HASH]) {
+				// Store new value
+				me[HASH] = hash;
+
+				// Retrigger URICHANGE event
+				$element.trigger("urichange", [ uri ]);
+			}
+			else {
+				// Prevent further hashchange handlers from receiving this
+				$event.stopImmediatePropagation()
+			}
 		},
 
-		"sig/start" : function start() {
-			this[$ELEMENT].trigger(HASHCHANGE);
-		},
+		"dom/hashset" : function ($event, uri, silent) {
+			var me = this;
+			var hash = uri.toString();
 
-		"sig/finalize" : function finalize() {
-			// Remove DOM event handler
-			this[$ELEMENT].off(HASHCHANGE, onHashChange);
+			if (silent === true) {
+				me[HASH] = hash;
+			}
 
-			// Remove HUB event handler
-			me.unsubscribe(me.displayName + SET, setRoute);
+			me[$ELEMENT].get(0).location.hash = hash;
 		}
 	});
 });
 /**
- * TroopJS data/store/component module
+ * TroopJS browser/mvc/route/widget module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-data/store/component',[ "troopjs-core/component/gadget", "when", "when/apply", "poly/array" ], function StoreModule(Gadget, when, apply) {
+define('troopjs-browser/mvc/route/widget',[ "../../component/widget" ], function (Widget) {
+	"use strict";
+
+	var $ELEMENT = "$element";
+	var DISPLAYNAME = "displayName";
+	var SET = "/set";
+
+	function setRoute(uri) {
+		/* jshint validthis:true */
+		this[$ELEMENT].trigger("hashset", [ uri ]);
+	}
+
+	return Widget.extend({
+		"displayName" : "browser/mvc/route/widget",
+
+		"sig/initialize" : function () {
+			var me = this;
+
+			me.subscribe(me[DISPLAYNAME] + SET, setRoute);
+		},
+
+		"sig/finalize" : function () {
+			var me = this;
+
+			me.unsubscribe(me[DISPLAYNAME] + SET, setRoute);
+		},
+
+		"dom/urichange" : function ($event, uri) {
+			var me = this;
+
+			me.publish(me[DISPLAYNAME], uri, $event);
+		}
+	});
+});
+/**
+ * TroopJS core/logger/console
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], function ConsoleLogger(Component) {
+	"use strict";
+
+	/*jshint devel:true*/
+	var CONSOLE = console;
+
+	function noop() {}
+
+	var spec = {};
+	["info","log","debug","warn","error"].reduce(function(memo, feature) {
+			memo[feature] =
+				typeof CONSOLE != 'undefined' && CONSOLE[feature] ? CONSOLE[feature] : noop;
+			return memo;
+	}, spec);
+
+	return Component.create({
+			"displayName" : "core/logger/console"
+		},
+		spec);
+});
+/**
+ * TroopJS core/logger/pubsub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], function PubSubLogger(Component, hub) {
+	"use strict";
+
+	var ARRAY_PUSH = Array.prototype.push;
+	var PUBLISH = hub.publish;
+
+	return Component.create({
+		"displayName" : "core/logger/pubsub",
+
+		"log": function log() {
+			var args = [ "logger/log" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"warn" : function warn() {
+			var args = [ "logger/warn" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"debug" : function debug() {
+			var args = [ "logger/debug" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"info" : function info() {
+			var args = [ "logger/info" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		},
+
+		"error" : function info() {
+			var args = [ "logger/error" ];
+			ARRAY_PUSH.apply(args, arguments);
+			PUBLISH.apply(hub, args);
+		}
+	});
+});
+/**
+ * TroopJS core/logger/pubsub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge", "when" ], function logger(Service, merge, when) {
+	"use strict";
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_OBJECT = "[object Object]";
+	var LENGTH = "length";
+	var APPENDERS = "appenders";
+
+	function forward(_signal, _args) {
+		/*jshint validthis:true*/
+		var me = this;
+		var signal = me.signal;
+		var args = [ _signal ];
+		var appenders = me[APPENDERS];
+		var index = 0;
+
+		ARRAY_PUSH.apply(args, _args);
+
+		var next = function () {
+			var appender;
+
+			return (appender = appenders[index++])
+				? when(signal.apply(appender, args), next)
+				: when.resolve(_args);
+		};
+
+		return next();
+	}
+
+	function convert(cat, message) {
+		var result = {
+			"cat" : cat,
+			"time": new Date().getTime()
+		};
+
+		if (OBJECT_TOSTRING.call(message) === TOSTRING_OBJECT) {
+			merge.call(result, message);
+		}
+		else {
+			result.msg = message;
+		}
+
+		return result;
+	}
+
+	function append(obj) {
+		/*jshint validthis:true*/
+		var me = this;
+		var appenders = me[APPENDERS];
+		var i;
+		var iMax;
+
+		for (i = 0, iMax = appenders[LENGTH]; i < iMax; i++) {
+			appenders[i].append(obj);
+		}
+	}
+
+	return Service.extend(function LoggerService() {
+		this[APPENDERS] = ARRAY_SLICE.call(arguments);
+	}, {
+		displayName : "core/logger/service",
+
+		"sig/initialize" : function onInitialize() {
+			return forward.call(this, "initialize", arguments);
+		},
+		"sig/start" : function onStart() {
+			return forward.call(this, "start", arguments);
+		},
+		"sig/stop" : function onStop() {
+			return forward.call(this, "stop", arguments);
+		},
+		"sig/finalize" : function onFinalize() {
+			return forward.call(this, "finalize", arguments);
+		},
+
+		"hub/logger/log" : function onLog(message) {
+			append.call(this, convert("log", message));
+		},
+
+		"hub/logger/warn" : function onWarn(message) {
+			append.call(this, convert("warn", message));
+		},
+
+		"hub/logger/debug" : function onDebug(message) {
+			append.call(this, convert("debug", message));
+		},
+
+		"hub/logger/info" : function onInfo(message) {
+			append.call(this, convert("info", message));
+		},
+
+		"hub/logger/error" : function onError(message) {
+			append.call(this, convert("error", message));
+		}
+	});
+});
+
+/**
+ * TroopJS core/pubsub/proxy/to1x
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "when/apply", "poly/array", "poly/object" ], function To1xModule(Service, when, apply) {
 	"use strict";
 
 	var UNDEFINED;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var OBJECT_KEYS = Object.keys;
 	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_ARRAY = "[object Array]";
-	var TOSTRING_OBJECT = "[object Object]";
-	var TOSTRING_FUNCTION = "[object Function]";
 	var TOSTRING_STRING = "[object String]";
-	var ARRAY_SLICE = Array.prototype.slice;
+	var PUBLISH = "publish";
+	var SUBSCRIBE = "subscribe";
+	var HUB = "hub";
+	var SETTINGS = "settings";
 	var LENGTH = "length";
-	var ADAPTERS = "adapters";
-	var STORAGE = "storage";
-	var BEFORE_GET = "beforeGet";
-	var AFTER_PUT = "afterPut";
-	var CLEAR = "clear";
-	var LOCKS = "locks";
+	var RESOLVE = "resolve";
+	var TOPIC = "topic";
+	var DEFER = "defer";
+	var MEMORY = "memory";
 
-	/**
-	 * Applies method to this (if it exists)
-	 * @param {string} method Method name
-	 * @returns {boolean|*}
-	 * @private
-	 */
-	function applyMethod(method) {
-		/*jshint validthis:true*/
+	return Service.extend(
+		/**
+		 * Proxies to 1.x hub
+		 * @param {object..} setting Setting
+		 * @constructor
+		 */
+		function To1xService(setting) {
+			this[SETTINGS] = ARRAY_SLICE.call(arguments);
+		}, {
+			"displayName" : "core/pubsub/proxy/to1x",
+
+			"sig/initialize" : function () {
+				var me = this;
+
+				// Iterate SETTINGS
+				me[SETTINGS].forEach(function (setting) {
+					if (!(HUB in setting)) {
+						throw new Error("'" + HUB + "' is missing from setting");
+					}
+
+					var publish = setting[PUBLISH] || {};
+					var subscribe = setting[SUBSCRIBE] || {};
+					var hub = setting[HUB];
+
+					// Iterate publish keys
+					OBJECT_KEYS(publish).forEach(function (source) {
+						// Extract target
+						var target = publish[source];
+						var topic;
+						var defer;
+
+						// If target is a string set topic to target and defer to false
+						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+							topic = target;
+							defer = false;
+						}
+						// Otherwise just grab topic and defer from target
+						else {
+							// Make sure we have a topic
+							if (!(TOPIC in target)) {
+								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
+							}
+
+							// Get topic
+							topic = target[TOPIC];
+							// Make sure defer is a boolean
+							defer = !!target[DEFER];
+						}
+
+						// Create callback
+						var callback = publish[source] = function () {
+							// Initialize args with topic as the first argument
+							var args = [ topic ];
+							var deferred;
+							var resolve;
+
+							// Push original arguments on args
+							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
+
+							if (defer) {
+								// Create deferred
+								deferred = when.defer();
+
+								// Store original resolve method
+								resolve = deferred[RESOLVE];
+
+								// Since the deferred implementation in jQuery (that we use in 1.x) allows
+								// to resolve with multiple arguments, we monkey-patch resolve here
+								deferred[RESOLVE] = deferred.resolver[RESOLVE] = function () {
+									resolve(ARRAY_SLICE.call(arguments));
+								};
+
+								// Push deferred as last argument on args
+								ARRAY_PUSH.call(args, deferred);
+							}
+
+							// Publish with args
+							hub.publish.apply(hub, args);
+
+							// Return promise
+							return deferred
+								? deferred.promise
+								: UNDEFINED;
+						};
+
+						// Transfer topic and defer to callback
+						callback[TOPIC] = topic;
+						callback[DEFER] = defer;
+
+						// Subscribe from me
+						me.subscribe(source, callback);
+					});
+
+					// Iterate subscribe keys
+					OBJECT_KEYS(subscribe).forEach(function (source) {
+						// Extract target
+						var target = subscribe[source];
+						var topic;
+						var memory;
+
+						// If target is not a string, make it into an object
+						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+							topic = target;
+							memory = false;
+						}
+						// Otherwise just grab from the properties
+						else {
+							// Make sure we have a topic
+							if (!(TOPIC in target)) {
+								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
+							}
+
+							// Get topic
+							topic = target[TOPIC];
+							// Make sure memory is a boolean
+							memory = !!target[MEMORY];
+						}
+
+						// Create callback
+						var callback = subscribe[source] = function () {
+							// Initialize args with topic as the first argument
+							var args = [ topic ];
+							var deferred;
+							var result;
+
+							// Push sliced (without topic) arguments on args
+							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
+
+							// If the last argument look like a promise we pop and store as deferred
+							if (when.isPromise(args[args[LENGTH] - 1])) {
+								deferred = args.pop();
+							}
+
+							// Publish and store promise as result
+							result = me.publish.apply(me, args);
+
+							// If we have a deferred we should chain it to result
+							if (deferred) {
+								when(result, apply(deferred.resolve), deferred.reject, deferred.progress);
+							}
+
+							// Return result
+							return result;
+						};
+
+						// Transfer topic and memory to callback
+						callback[TOPIC] = topic;
+						callback[MEMORY] = memory;
+
+						// Subscribe from hub,notice that since we're pushing memory there _is_ a chance that
+						// we'll get a callback before sig/start
+						hub.subscribe(source, me, memory, callback);
+					});
+				});
+			},
+
+			"sig/finalize" : function () {
+				var me = this;
+
+				// Iterate SETTINGS
+				me[SETTINGS].forEach(function (setting) {
+					if (!(HUB in setting)) {
+						throw new Error("'" + HUB + "' is missing from setting");
+					}
+
+					var publish = setting[PUBLISH] || {};
+					var subscribe = setting[SUBSCRIBE] || {};
+					var hub = setting[HUB];
+
+					// Iterate publish keys and unsubscribe
+					OBJECT_KEYS(publish).forEach(function (source) {
+						me.unsubscribe(source, publish[source]);
+					});
+
+					// Iterate subscribe keys and unsubscribe
+					OBJECT_KEYS(subscribe).forEach(function (source) {
+						hub.unsubscribe(source, me, subscribe[source]);
+					});
+				});
+			}
+		});
+});
+/**
+ * TroopJS core/pubsub/proxy/to2x
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "poly/array", "poly/object" ], function To2xModule(Service, when) {
+	"use strict";
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var OBJECT_KEYS = Object.keys;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_STRING = "[object String]";
+	var PUBLISH = "publish";
+	var SUBSCRIBE = "subscribe";
+	var HUB = "hub";
+	var SETTINGS = "settings";
+	var TOPIC = "topic";
+	var REPUBLISH = "republish";
+
+	return Service.extend(
+		/**
+		 * Proxies to 2.x hub
+		 * @param {object..} setting Setting
+		 * @constructor
+		 */
+		function To2xService(setting) {
+			this[SETTINGS] = ARRAY_SLICE.call(arguments);
+		}, {
+			"displayName" : "core/pubsub/proxy/to2x",
+
+			"sig/initialize" : function ()  {
+				var me = this;
+
+				// Iterate SETTINGS
+				me[SETTINGS].forEach(function (setting) {
+					if (!(HUB in setting)) {
+						throw new Error("'" + HUB + "' is missing from setting");
+					}
+
+					var publish = setting[PUBLISH] || {};
+					var subscribe = setting[SUBSCRIBE] || {};
+					var hub = setting[HUB];
+
+					// Iterate publish keys
+					OBJECT_KEYS(publish).forEach(function (source) {
+						// Extract target
+						var target = publish[source];
+						var topic;
+
+						// If target is a string set topic to target
+						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+							topic = target;
+						}
+						// Otherwise just grab topic from target
+						else {
+							// Make sure we have a topic
+							if (!(TOPIC in target)) {
+								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
+							}
+
+							// Get topic
+							topic = target[TOPIC];
+						}
+
+						// Create callback
+						var callback = publish[source] = function () {
+							// Initialize args with topic as the first argument
+							var args = [ topic ];
+
+							// Push original arguments on args
+							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
+
+							return hub.publish.apply(hub, args);
+						};
+
+						// Transfer topic to callback
+						callback[TOPIC] = topic;
+
+						me.subscribe(source, callback);
+					});
+
+					// Iterate subscribe keys
+					OBJECT_KEYS(subscribe).forEach(function (source) {
+						// Extract target
+						var target = subscribe[source];
+						var topic;
+						var republish;
+
+						// If target is a string set topic to target and republish to false
+						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+							topic = target;
+							republish = false;
+						}
+						// Otherwise just grab topic and republish from target
+						else {
+							// Make sure we have a topic
+							if (!(TOPIC in target)) {
+								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
+							}
+
+							// Get topic
+							topic = target[TOPIC];
+							// Make sure republish is a boolean
+							republish = !!target[REPUBLISH];
+						}
+
+						// Create callback
+						var callback = subscribe[source] = function () {
+							// Initialize args with topic as the first argument
+							var args = [ topic ];
+
+							// Push original arguments on args
+							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
+
+							// Publish and store promise as result
+							return me.publish.apply(me, args);
+						};
+
+						// Transfer topic and republish to callback
+						callback[TOPIC] = topic;
+						callback[REPUBLISH] = republish;
+
+						hub.subscribe(source, me, callback);
+					});
+				});
+			},
+
+			"sig/start" : function () {
+				var me = this;
+				var results = [];
+
+				// Iterate SETTINGS
+				me[SETTINGS].forEach(function (setting) {
+					if (!(HUB in setting)) {
+						throw new Error("'" + HUB + "' is missing from setting");
+					}
+
+					var subscribe = setting[SUBSCRIBE] || {};
+					var hub = setting[HUB];
+
+					// Iterate subscribe keys
+					OBJECT_KEYS(subscribe).forEach(function (source) {
+						var callback = subscribe[source];
+
+						// Check if we should republish
+						if (callback[REPUBLISH] === true) {
+							// Push result from republish on results
+							results.push(hub.republish(source, false, me, callback));
+						}
+					});
+				});
+
+				// Return promise that will resolve once all results are resolved
+				return when.all(results);
+			},
+
+			"sig/finalize" : function () {
+				var me = this;
+
+				// Iterate SETTINGS
+				me[SETTINGS].forEach(function (setting) {
+					if (!(HUB in setting)) {
+						throw new Error("'" + HUB + "' is missing from setting");
+					}
+
+					var publish = setting[PUBLISH] || {};
+					var subscribe = setting[SUBSCRIBE] || {};
+					var hub = setting[HUB];
+
+					// Iterate publish keys and unsubscribe
+					OBJECT_KEYS(publish).forEach(function (source) {
+						me.unsubscribe(source, publish[source]);
+					});
+
+					// Iterate subscribe keys and unsubscribe
+					OBJECT_KEYS(subscribe).forEach(function (source) {
+						hub.unsubscribe(source, me, subscribe[source]);
+					});
+				});
+			}
+		});
+});
+/**
+ * TroopJS browser/mvc/controller/widget module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/mvc/controller/widget',[
+	"../../hash/widget",
+	"poly/object",
+	"poly/array"
+], function (Widget) {
+	"use strict";
+
+	var CACHE = "_cache";
+	var DISPLAYNAME = "displayName";
+	var ARRAY_SLICE = Array.prototype.slice;
+	var currTaskNo = 0;
+
+	function extend() {
 		var me = this;
 
-		return method in me && me[method].apply(me, ARRAY_SLICE.call(arguments, 1));
+		ARRAY_SLICE.call(arguments).forEach(function (arg) {
+			Object.keys(arg).forEach(function (key) {
+				me[key] = arg[key];
+			});
+		});
+
+		return me;
 	}
 
-	/**
-	 * Puts value
-	 * @param {string|null} key Key - can be dot separated for sub keys
-	 * @param {*} value Value
-	 * @returns {Promise} Promise of put
-	 * @private
-	 */
-	function put(key, value) {
-		/*jshint validthis:true*/
+	function handleRequests(requests) {
 		var me = this;
-		var node = me[STORAGE];
-		var parts = key
-			? key.split(".")
-			: [];
-		var part;
-		var last = parts.pop();
+		var displayName = me[DISPLAYNAME];
 
-		while (node && (part = parts.shift())) {
-			switch (OBJECT_TOSTRING.call(node)) {
-				case TOSTRING_ARRAY :
-				/* falls through */
+		return me.task(function (resolve, reject) {
+			// Track this task.
+			var taskNo = ++currTaskNo;
 
-				case TOSTRING_OBJECT :
-					if (part in node) {
-						node = node[part];
-						break;
+			me.request(extend.call({}, me[CACHE], requests))
+				.then(function (results) {
+					// Reject if this promise is not the current pending task.
+					if (taskNo !== currTaskNo)
+						reject(results);
+					else {
+						// Get old cache
+						var cache = me[CACHE];
+
+						// Calculate updates
+						var updates = {};
+						var updated = Object.keys(results).reduce(function (update, key) {
+							if (!me.equals(cache[key], results[key])) {
+								updates[key] = results[key];
+								update = true;
+							}
+
+							return update;
+						}, false);
+
+						// Update cache
+						me[CACHE] = results;
+
+						resolve(me.publish(displayName + "/results", results)
+							.then(function () {
+								return updated && me.publish(displayName + "/updates", updates);
+							})
+							.then(function () {
+								// Trigger `hashset`
+								me.$element.trigger("hashset", [ me.data2uri(results) ]);
+							})
+							.yield(results));
 					}
-				/* falls through */
-
-				default :
-					node = node[part] = {};
-			}
-		}
-
-		// Evaluate value if needed
-		if (OBJECT_TOSTRING.call(value) === TOSTRING_FUNCTION) {
-			value = value.call(me, {
-				"get" : function () {
-					return get.apply(me, arguments);
-				},
-				"has" : function () {
-					return has.apply(me, arguments);
-				}
-			}, key);
-		}
-
-		return last !== UNDEFINED
-			// First store the promise, then override with the true value once resolved
-			? when(value, function (result) {
-				node[last] = result;
-
-				return result;
-			})
-			// No key provided, just return a promise of the value
-			: when(value);
+				});
+		});
 	}
 
-	/**
-	 * Gets value
-	 * @param {string} key Key - can be dot separated for sub keys
-	 * @returns {*} Value
-	 * @private
-	 */
-	function get(key) {
-		/*jshint validthis:true*/
-		var node = this[STORAGE];
-		var parts = key.split(".");
-		var part;
-
-		while (node && (part = parts.shift())) {
-			switch (OBJECT_TOSTRING.call(node)) {
-				case TOSTRING_ARRAY :
-				/* falls through */
-
-				case TOSTRING_OBJECT :
-					if (part in node) {
-						node = node[part];
-						break;
-					}
-				/* falls through */
-
-				default :
-					node = UNDEFINED;
-			}
-		}
-
-		return node;
-	}
-
-	/**
-	 * Check is key exists
-	 * @param key {string} key Key - can be dot separated for sub keys
-	 * @returns {boolean}
-	 * @private
-	 */
-	function has(key) {
-		/*jshint validthis:true*/
-		var node = this[STORAGE];
-		var parts = key.split(".");
-		var part;
-		var last = parts.pop();
-
-		while (node && (part = parts.shift())) {
-			switch (OBJECT_TOSTRING.call(node)) {
-				case TOSTRING_ARRAY :
-				/* falls through */
-
-				case TOSTRING_OBJECT :
-					if (part in node) {
-						node = node[part];
-						break;
-					}
-				/* falls through */
-
-				default :
-					node = UNDEFINED;
-			}
-		}
-
-		return node !== UNDEFINED && last in node;
-	}
-
-	return Gadget.extend(function StoreComponent(adapter) {
-		if (arguments[LENGTH] === 0) {
-			throw new Error("No adapter(s) provided");
-		}
-
-		var me = this;
-
-		me[ADAPTERS] = ARRAY_SLICE.call(arguments);
-		me[STORAGE] = {};
-		me[LOCKS] = {};
+	return Widget.extend(function () {
+		this[CACHE] = {};
 	}, {
-		"displayName" : "data/store/component",
+		"displayName": "browser/mvc/controller/widget",
 
-		/**
-		 * Waits for store to be "locked"
-		 * @param {string} key Key
-		 * @param {function} [onFulfilled] onFulfilled callback
-		 * @param {function} [onRejected] onRejected callback
-		 * @param {function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of ready
-		 */
-		"lock" : function (key, onFulfilled, onRejected, onProgress) {
-			var locks = this[LOCKS];
-			var result;
+		"sig/initialize": function () {
+			var me = this;
 
-			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
-				throw new Error("key has to be of type string");
+			me.subscribe(me[DISPLAYNAME] + "/requests", handleRequests);
+		},
+
+		"sig/finalize": function () {
+			var me = this;
+
+			me.unsubscribe(me[DISPLAYNAME]+ "/requests", handleRequests);
+		},
+
+		"dom/urichange": function ($event, uri) {
+			var me = this;
+
+			me.publish(me[DISPLAYNAME] + "/requests", me.uri2data(uri));
+		},
+
+		"request" : function (/* requests */) {
+			throw new Error("request is not implemented");
+		},
+
+		"uri2data" : function (/* uri */) {
+			throw new Error("uri2data is not implemented");
+		},
+
+		"data2uri" : function (/* data */) {
+			throw new Error("data2uri is not implemented");
+		},
+
+		"equals" : function (a, b) {
+			return a && b && a === b;
+		}
+	});
+});
+/**
+ * TroopJS browser/store/adapter/base module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/store/adapter/base',[ "troopjs-core/component/gadget" ], function BaseAdapterModule(Gadget) {
+	"use strict";
+	var STORAGE = "storage";
+
+	return Gadget.extend({
+		"displayName" : "browser/store/adapter/base",
+
+		"afterPut" : function (store, key, value) {
+			this[STORAGE].setItem(key, JSON.stringify(value));
+		},
+
+		"beforeGet" : function get(store, key) {
+			return store.put(key, JSON.parse(this[STORAGE].getItem(key)));
+		},
+
+		"clear" : function clear() {
+			return this[STORAGE].clear();
+		}
+	});
+});
+/**
+ * TroopJS browser/store/adapter/local module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/store/adapter/local',[ "./base" ], function LocalAdapterModule(Store) {
+	"use strict";
+
+	return Store.extend({
+		"displayName" : "browser/store/adapter/local",
+
+		"storage" : window.localStorage
+	});
+});
+/**
+ * TroopJS browser/store/adapter/session module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/store/adapter/session',[ "./base" ], function SessionAdapterModule(Store) {
+	"use strict";
+
+	return Store.extend({
+		"displayName" : "browser/store/adapter/session",
+
+		"storage": window.sessionStorage
+	});
+});
+
+/**
+ * TroopJS jquery/resize
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ *
+ * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
+ */
+define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
+	"use strict";
+
+	var NULL = null;
+	var RESIZE = "resize";
+	var W = "w";
+	var H = "h";
+	var $ELEMENTS = $([]);
+	var INTERVAL = NULL;
+
+	/**
+	 * Iterator
+	 * @param index
+	 * @param me
+	 */
+	function iterator(index, me) {
+		// Get data
+		var $data = $.data(me);
+
+		// Get reference to $me
+		var $me = $(me);
+
+		// Get previous width and height
+		var w = $me.width();
+		var h = $me.height();
+
+		// Check if width or height has changed since last check
+		if (w !== $data[W] || h !== $data[H]) {
+			$data[W] = w;
+			$data[H] = h;
+
+			$me.trigger(RESIZE, [ w, h ]);
+		}
+	}
+
+	/**
+	 * Internal interval
+	 */
+	function interval() {
+		$ELEMENTS.each(iterator);
+	}
+
+	$.event.special[RESIZE] = {
+		"setup" : function onResizeSetup() {
+			var me = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(me)) {
+				return false;
 			}
 
-			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
+			// Store data
+			var $data = $.data(me, RESIZE, {});
 
-			return result;
+			// Get reference to $me
+			var $me = $(me);
+
+			// Initialize data
+			$data[W] = $me.width();
+			$data[H] = $me.height();
+
+			// Add to tracked collection
+			$ELEMENTS = $ELEMENTS.add(me);
+
+			// If this is the first element, start interval
+			if($ELEMENTS.length === 1) {
+				INTERVAL = setInterval(interval, 100);
+			}
 		},
 
-		/**
-		 * Gets state value
-		 * @param {string..} key Key - can be dot separated for sub keys
-		 * @param {function} [onFulfilled] onFulfilled callback
-		 * @param {function} [onRejected] onRejected callback
-		 * @param {function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of value
-		 */
-		"get" : function (key, onFulfilled, onRejected, onProgress) {
-			/*jshint curly:false*/
+		"teardown" : function onResizeTeardown() {
 			var me = this;
-			var keys = ARRAY_SLICE.call(arguments);
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(me)) {
+				return false;
+			}
+
+			// Remove data
+			$.removeData(me, RESIZE);
+
+			// Remove from tracked collection
+			$ELEMENTS = $ELEMENTS.not(me);
+
+			// If this is the last element, stop interval
+			if($ELEMENTS.length === 0 && INTERVAL !== NULL) {
+				clearInterval(INTERVAL);
+			}
+		}
+	};
+});
+
+/**
+ * TroopJS jquery/dimensions
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-jquery/dimensions',[ "jquery", "./resize" ], function DimensionsModule($) {
+	"use strict";
+
+	var NULL = null;
+	var DIMENSIONS = "dimensions";
+	var RESIZE = "resize." + DIMENSIONS;
+	var W = "w";
+	var H = "h";
+	var _W = "_" + W;
+	var _H = "_" + H;
+
+	/**
+	 * Internal comparator used for reverse sorting arrays
+	 */
+	function reverse(a, b) {
+		return b - a;
+	}
+
+	/**
+	 * Internal onResize handler
+	 */
+	function onResize() {
+		/*jshint validthis:true*/
+		var me = this;
+		var $me = $(me);
+		var width = $me.width();
+		var height = $me.height();
+
+		// Iterate all dimensions
+		$.each($.data(me, DIMENSIONS), function dimensionIterator(namespace, dimension) {
+			var w = dimension[W];
+			var h = dimension[H];
+			var _w;
+			var _h;
 			var i;
-			var iMax;
 
-			// Step until we hit the end or keys[i] is not a string
-			for (i = 0, iMax = keys[LENGTH]; i < iMax && OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
+			i = w.length;
+			_w = w[i - 1];
+			while(w[--i] < width) {
+				_w = w[i];
+			}
 
-			// Update callbacks
-			onFulfilled = keys[i];
-			onRejected = keys[i+1];
-			onProgress = keys[i+2];
+			i = h.length;
+			_h = h[i - 1];
+			while(h[--i] < height) {
+				_h = h[i];
+			}
 
-			// Set the new length of keys
-			keys[LENGTH] = i;
+			// If _w or _h has changed, update and trigger
+			if (_w !== dimension[_W] || _h !== dimension[_H]) {
+				dimension[_W] = _w;
+				dimension[_H] = _h;
 
-			return when
-				.map(keys, function (key) {
-					return when
-						// Map adapters and BEFORE_GET on each adapter
-						.map(me[ADAPTERS], function (adapter) {
-							return when(applyMethod.call(adapter, BEFORE_GET, me, key));
-						})
-						// Get value from STORAGE
-						.then(function () {
-							return get.call(me, key);
-						});
-				})
-				// Add callbacks
-				.then(onFulfilled && apply(onFulfilled), onRejected, onProgress);
+				$me.trigger(DIMENSIONS + "." + namespace, [ _w, _h ]);
+			}
+		});
+	}
+
+	$.event.special[DIMENSIONS] = {
+		setup : function onDimensionsSetup() {
+			$(this)
+				.bind(RESIZE, onResize)
+				.data(DIMENSIONS, {});
 		},
 
 		/**
-		 * Puts state value
-		 * @param {string} key Key - can be dot separated for sub keys
-		 * @param {*} value Value
-		 * @param {function} [onFulfilled] onFulfilled callback
-		 * @param {function} [onRejected] onRejected callback
-		 * @param {function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of value
+		 * Do something each time an event handler is bound to a particular element
+		 * @param handleObj (Object)
 		 */
-		"put" : function (key, value, onFulfilled, onRejected, onProgress) {
+		add : function onDimensionsAdd(handleObj) {
+			var me = this;
+			var namespace = handleObj.namespace;
+			var dimension = {};
+			var w = dimension[W] = [];
+			var h = dimension[H] = [];
+			var re = /(w|h)(\d+)/g;
+			var matches;
+
+			while ((matches = re.exec(namespace)) !== NULL) {
+				dimension[matches[1]].push(parseInt(matches[2], 10));
+			}
+
+			w.sort(reverse);
+			h.sort(reverse);
+
+			$.data(me, DIMENSIONS)[namespace] = dimension;
+		},
+
+		/**
+		 * Do something each time an event handler is unbound from a particular element
+		 * @param handleObj (Object)
+		 */
+		remove : function onDimensionsRemove(handleObj) {
+			delete $.data(this, DIMENSIONS)[handleObj.namespace];
+		},
+
+		teardown : function onDimensionsTeardown() {
+			$(this)
+				.removeData(DIMENSIONS)
+				.unbind(RESIZE, onResize);
+		}
+	};
+});
+/**
+ * TroopJS browser/dimensions/widget
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jquery/dimensions", "troopjs-jquery/resize" ], function DimensionsModule(Widget) {
+	"use strict";
+
+	var UNDEFINED;
+	var $ELEMENT = "$element";
+	var DIMENSIONS = "dimensions";
+
+	function onDimensions($event, w, h) {
+		var me = $event.data;
+
+		me.publish(me.displayName, w, h, $event);
+	}
+
+	return Widget.extend(function DimensionsWidget($element, displayName, dimensions) {
+		if (dimensions === UNDEFINED) {
+			throw new Error("No dimensions provided");
+		}
+
+		this[DIMENSIONS] = dimensions;
+	}, {
+		"displayName" : "browser/dimensions/widget",
+
+		"sig/initialize" : function initialize() {
 			var me = this;
 
-			return when(put.call(me, key, value), function (result) {
-				return when
-					// Map adapters and AFTER_PUT on each adapter
-					.map(me[ADAPTERS], function (adapter) {
-						return when(applyMethod.call(adapter, AFTER_PUT, me, key, result));
-					})
-					.yield(result);
-			})
-				// Add callbacks
-				.then(onFulfilled, onRejected, onProgress);
+			me[$ELEMENT].on(DIMENSIONS + "." + me[DIMENSIONS], me, onDimensions);
 		},
 
-		/**
-		 * Puts state value if key is UNDEFINED
-		 * @param {string} key Key - can be dot separated for sub keys
-		 * @param {*} value Value
-		 * @param {function} [onFulfilled] onFulfilled callback
-		 * @param {function} [onRejected] onRejected callback
-		 * @param {function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of value
-		 */
-		"putIfNotHas" : function (key, value, onFulfilled, onRejected, onProgress) {
+		"sig/start" : function start() {
+			this[$ELEMENT].trigger("resize." + DIMENSIONS);
+		},
+
+		"sig/finalize" : function finalize() {
 			var me = this;
 
-			return !me.has(key)
-				? me.put(key, value, onFulfilled, onRejected, onProgress)
-				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
-		},
+			me[$ELEMENT].off(DIMENSIONS + "." + me[DIMENSIONS], onDimensions);
+		}
+	});
+});
+/**
+ * TroopJS data/ajax/service
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-data/ajax/service',[
+	"troopjs-core/component/service",
+	"jquery",
+	"troopjs-utils/merge"
+], function (Service, $, merge) {
+	"use strict";
 
-		/**
-		 * Checks if key exists
-		 * @param {string} key Key - can be dot separated for sub keys
-		 * @returns {boolean} True if key exists, otherwise false
-		 */
-		"has" : function (key) {
-			return has.call(this, key);
-		},
+	return Service.extend({
+		"displayName" : "data/ajax/service",
 
-		/**
-		 * Clears all adapters
-		 * @param {function} [onFulfilled] onFulfilled callback
-		 * @param {function} [onRejected] onRejected callback
-		 * @param {function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of clear
-		 */
-		"clear" : function (onFulfilled, onRejected, onProgress) {
-			var me = this;
-
-			return when
-				.map(me[ADAPTERS], function (adapter) {
-					return when(applyMethod.call(adapter, CLEAR, me));
-				})
-				// Add callbacks
-				.then(onFulfilled && apply(onFulfilled), onRejected, onProgress);
+		"hub/ajax" : function ajax(settings) {
+			// Request
+			return $.ajax(merge.call({
+				"headers": {
+					"x-request-id": new Date().getTime()
+				}
+			}, settings));
 		}
 	});
 });
@@ -3175,9 +3914,7 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
 	var ARRAY = Array;
 
 	var SECOND = 1000;
-	var INTERVAL = "interval";
 	var GENERATIONS = "generations";
-	var AGE = "age";
 	var HEAD = "head";
 	var NEXT = "next";
 	var EXPIRES = "expires";
@@ -3389,77 +4126,10 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base" ], functio
 		return result;
 	}
 
-	return Component.extend(function CacheComponent(age) {
-		var me = this;
-
-		me[AGE] = age || (60 * SECOND);
-		me[GENERATIONS] = {};
+	return Component.extend(function CacheComponent() {
+		this[GENERATIONS] = {};
 	}, {
 		"displayName" : "data/cache/component",
-
-		"sig/start" : function start() {
-			var me = this;
-			var generations = me[GENERATIONS];
-
-			// Create new sweep interval
-			me[INTERVAL] = INTERVAL in me
-				? me[INTERVAL]
-				: setInterval(function sweep() {
-				/*jshint forin:false*/
-				// Calculate expiration of this generation
-				var expires = 0 | new Date().getTime() / SECOND;
-
-				var property;
-				var current;
-
-				// Get head
-				current = generations[HEAD];
-
-				// Fail fast if there's no head
-				if (current === UNDEFINED) {
-					return;
-				}
-
-				do {
-					// Exit if this generation is to young
-					if (current[EXPIRES] > expires) {
-						break;
-					}
-
-					// Iterate all properties on current
-					for (property in current) {
-						// And is it not a reserved property
-						if (property === EXPIRES || property === NEXT || property === GENERATIONS) {
-							continue;
-						}
-
-						// Delete from me (cache)
-						delete me[property];
-					}
-
-					// Delete generation
-					delete generations[current[EXPIRES]];
-				}
-				// While there's a next
-				while ((current = current[NEXT]));
-
-				// Reset head
-				generations[HEAD] = current;
-			}, me[AGE]);
-		},
-
-		"sig/stop" : function stop() {
-			var me = this;
-
-			// Only do this if we have an interval
-			if (INTERVAL in me) {
-				// Clear interval
-				clearInterval(me[INTERVAL]);
-
-				// Reset interval
-				delete me[INTERVAL];
-			}
-		},
 
 		"sig/finalize" : function finalize() {
 			/*jshint forin:false*/
@@ -4099,6 +4769,16 @@ define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], f
 });
 
 /**
+* TroopJS jquery/noconflict
+* @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
+*/
+define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
+	"use strict";
+
+	return $.noConflict(true);
+});
+
+/**
  * TroopJS requirejs/template
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  *
@@ -4464,888 +5144,5 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 	};
 });
 
-/**
- * TroopJS browser/loom/woven
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
-	"use strict";
-	var ARRAY_MAP = Array.prototype.map;
-	var LENGTH = "length";
-	var WOVEN = "woven";
-	var $WARP = config["$warp"];
-
-	/**
-	 * Gets woven widgets
-	 * @returns {Promise} of woven widgets
-	 */
-	return function woven() {
-		var $woven = [];
-		var $wovenLength = 0;
-		var re;
-
-		// If we have arguments we have convert and filter
-		if (arguments[LENGTH] > 0) {
-			// Map arguments to a regexp
-			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Iterate
-			$(this).each(function (index, element) {
-				// Filter widget promises
-				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
-					return re.test($weft[WOVEN]);
-				});
-
-				// Add promise of widgets to $woven
-				$woven[$wovenLength++] = when.all($widgets);
-			});
-		}
-		// Otherwise we can use a faster approach
-		else {
-			// Iterate
-			$(this).each(function (index, element) {
-				// Add promise of widgets to $woven
-				$woven[$wovenLength++] = when.all($.data(element, $WARP));
-			});
-		}
-
-		// Return promise of $woven
-		return when.all($woven);
-	};
-});
-/**
- * TroopJS jquery/loom
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", "troopjs-browser/loom/weave", "troopjs-browser/loom/unweave", "troopjs-browser/loom/woven", "troopjs-utils/getargs", "poly/array" ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
-	"use strict";
-
-	var UNDEFINED;
-	var $FN = $.fn;
-	var $EXPR = $.expr;
-	var $CREATEPSEUDO = $EXPR.createPseudo;
-	var WEAVE = "weave";
-	var UNWEAVE = "unweave";
-	var WOVEN = "woven";
-	var ATTR_WEAVE = config[WEAVE];
-	var ATTR_WOVEN = config[WOVEN];
-	var RE_SEPARATOR = /[\s,]+/;
-
-	/**
-	 * Tests if element has a data-weave attribute
-	 * @param element to test
-	 * @returns {boolean}
-	 * @private
-	 */
-	function hasDataWeaveAttr(element) {
-		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
-	}
-
-	/**
-	 * Tests if element has a data-woven attribute
-	 * @param element to test
-	 * @returns {boolean}
-	 * @private
-	 */
-	function hasDataWovenAttr(element) {
-		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
-	}
-
-	/**
-	 * :weave expression
-	 * @type {*}
-	 */
-	$EXPR[":"][WEAVE] = $CREATEPSEUDO
-		// If we have jQuery >= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don't have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWeaveAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Return expression
-			return function (element) {
-				// Get weave attribute
-				var weave = $(element).attr(ATTR_WEAVE);
-
-				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
-				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var weave = $(element).attr(ATTR_WEAVE);
-
-			return weave === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: new RegExp(getargs.call(match[3]).map(function (widget) {
-							return "^" + widget;
-						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
-			};
-
-	/**
-	 * :woven expression
-	 * @type {*}
-	 */
-	$EXPR[":"][WOVEN] = $CREATEPSEUDO
-		// If we have jQuery >= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don't have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWovenAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Return expression
-			return function (element) {
-				var attr_woven = $(element).attr(ATTR_WOVEN);
-
-				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
-				return attr_woven !== UNDEFINED && widgets.test(attr_woven.replace(RE_SEPARATOR, "\n"));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var attr_woven = $(element).attr(ATTR_WOVEN);
-
-			return attr_woven === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: new RegExp(getargs.call(match[3]).map(function (widget) {
-						return "^" + widget;
-					}).join("|"), "m").test(attr_woven.replace(RE_SEPARATOR, "\n"));
-		};
-
-	/**
-	 * Weaves elements
-	 * @returns {Promise} of weaving
-	 */
-	$FN[WEAVE] = weave;
-
-	/**
-	 * Unweaves elements
-	 * @returns {Promise} of unweaving
-	 */
-	$FN[UNWEAVE] = unweave;
-
-	/**
-	 * Gets woven widgets
-	 * @returns {Promise} of woven widgets
-	 */
-	$FN[WOVEN] = woven;
-});
-
-/**
-* TroopJS jquery/noconflict
-* @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
-*/
-define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
-	"use strict";
-
-	return $.noConflict(true);
-});
-
-/**
- * TroopJS core/pubsub/proxy/to1x
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "when/apply", "poly/array", "poly/object" ], function To1xModule(Service, when, apply) {
-	"use strict";
-
-	var UNDEFINED;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var OBJECT_KEYS = Object.keys;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_STRING = "[object String]";
-	var PUBLISH = "publish";
-	var SUBSCRIBE = "subscribe";
-	var HUB = "hub";
-	var SETTINGS = "settings";
-	var LENGTH = "length";
-	var RESOLVE = "resolve";
-	var TOPIC = "topic";
-	var DEFER = "defer";
-	var MEMORY = "memory";
-
-	return Service.extend(
-		/**
-		 * Proxies to 1.x hub
-		 * @param {object..} setting Setting
-		 * @constructor
-		 */
-		function To1xService(setting) {
-			this[SETTINGS] = ARRAY_SLICE.call(arguments);
-		}, {
-			"displayName" : "core/pubsub/proxy/to1x",
-
-			"sig/initialize" : function () {
-				var me = this;
-
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error("'" + HUB + "' is missing from setting");
-					}
-
-					var publish = setting[PUBLISH] || {};
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
-
-					// Iterate publish keys
-					OBJECT_KEYS(publish).forEach(function (source) {
-						// Extract target
-						var target = publish[source];
-						var topic;
-						var defer;
-
-						// If target is a string set topic to target and defer to false
-						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
-							topic = target;
-							defer = false;
-						}
-						// Otherwise just grab topic and defer from target
-						else {
-							// Make sure we have a topic
-							if (!(TOPIC in target)) {
-								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
-							}
-
-							// Get topic
-							topic = target[TOPIC];
-							// Make sure defer is a boolean
-							defer = !!target[DEFER];
-						}
-
-						// Create callback
-						var callback = publish[source] = function () {
-							// Initialize args with topic as the first argument
-							var args = [ topic ];
-							var deferred;
-							var resolve;
-
-							// Push original arguments on args
-							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
-
-							if (defer) {
-								// Create deferred
-								deferred = when.defer();
-
-								// Store original resolve method
-								resolve = deferred[RESOLVE];
-
-								// Since the deferred implementation in jQuery (that we use in 1.x) allows
-								// to resolve with multiple arguments, we monkey-patch resolve here
-								deferred[RESOLVE] = deferred.resolver[RESOLVE] = function () {
-									resolve(ARRAY_SLICE.call(arguments));
-								};
-
-								// Push deferred as last argument on args
-								ARRAY_PUSH.call(args, deferred);
-							}
-
-							// Publish with args
-							hub.publish.apply(hub, args);
-
-							// Return promise
-							return deferred
-								? deferred.promise
-								: UNDEFINED;
-						};
-
-						// Transfer topic and defer to callback
-						callback[TOPIC] = topic;
-						callback[DEFER] = defer;
-
-						// Subscribe from me
-						me.subscribe(source, callback);
-					});
-
-					// Iterate subscribe keys
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						// Extract target
-						var target = subscribe[source];
-						var topic;
-						var memory;
-
-						// If target is not a string, make it into an object
-						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
-							topic = target;
-							memory = false;
-						}
-						// Otherwise just grab from the properties
-						else {
-							// Make sure we have a topic
-							if (!(TOPIC in target)) {
-								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
-							}
-
-							// Get topic
-							topic = target[TOPIC];
-							// Make sure memory is a boolean
-							memory = !!target[MEMORY];
-						}
-
-						// Create callback
-						var callback = subscribe[source] = function () {
-							// Initialize args with topic as the first argument
-							var args = [ topic ];
-							var deferred;
-							var result;
-
-							// Push sliced (without topic) arguments on args
-							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
-
-							// If the last argument look like a promise we pop and store as deferred
-							if (when.isPromise(args[args[LENGTH] - 1])) {
-								deferred = args.pop();
-							}
-
-							// Publish and store promise as result
-							result = me.publish.apply(me, args);
-
-							// If we have a deferred we should chain it to result
-							if (deferred) {
-								when(result, apply(deferred.resolve), deferred.reject, deferred.progress);
-							}
-
-							// Return result
-							return result;
-						};
-
-						// Transfer topic and memory to callback
-						callback[TOPIC] = topic;
-						callback[MEMORY] = memory;
-
-						// Subscribe from hub,notice that since we're pushing memory there _is_ a chance that
-						// we'll get a callback before sig/start
-						hub.subscribe(source, me, memory, callback);
-					});
-				});
-			},
-
-			"sig/finalize" : function () {
-				var me = this;
-
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error("'" + HUB + "' is missing from setting");
-					}
-
-					var publish = setting[PUBLISH] || {};
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
-
-					// Iterate publish keys and unsubscribe
-					OBJECT_KEYS(publish).forEach(function (source) {
-						me.unsubscribe(source, publish[source]);
-					});
-
-					// Iterate subscribe keys and unsubscribe
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						hub.unsubscribe(source, me, subscribe[source]);
-					});
-				});
-			}
-		});
-});
-/**
- * TroopJS core/pubsub/proxy/to2x
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "poly/array", "poly/object" ], function To2xModule(Service, when) {
-	"use strict";
-
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var OBJECT_KEYS = Object.keys;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_STRING = "[object String]";
-	var PUBLISH = "publish";
-	var SUBSCRIBE = "subscribe";
-	var HUB = "hub";
-	var SETTINGS = "settings";
-	var TOPIC = "topic";
-	var REPUBLISH = "republish";
-
-	return Service.extend(
-		/**
-		 * Proxies to 2.x hub
-		 * @param {object..} setting Setting
-		 * @constructor
-		 */
-		function To2xService(setting) {
-			this[SETTINGS] = ARRAY_SLICE.call(arguments);
-		}, {
-			"displayName" : "core/pubsub/proxy/to2x",
-
-			"sig/initialize" : function ()  {
-				var me = this;
-
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error("'" + HUB + "' is missing from setting");
-					}
-
-					var publish = setting[PUBLISH] || {};
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
-
-					// Iterate publish keys
-					OBJECT_KEYS(publish).forEach(function (source) {
-						// Extract target
-						var target = publish[source];
-						var topic;
-
-						// If target is a string set topic to target
-						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
-							topic = target;
-						}
-						// Otherwise just grab topic from target
-						else {
-							// Make sure we have a topic
-							if (!(TOPIC in target)) {
-								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
-							}
-
-							// Get topic
-							topic = target[TOPIC];
-						}
-
-						// Create callback
-						var callback = publish[source] = function () {
-							// Initialize args with topic as the first argument
-							var args = [ topic ];
-
-							// Push original arguments on args
-							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
-
-							return hub.publish.apply(hub, args);
-						};
-
-						// Transfer topic to callback
-						callback[TOPIC] = topic;
-
-						me.subscribe(source, callback);
-					});
-
-					// Iterate subscribe keys
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						// Extract target
-						var target = subscribe[source];
-						var topic;
-						var republish;
-
-						// If target is a string set topic to target and republish to false
-						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
-							topic = target;
-							republish = false;
-						}
-						// Otherwise just grab topic and republish from target
-						else {
-							// Make sure we have a topic
-							if (!(TOPIC in target)) {
-								throw new Error("'" + TOPIC + "' is missing from target '" + source + "'");
-							}
-
-							// Get topic
-							topic = target[TOPIC];
-							// Make sure republish is a boolean
-							republish = !!target[REPUBLISH];
-						}
-
-						// Create callback
-						var callback = subscribe[source] = function () {
-							// Initialize args with topic as the first argument
-							var args = [ topic ];
-
-							// Push original arguments on args
-							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
-
-							// Publish and store promise as result
-							return me.publish.apply(me, args);
-						};
-
-						// Transfer topic and republish to callback
-						callback[TOPIC] = topic;
-						callback[REPUBLISH] = republish;
-
-						hub.subscribe(source, me, callback);
-					});
-				});
-			},
-
-			"sig/start" : function () {
-				var me = this;
-				var results = [];
-
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error("'" + HUB + "' is missing from setting");
-					}
-
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
-
-					// Iterate subscribe keys
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						var callback = subscribe[source];
-
-						// Check if we should republish
-						if (callback[REPUBLISH] === true) {
-							// Push result from republish on results
-							results.push(hub.republish(source, false, me, callback));
-						}
-					});
-				});
-
-				// Return promise that will resolve once all results are resolved
-				return when.all(results);
-			},
-
-			"sig/finalize" : function () {
-				var me = this;
-
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error("'" + HUB + "' is missing from setting");
-					}
-
-					var publish = setting[PUBLISH] || {};
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
-
-					// Iterate publish keys and unsubscribe
-					OBJECT_KEYS(publish).forEach(function (source) {
-						me.unsubscribe(source, publish[source]);
-					});
-
-					// Iterate subscribe keys and unsubscribe
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						hub.unsubscribe(source, me, subscribe[source]);
-					});
-				});
-			}
-		});
-});
-/**
- * TroopJS browser/store/adapter/base module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/store/adapter/base',[ "troopjs-core/component/gadget" ], function BaseAdapterModule(Gadget) {
-	"use strict";
-	var STORAGE = "storage";
-
-	return Gadget.extend({
-		"displayName" : "browser/store/adapter/base",
-
-		"afterPut" : function (store, key, value) {
-			this[STORAGE].setItem(key, JSON.stringify(value));
-		},
-
-		"beforeGet" : function get(store, key) {
-			return store.put(key, JSON.parse(this[STORAGE].getItem(key)));
-		},
-
-		"clear" : function clear() {
-			return this[STORAGE].clear();
-		}
-	});
-});
-/**
- * TroopJS browser/store/adapter/local module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/store/adapter/local',[ "./base" ], function LocalAdapterModule(Store) {
-	"use strict";
-
-	return Store.extend({
-		"displayName" : "browser/store/adapter/local",
-
-		"storage" : window.localStorage
-	});
-});
-/**
- * TroopJS browser/store/adapter/session module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/store/adapter/session',[ "./base" ], function SessionAdapterModule(Store) {
-	"use strict";
-
-	return Store.extend({
-		"displayName" : "browser/store/adapter/session",
-
-		"storage": window.sessionStorage
-	});
-});
-
-/**
- * TroopJS jquery/dimensions
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-jquery/dimensions',[ "jquery" ], function DimensionsModule($) {
-	"use strict";
-
-	var NULL = null;
-	var DIMENSIONS = "dimensions";
-	var RESIZE = "resize." + DIMENSIONS;
-	var W = "w";
-	var H = "h";
-	var _W = "_" + W;
-	var _H = "_" + H;
-
-	/**
-	 * Internal comparator used for reverse sorting arrays
-	 */
-	function reverse(a, b) {
-		return b - a;
-	}
-
-	/**
-	 * Internal onResize handler
-	 */
-	function onResize() {
-		/*jshint validthis:true*/
-		var me = this;
-		var $me = $(me);
-		var width = $me.width();
-		var height = $me.height();
-
-		// Iterate all dimensions
-		$.each($.data(me, DIMENSIONS), function dimensionIterator(namespace, dimension) {
-			var w = dimension[W];
-			var h = dimension[H];
-			var _w;
-			var _h;
-			var i;
-
-			i = w.length;
-			_w = w[i - 1];
-			while(w[--i] < width) {
-				_w = w[i];
-			}
-
-			i = h.length;
-			_h = h[i - 1];
-			while(h[--i] < height) {
-				_h = h[i];
-			}
-
-			// If _w or _h has changed, update and trigger
-			if (_w !== dimension[_W] || _h !== dimension[_H]) {
-				dimension[_W] = _w;
-				dimension[_H] = _h;
-
-				$me.trigger(DIMENSIONS + "." + namespace, [ _w, _h ]);
-			}
-		});
-	}
-
-	$.event.special[DIMENSIONS] = {
-		setup : function onDimensionsSetup() {
-			$(this)
-				.bind(RESIZE, onResize)
-				.data(DIMENSIONS, {});
-		},
-
-		/**
-		 * Do something each time an event handler is bound to a particular element
-		 * @param handleObj (Object)
-		 */
-		add : function onDimensionsAdd(handleObj) {
-			var me = this;
-			var namespace = handleObj.namespace;
-			var dimension = {};
-			var w = dimension[W] = [];
-			var h = dimension[H] = [];
-			var re = /(w|h)(\d+)/g;
-			var matches;
-
-			while ((matches = re.exec(namespace)) !== NULL) {
-				dimension[matches[1]].push(parseInt(matches[2], 10));
-			}
-
-			w.sort(reverse);
-			h.sort(reverse);
-
-			$.data(me, DIMENSIONS)[namespace] = dimension;
-		},
-
-		/**
-		 * Do something each time an event handler is unbound from a particular element
-		 * @param handleObj (Object)
-		 */
-		remove : function onDimensionsRemove(handleObj) {
-			delete $.data(this, DIMENSIONS)[handleObj.namespace];
-		},
-
-		teardown : function onDimensionsTeardown() {
-			$(this)
-				.removeData(DIMENSIONS)
-				.unbind(RESIZE, onResize);
-		}
-	};
-});
-/**
- * TroopJS jquery/resize
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
- */
-define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
-	"use strict";
-
-	var NULL = null;
-	var RESIZE = "resize";
-	var W = "w";
-	var H = "h";
-	var $ELEMENTS = $([]);
-	var INTERVAL = NULL;
-
-	/**
-	 * Iterator
-	 * @param index
-	 * @param me
-	 */
-	function iterator(index, me) {
-		// Get data
-		var $data = $.data(me);
-
-		// Get reference to $me
-		var $me = $(me);
-
-		// Get previous width and height
-		var w = $me.width();
-		var h = $me.height();
-
-		// Check if width or height has changed since last check
-		if (w !== $data[W] || h !== $data[H]) {
-			$data[W] = w;
-			$data[H] = h;
-
-			$me.trigger(RESIZE, [ w, h ]);
-		}
-	}
-
-	/**
-	 * Internal interval
-	 */
-	function interval() {
-		$ELEMENTS.each(iterator);
-	}
-
-	$.event.special[RESIZE] = {
-		"setup" : function onResizeSetup() {
-			var me = this;
-
-			// window has a native resize event, exit fast
-			if ($.isWindow(me)) {
-				return false;
-			}
-
-			// Store data
-			var $data = $.data(me, RESIZE, {});
-
-			// Get reference to $me
-			var $me = $(me);
-
-			// Initialize data
-			$data[W] = $me.width();
-			$data[H] = $me.height();
-
-			// Add to tracked collection
-			$ELEMENTS = $ELEMENTS.add(me);
-
-			// If this is the first element, start interval
-			if($ELEMENTS.length === 1) {
-				INTERVAL = setInterval(interval, 100);
-			}
-		},
-
-		"teardown" : function onResizeTeardown() {
-			var me = this;
-
-			// window has a native resize event, exit fast
-			if ($.isWindow(me)) {
-				return false;
-			}
-
-			// Remove data
-			$.removeData(me, RESIZE);
-
-			// Remove from tracked collection
-			$ELEMENTS = $ELEMENTS.not(me);
-
-			// If this is the last element, stop interval
-			if($ELEMENTS.length === 0 && INTERVAL !== NULL) {
-				clearInterval(INTERVAL);
-			}
-		}
-	};
-});
-
-/**
- * TroopJS browser/dimensions/widget
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jquery/dimensions", "troopjs-jquery/resize" ], function DimensionsModule(Widget) {
-	"use strict";
-
-	var UNDEFINED;
-	var $ELEMENT = "$element";
-	var DIMENSIONS = "dimensions";
-
-	function onDimensions($event, w, h) {
-		var me = $event.data;
-
-		me.publish(me.displayName, w, h, $event);
-	}
-
-	return Widget.extend(function DimensionsWidget($element, displayName, dimensions) {
-		if (dimensions === UNDEFINED) {
-			throw new Error("No dimensions provided");
-		}
-
-		this[DIMENSIONS] = dimensions;
-	}, {
-		"displayName" : "browser/dimensions/widget",
-
-		"sig/initialize" : function initialize() {
-			var me = this;
-
-			me[$ELEMENT].on(DIMENSIONS + "." + me[DIMENSIONS], me, onDimensions);
-		},
-
-		"sig/start" : function start() {
-			this[$ELEMENT].trigger("resize." + DIMENSIONS);
-		},
-
-		"sig/finalize" : function finalize() {
-			var me = this;
-
-			me[$ELEMENT].off(DIMENSIONS + "." + me[DIMENSIONS], onDimensions);
-		}
-	});
-});
-define('troopjs/version',[],function () { return "2.0.2-7"; });
+define('troopjs/version',[],function () { return "2.1.0-4"; });
 define(['troopjs/version'], function (main) { return main; });
