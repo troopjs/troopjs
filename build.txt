@@ -37,6 +37,7 @@ bower_components/troopjs-jquery/dimensions.js
 bower_components/troopjs-browser/dimensions/widget.js
 bower_components/troopjs-data/ajax/service.js
 bower_components/troopjs-data/cache/component.js
+bower_components/troopjs-data/cache/service.js
 bower_components/troopjs-data/query/component.js
 bower_components/troopjs-data/query/service.js
 bower_components/troopjs-data/component/widget.js

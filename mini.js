@@ -4,7 +4,7 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-1+1454227 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-1+7703e49 ]
  *
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
