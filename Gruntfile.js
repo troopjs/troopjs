@@ -172,7 +172,7 @@ module.exports = function(grunt) {
 			},
 			"dist" : {
 				"options" : {
-					"branch" : "build/2.x",
+					"branch" : "build/3.x",
 					"dir" : "<%= build.dist %>"
 				}
 			}
