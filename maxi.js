@@ -11,6 +11,7 @@ define([
 	"troopjs-browser/dimensions/widget",
 	"troopjs-data/ajax/service",
 	"troopjs-data/cache/component",
+	"troopjs-data/cache/service",
 	"troopjs-data/query/service",
 	"troopjs-data/component/widget",
 	"troopjs-jquery/noconflict",
