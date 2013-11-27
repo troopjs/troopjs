@@ -1,0 +1,60 @@
+{
+	"name": "troopjs",
+	"description": "TroopJS package",
+	"version": "3.0.0-1+1454227",
+	"author": {
+		"name": "Mikael Karon",
+		"email": "mikael@karon.se"
+	},
+	"maintainers": [
+		{
+			"name": "Mikael Karon",
+			"web": "https://github.com/mikaelkaron"
+		},
+		{
+			"name": "Garry Yao",
+			"web": "https://github.com/garryyao"
+		}
+	],
+	"contributors": [
+		{
+			"name": "Kates Gasis",
+			"web": "https://github.com/kates"
+		},
+		{
+			"name": "Norman Xu",
+			"web": "https://github.com/normanzb"
+		},
+		{
+			"name": "Vincent Shao",
+			"web": "https://github.com/lupincn"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/troopjs/troopjs.git"
+	},
+	"bugs": {
+		"url": "https://github.com/troopjs/troopjs/issues"
+	},
+	"homepage": "http://troopjs.com",
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "http://troopjs.mit-license.org/"
+		}
+	],
+	"devDependencies": {
+		"matchdep": "~0.3",
+		"grunt": "~0.4",
+		"grunt-contrib-requirejs": "~0.4",
+		"grunt-contrib-uglify": "~0.2",
+		"grunt-contrib-clean": "~0.5",
+		"grunt-buster": "~0.3",
+		"grunt-banner": "~0.2",
+		"grunt-git-describe": "~2.3",
+		"grunt-git-dist": "~0.4",
+		"grunt-semver": "~0.1",
+		"semver": "~2.2"
+	}
+}
