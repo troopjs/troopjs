@@ -1,7 +1,5 @@
-# IDEA
+# IDE
 .idea
-
-# Eclipse
 .project
 .settings
 .externalToolBuilders
