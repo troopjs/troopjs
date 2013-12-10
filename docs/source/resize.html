@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS jquery/resize
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ *
+ * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
+ */
+define([ &quot;jquery&quot; ], function ResizeModule($) {
+	&quot;use strict&quot;;
+
+	var NULL = null;
+	var RESIZE = &quot;resize&quot;;
+	var W = &quot;w&quot;;
+	var H = &quot;h&quot;;
+	var $ELEMENTS = $([]);
+	var INTERVAL = NULL;
+
+	/*
+	 * Iterator
+	 * @param index
+	 * @param me
+	 */
+	function iterator(index, me) {
+		// Get data
+		var $data = $.data(me);
+
+		// Get reference to $me
+		var $me = $(me);
+
+		// Get previous width and height
+		var w = $me.width();
+		var h = $me.height();
+
+		// Check if width or height has changed since last check
+		if (w !== $data[W] || h !== $data[H]) {
+			$data[W] = w;
+			$data[H] = h;
+
+			$me.trigger(RESIZE, [ w, h ]);
+		}
+	}
+
+	/*
+	 * Internal interval
+	 */
+	function interval() {
+		$ELEMENTS.each(iterator);
+	}
+
+<span id='$-event-resize'>	/**
+</span>	 * jQuery event fired whenever element dimension changes using an interval.
+	 * @member $
+	 * @event resize
+	 */
+	$.event.special[RESIZE] = {
+		&quot;setup&quot; : function onResizeSetup() {
+			var me = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(me)) {
+				return false;
+			}
+
+			// Store data
+			var $data = $.data(me, RESIZE, {});
+
+			// Get reference to $me
+			var $me = $(me);
+
+			// Initialize data
+			$data[W] = $me.width();
+			$data[H] = $me.height();
+
+			// Add to tracked collection
+			$ELEMENTS = $ELEMENTS.add(me);
+
+			// If this is the first element, start interval
+			if($ELEMENTS.length === 1) {
+				INTERVAL = setInterval(interval, 100);
+			}
+		},
+
+		&quot;teardown&quot; : function onResizeTeardown() {
+			var me = this;
+
+			// window has a native resize event, exit fast
+			if ($.isWindow(me)) {
+				return false;
+			}
+
+			// Remove data
+			$.removeData(me, RESIZE);
+
+			// Remove from tracked collection
+			$ELEMENTS = $ELEMENTS.not(me);
+
+			// If this is the last element, stop interval
+			if($ELEMENTS.length === 0 &amp;&amp; INTERVAL !== NULL) {
+				clearInterval(INTERVAL);
+			}
+		}
+	};
+});
+</pre>
+</body>
+</html>

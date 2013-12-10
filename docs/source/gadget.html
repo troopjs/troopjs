@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS core/component/gadget
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;../event/emitter&quot;, &quot;when&quot;, &quot;../pubsub/hub&quot; ], function GadgetModule(Emitter, when, hub) {
+	&quot;use strict&quot;;
+
+<span id='core-component-gadget'>	/**
+</span>	 * Base component that provides events and subscriptions features.
+	 *
+	 * 	var one = Gadget.create({
+	 * 		&quot;hub/kick/start&quot;: function(foo) {
+	 * 			// handle kick start
+	 * 		},
+	 *
+	 * 		&quot;hub/piss/off&quot;: function() {
+	 * 			// handle piss off
+	 * 		},
+	 *
+	 * 		&quot;sig/task&quot;: function() {
+	 * 			// handle &quot;bar&quot; task.
+	 * 		},
+	 *
+	 * 		&quot;hub/task&quot;: function() {
+	 * 			// handle both &quot;foo&quot; and &quot;bar&quot;.
+	 * 		}
+	 * 	});
+	 *
+	 * 	var other = Gadget.create();
+	 *
+	 * 	other.publish(&quot;kick/start&quot;,&quot;foo&quot;);
+	 * 	other.publish(&quot;piss/off&quot;);
+	 * 	other.task(&quot;foo&quot;, function() {
+	 * 		// some dirty lift.
+	 * 	});
+	 * 	one.task(&quot;bar&quot;, function() {
+	 * 		// some dirty lift.
+	 * 	});
+	 *
+	 * @class core.component.gadget
+	 * @extends core.event.emitter
+	 */
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var PUBLISH = hub.publish;
+	var REPUBLISH = hub.republish;
+	var SUBSCRIBE = hub.subscribe;
+	var UNSUBSCRIBE = hub.unsubscribe;
+	var LENGTH = &quot;length&quot;;
+	var FEATURES = &quot;features&quot;;
+	var TYPE = &quot;type&quot;;
+	var VALUE = &quot;value&quot;;
+	var SUBSCRIPTIONS = &quot;subscriptions&quot;;
+	var EMITTER_PROTO = Emitter.prototype;
+	var ON = EMITTER_PROTO.on;
+	var OFF = EMITTER_PROTO.off;
+	var REEMITT = EMITTER_PROTO.reemit;
+	var PEEK = EMITTER_PROTO.peek;
+
+	return Emitter.extend(function Gadget() {
+		this[SUBSCRIPTIONS] = [];
+	}, {
+		&quot;displayName&quot; : &quot;core/component/gadget&quot;,
+
+		&quot;sig/initialize&quot; : function onInitialize() {
+			var me = this;
+			var subscription;
+			var subscriptions = me[SUBSCRIPTIONS];
+			var special;
+			var specials = me.constructor.specials.hub;
+			var i;
+			var iMax;
+			var type;
+			var value;
+
+			// Iterate specials
+			for (i = 0, iMax = specials ? specials[LENGTH] : 0; i &lt; iMax; i++) {
+				// Get special
+				special = specials[i];
+
+				// Create subscription
+				subscription = subscriptions[i] = {};
+
+				// Set subscription properties
+				subscription[TYPE] = type = special[TYPE];
+				subscription[FEATURES] = special[FEATURES];
+				subscription[VALUE] = value = special[VALUE];
+
+				// Subscribe
+				SUBSCRIBE.call(hub, type, me, value);
+			}
+		},
+
+		&quot;sig/start&quot; : function onStart() {
+			var me = this;
+			var args = arguments;
+			var subscription;
+			var subscriptions = me[SUBSCRIPTIONS];
+			var results = [];
+			var resultsLength = 0;
+			var i;
+			var iMax;
+
+			// Iterate subscriptions
+			for (i = 0, iMax = subscriptions[LENGTH]; i &lt; iMax; i++) {
+				// Get subscription
+				subscription = subscriptions[i];
+
+				// If this is not a &quot;memory&quot; subscription - continue
+				if (subscription[FEATURES] !== &quot;memory&quot;) {
+					continue;
+				}
+
+				// Republish, store result
+				results[resultsLength++] = REPUBLISH.call(hub, subscription[TYPE], false, me, subscription[VALUE]);
+			}
+
+			// Return promise that will be fulfilled when all results are, and yield args
+			return when.all(results).yield(args);
+		},
+
+		&quot;sig/finalize&quot; : function onFinalize() {
+			var me = this;
+			var subscription;
+			var subscriptions = me[SUBSCRIPTIONS];
+			var i;
+			var iMax;
+
+			// Iterate subscriptions
+			for (i = 0, iMax = subscriptions[LENGTH]; i &lt; iMax; i++) {
+				// Get subscription
+				subscription = subscriptions[i];
+
+				// Unsubscribe
+				UNSUBSCRIBE.call(hub, subscription[TYPE], me, subscription[VALUE]);
+			}
+		},
+
+		/*
+		 * Signal handler for 'task'
+		 * @param {Promise} task
+		 * @returns {Promise}
+		 */
+		&quot;sig/task&quot; : function onTask(task) {
+			return this.publish(&quot;task&quot;, task);
+		},
+
+<span id='core-component-gadget-method-reemit'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Context of the callback will always be **this** object.
+		 */
+		&quot;reemit&quot; : function reemit(event, senile, callback) {
+			var me = this;
+			var args = [ event, senile, me ];
+
+			// Add args
+			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 2));
+
+			// Forward
+			return REEMITT.apply(me, args);
+		},
+
+<span id='core-component-gadget-method-on'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Context of the callback will always be **this** object.
+		 */
+		&quot;on&quot;: function on(event) {
+			var me = this;
+			var args = [ event, me ];
+
+			// Add args
+			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
+
+			// Forward
+			return ON.apply(me, args);
+		},
+
+<span id='core-component-gadget-method-off'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Context of the callback will always be **this** object.
+		 */
+		&quot;off&quot; : function off(event) {
+			var me = this;
+			var args = [ event, me ];
+
+			// Add args
+			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
+
+			// Forward
+			return OFF.apply(me, args);
+		},
+
+<span id='core-component-gadget-method-publish'>		/**
+</span>		 * @inheritdoc core.pubsub.hub#publish
+		 */
+		&quot;publish&quot; : function publish() {
+			return PUBLISH.apply(hub, arguments);
+		},
+
+<span id='core-component-gadget-method-republish'>		/**
+</span>		 * @inheritdoc core.pubsub.hub#republish
+		 */
+		&quot;republish&quot; : function republish(event, senile, callback) {
+			var me = this;
+			var args = [ event, senile, me ];
+
+			// Add args
+			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 2));
+
+			// Republish
+			return REPUBLISH.apply(hub, args);
+		},
+
+<span id='core-component-gadget-method-subscribe'>		/**
+</span>		 * @inheritdoc core.pubsub.hub#subscribe
+		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
+		 */
+		&quot;subscribe&quot; : function subscribe(event, callback) {
+			var me = this;
+			var args = [ event, me ];
+
+			// Add args
+			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
+
+			// Subscribe
+			SUBSCRIBE.apply(hub, args);
+
+			return me;
+		},
+
+<span id='core-component-gadget-method-unsubscribe'>		/**
+</span>		 * @inheritdoc core.pubsub.hub#unsubscribe
+		 * @localdoc Unsubscribe from public events in context of this component.
+		 */
+		&quot;unsubscribe&quot; : function unsubscribe(event, callback) {
+			var me = this;
+			var args = [ event, me ];
+
+			// Add args
+			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
+
+			// Unsubscribe
+			UNSUBSCRIBE.apply(hub, args);
+
+			return me;
+		},
+
+<span id='core-component-gadget-method-spy'>		/**
+</span>		 * Spies on the current value in MEMORY on the hub
+		 * @param {String} event event to spy on
+		 * @returns {*} Value in MEMORY
+		 */
+		&quot;spy&quot; : function (event) {
+			return PEEK.call(hub, event);
+		}
+	});
+});
+</pre>
+</body>
+</html>

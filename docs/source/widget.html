@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/component/widget
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;troopjs-core/component/gadget&quot;, &quot;jquery&quot;, &quot;../loom/config&quot;, &quot;../loom/weave&quot;, &quot;../loom/unweave&quot;, &quot;../loom/plugin&quot;, &quot;troopjs-jquery/destroy&quot; ], function WidgetModule(Gadget, $, config, weave, unweave) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var TYPEOF_FUNCTION = &quot;function&quot;;
+	var $ELEMENT = &quot;$element&quot;;
+	var $HANDLERS = &quot;$handlers&quot;;
+	var FEATURES = &quot;features&quot;;
+	var TYPE = &quot;type&quot;;
+	var VALUE = &quot;value&quot;;
+	var PROXY = &quot;proxy&quot;;
+	var GUID = &quot;guid&quot;;
+	var LENGTH = &quot;length&quot;;
+	var SELECTOR_WEAVE = &quot;[&quot; + config[&quot;weave&quot;] + &quot;]&quot;;
+	var SELECTOR_UNWEAVE = &quot;[&quot; + config[&quot;unweave&quot;] + &quot;]&quot;;
+
+
+	/*
+	 * Creates a proxy that executes 'handler' in 'widget' scope
+	 * @private
+	 * @param {Object} widget target widget
+	 * @param {Function} handler target handler
+	 * @returns {Function} proxied handler
+	 */
+	function eventProxy(widget, handler) {
+		/*
+		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
+		 * @returns result of proxied hanlder invocation
+		 */
+		return function handlerProxy() {
+			// Apply with shifted arguments to handler
+			return handler.apply(widget, arguments);
+		};
+	}
+
+	/*
+	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
+	 * @private
+	 * @param $fn jQuery method
+	 * @returns {Function} proxied render
+	 */
+	function renderProxy($fn) {
+		/*
+		 * Renders contents into element
+		 * @private
+		 * @param {Function|String} contents Template/String to render
+		 * @param {Object..} [data] If contents is a template - template data
+		 * @returns {Object} me
+		 */
+		function render(contents, data) {
+			/*jshint validthis:true*/
+			var me = this;
+			var args = ARRAY_SLICE.call(arguments, 1);
+
+			// Call render with contents (or result of contents if it's a function)
+			return weave.call($fn.call(me[$ELEMENT],
+				typeof contents === TYPEOF_FUNCTION ? contents.apply(me,args) : contents
+			).find(SELECTOR_WEAVE));
+		}
+
+		return render;
+	}
+
+<span id='browser-component-widget'>	/**
+</span>	 * Base DOM component attached to an element, that takes care of widget instantiation.
+	 * @class browser.component.widget
+	 */
+	return Gadget.extend(function ($element, displayName) {
+		var me = this;
+
+		if ($element === UNDEFINED) {
+			throw new Error(&quot;No $element provided&quot;);
+		}
+
+		me[$ELEMENT] = $element;
+		me[$HANDLERS] = [];
+
+		if (displayName !== UNDEFINED) {
+			me.displayName = displayName;
+		}
+	}, {
+		&quot;displayName&quot; : &quot;browser/component/widget&quot;,
+
+		&quot;sig/initialize&quot; : function onInitialize() {
+			var me = this;
+			var $element = me[$ELEMENT];
+			var $handler;
+			var $handlers = me[$HANDLERS];
+			var special;
+			var specials = me.constructor.specials.dom;
+			var type;
+			var features;
+			var value;
+			var proxy;
+			var i;
+			var iMax;
+
+			// Iterate specials
+			for (i = 0, iMax = specials ? specials[LENGTH] : 0; i &lt; iMax; i++) {
+				// Get special
+				special = specials[i];
+
+				// Create $handler
+				$handler = $handlers[i] = {};
+
+				// Set $handler properties
+				$handler[TYPE] = type = special[TYPE];
+				$handler[FEATURES] = features = special[FEATURES];
+				$handler[VALUE] = value = special[VALUE];
+				$handler[PROXY] = proxy = eventProxy(me, value);
+
+				// Attach proxy
+				$element.on(type, features, me, proxy);
+
+				// Copy GUID from proxy to value (so you can use .off to remove it)
+				value[GUID] = proxy[GUID];
+			}
+		},
+
+		&quot;sig/finalize&quot; : function onFinalize() {
+			var me = this;
+			var $element = me[$ELEMENT];
+			var $handler;
+			var $handlers = me[$HANDLERS];
+			var i;
+			var iMax;
+
+			// Iterate $handlers
+			for (i = 0, iMax = $handlers[LENGTH]; i &lt; iMax; i++) {
+				// Get $handler
+				$handler = $handlers[i];
+
+				// Detach event handler
+				$element.off($handler[TYPE], $handler[FEATURES], $handler[PROXY]);
+			}
+		},
+
+		&quot;sig/task&quot; : function onTask(task) {
+			this[$ELEMENT].trigger(&quot;task&quot;, [ task ]);
+		},
+
+<span id='browser-component-widget-method-weave'>		/**
+</span>		 * Weaves all children of $element
+		 * @returns {Promise} from weave
+		 */
+		&quot;weave&quot; : function () {
+			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
+		},
+
+<span id='browser-component-widget-method-unweave'>		/**
+</span>		 * Unweaves all children of $element _and_ me
+		 * @returns {Promise} from unweave
+		 */
+		&quot;unweave&quot; : function () {
+			return unweave.apply(this[$ELEMENT].find(SELECTOR_UNWEAVE).addBack(), arguments);
+		},
+
+<span id='browser-component-widget-method-dom/destroy'>		/**
+</span>		 * Destroy DOM handler
+		 */
+		&quot;dom/destroy&quot; : function () {
+			this.unweave();
+		},
+
+<span id='browser-component-widget-method-before'>		/**
+</span>		 * Renders content and inserts it before $element
+		 * @method
+		 */
+		&quot;before&quot; : renderProxy($.fn.before),
+
+<span id='browser-component-widget-method-after'>		/**
+</span>		 * Renders content and inserts it after $element
+		 * @method
+		 */
+		&quot;after&quot; : renderProxy($.fn.after),
+
+<span id='browser-component-widget-method-html'>		/**
+</span>		 * Renders content and replaces $element contents
+		 * @method
+		 */
+		&quot;html&quot; : renderProxy($.fn.html),
+
+<span id='browser-component-widget-method-text'>		/**
+</span>		 * Renders content and replaces $element contents
+		 * @method
+		 */
+		&quot;text&quot; : renderProxy($.fn.text),
+
+<span id='browser-component-widget-method-append'>		/**
+</span>		 * Renders content and appends it to $element
+		 * @method
+		 */
+		&quot;append&quot; : renderProxy($.fn.append),
+
+<span id='browser-component-widget-method-prepend'>		/**
+</span>		 * Renders content and prepends it to $element
+		 * @method
+		 */
+		&quot;prepend&quot; : renderProxy($.fn.prepend)
+	});
+});
+</pre>
+</body>
+</html>

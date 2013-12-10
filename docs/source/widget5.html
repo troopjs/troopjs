@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * TroopJS browser/mvc/controller/widget module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([
+	&quot;../../component/widget&quot;,
+	&quot;../../hash/widget&quot;,
+	&quot;poly/object&quot;,
+	&quot;poly/array&quot;
+], function (Widget, Hash) {
+	&quot;use strict&quot;;
+
+	var CACHE = &quot;_cache&quot;;
+	var DISPLAYNAME = &quot;displayName&quot;;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var currTaskNo = 0;
+
+	function extend() {
+		var me = this;
+
+		ARRAY_SLICE.call(arguments).forEach(function (arg) {
+			Object.keys(arg).forEach(function (key) {
+				me[key] = arg[key];
+			});
+		});
+
+		return me;
+	}
+
+	var indexes = {};
+	// Check if the object has changed since the last retrieval.
+	function checkChanged(key, val) {
+		var curr = this[CACHE][key], hash = this.hash(val);
+		var ischanged = !(curr === val &amp;&amp; indexes[key] === hash );
+		ischanged &amp;&amp; (indexes[key] = hash);
+		return ischanged;
+	}
+
+	function handleRequests(requests) {
+		var me = this;
+		var displayName = me[DISPLAYNAME];
+
+		return me.task(function (resolve, reject) {
+			// Track this task.
+			var taskNo = ++currTaskNo;
+
+			me.request(extend.call({}, me[CACHE], requests))
+				.then(function (results) {
+					// Reject if this promise is not the current pending task.
+					if (taskNo == currTaskNo) {
+						// Get old cache
+						var cache = me[CACHE];
+
+						// Calculate updates
+						var updates = {};
+						var updated = Object.keys(results).reduce(function (update, key) {
+							if (checkChanged.apply(me, [key, results[key]])) {
+								updates[key] = results[key];
+								update = true;
+							}
+
+							return update;
+						}, false);
+
+						// Update cache
+						me[CACHE] = results;
+
+						resolve(me.publish(displayName + &quot;/results&quot;, results)
+							.then(function () {
+								return updated &amp;&amp; me.publish(displayName + &quot;/updates&quot;, updates);
+							})
+							.then(function () {
+								// Trigger `hashset`
+								me.$element.trigger(&quot;hashset&quot;, me.data2uri(results), true);
+							})
+							.yield(results));
+					}
+				});
+		});
+	}
+
+	return Widget.extend(function () {
+		this[CACHE] = {};
+	}, {
+		&quot;displayName&quot;: &quot;browser/mvc/controller/widget&quot;,
+
+		&quot;sig/initialize&quot;: function () {
+			var me = this;
+
+			me.subscribe(me[DISPLAYNAME] + &quot;/requests&quot;, handleRequests);
+		},
+
+		&quot;sig/finalize&quot;: function () {
+			var me = this;
+
+			me.unsubscribe(me[DISPLAYNAME]+ &quot;/requests&quot;, handleRequests);
+		},
+
+		&quot;dom/urichange&quot;: function ($event, uri) {
+			var me = this;
+
+			me.publish(me[DISPLAYNAME] + &quot;/requests&quot;, me.uri2data(uri));
+		},
+
+		&quot;request&quot; : function (/* requests */) {
+			throw new Error(&quot;request is not implemented&quot;);
+		},
+
+		&quot;uri2data&quot; : function (/* uri */) {
+			throw new Error(&quot;uri2data is not implemented&quot;);
+		},
+
+		&quot;data2uri&quot; : function (/* data */) {
+			throw new Error(&quot;data2uri is not implemented&quot;);
+		},
+
+		// Override me to compute the data hash.
+		&quot;hash&quot; : function (data) { return &quot;&quot;; }
+	}, Hash);
+});
+</pre>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/loom/woven
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/array&quot; ], function WovenModule(config, when, $) {
+	&quot;use strict&quot;;
+	var ARRAY_MAP = Array.prototype.map;
+	var LENGTH = &quot;length&quot;;
+	var WOVEN = &quot;woven&quot;;
+	var $WARP = config[&quot;$warp&quot;];
+
+<span id='browser-loom-woven-method-woven'>	/**
+</span>	 * Retrieve all or specific widget instances living on this element, that are
+	 * created by {@link browser.loom.weave weaving}.
+	 *
+	 * @member browser.loom.woven
+	 * @method woven
+	 * @param {String...} [name] One or more name of the widget to narrow down.
+	 * @returns {Promise} Promise to the completion of retrieving the woven widgets array.
+	 */
+	return function woven() {
+		var $woven = [];
+		var $wovenLength = 0;
+		var re;
+
+		// If we have arguments we have convert and filter
+		if (arguments[LENGTH] &gt; 0) {
+			// Map arguments to a regexp
+			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
+				return &quot;^&quot; + widget;
+			}).join(&quot;|&quot;), &quot;m&quot;);
+
+			// Iterate
+			$(this).each(function (index, element) {
+				// Filter widget promises
+				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
+					return re.test($weft[WOVEN]);
+				});
+
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($widgets);
+			});
+		}
+		// Otherwise we can use a faster approach
+		else {
+			// Iterate
+			$(this).each(function (index, element) {
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($.data(element, $WARP));
+			});
+		}
+
+		// Return promise of $woven
+		return when.all($woven);
+	};
+});</pre>
+</body>
+</html>

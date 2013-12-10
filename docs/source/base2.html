@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS core/component/base
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot; ], function ComponentModule(Factory, when, merge) {
+	&quot;use strict&quot;;
+
+<span id='core-component-base'>	/**
+</span>	 * Imagine component as an object that has predefined life-cycle, with the following phases:
+	 *
+	 *   1. initialize (signal)
+	 *   1. start (signal)
+	 *   1. started
+	 *   1. stop (signal)
+	 *   1. finalize (signal)
+	 *   1. finalized
+	 *
+	 * Calls on {@link #start} or {@link #stop} method of the component will trigger any defined signal
+	 * handlers declared.
+	 *
+	 * 	var app = Component.extend({
+	 * 		&quot;displayName&quot;: &quot;my/component/app&quot;,
+	 *
+	 * 		// Signal handler for &quot;start&quot; phase
+	 * 		&quot;sig/start&quot;: function start() {
+	 * 			// bind resize handler.
+	 * 			$(window).on('resize.app', $.proxy(this.onResize, this));
+	 * 		},
+	 *
+	 * 		// Signal handler for &quot;finalize&quot; phase
+	 * 		&quot;sig/finalize&quot;: function finalize() {
+	 * 			// cleanup the handler.
+	 * 			$(window).off('resize.app');
+	 * 		},
+	 *
+	 * 		&quot;onResize&quot;: function onResize(argument) {
+	 * 			// window resized.
+	 * 		}
+	 * 	});
+	 *
+	 * 	$.ready(function on_load() {
+	 * 		app.start();
+	 * 	});
+	 *
+	 * 	$(window).unload(function on_unload (argument) {
+	 * 	  app.end();
+	 * 	});
+	 * @class core.component.base
+	 */
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var INSTANCE_COUNT = &quot;instanceCount&quot;;
+	var CONFIGURATION = &quot;configuration&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var NAME = &quot;name&quot;;
+	var VALUE = &quot;value&quot;;
+	var PHASE = &quot;phase&quot;;
+	var STARTED = &quot;started&quot;;
+	var FINISHED = &quot;finished&quot;;
+	var INITIALIZE = &quot;initialize&quot;;
+	var STOP = &quot;stop&quot;;
+	var SIG = &quot;sig&quot;;
+	var INSTANCE_COUNTER = 0;
+
+	return Factory(
+	function Component() {
+		var me = this;
+
+		// Update instance count
+		me[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
+
+		// Set configuration
+		me[CONFIGURATION] = {};
+	}, {
+		&quot;instanceCount&quot; : INSTANCE_COUNTER,
+
+		&quot;displayName&quot; : &quot;core/component/base&quot;,
+
+<span id='core-component-base-method-configure'>		/**
+</span>		 * Add to the component configurations, possibly {@link Object#merge merge} with the existing ones.
+		 *
+		 * 		var List = Component.extend({
+		 * 			&quot;sig/start&quot;: function start() {
+		 * 				// configure the List.
+		 * 				this.configure({
+		 * 					&quot;type&quot;: &quot;list&quot;,
+		 * 					&quot;cls&quot;: [&quot;list&quot;]
+		 * 				});
+		 * 			}
+		 * 		});
+		 * 		var Dropdown = List.extend({
+		 * 			&quot;sig/start&quot;: function start() {
+		 * 				// configure the Dropdown.
+		 * 				this.configure({
+		 * 					&quot;type&quot;: &quot;dropdown&quot;,
+		 * 					&quot;cls&quot;: [&quot;dropdown&quot;],
+		 * 					&quot;shadow&quot;: true
+		 * 				});
+		 * 			}
+		 * 		});
+		 *
+		 * 		var dropdown = new Dropdown();
+		 *
+		 * 		// Overwritten: &quot;dropdown&quot;
+		 * 		print(dropdown.configuration.id);
+		 * 		// Augmented: [&quot;list&quot;,&quot;dropdown&quot;]
+		 * 		print(dropdown.configuration.cls);
+		 * 		// Added: true
+		 * 		print(dropdown.configuration.shadow);
+		 *
+		 * @param {Object...} [configs] Config(s) to add.
+		 * @returns {Object} The new configuration.
+		 */
+		&quot;configure&quot; : function configure() {
+			return merge.apply(this[CONFIGURATION], arguments);
+		},
+
+<span id='core-component-base-method-signal'>		/**
+</span>		 * Signals the component
+		 * @param _signal {String} Signal
+		 * @return {Promise}
+		 */
+		&quot;signal&quot; : function onSignal(_signal) {
+			var me = this;
+			var args = ARRAY_SLICE.call(arguments, 1);
+			var specials = me.constructor.specials;
+			var signals = (SIG in specials &amp;&amp; specials[SIG][_signal]) || [];
+			var signal;
+			var index = 0;
+			var result = [];
+			var resultLength = -2;
+
+			function next(_args) {
+				// Add result if resultLength is within bounds
+				if (++resultLength &gt; -1) {
+					result[resultLength] = _args;
+				}
+
+				// Return a chained promise of next callback, or a promise resolved with _signal
+				return (signal = signals[index++])
+					? when(signal[VALUE].apply(me, args), next)
+					: when.resolve(result);
+			}
+
+			// Return promise
+			return next(args);
+		},
+
+<span id='core-component-base-method-start'>		/**
+</span>		 * Start the component life-cycle.
+		 * @return {*}
+		 */
+		&quot;start&quot; : function start() {
+			var me = this;
+			var signal = me.signal;
+			var args = [ INITIALIZE ];
+
+			// Set phase
+			me[PHASE] = INITIALIZE;
+
+			// Add signal to arguments
+			ARRAY_PUSH.apply(args, arguments);
+
+			return signal.apply(me, args).then(function initialized(_initialized) {
+				// Modify args to change signal (and store in PHASE)
+				args[0] = me[PHASE] = &quot;start&quot;;
+
+				return signal.apply(me, args).then(function started(_started) {
+					// Update phase
+					me[PHASE] = &quot;started&quot;;
+
+					// Return concatenated result
+					return ARRAY_PROTO.concat(_initialized, _started);
+				});
+			});
+		},
+
+<span id='core-component-base-method-stop'>		/**
+</span>		 * Stops the component life-cycle.
+		 * @return {*}
+		 */
+		&quot;stop&quot; : function stop() {
+			var me = this;
+			var signal = me.signal;
+			var args = [ STOP ];
+
+			// Set phase
+			me[PHASE] = STOP;
+
+			// Add signal to arguments
+			ARRAY_PUSH.apply(args, arguments);
+
+			return signal.apply(me, args).then(function stopped(_stopped) {
+				// Modify args to change signal (and store in PHASE)
+				args[0] = me[PHASE] = &quot;finalize&quot;;
+
+				return signal.apply(me, args).then(function finalized(_finalized) {
+					// Update phase
+					me[PHASE] = &quot;finalized&quot;;
+
+					// Return concatenated result
+					return ARRAY_PROTO.concat(_stopped, _finalized);
+				});
+			});
+		},
+
+<span id='core-component-base-method-task'>		/**
+</span>		 * Schedule a new promise that runs on this component, sends a &quot;task&quot; signal once finished.
+		 *
+		 * **Note:** It's recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
+		 * since in additional to an ordinary promise, it also helps to track the context of any running promise,
+		 * including it's name, completion time and a given ID.
+		 *
+		 * 	var widget = Widget.create({
+		 * 		&quot;sig/task&quot; : function(promise) {
+		 * 			print('task %s started at: %s, finished at: %s', promise.name, promise.started);
+		 * 		}
+		 * 	});
+		 *
+		 * 	widget.task(function(resolve) {
+		 * 		$(this.$element).fadeOut(resolve);
+		 * 	}, 'animate');
+		 *
+		 * @param {Function} resolver The task resolver function.
+		 * @param {Function} resolver.resolve Resolve the task.
+		 * @param {Function} resolver.reject Reject the task.
+		 * @param {Function} resolver.notify Notify the progress of this task.
+		 * @param {String} [name]
+		 * @returns {Promise}
+		 */
+		&quot;task&quot; : function task(resolver, name) {
+			var me = this;
+
+			var promise = when
+				.promise(resolver)
+				.ensure(function () {
+					promise[FINISHED] = new Date();
+				});
+
+			promise[CONTEXT] = me;
+			promise[STARTED] = new Date();
+			promise[NAME] = name;
+
+			return me.signal(&quot;task&quot;, promise).yield(promise);
+		},
+
+<span id='core-component-base-method-toString'>		/**
+</span>		 * Gives string representation of this component instance.
+		 * @returns {string} displayName and instanceCount
+		 */
+		&quot;toString&quot; : function _toString() {
+			var me = this;
+
+			return me.displayName + &quot;@&quot; + me[INSTANCE_COUNT];
+		}
+	});
+});
+</pre>
+</body>
+</html>
