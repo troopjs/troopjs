@@ -229,8 +229,8 @@ define([ "troopjs-core/component/base" ], function CacheModule(Component) {
 	 * @class data.cache.component
 	 * @extends core.component.base
 	 */
-	return Component.extend(function CacheComponent(age) {
-		me[GENERATIONS] = {};
+	return Component.extend(function CacheComponent() {
+		this[GENERATIONS] = {};
 	}, {
 		"displayName" : "data/cache/component",
 

@@ -13,11 +13,11 @@
     "when": "~2.6"
   },
   "homepage": "https://github.com/troopjs/troopjs-data",
-  "_release": "78cdac33cd",
+  "_release": "d4e66ee46a",
   "_resolution": {
     "type": "branch",
     "branch": "develop",
-    "commit": "78cdac33cd001dbca753dd99276db1b61f0efc05"
+    "commit": "d4e66ee46a53f06e00c003fa6382f71142b47c3d"
   },
   "_source": "git://github.com/troopjs/troopjs-data.git",
   "_target": "develop",
