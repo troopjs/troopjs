@@ -15,230 +15,101 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS data/query/service
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * TroopJS data/cache/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;module&quot;, &quot;troopjs-core/component/service&quot;, &quot;./component&quot;, &quot;troopjs-utils/merge&quot;, &quot;when&quot;, &quot;when/apply&quot; ], function QueryServiceModule(module, Service, Query, merge, when, apply) {
-	&quot;use strict&quot;;
+define([ &quot;troopjs-core/component/service&quot; ], function CacheServiceModule(Service) {
 
 	var UNDEFINED;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_CONCAT = ARRAY_PROTO.concat;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var CACHES = &quot;_caches&quot;;
+	var TIMEOUT = &quot;_timeout&quot;;
+	var SECOND = 1000;
+	var GENERATIONS = &quot;generations&quot;;
+	var HEAD = &quot;head&quot;;
+	var NEXT = &quot;next&quot;;
+	var EXPIRES = &quot;expires&quot;;
 	var LENGTH = &quot;length&quot;;
-	var BATCHES = &quot;batches&quot;;
-	var INTERVAL = &quot;interval&quot;;
-	var CACHE = &quot;cache&quot;;
-	var QUERIES = &quot;queries&quot;;
-	var RESOLVED = &quot;resolved&quot;;
-	var CONFIGURATION = &quot;configuration&quot;;
-	var RAW = &quot;raw&quot;;
-	var ID = &quot;id&quot;;
-	var Q = &quot;q&quot;;
-	var MODULE_CONFIG = module.config();
 
-<span id='data-query-service'>	/**
-</span>	 * Service that batch processes the query requests send to server and cache the results.
-	 *
-	 * ** Note ** Ajax service is used to talk to the server.
-	 * @class data.query.service
-	 * @extends core.component.service
-	 */
-	return Service.extend(function QueryService(cache) {
+	function sweep(expires) {
+		/*jshint forin:false*/
 		var me = this;
+		var generations = me[GENERATIONS];
+		var property;
+		var current;
 
-		if (cache === UNDEFINED) {
-			throw new Error(&quot;No cache provided&quot;);
+		// Get head
+		current = generations[HEAD];
+
+		// Fail fast if there's no head
+		if (current === UNDEFINED) {
+			return;
 		}
 
-		me[BATCHES] = [];
-		me[CACHE] = cache;
+		do {
+			// Exit if this generation is to young
+			if (current[EXPIRES] &gt; expires) {
+				break;
+			}
 
-		me.configure(MODULE_CONFIG);
+			// Iterate all properties on current
+			for (property in current) {
+				// And is it not a reserved property
+				if (property === EXPIRES || property === NEXT || property === GENERATIONS) {
+					continue;
+				}
+
+				// Delete from me (cache)
+				delete me[property];
+			}
+
+			// Delete generation
+			delete generations[current[EXPIRES]];
+		}
+			// While there's a next
+		while ((current = current[NEXT]));
+
+		// Reset head
+		generations[HEAD] = current;
+	}
+
+	return Service.extend(function CacheService() {
+		this[CACHES] = ARRAY_SLICE.call(arguments);
 	}, {
-		&quot;displayName&quot; : &quot;data/query/service&quot;,
-
-		&quot;sig/start&quot; : function start() {
+		&quot;sig/start&quot; : function start(delay) {
 			var me = this;
-			var cache = me[CACHE];
+			var caches = me[CACHES];
 
-			// Set interval (if we don't have one)
-			me[INTERVAL] = INTERVAL in me
-				? me[INTERVAL]
-				: setInterval(function scan() {
-				var batches = me[BATCHES];
+			if (delay === UNDEFINED) {
+				delay = (60 * SECOND);
+			}
 
-				// Return fast if there is nothing to do
-				if (batches[LENGTH] === 0) {
-					return;
+			function loop() {
+				// Calculate expiration of this generation
+				var expires = 0 | new Date().getTime() / SECOND;
+				var i;
+				var iMax;
+
+				//. Loop over caches
+				for (i = 0, iMax = caches[LENGTH]; i &lt; iMax; i++) {
+					// Call sweep on each cache
+					sweep.call(caches[i], expires);
+
+					// Set timeout for next execution
+					me[TIMEOUT] = setTimeout(loop, delay);
 				}
+			}
 
-				// Reset batches
-				me[BATCHES] = [];
-
-				function request() {
-					var q = [];
-					var i;
-
-					// Iterate batches
-					for (i = batches[LENGTH]; i--;) {
-						// Add batch[Q] to q
-						ARRAY_PUSH.apply(q, batches[i][Q]);
-					}
-
-					// Publish ajax
-					return me.publish(&quot;ajax&quot;, merge.call({
-						&quot;data&quot;: {
-							&quot;q&quot;: q.join(&quot;|&quot;)
-						}
-					}, me[CONFIGURATION]));
-				}
-
-				function done(data) {
-					var batch;
-					var queries;
-					var id;
-					var i;
-					var j;
-
-					// Add all new data to cache
-					cache.put(data);
-
-					// Iterate batches
-					for (i = batches[LENGTH]; i--;) {
-						batch = batches[i];
-						queries = batch[QUERIES];
-						id = batch[ID];
-
-						// Iterate queries
-						for (j = queries[LENGTH]; j--;) {
-							// If we have a corresponding ID, fetch from cache
-							if (j in id) {
-								queries[j] = cache[id[j]];
-							}
-						}
-
-						// Resolve batch
-						batch.resolve(queries);
-					}
-				}
-
-				function fail() {
-					var batch;
-					var i;
-
-					// Iterate batches
-					for (i = batches[LENGTH]; i--;) {
-						batch = batches[i];
-
-						// Reject (with original queries as argument)
-						batch.reject(batch[QUERIES]);
-					}
-				}
-
-				// Request and handle response
-				request().then(done, fail);
-			}, 200);
+			// Start loop
+			loop();
 		},
 
 		&quot;sig/stop&quot; : function stop() {
 			var me = this;
 
-			// Only do this if we have an interval
-			if (INTERVAL in me) {
-				// Clear interval
-				clearInterval(me[INTERVAL]);
-
-				// Reset interval
-				delete me[INTERVAL];
-			}
-		},
-
-<span id='data-query-service-event-hub/query'>		/**
-</span>		 * Handle query request on hub event.
-		 * @event
-		 * @returns {Promise}
-		 */
-		&quot;hub/query&quot; : function hubQuery(/* query, query, query, .., */) {
-			var me = this;
-			var batches = me[BATCHES];
-			var cache = me[CACHE];
-			var q = [];
-			var id = [];
-			var ast;
-			var i;
-			var j;
-			var iMax;
-			var queries;
-			var query;
-
-			// Create deferred batch
-			var deferred = when.defer();
-			var resolver = deferred.resolver;
-
-			try {
-				// Slice and flatten queries
-				queries = ARRAY_CONCAT.apply(ARRAY_PROTO, ARRAY_SLICE.call(arguments));
-
-				// Iterate queries
-				for (i = 0, iMax = queries[LENGTH]; i &lt; iMax; i++) {
-					// Init Query
-					query = Query(queries[i]);
-
-					// Get AST
-					ast = query.ast();
-
-					// If we have an ID
-					if (ast[LENGTH] &gt; 0) {
-						// Store raw ID
-						id[i] = ast[0][RAW];
-					}
-
-					// Get reduced AST
-					ast = query.reduce(cache).ast();
-
-					// Step backwards through AST
-					for (j = ast[LENGTH]; j-- &gt; 0;) {
-						// If this op is not resolved
-						if (!ast[j][RESOLVED]) {
-							// Add rewritten (and reduced) query to q
-							ARRAY_PUSH.call(q, query.rewrite());
-							break;
-						}
-					}
-				}
-
-				// If all queries were fully reduced, we can quick resolve
-				if (q[LENGTH] === 0) {
-					// Iterate queries
-					for (i = 0; i &lt; iMax; i++) {
-						// If we have a corresponding ID, fetch from cache
-						if (i in id) {
-							queries[i] = cache[id[i]];
-						}
-					}
-
-					// Resolve batch resolver
-					resolver.resolve(queries);
-				}
-				else {
-					// Store properties on batch
-					resolver[QUERIES] = queries;
-					resolver[ID] = id;
-					resolver[Q] = q;
-
-					// Add batch to batches
-					batches.push(resolver);
-				}
-			}
-			catch (e) {
-				resolver.reject(e);
-			}
-
-			// Return promise
-			return deferred.promise;
+			// Clear interval
+			clearTimeout(me[TIMEOUT]);
 		}
 	});
 });

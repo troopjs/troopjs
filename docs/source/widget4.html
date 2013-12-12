@@ -16,40 +16,60 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS browser/mvc/route/widget module
+</span> * TroopJS browser/hash/widget module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;../../component/widget&quot; ], function (Widget) {
+define([
+	&quot;../component/widget&quot;,
+	&quot;troopjs-core/net/uri&quot;,
+	&quot;troopjs-jquery/hashchange&quot;
+], function (Widget, URI) {
 	&quot;use strict&quot;;
 
 	var $ELEMENT = &quot;$element&quot;;
-	var DISPLAYNAME = &quot;displayName&quot;;
-	var SET = &quot;/set&quot;;
-
-	function setRoute(uri) {
-		/* jshint validthis:true */
-		this[$ELEMENT].trigger(&quot;hashset&quot;, [ uri ]);
-	}
+	var HASH = &quot;_hash&quot;;
+	var RE = /^#/;
 
 	return Widget.extend({
-		&quot;displayName&quot; : &quot;browser/mvc/route/widget&quot;,
+		&quot;displayName&quot; : &quot;browser/hash/widget&quot;,
 
-		&quot;sig/initialize&quot; : function () {
-			var me = this;
-
-			me.subscribe(me[DISPLAYNAME] + SET, setRoute);
+		&quot;sig/start&quot; : function () {
+			this[$ELEMENT].trigger(&quot;hashchange&quot;);
 		},
 
-		&quot;sig/finalize&quot; : function () {
+		&quot;dom/hashchange&quot; : function ($event) {
 			var me = this;
+			var $element = me[$ELEMENT];
 
-			me.unsubscribe(me[DISPLAYNAME] + SET, setRoute);
+			// Create URI
+			var uri = URI($element.get(0).location.hash.replace(RE, &quot;&quot;));
+
+			// Convert to string
+			var hash = uri.toString();
+
+			// Did anything change?
+			if (hash !== me[HASH]) {
+				// Store new value
+				me[HASH] = hash;
+
+				// Retrigger URICHANGE event
+				$element.trigger(&quot;urichange&quot;, [ uri ]);
+			}
+			else {
+				// Prevent further hashchange handlers from receiving this
+				$event.stopImmediatePropagation()
+			}
 		},
 
-		&quot;dom/urichange&quot; : function ($event, uri) {
+		&quot;dom/hashset&quot; : function ($event, uri, silent) {
 			var me = this;
+			var hash = uri.toString();
 
-			me.publish(me[DISPLAYNAME], uri, $event);
+			if (silent === true) {
+				me[HASH] = hash;
+			}
+
+			me[$ELEMENT].get(0).location.hash = hash;
 		}
 	});
 });</pre>

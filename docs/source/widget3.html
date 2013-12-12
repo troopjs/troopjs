@@ -15,61 +15,50 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS browser/hash/widget module
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/dimensions/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([
-	&quot;../component/widget&quot;,
-	&quot;troopjs-core/net/uri&quot;,
-	&quot;troopjs-jquery/hashchange&quot;
-], function (Widget, URI) {
+define([ &quot;../component/widget&quot;, &quot;troopjs-jquery/dimensions&quot;, &quot;troopjs-jquery/resize&quot; ], function DimensionsModule(Widget) {
 	&quot;use strict&quot;;
 
+	var UNDEFINED;
 	var $ELEMENT = &quot;$element&quot;;
-	var HASH = &quot;_hash&quot;;
-	var RE = /^#/;
+	var DIMENSIONS = &quot;dimensions&quot;;
 
-	return Widget.extend({
-		&quot;displayName&quot; : &quot;browser/hash/widget&quot;,
+	function onDimensions($event, w, h) {
+		var me = $event.data;
 
-		&quot;sig/start&quot; : function () {
-			this[$ELEMENT].trigger(&quot;hashchange&quot;);
+		me.publish(me.displayName, w, h, $event);
+	}
+
+<span id='browser-dimensions-widget'>	/**
+</span>	 * A dimension-aware widget that publish dimension change event.
+	 * @class browser.dimensions.widget
+	 */
+	return Widget.extend(function DimensionsWidget($element, displayName, dimensions) {
+		if (dimensions === UNDEFINED) {
+			throw new Error(&quot;No dimensions provided&quot;);
+		}
+
+		this[DIMENSIONS] = dimensions;
+	}, {
+		&quot;displayName&quot; : &quot;browser/dimensions/widget&quot;,
+
+		&quot;sig/initialize&quot; : function initialize() {
+			var me = this;
+
+			me[$ELEMENT].on(DIMENSIONS + &quot;.&quot; + me[DIMENSIONS], me, onDimensions);
 		},
 
-		&quot;dom/hashchange&quot; : function ($event) {
-			var me = this;
-			var $element = me[$ELEMENT];
-
-			// Create URI
-			var uri = URI($element.get(0).location.hash.replace(RE, &quot;&quot;));
-
-			// Convert to string
-			var hash = uri.toString();
-
-			// Did anything change?
-			if (hash !== me[HASH]) {
-				// Store new value
-				me[HASH] = hash;
-
-				// Retrigger URICHANGE event
-				$element.trigger(&quot;urichange&quot;, [ uri ]);
-			}
-			else {
-				// Prevent further hashchange handlers from receiving this
-				$event.stopImmediatePropagation()
-			}
+		&quot;sig/start&quot; : function start() {
+			this[$ELEMENT].trigger(&quot;resize.&quot; + DIMENSIONS);
 		},
 
-		&quot;dom/hashset&quot; : function ($event, uri, silent) {
+		&quot;sig/finalize&quot; : function finalize() {
 			var me = this;
-			var hash = uri.toString();
 
-			if (silent === true) {
-				me[HASH] = hash;
-			}
-
-			me[$ELEMENT].get(0).location.hash = hash;
+			me[$ELEMENT].off(DIMENSIONS + &quot;.&quot; + me[DIMENSIONS], onDimensions);
 		}
 	});
 });</pre>

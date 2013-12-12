@@ -1,0 +1,25 @@
+{
+  "name": "troopjs-browser",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "troopjs-core": "develop",
+    "troopjs-jquery": "develop",
+    "troopjs-utils": "develop",
+    "jquery": "~2",
+    "poly": "~0.6",
+    "when": "~2.6"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-browser",
+  "_release": "d4eb250d62",
+  "_resolution": {
+    "type": "branch",
+    "branch": "develop",
+    "commit": "d4eb250d625b6da8e91693c7535b6be526297c73"
+  },
+  "_source": "git://github.com/troopjs/troopjs-browser.git",
+  "_target": "develop",
+  "_originalSource": "troopjs-browser"
+}

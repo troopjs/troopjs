@@ -1,0 +1,25 @@
+{
+  "name": "troopjs-data",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "troopjs-core": "develop",
+    "troopjs-browser": "develop",
+    "troopjs-utils": "develop",
+    "jquery": "~2",
+    "poly": "~0.6",
+    "when": "~2.6"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-data",
+  "_release": "78cdac33cd",
+  "_resolution": {
+    "type": "branch",
+    "branch": "develop",
+    "commit": "78cdac33cd001dbca753dd99276db1b61f0efc05"
+  },
+  "_source": "git://github.com/troopjs/troopjs-data.git",
+  "_target": "develop",
+  "_originalSource": "troopjs-data"
+}
