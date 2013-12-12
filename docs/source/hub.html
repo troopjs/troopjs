@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * TroopJS core/pubsub/hub
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;../event/emitter&quot; ], function HubModule(Emitter) {
+	&quot;use strict&quot;;
+
+<span id='core-pubsub-hub'>	/**
+</span>	 * The centric &quot;bus&quot; that handlers publishing and subscription.
+	 *
+	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
+	 * use methods like {@link core.component.gadget#publish} and {@link core.component.gadget#subscribe}
+	 * that are provided as shortcuts.
+	 *
+	 * @class core.pubsub.hub
+	 * @singleton
+	 * @extends core.event.emitter
+	 */
+
+	var COMPONENT_PROTOTYPE = Emitter.prototype;
+
+	return Emitter.create({
+		&quot;displayName&quot;: &quot;core/pubsub/hub&quot;,
+
+<span id='core-pubsub-hub-method-subscribe'>		/**
+</span>		 * Listen to an event that are emitted publicly.
+		 * @inheritdoc #on
+		 * @method
+		 */
+		&quot;subscribe&quot; : COMPONENT_PROTOTYPE.on,
+
+<span id='core-pubsub-hub-method-unsubscribe'>		/**
+</span>		 * Remove a public event listener.
+		 * @inheritdoc #off
+		 * @method
+		 */
+		&quot;unsubscribe&quot; : COMPONENT_PROTOTYPE.off,
+
+<span id='core-pubsub-hub-method-publish'>		/**
+</span>		 * Emit a public event that can be subscribed by other components.
+		 * @inheritdoc #emit
+		 * @method
+		 */
+		&quot;publish&quot; : COMPONENT_PROTOTYPE.emit,
+
+<span id='core-pubsub-hub-method-republish'>		/**
+</span>		 * Re-emit a public event.
+		 * @inheritdoc #reemit
+		 * @method
+		 */
+		&quot;republish&quot; : COMPONENT_PROTOTYPE.reemit,
+
+		&quot;spy&quot; : COMPONENT_PROTOTYPE.peek
+	});
+});
+</pre>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * TroopJS core/net/uri
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ *
+ * Parts of code from parseUri 1.2.2 Copyright Steven Levithan &lt;stevenlevithan.com&gt;
+ */
+define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
+	&quot;use strict&quot;;
+
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var OBJECT_PROTO = Object.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var STRING_SPLIT = String.prototype.split;
+	var TOSTRING = OBJECT_PROTO.toString;
+	var TOSTRING_OBJECT = TOSTRING.call(OBJECT_PROTO);
+	var TOSTRING_ARRAY = TOSTRING.call(ARRAY_PROTO);
+	var TOSTRING_FUNCTION = TOSTRING.call(Function.prototype);
+	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:([^?#]*)(?:\?([^#]*))?(?:#(.*))?)/;
+
+	var PROTOCOL = &quot;protocol&quot;;
+	var AUTHORITY = &quot;authority&quot;;
+	var PATH = &quot;path&quot;;
+	var QUERY = &quot;query&quot;;
+	var ANCHOR = &quot;anchor&quot;;
+
+	var KEYS = [ &quot;source&quot;,
+		PROTOCOL,
+		AUTHORITY,
+		&quot;userInfo&quot;,
+		&quot;user&quot;,
+		&quot;password&quot;,
+		&quot;host&quot;,
+		&quot;port&quot;,
+		PATH,
+		QUERY,
+		ANCHOR ];
+
+	function Query(arg) {
+		/*jshint forin:false*/
+		var result = {};
+		var matches;
+		var key = NULL;
+		var value;
+		var re = /(?:&amp;|^)([^&amp;=]*)=?([^&amp;]*)/g;
+
+		result.toString = Query.toString;
+
+		if (TOSTRING.call(arg) === TOSTRING_OBJECT) {
+			for (key in arg) {
+				result[key] = arg[key];
+			}
+		} else {
+			while ((matches = re.exec(arg)) !== NULL) {
+				key = matches[1];
+
+				if (key in result) {
+					value = result[key];
+
+					if (TOSTRING.call(value) === TOSTRING_ARRAY) {
+						value[value.length] = matches[2];
+					}
+					else {
+						result[key] = [ value, matches[2] ];
+					}
+				}
+				else {
+					result[key] = matches[2];
+				}
+			}
+		}
+
+		return result;
+	}
+
+	Query.toString = function QueryToString() {
+		/*jshint forin:false*/
+		var me = this;
+		var key;
+		var value;
+		var values;
+		var query = [];
+		var i = 0;
+		var j;
+
+		for (key in me) {
+			if (TOSTRING.call(me[key]) === TOSTRING_FUNCTION) {
+				continue;
+			}
+
+			query[i++] = key;
+		}
+
+		query.sort();
+
+		while (i--) {
+			key = query[i];
+			value = me[key];
+
+			if (TOSTRING.call(value) === TOSTRING_ARRAY) {
+				values = value.slice(0);
+
+				values.sort();
+
+				j = values.length;
+
+				while (j--) {
+					value = values[j];
+
+					values[j] = value === &quot;&quot;
+						? key
+						: key + &quot;=&quot; + value;
+				}
+
+				query[i] = values.join(&quot;&amp;&quot;);
+			}
+			else {
+				query[i] = value === &quot;&quot;
+					? key
+					: key + &quot;=&quot; + value;
+			}
+		}
+
+		return query.join(&quot;&amp;&quot;);
+	};
+
+	// Extend on the instance of array rather than subclass it
+	function Path(arg) {
+		var result = [];
+
+		result.toString = Path.toString;
+
+		ARRAY_PUSH.apply(result, TOSTRING.call(arg) === TOSTRING_ARRAY
+			? arg
+			: STRING_SPLIT.call(arg, &quot;/&quot;));
+
+		return result;
+	}
+
+	Path.toString = function PathToString() {
+		return this.join(&quot;/&quot;);
+	};
+
+	var URI = Factory(function URI(str) {
+		var me = this;
+		var value;
+		var matches;
+		var i;
+
+		if ((matches = RE_URI.exec(str)) !== NULL) {
+			i = matches.length;
+
+			while (i--) {
+				value = matches[i];
+
+				if (value) {
+					me[KEYS[i]] = value;
+				}
+			}
+		}
+
+		if (QUERY in me) {
+			me[QUERY] = Query(me[QUERY]);
+		}
+
+		if (PATH in me) {
+			me[PATH] = Path(me[PATH]);
+		}
+	}, {
+		&quot;displayName&quot; : &quot;browser/route/uri&quot;,
+
+		&quot;toString&quot; : function URIToString() {
+			var me = this;
+			var uri = [ PROTOCOL , &quot;://&quot;, AUTHORITY, PATH, &quot;?&quot;, QUERY, &quot;#&quot;, ANCHOR ];
+			var i;
+			var key;
+
+			if (!(PROTOCOL in me)) {
+				uri[0] = uri[1] = &quot;&quot;;
+			}
+
+			if (!(AUTHORITY in me)) {
+				uri[2] = &quot;&quot;;
+			}
+
+			if (!(PATH in me)) {
+				uri[3] = &quot;&quot;;
+			}
+
+			if (!(QUERY in me)) {
+				uri[4] = uri[5] = &quot;&quot;;
+			}
+
+			if (!(ANCHOR in me)) {
+				uri[6] = uri[7] = &quot;&quot;;
+			}
+
+			i = uri.length;
+
+			while (i--) {
+				key = uri[i];
+
+				if (key in me) {
+					uri[i] = me[key];
+				}
+			}
+
+			return uri.join(&quot;&quot;);
+		}
+	});
+
+	URI.Path = Path;
+	URI.Query = Query;
+
+	return URI;
+});</pre>
+</body>
+</html>

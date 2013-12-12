@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS jquery/destroy
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;jquery&quot; ], function DestroyModule($) {
+	&quot;use strict&quot;;
+
+	var DESTROY = &quot;destroy&quot;;
+
+<span id='$-event-destroy'>	/**
+</span>	 * A special jQuery event whose handler will be called, only when this handler it's removed from the element.
+	 * @member $
+	 * @event destroy
+	 */
+	$.event.special[DESTROY] = {
+		&quot;noBubble&quot; : true,
+
+		&quot;trigger&quot; : function () {
+			return false;
+		},
+
+		&quot;remove&quot; : function onDestroyRemove(handleObj) {
+			var me = this;
+
+			if (handleObj) {
+				handleObj.handler.call(me, $.Event({
+					&quot;type&quot; : handleObj.type,
+					&quot;data&quot; : handleObj.data,
+					&quot;namespace&quot; : handleObj.namespace,
+					&quot;target&quot; : me
+				}));
+			}
+		}
+	};
+});
+</pre>
+</body>
+</html>

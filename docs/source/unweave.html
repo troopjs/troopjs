@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/loom/unweave
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/array&quot; ], function UnweaveModule(config, when, $) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_MAP = ARRAY_PROTO.map;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var WEAVE = &quot;weave&quot;;
+	var UNWEAVE = &quot;unweave&quot;;
+	var WOVEN = &quot;woven&quot;;
+	var LENGTH = &quot;length&quot;;
+	var $WARP = config[&quot;$warp&quot;];
+	var $WEFT = config[&quot;$weft&quot;];
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var ATTR_UNWEAVE = config[UNWEAVE];
+	var RE_SEPARATOR = /[\s,]+/;
+
+<span id='browser-loom-unweave-method-unweave'>	/**
+</span>	 * Destroy all widget instances living on this element, that are created
+	 * by {@link browser.loom.weave weaving}, it is also to clean up the attributes
+	 * and data references to the previously instantiated widgets.
+	 *
+	 * @member browser.loom.unweave
+	 * @method unweave
+	 * @returns {Promise} Promise to the completion of destroying all woven widgets.
+	 */
+	return function unweave() {
+		// Store stop_args for later
+		var stop_args = arguments;
+
+		// Map elements
+		return when.all(ARRAY_MAP.call(this, function (element) {
+			var $element = $(element);
+			var $data = $element.data();
+			var $warp = $data[$WARP] || ($data[$WARP] = []);
+			var $unweave = [];
+			var unweave_attr = $element.attr(ATTR_UNWEAVE);
+			var unweave_re = [];
+			var re = /[\s,]*([\w_\-\/\.]+)(?:@(\d+))?/g;
+			var matches;
+			var $weft;
+			var iMax;
+			var i;
+			var j;
+
+			/*
+			 * Updated attributes
+			 * @param {object} widget Widget
+			 * @private
+			 */
+			var update_attr = function (widget) {
+				var $promise = widget[$WEFT];
+				var woven = $promise[WOVEN];
+				var weave = $promise[WEAVE];
+
+				$element
+					.attr(ATTR_WOVEN, function (index, attr) {
+						var result = [];
+
+						if (attr !== UNDEFINED) {
+							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR).filter(function (part) {
+								return part !== woven;
+							}));
+						}
+
+						return result[LENGTH] === 0
+							? null
+							: result.join(&quot; &quot;);
+					})
+					.attr(ATTR_WEAVE, function (index, attr) {
+						var result = [ weave ];
+
+						if (attr !== UNDEFINED) {
+							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
+						}
+
+						return result.join(&quot; &quot;);
+					});
+			};
+
+			// Make sure to remove ATTR_UNWEAVE (so we don't try processing this again)
+			$element.removeAttr(ATTR_UNWEAVE);
+
+			// Check if we should remove all widgets
+			if (unweave_attr === UNDEFINED) {
+				// Copy from $warp to $unweave
+				ARRAY_PUSH.apply($unweave, $warp);
+
+				// Truncate $warp
+				$warp[LENGTH] = 0;
+			} else {
+				// Iterate unweave_attr (while re matches)
+				// matches[1] : widget name - &quot;widget/name&quot;
+				// matches[2] : widget instance id - &quot;123&quot;
+				while ((matches = re.exec(unweave_attr)) !== NULL) {
+					ARRAY_PUSH.call(unweave_re, &quot;^&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;$&quot;);
+				}
+
+				// Redefine unweave_re as a regexp
+				unweave_re = new RegExp(unweave_re.join(&quot;|&quot;));
+
+				// Move matching promises from $warp to $unweave
+				for (i = j = 0, iMax = $warp[LENGTH]; i &lt; iMax; i++) {
+					$weft = $warp[i];
+
+					if (!unweave_re.test($weft[WOVEN])) {
+						// Move to new index
+						$warp[j++] = $weft;
+					}
+					else {
+						// Push on $weave
+						ARRAY_PUSH.call($unweave, $weft);
+					}
+				}
+
+				// Truncate $warp
+				$warp[LENGTH] = j;
+			}
+
+			// Return promise of mapped $unweave
+			return when.map($unweave, function (widget) {
+				// Store promise of stop yielding widget
+				var promise = widget.stop.apply(widget, stop_args).yield(widget);
+
+				// Add deferred update of attr
+				when(promise, update_attr);
+
+				// Return promise
+				return promise;
+			});
+		}));
+	};
+});</pre>
+</body>
+</html>

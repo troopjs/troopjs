@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * TroopJS utils/unique
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define(function UniqueModule() {
+	&quot;use strict&quot;;
+
+	var LENGTH = &quot;length&quot;;
+
+<span id='global-method-'>	/**
+</span>	 * Reduces array to only contain unique values (evals left-right)
+	 * @returns {Number} New length of array
+	 */
+	return function unique(comparator) {
+		var arg;
+		var args = this;
+		var i;
+		var j;
+		var k;
+		var iMax = args[LENGTH];
+
+		// Did we provide a comparator?
+		if (comparator) {
+			comparator_outer: for (i = k = 0; i &lt; iMax; i++) {
+				arg = args[i];
+
+				for (j = 0; j &lt; i; j++) {
+					if (comparator.call(args, arg, [j]) === true) {
+						continue comparator_outer;
+					}
+				}
+
+				args[k++] = arg;
+			}
+		}
+		// Otherwise use strict equality
+		else {
+			outer: for (i = k = 0; i &lt; iMax; i++) {
+				arg = args[i];
+
+				for (j = 0; j &lt; i; j++) {
+					if (arg === args[j]) {
+						continue outer;
+					}
+				}
+
+				args[k++] = arg;
+			}
+		}
+
+		// Assign new length
+		args[LENGTH] = k;
+
+		// Return new length
+		return k;
+	};
+});</pre>
+</body>
+</html>

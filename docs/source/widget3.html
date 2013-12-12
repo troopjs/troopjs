@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/dimensions/widget
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;../component/widget&quot;, &quot;troopjs-jquery/dimensions&quot;, &quot;troopjs-jquery/resize&quot; ], function DimensionsModule(Widget) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var $ELEMENT = &quot;$element&quot;;
+	var DIMENSIONS = &quot;dimensions&quot;;
+
+	function onDimensions($event, w, h) {
+		var me = $event.data;
+
+		me.publish(me.displayName, w, h, $event);
+	}
+
+<span id='browser-dimensions-widget'>	/**
+</span>	 * A dimension-aware widget that publish dimension change event.
+	 * @class browser.dimensions.widget
+	 */
+	return Widget.extend(function DimensionsWidget($element, displayName, dimensions) {
+		if (dimensions === UNDEFINED) {
+			throw new Error(&quot;No dimensions provided&quot;);
+		}
+
+		this[DIMENSIONS] = dimensions;
+	}, {
+		&quot;displayName&quot; : &quot;browser/dimensions/widget&quot;,
+
+		&quot;sig/initialize&quot; : function initialize() {
+			var me = this;
+
+			me[$ELEMENT].on(DIMENSIONS + &quot;.&quot; + me[DIMENSIONS], me, onDimensions);
+		},
+
+		&quot;sig/start&quot; : function start() {
+			this[$ELEMENT].trigger(&quot;resize.&quot; + DIMENSIONS);
+		},
+
+		&quot;sig/finalize&quot; : function finalize() {
+			var me = this;
+
+			me[$ELEMENT].off(DIMENSIONS + &quot;.&quot; + me[DIMENSIONS], onDimensions);
+		}
+	});
+});</pre>
+</body>
+</html>

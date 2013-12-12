@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+* TroopJS requirejs/shadow
+* @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
+*/
+define([ &quot;text&quot; ], function (text) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var EXPORTS = &quot;exports&quot;;
+	var EXTENSION = &quot;.js&quot;;
+	var PATTERN = /(.+?)#(.+)$/;
+	var RE_EMPTY = /^empty:/;
+	var REQUIRE_VERSION = require.version;
+	var buildMap = {};
+
+	function amdify (scriptText, hashVal) {
+		var pattern = /([^=&amp;]+)=([^&amp;]+)/g;
+		var m;
+		var deps = [];
+		var args = [];
+
+		while (hashVal &amp;&amp; (m = pattern.exec(hashVal))) {
+			if (m[1] === EXPORTS) {
+				scriptText += &quot;;\nreturn &quot; + m[2] + &quot;;\n&quot;;
+			}
+			else {
+				deps.push(&quot;'&quot; + m[2] + &quot;'&quot;);
+				args.push(m[1]);
+			}
+		}
+
+		return &quot;define([ &quot; + deps.join(&quot;, &quot;) + &quot; ], function (&quot; + args.join(&quot;, &quot;) + &quot;) {\n&quot;
+			+ scriptText
+			+ &quot;});&quot;;
+	}
+
+	function cmpVersion(a, b) {
+		var result;
+		var len;
+		var i;
+
+		a = a.split(&quot;.&quot;);
+		b = b.split(&quot;.&quot;);
+		len = Math.min(a.length, b.length);
+
+		for (i = 0; i &lt; len; i++) {
+			result = parseInt(a[i], null) - parseInt(b[i], null);
+			if (result !== 0) {
+				return result;
+			}
+		}
+		return a.length - b.length;
+	}
+
+	return {
+		load : function (name, req, onLoad, config) {
+			var m;
+			var hashVal;
+			var content;
+			var url;
+			var realName = name;
+
+			// The name is like 'jquery.form#$=jquery&amp;exports=$',
+			// So, if macthed, m[1] is 'jquery.form', m[2] is '$=jquery&amp;exports=$'
+			if ((m = PATTERN.exec(name))) {
+				realName = m[1];
+				hashVal = m[2];
+			}
+			url = req.toUrl(realName + EXTENSION);
+
+			// For Optimization. The url is &quot;empty:&quot; if excluded.
+			if (RE_EMPTY.test(url)) {
+				onLoad(UNDEFINED);
+			}
+			else {
+				text.get(url, function(data) {
+					content = amdify(data, hashVal);
+					if (config.isBuild) {
+						buildMap[name] = content;
+					}
+
+					onLoad.fromText(name, content);  
+					// On requirejs version below '2.1.0', 
+					// need to manually require the module after the call to onLoad.fromText()
+					if (cmpVersion(REQUIRE_VERSION, &quot;2.1.0&quot;) &lt; 0) {
+						req([ name ], onLoad);
+					}	
+				});
+			}
+		},
+
+		write : function (pluginName, moduleName, write) { 
+			var content;
+
+			if (moduleName in buildMap) {
+				content = buildMap[moduleName];
+				write.asModule(pluginName + &quot;!&quot; + moduleName, content);
+			}
+		}
+	};
+});
+</pre>
+</body>
+</html>

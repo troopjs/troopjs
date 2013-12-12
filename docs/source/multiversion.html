@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS requirejs/multiversion
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define(function MultiversionModule() {
+	&quot;use strict&quot;;
+
+	var RE = /(.+?)#(.+)$/;
+	var CONTEXTS = require.s.contexts;
+
+	return {
+		&quot;load&quot; : function (name, parentRequire, onload) {
+			var context;
+			var matches;
+
+			// if name matches RE
+			// matches[0] : module name with context - &quot;module/name#context&quot;
+			// matches[1] : module name - &quot;module/name&quot;
+			// matches[2] : context name - &quot;context&quot;
+			if ((matches = RE.exec(name)) !== null) {
+				name = matches[1];
+				context = matches[2];
+
+				if (context in CONTEXTS) {
+					parentRequire = CONTEXTS[context].require;
+				}
+			}
+
+			parentRequire([ name ], function (module) {
+				onload(module);
+			}, onload.error);
+		}
+	};
+});</pre>
+</body>
+</html>

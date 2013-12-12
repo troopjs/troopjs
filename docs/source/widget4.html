@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * TroopJS browser/hash/widget module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([
+	&quot;../component/widget&quot;,
+	&quot;troopjs-core/net/uri&quot;,
+	&quot;troopjs-jquery/hashchange&quot;
+], function (Widget, URI) {
+	&quot;use strict&quot;;
+
+	var $ELEMENT = &quot;$element&quot;;
+	var HASH = &quot;_hash&quot;;
+	var RE = /^#/;
+
+	return Widget.extend({
+		&quot;displayName&quot; : &quot;browser/hash/widget&quot;,
+
+		&quot;sig/start&quot; : function () {
+			this[$ELEMENT].trigger(&quot;hashchange&quot;);
+		},
+
+		&quot;dom/hashchange&quot; : function ($event) {
+			var me = this;
+			var $element = me[$ELEMENT];
+
+			// Create URI
+			var uri = URI($element.get(0).location.hash.replace(RE, &quot;&quot;));
+
+			// Convert to string
+			var hash = uri.toString();
+
+			// Did anything change?
+			if (hash !== me[HASH]) {
+				// Store new value
+				me[HASH] = hash;
+
+				// Retrigger URICHANGE event
+				$element.trigger(&quot;urichange&quot;, [ uri ]);
+			}
+			else {
+				// Prevent further hashchange handlers from receiving this
+				$event.stopImmediatePropagation()
+			}
+		},
+
+		&quot;dom/hashset&quot; : function ($event, uri, silent) {
+			var me = this;
+			var hash = uri.toString();
+
+			if (silent === true) {
+				me[HASH] = hash;
+			}
+
+			me[$ELEMENT].get(0).location.hash = hash;
+		}
+	});
+});</pre>
+</body>
+</html>

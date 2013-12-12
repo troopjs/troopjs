@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/store/adapter/base module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;troopjs-core/component/gadget&quot; ], function BaseAdapterModule(Gadget) {
+	&quot;use strict&quot;;
+	var STORAGE = &quot;storage&quot;;
+
+<span id='browser-store-adapter-base'>	/**
+</span>	 * Component that lands the {@link data.store.component} on browser.
+	 * @class browser.store.adapter.base
+	 */
+	return Gadget.extend({
+		&quot;displayName&quot; : &quot;browser/store/adapter/base&quot;,
+
+		&quot;afterPut&quot; : function (store, key, value) {
+			this[STORAGE].setItem(key, JSON.stringify(value));
+		},
+
+		&quot;beforeGet&quot; : function get(store, key) {
+			return store.put(key, JSON.parse(this[STORAGE].getItem(key)));
+		},
+
+		&quot;clear&quot; : function clear() {
+			return this[STORAGE].clear();
+		}
+	});
+});</pre>
+</body>
+</html>
