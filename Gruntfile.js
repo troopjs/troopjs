@@ -191,9 +191,11 @@ module.exports = function(grunt) {
 		grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + git_version.object)));
 	});
 
-	// Load all local and NPM tasks
+	// Load all grunt tasks from package.json
+	require("load-grunt-tasks")(grunt);
+
+	//Load all local grunt tasks
 	grunt.loadTasks("tasks");
-	require("matchdep").filterDev("grunt-*").forEach(grunt.loadNpmTasks);
 
 	grunt.registerTask("rewrite", "Rewrite package files", function () {
 		var _ = grunt.util._;

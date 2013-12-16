@@ -48,7 +48,6 @@
 		"test": "grunt test"
 	},
 	"devDependencies": {
-		"matchdep": "~0.3",
 		"grunt": "~0.4",
 		"grunt-contrib-requirejs": "~0.4",
 		"grunt-contrib-uglify": "~0.2",
@@ -58,6 +57,7 @@
 		"grunt-git-describe": "~2.3",
 		"grunt-git-dist": "~0.4",
 		"grunt-semver": "~0.1",
+		"load-grunt-tasks": "~0.2",
 		"semver": "~2.2"
 	}
 }
