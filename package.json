@@ -44,6 +44,9 @@
 			"url": "http://troopjs.mit-license.org/"
 		}
 	],
+	"scripts": {
+		"test": "grunt test"
+	},
 	"devDependencies": {
 		"matchdep": "~0.3",
 		"grunt": "~0.4",
