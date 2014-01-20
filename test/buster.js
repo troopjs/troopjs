@@ -15,6 +15,7 @@ module.exports["troopjs"] = {
 		"bower_components/jquery/jquery.js",
 		"bower_components/when/*.js",
 		"bower_components/requirejs/require.js",
+		"bower_components/requirejs-text/text.js",
 		"bower_components/poly/*.js",
 		"bower_components/poly/lib/*.js"
 	],

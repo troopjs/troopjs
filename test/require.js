@@ -29,11 +29,15 @@ var require = {
 	}, {
 		"name" : "troopjs-utils",
 		"location" : "bower_components/troopjs-utils"
+	}, {
+		"name" : "requirejs-text",
+		"location" : "bower_components/requirejs-text"
 	}],
 
 	"map" : {
 		"*" : {
 			"template" : "troopjs-requirejs/template",
+			"text" : "requirejs-text/text",
 			"logger" : "troopjs-core/logger/console"
 		}
 	}
