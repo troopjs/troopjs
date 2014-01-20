@@ -1,16 +1,19 @@
 {
-	"name": "troopjs",
-	"version": "3.0.0-1",
-	"ignore": [
-		"**/.*",
-		"node_modules"
-	],
-	"dependencies": {
-		"troopjs-core": "develop",
-		"troopjs-browser": "develop",
-		"troopjs-data": "develop",
-		"troopjs-requirejs": "develop",
-		"troopjs-jquery": "develop",
-		"troopjs-utils": "develop"
-	}
+  "name": "troopjs",
+  "version": "3.0.0-1",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "troopjs-core": "develop",
+    "troopjs-browser": "develop",
+    "troopjs-data": "develop",
+    "troopjs-requirejs": "develop",
+    "troopjs-jquery": "develop",
+    "troopjs-utils": "develop"
+  },
+  "devDependencies": {
+    "requirejs-text": "~2.0.10"
+  }
 }
