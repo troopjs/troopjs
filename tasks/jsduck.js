@@ -150,7 +150,22 @@ module.exports = function JSDuckTask(grunt) {
 
 				// Excludes non-source files from JSDuck run.
 				var excludes = _.reduce(sources, function(excludes, module_path) {
+
 					excludes.push(path.join(module_path, "test"));	// To ignore tests.
+
+					var git_ignore = path.join(module_path, ".gitignore");
+
+					// inherits excludes from .gitignore.
+					if (grunt.file.isFile(git_ignore)) {
+						var ignores = grunt.file.read(git_ignore, {encoding: 'UTF8'});
+						ignores.split('\n').forEach(function (line) {
+							// Comment
+							if (/^#/.test(line) || !line.trim())
+								return;
+							excludes.push(path.join(module_path, line));	// To ignore tests.
+						});
+					}
+
 					return excludes;
 				}, []);
 
