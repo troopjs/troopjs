@@ -15,7 +15,6 @@ define([
 	"troopjs-data/query/service",
 	"troopjs-data/component/widget",
 	"troopjs-jquery/noconflict",
-	"troopjs-requirejs/template",
 	"troopjs-requirejs/multiversion",
 	"troopjs-requirejs/shadow"
 ]);
