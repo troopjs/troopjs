@@ -9,11 +9,10 @@
     "troopjs-core": "develop",
     "troopjs-browser": "develop",
     "troopjs-data": "develop",
-    "troopjs-requirejs": "develop",
     "troopjs-jquery": "develop",
-    "troopjs-utils": "develop"
+    "troopjs-requirejs": "develop"
   },
   "devDependencies": {
     "requirejs-text": "~2.0.10"
   }
-}
+}\

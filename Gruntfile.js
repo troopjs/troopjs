@@ -66,6 +66,9 @@ module.exports = function(grunt) {
 					"name" : "troopjs",
 					"location" : "."
 				}, {
+					"name" : "troopjs-composer",
+					"location" : "bower_components/troopjs-composer"
+				}, {
 					"name" : "troopjs-core",
 					"location" : "bower_components/troopjs-core"
 				}, {
