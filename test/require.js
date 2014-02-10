@@ -12,6 +12,9 @@ var require = {
 		"location" : "bower_components/poly",
 		"main" : "poly"
 	}, {
+		"name" : "troopjs-composer",
+		"location" : "bower_components/troopjs-composer"
+	}, {
 		"name" : "troopjs-core",
 		"location" : "bower_components/troopjs-core"
 	}, {
