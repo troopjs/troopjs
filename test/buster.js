@@ -21,6 +21,6 @@ module.exports["troopjs"] = {
 	],
 
 	"tests" : [
-		"bower_components/troopjs-*/test/**/*.js"
+		"bower_components/troopjs-*/test/**/*-test.js"
 	]
 };
