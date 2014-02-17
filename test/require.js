@@ -21,6 +21,9 @@ var require = {
 		"name" : "troopjs-data",
 		"location" : "bower_components/troopjs-data"
 	}, {
+		"name" : "troopjs-composer",
+		"location" : "bower_components/troopjs-composer"
+	}, {
 		"name" : "troopjs-browser",
 		"location" : "bower_components/troopjs-browser"
 	}, {
