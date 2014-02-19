@@ -6,11 +6,12 @@
     "node_modules"
   ],
   "dependencies": {
-    "troopjs-core": "develop",
-    "troopjs-browser": "develop",
-    "troopjs-data": "develop",
-    "troopjs-jquery": "develop",
-    "troopjs-requirejs": "develop"
+    "troopjs-composer": "*",
+    "troopjs-core": "*",
+    "troopjs-browser": "*",
+    "troopjs-data": "*",
+    "troopjs-jquery": "*",
+    "troopjs-requirejs": "*"
   },
   "devDependencies": {
     "requirejs-text": "~2.0.10"
