@@ -19,10 +19,11 @@
  * TroopJS data/cache/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;troopjs-core/component/base&quot; ], function CacheModule(Component) {
+define([ &quot;troopjs-core/component/base&quot;, &quot;poly/object&quot;, &quot;poly/array&quot; ], function CacheModule(Component) {
 	&quot;use strict&quot;;
 
 	var UNDEFINED;
+	var TRUE = true;
 	var FALSE = false;
 	var NULL = null;
 	var OBJECT = Object;
@@ -85,8 +86,9 @@ define([ &quot;troopjs-core/component/base&quot; ], function CacheModule(Compone
 				result = me[id];
 
 				// Bypass collapsed object that already exists in cache.
-				if(node[_COLLAPSED] === true)
+				if(node[_COLLAPSED] === TRUE) {
 					return result;
+				}
 
 				break cache;
 			}
@@ -162,8 +164,8 @@ define([ &quot;troopjs-core/component/base&quot; ], function CacheModule(Compone
 
 		// Check if we need to move result between generations
 		move : {
-			// Break fast if id is NULL
-			if (id === NULL) {
+			// Break fast if id is UNDEFINED
+			if (id === UNDEFINED) {
 				break move;
 			}
 
@@ -192,10 +194,10 @@ define([ &quot;troopjs-core/component/base&quot; ], function CacheModule(Compone
 			}
 
 			add : {
-
 				// Collapsed object should not be collected by GC.
-				if(result[_COLLAPSED] === true)
+				if(result[_COLLAPSED] === TRUE) {
 					break add;
+				}
 
 				// Update expiration time
 				result[_EXPIRES] = expires;
@@ -252,20 +254,20 @@ define([ &quot;troopjs-core/component/base&quot; ], function CacheModule(Compone
 		&quot;displayName&quot; : &quot;data/cache/component&quot;,
 
 		&quot;sig/finalize&quot; : function finalize() {
-			/*jshint forin:false*/
 			var me = this;
-			var property;
 
 			// Iterate all properties on me
-			for (property in me) {
-				// Don't delete non-objects or objects that don't ducktype cachable
-				if (me[property][CONSTRUCTOR] !== OBJECT || !(_ID in me[property])) {
-					continue;
-				}
+			Object.keys(me).forEach(function (property) {
+				var value;
 
-				// Delete from me (cache)
-				delete me[property];
-			}
+				// Check if we should delete this property
+				if ((value = me[property]) !== UNDEFINED // value is not UNDEFINED
+					&amp;&amp; [CONSTRUCTOR] === OBJECT            // and value[CONSTRUCTOR] is OBJECT
+					&amp;&amp; value.hasOwnProperty(_ID)) {        // and value ducktypes cachable
+					// Delete from me (cache)
+					delete me[property];
+				}
+			});
 		},
 
 <span id='data-cache-component-method-put'>		/**

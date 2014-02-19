@@ -19,41 +19,35 @@
  * TroopJS browser/component/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;troopjs-core/component/gadget&quot;, &quot;jquery&quot;, &quot;../loom/config&quot;, &quot;../loom/weave&quot;, &quot;../loom/unweave&quot;, &quot;../loom/plugin&quot;, &quot;troopjs-jquery/destroy&quot; ], function WidgetModule(Gadget, $, config, weave, unweave) {
+define([
+	&quot;jquery&quot;,
+	&quot;troopjs-core/component/gadget&quot;,
+	&quot;troopjs-utils/merge&quot;,
+	&quot;./runner/sequence&quot;,
+	&quot;../loom/config&quot;,
+	&quot;../loom/weave&quot;,
+	&quot;../loom/unweave&quot;,
+	&quot;troopjs-jquery/destroy&quot;
+], function WidgetModule($, Gadget, merge, sequence, LOOM_CONF, weave, unweave) {
 	&quot;use strict&quot;;
 
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
+	var ARRAY_PUSH = Array.prototype.push;
+	var $GET = $.fn.get;
 	var TYPEOF_FUNCTION = &quot;function&quot;;
 	var $ELEMENT = &quot;$element&quot;;
-	var $HANDLERS = &quot;$handlers&quot;;
+	var $HANDLER = &quot;$handler&quot;;
+	var DOM = &quot;dom&quot;;
 	var FEATURES = &quot;features&quot;;
-	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
-	var PROXY = &quot;proxy&quot;;
-	var GUID = &quot;guid&quot;;
+	var NAME = &quot;name&quot;;
+	var TYPES = &quot;types&quot;;
 	var LENGTH = &quot;length&quot;;
-	var SELECTOR_WEAVE = &quot;[&quot; + config[&quot;weave&quot;] + &quot;]&quot;;
-	var SELECTOR_UNWEAVE = &quot;[&quot; + config[&quot;unweave&quot;] + &quot;]&quot;;
+	var $WEFT = LOOM_CONF[&quot;$weft&quot;];
+	var SELECTOR_WEAVE = &quot;[&quot; + LOOM_CONF[&quot;weave&quot;] + &quot;]&quot;;
+	var SELECTOR_WOVEN = &quot;[&quot; + LOOM_CONF[&quot;woven&quot;] + &quot;]&quot;;
 
-
-	/*
-	 * Creates a proxy that executes 'handler' in 'widget' scope
-	 * @private
-	 * @param {Object} widget target widget
-	 * @param {Function} handler target handler
-	 * @returns {Function} proxied handler
-	 */
-	function eventProxy(widget, handler) {
-		/*
-		 * Creates a proxy of the outer method 'handler' that first adds 'topic' to the arguments passed
-		 * @returns result of proxied hanlder invocation
-		 */
-		return function handlerProxy() {
-			// Apply with shifted arguments to handler
-			return handler.apply(widget, arguments);
-		};
-	}
 
 	/*
 	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
@@ -61,25 +55,22 @@ define([ &quot;troopjs-core/component/gadget&quot;, &quot;jquery&quot;, &quot;..
 	 * @param $fn jQuery method
 	 * @returns {Function} proxied render
 	 */
-	function renderProxy($fn) {
+	function $render($fn) {
 		/*
 		 * Renders contents into element
 		 * @private
 		 * @param {Function|String} contents Template/String to render
-		 * @param {Object..} [data] If contents is a template - template data
-		 * @returns {Object} me
+		 * @param {...*} [args] Template arguments
+		 * @returns {Promise} Promise of  render
 		 */
-		function render(contents, data) {
+		function render(contents, args) {
 			/*jshint validthis:true*/
 			var me = this;
-			var args = ARRAY_SLICE.call(arguments, 1);
 
 			// Call render with contents (or result of contents if it's a function)
-			$fn.call(
-				me[$ELEMENT],
-				typeof contents === TYPEOF_FUNCTION ? contents.apply(me, args) : contents
-			);
-			return me.weave();
+			return weave.call($fn.call(me[$ELEMENT],
+				typeof contents === TYPEOF_FUNCTION ? contents.apply(me, ARRAY_SLICE.call(arguments, 1)) : contents
+			).find(SELECTOR_WEAVE));
 		}
 
 		return render;
@@ -91,71 +82,103 @@ define([ &quot;troopjs-core/component/gadget&quot;, &quot;jquery&quot;, &quot;..
 	 */
 	return Gadget.extend(function ($element, displayName) {
 		var me = this;
+		var $get;
 
+		// No $element
 		if ($element === UNDEFINED) {
 			throw new Error(&quot;No $element provided&quot;);
 		}
+		// Is _not_ a jQuery element
+		else if (!$element.jquery) {
+			// From a plain dom node
+			if ($element.nodeType) {
+				$element = $($element);
+			}
+			else {
+				throw new Error(&quot;Unsupported widget element&quot;);
+			}
+		}
+		// From a different jQuery instance
+		else if (($get = $element.get) !== $GET) {
+			$element = $($get.call($element, 0));
+		}
 
+		// Store $ELEMENT
 		me[$ELEMENT] = $element;
-		me[$HANDLERS] = [];
+
+		/*
+		 * Handles DOM events by emitting them
+		 * @private
+		 * @param {jQuery.Event} $event jQuery Event
+		 * @param {...*} [args] Additional handler arguments
+		 * @returns {*} Result from last executed handler
+		 */
+		me[$HANDLER] = function $handler($event, args) {
+			// Redefine args
+			args = [ {
+				&quot;type&quot; : &quot;dom/&quot; + $event.type,
+				&quot;runner&quot; : sequence
+			} ];
+
+			// Push original arguments on args
+			ARRAY_PUSH.apply(args, arguments);
+
+			// Return result of emit
+			return me.emit.apply(me, args);
+		};
 
 		if (displayName !== UNDEFINED) {
 			me.displayName = displayName;
 		}
+
 	}, {
 		&quot;displayName&quot; : &quot;browser/component/widget&quot;,
 
 		&quot;sig/initialize&quot; : function onInitialize() {
 			var me = this;
 			var $element = me[$ELEMENT];
-			var $handler;
-			var $handlers = me[$HANDLERS];
+			var $handler = me[$HANDLER];
 			var special;
-			var specials = me.constructor.specials.dom;
-			var type;
-			var features;
-			var value;
-			var proxy;
+			var specials;
 			var i;
 			var iMax;
 
-			// Iterate specials
-			for (i = 0, iMax = specials ? specials[LENGTH] : 0; i &lt; iMax; i++) {
-				// Get special
-				special = specials[i];
+			// Make sure we have DOM specials
+			if ((specials = me.constructor.specials[DOM]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
 
-				// Create $handler
-				$handler = $handlers[i] = {};
+					// Add special to emitter
+					me.on(special[NAME], special[VALUE], special[FEATURES]);
+				}
 
-				// Set $handler properties
-				$handler[TYPE] = type = special[TYPE];
-				$handler[FEATURES] = features = special[FEATURES];
-				$handler[VALUE] = value = special[VALUE];
-				$handler[PROXY] = proxy = eventProxy(me, value);
-
-				// Attach proxy
-				$element.on(type, features, me, proxy);
-
-				// Copy GUID from proxy to value (so you can use .off to remove it)
-				value[GUID] = proxy[GUID];
+				// Bind $handler to $element
+				$element.on(specials[TYPES].join(&quot; &quot;), null, me, $handler);
 			}
 		},
 
 		&quot;sig/finalize&quot; : function onFinalize() {
 			var me = this;
 			var $element = me[$ELEMENT];
-			var $handler;
-			var $handlers = me[$HANDLERS];
+			var $handler = me[$HANDLER];
+			var special;
+			var specials;
 			var i;
 			var iMax;
 
-			// Iterate $handlers
-			for (i = 0, iMax = $handlers[LENGTH]; i &lt; iMax; i++) {
-				// Get $handler
-				$handler = $handlers[i];
+			// Make sure we have DOM specials
+			if ((specials = me.constructor.specials[DOM]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
 
-				// Detach event handler
-				$element.off($handler[TYPE], $handler[FEATURES], $handler[PROXY]);
+					// Remove special from emitter
+					me.off(special[NAME], special[VALUE]);
+				}
+
+				// Unbind $handler from $element
+				$element.off(specials[TYPES].join(&quot; &quot;), null, $handler);
 			}
 		},
 
@@ -168,19 +191,22 @@ define([ &quot;troopjs-core/component/gadget&quot;, &quot;jquery&quot;, &quot;..
 		 * @returns {Promise} from weave
 		 */
 		&quot;weave&quot; : function () {
-			// Publishing for weaving in, to notify parties that use a different loom configuration, e.g. other Troop versions.
-			this.publish(&quot;weave&quot;, this);
 			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
 		},
 
 <span id='browser-component-widget-method-unweave'>		/**
-</span>		 * Unweaves all children of $element _and_ me
-		 * @returns {Promise} from unweave
+</span>		 * Unweaves all woven children widgets including the widget itself.
+		 * @returns {Promise} Promise of completeness of unweaving all widgets.
 		 */
 		&quot;unweave&quot; : function () {
-			// Publishing for unweaveing.
-			this.publish(&quot;unweave&quot;, this);
-			return unweave.apply(this[$ELEMENT].find(SELECTOR_UNWEAVE).addBack(), arguments);
+			var woven = this[$ELEMENT].find(SELECTOR_WOVEN);
+
+			// Unweave myself only if I am woven.
+			if(this[$WEFT]) {
+				woven = woven.addBack();
+			}
+
+			return unweave.apply(woven, arguments);
 		},
 
 <span id='browser-component-widget-method-dom/destroy'>		/**
@@ -194,37 +220,37 @@ define([ &quot;troopjs-core/component/gadget&quot;, &quot;jquery&quot;, &quot;..
 </span>		 * Renders content and inserts it before $element
 		 * @method
 		 */
-		&quot;before&quot; : renderProxy($.fn.before),
+		&quot;before&quot; : $render($.fn.before),
 
 <span id='browser-component-widget-method-after'>		/**
 </span>		 * Renders content and inserts it after $element
 		 * @method
 		 */
-		&quot;after&quot; : renderProxy($.fn.after),
+		&quot;after&quot; : $render($.fn.after),
 
 <span id='browser-component-widget-method-html'>		/**
 </span>		 * Renders content and replaces $element contents
 		 * @method
 		 */
-		&quot;html&quot; : renderProxy($.fn.html),
+		&quot;html&quot; : $render($.fn.html),
 
 <span id='browser-component-widget-method-text'>		/**
 </span>		 * Renders content and replaces $element contents
 		 * @method
 		 */
-		&quot;text&quot; : renderProxy($.fn.text),
+		&quot;text&quot; : $render($.fn.text),
 
 <span id='browser-component-widget-method-append'>		/**
 </span>		 * Renders content and appends it to $element
 		 * @method
 		 */
-		&quot;append&quot; : renderProxy($.fn.append),
+		&quot;append&quot; : $render($.fn.append),
 
 <span id='browser-component-widget-method-prepend'>		/**
 </span>		 * Renders content and prepends it to $element
 		 * @method
 		 */
-		&quot;prepend&quot; : renderProxy($.fn.prepend)
+		&quot;prepend&quot; : $render($.fn.prepend)
 	});
 });
 </pre>

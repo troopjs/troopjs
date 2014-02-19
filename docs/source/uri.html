@@ -15,13 +15,13 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS core/net/uri
+  <pre class="prettyprint lang-js">/*
+ * TroopJS core/net/uri
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  *
  * Parts of code from parseUri 1.2.2 Copyright Steven Levithan &lt;stevenlevithan.com&gt;
  */
-define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
+define([ &quot;../mixin/base&quot; ], function URIModule(Base) {
 	&quot;use strict&quot;;
 
 	var NULL = null;
@@ -53,6 +53,10 @@ define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
 		QUERY,
 		ANCHOR ];
 
+<span id='core-net-uri-Query'>	/**
+</span>	 * Parse the **query** part of an URI.
+	 * @class core.net.uri.Query
+	 */
 	function Query(arg) {
 		/*jshint forin:false*/
 		var result = {};
@@ -90,6 +94,10 @@ define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
 		return result;
 	}
 
+<span id='core-net-uri-Query-method-toString'>	/**
+</span>	 * Serialize the query in url encoded format like `key1=value1&amp;key2=value2` without having it encoded.
+	 * @member core.net.uri.Query
+	 */
 	Query.toString = function QueryToString() {
 		/*jshint forin:false*/
 		var me = this;
@@ -141,8 +149,12 @@ define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
 		return query.join(&quot;&amp;&quot;);
 	};
 
-	// Extend on the instance of array rather than subclass it
+<span id='core-net-uri-Path'>	/**
+</span>	 * Parse the **path** part of an URI.
+	 * @class core.net.uri.Path
+	 */
 	function Path(arg) {
+		// Extend on the instance of array rather than subclass it
 		var result = [];
 
 		result.toString = Path.toString;
@@ -154,11 +166,20 @@ define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
 		return result;
 	}
 
+<span id='core-net-uri-Path-method-toString'>	/**
+</span>	 * Serialize the URI path using back-slash as delimiter.
+	 * @member core.net.uri.Path
+	 */
 	Path.toString = function PathToString() {
 		return this.join(&quot;/&quot;);
 	};
 
-	var URI = Factory(function URI(str) {
+<span id='core-net-uri'>	/**
+</span>	 * @class core.net.uri
+	 * @extends core.mixin.base
+	 * The universal URI parser and serializer.
+	 */
+	var URI = Base.extend(function URI(str) {
 		var me = this;
 		var value;
 		var matches;
@@ -184,8 +205,12 @@ define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
 			me[PATH] = Path(me[PATH]);
 		}
 	}, {
-		&quot;displayName&quot; : &quot;browser/route/uri&quot;,
+		&quot;displayName&quot; : &quot;core/net/uri&quot;,
 
+<span id='core-net-uri-method-toString'>		/**
+</span>		 * Serialize into the URI string.
+		 * @return {String}
+		 */
 		&quot;toString&quot; : function URIToString() {
 			var me = this;
 			var uri = [ PROTOCOL , &quot;://&quot;, AUTHORITY, PATH, &quot;?&quot;, QUERY, &quot;#&quot;, ANCHOR ];
@@ -227,9 +252,11 @@ define([ &quot;../component/factory&quot; ], function URIModule(Factory) {
 	});
 
 	URI.Path = Path;
+
 	URI.Query = Query;
 
 	return URI;
-});</pre>
+});
+</pre>
 </body>
 </html>

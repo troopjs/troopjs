@@ -15,8 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS browser/loom/plugin
+  <pre class="prettyprint lang-js">/*
+ * TroopJS browser/loom/plugin
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define([
@@ -42,8 +42,8 @@ define([
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
 
-<span id='global-method-hasDataWeaveAttr'>	/**
-</span>	 * Tests if element has a data-weave attribute
+	/*
+	 * Tests if element has a data-weave attribute
 	 * @param element to test
 	 * @returns {boolean}
 	 * @private
@@ -52,8 +52,8 @@ define([
 		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
 	}
 
-<span id='global-method-hasDataWovenAttr'>	/**
-</span>	 * Tests if element has a data-woven attribute
+	/*
+	 * Tests if element has a data-woven attribute
 	 * @param element to test
 	 * @returns {boolean}
 	 * @private
@@ -62,9 +62,8 @@ define([
 		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
 	}
 
-<span id='global-property-S-EXPR[":"][WEAVE]'>	/**
-</span>	 * :weave expression
-	 * @type {*}
+	/*
+	 * :weave expression
 	 */
 	$EXPR[&quot;:&quot;][WEAVE] = $CREATEPSEUDO
 		// If we have jQuery &gt;= 1.8 we want to use .createPseudo
@@ -101,9 +100,8 @@ define([
 						}).join(&quot;|&quot;), &quot;m&quot;).test(weave.replace(RE_SEPARATOR, &quot;\n&quot;));
 			};
 
-<span id='global-property-S-EXPR[":"][WOVEN]'>	/**
-</span>	 * :woven expression
-	 * @type {*}
+	/*
+	 * :woven expression
 	 */
 	$EXPR[&quot;:&quot;][WOVEN] = $CREATEPSEUDO
 		// If we have jQuery &gt;= 1.8 we want to use .createPseudo
@@ -139,20 +137,29 @@ define([
 					}).join(&quot;|&quot;), &quot;m&quot;).test(attr_woven.replace(RE_SEPARATOR, &quot;\n&quot;));
 		};
 
-<span id='global-method-S-FN[WEAVE]'>	/**
+<span id='$'>	/**
+</span>	 * @class $
+	 */
+
+<span id='$-method-weave'>	/**
 </span>	 * Weaves elements
+	 * @member $
+	 * @method weave
 	 * @returns {Promise} of weaving
 	 */
 	$FN[WEAVE] = weave;
 
-<span id='global-method-S-FN[UNWEAVE]'>	/**
+<span id='$-method-unweave'>	/**
 </span>	 * Unweaves elements
+	 * @member $
+	 * @method unweave
 	 * @returns {Promise} of unweaving
 	 */
 	$FN[UNWEAVE] = unweave;
 
-<span id='global-method-S-FN[WOVEN]'>	/**
+<span id='$-method-woven'>	/**
 </span>	 * Gets woven widgets
+	 * @method woven
 	 * @returns {Promise} of woven widgets
 	 */
 	$FN[WOVEN] = woven;

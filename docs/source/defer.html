@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS utils/defer
+ * when.defer patched with jQuery/deferred compatibility.
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;when&quot;, &quot;poly/array&quot; ], function DeferModule(when) {
+	&quot;use strict&quot;;
+
+	var ARRAY_SLICE = Array.prototype.slice;
+
+<span id='utils-defer'>	/**
+</span>	 * @class utils.defer
+	 * Function that creates a wrapped when.defer object, which can be send to anything that expects a jQuery/deferred.
+	 */
+	return function Defer() {
+		// Create defer
+		var defer = when.defer();
+
+		[ &quot;resolve&quot;, &quot;reject&quot;, &quot;progress&quot; ].forEach(function (value) {
+			var me = this;
+
+			// Since the deferred implementation in jQuery (that we use in 1.x) allows
+			// to resolve with optional context and multiple arguments, we monkey-patch resolve here
+			var func = me.resolver[value];
+
+			// Resolve/Reject/Progress with parameters:
+			// http://api.jquery.com/deferred.resolve
+			me[value] = function () {
+				func.apply(me, arguments);
+			};
+
+			// Resolve/Reject/Progress with context and parameters:
+			// http://api.jquery.com/deferred.resolveWith
+			me[value + &quot;With&quot;] = function (context) {
+				func.apply(context, ARRAY_SLICE.call(arguments, 1));
+			};
+
+		}, defer);
+
+		return defer;
+	};
+});
+</pre>
+</body>
+</html>

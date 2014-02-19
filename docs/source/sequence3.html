@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">define([
+	&quot;./constants&quot;,
+	&quot;when&quot;
+], function SequenceModule(CONSTANTS, when) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var HEAD = &quot;head&quot;;
+	var NEXT = &quot;next&quot;;
+	var PHASE = &quot;phase&quot;;
+	var MEMORY = &quot;memory&quot;;
+	var RE_PHASE = CONSTANTS[&quot;pattern&quot;];
+
+	/*
+	 * Runner that filters and executes candidates in sequence without overlap
+	 * @param {Object} event Event object
+	 * @param {Object} handlers List of handlers
+	 * @param {Array} args Initial arguments
+	 * @returns {Promise}
+	 */
+	return function sequence(event, handlers, args) {
+		var context = event[CONTEXT];
+		var callback = event[CALLBACK];
+		var results = [];
+		var resultsCount = 0;
+		var candidate;
+		var candidates = [];
+		var candidatesCount = 0;
+
+		// Iterate handlers
+		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
+			// Filter candidate[CONTEXT] if we have context
+			if (context !== UNDEFINED &amp;&amp; candidate[CONTEXT] !== context) {
+				continue;
+			}
+
+			// Filter candidate[CALLBACK] if we have callback
+			if (callback &amp;&amp; candidate[CALLBACK] !== callback) {
+				continue;
+			}
+
+			// Add to candidates
+			candidates[candidatesCount++] = candidate;
+		}
+
+		// Reset candidatesCount
+		candidatesCount = 0;
+
+		/*
+		 * Internal function for sequential execution of candidates candidates
+		 * @private
+		 * @param {Array} [result] result from previous candidate callback
+		 * @param {Boolean} [skip] flag indicating if this result should be skipped
+		 * @return {Promise} promise of next candidate callback execution
+		 */
+		var next = function (result, skip) {
+			/*jshint curly:false*/
+			var candidate;
+			var context;
+
+			// Store result if no skip
+			if (skip !== true) {
+				results[resultsCount++] = result;
+			}
+
+			// TODO Needs cleaner implementation
+			// Iterate candidates while candidate has a context and that context is in a blocked phase
+			while ((candidate = candidates[candidatesCount++]) // Has next candidate
+				&amp;&amp; (context = candidate[CONTEXT])                // Has context
+				&amp;&amp; RE_PHASE.test(context[PHASE]));               // In blocked phase
+
+			// Return promise of next callback, or a promise resolved with result
+			return candidate !== UNDEFINED
+				? when(candidate[CALLBACK].apply(context, args), next)
+				: (handlers[MEMORY] = args) === args &amp;&amp; when.resolve(results);
+		};
+
+		return next(args, true);
+	}
+});</pre>
+</body>
+</html>

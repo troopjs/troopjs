@@ -15,8 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS data/ajax/service
+  <pre class="prettyprint lang-js">/*
+ * TroopJS data/ajax/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define([
@@ -33,11 +33,12 @@ define([
 			// Request
 			return $.ajax(merge.call({
 				&quot;headers&quot;: {
-					&quot;x-request-id&quot;: new Date().getTime()
+					&quot;x-troopjs-request-id&quot;: new Date().getTime()
 				}
 			}, settings));
 		}
 	});
-});</pre>
+});
+</pre>
 </body>
 </html>

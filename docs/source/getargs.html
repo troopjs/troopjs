@@ -15,8 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS utils/getargs
+  <pre class="prettyprint lang-js">/*
+ * TroopJS utils/getargs
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define(function GetArgsModule() {
@@ -28,6 +28,15 @@ define(function GetArgsModule() {
 	var RE_BOOLEAN_TRUE = /^true$/i;
 	var RE_DIGIT = /^\d+$/;
 
+<span id='utils-getargs'>	/**
+</span>	 * Function that calls on a String, to parses it as function parameters delimited by commas.
+	 *
+	 * 	&quot; 1  , '2' , 3  ,false,5 &quot; =&gt; [ 1, &quot;2&quot;, 3, false, 5]
+	 * 	'1, 2 ',  3,\&quot;4\&quot;, 5  =&gt; [ &quot;1, 2 &quot;, 3, &quot;4&quot;, 5 ]
+	 *
+	 * @class utils.getargs
+	 * @return {Array} the array of parsed params.
+	 */
 	return function getargs() {
 		var me = this;
 		var result = [];
@@ -130,6 +139,7 @@ define(function GetArgsModule() {
 
 		return result;
 	};
-});</pre>
+});
+</pre>
 </body>
 </html>

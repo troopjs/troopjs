@@ -19,7 +19,12 @@
  * TroopJS core/component/base
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot; ], function ComponentModule(Factory, when, merge) {
+define([
+	&quot;../event/emitter&quot;,
+	&quot;when&quot;,
+	&quot;troopjs-utils/merge&quot;,
+	&quot;poly/array&quot;
+], function ComponentModule(Emitter, when, merge) {
 	&quot;use strict&quot;;
 
 <span id='core-component-base'>	/**
@@ -59,44 +64,94 @@ define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot
 	 * 		app.start();
 	 * 	});
 	 *
-	 * 	$(window).unload(function on_unload (argument) {
+	 * 	$(window).unload(function on_unload (argument) {\
 	 * 	  app.end();
 	 * 	});
 	 * @class core.component.base
+	 * @extends core.event.emitter
 	 */
 
+	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var INSTANCE_COUNT = &quot;instanceCount&quot;;
+	var EMITTER_PROTO = Emitter.prototype;
+	var EMITTER_ON = EMITTER_PROTO.on;
+	var EMITTER_OFF = EMITTER_PROTO.off;
 	var CONFIGURATION = &quot;configuration&quot;;
+	var LENGTH = &quot;length&quot;;
 	var CONTEXT = &quot;context&quot;;
 	var NAME = &quot;name&quot;;
+	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
 	var PHASE = &quot;phase&quot;;
-	var STARTED = &quot;started&quot;;
-	var FINISHED = &quot;finished&quot;;
-	var INITIALIZE = &quot;initialize&quot;;
 	var STOP = &quot;stop&quot;;
+	var INITIALIZE = &quot;initialize&quot;;
+	var STARTED = &quot;started&quot;;
+	var FINALIZED = &quot;finalized&quot;;
+	var FINISHED = &quot;finished&quot;;
 	var SIG = &quot;sig&quot;;
-	var INSTANCE_COUNTER = 0;
+	var ON = &quot;on&quot;;
 
-	return Factory(
-	function Component() {
+	return Emitter.extend(function Component() {
 		var me = this;
+		var specials;
+		var special;
+		var i;
+		var iMax;
 
-		// Update instance count
-		me[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
+		// Make sure we have SIG specials
+		if ((specials = me.constructor.specials[SIG]) !== UNDEFINED) {
+			// Iterate specials
+			for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+				special = specials[i];
+
+				me.on(special[NAME], special[VALUE]);
+			}
+		}
 
 		// Set configuration
 		me[CONFIGURATION] = {};
 	}, {
-		&quot;instanceCount&quot; : INSTANCE_COUNTER,
-
 		&quot;displayName&quot; : &quot;core/component/base&quot;,
 
+		&quot;sig/initialize&quot; : function onInitialize() {
+			var me = this;
+			var specials;
+			var special;
+			var i;
+			var iMax;
+
+			// Make sure we have ON specials
+			if ((specials = me.constructor.specials[ON]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
+
+					me.on(special[TYPE], special[VALUE]);
+				}
+			}
+		},
+
+		&quot;sig/finalize&quot; : function onFinalize() {
+			var me = this;
+			var specials;
+			var special;
+			var i;
+			var iMax;
+
+			// Make sure we have ON specials
+			if ((specials = me.constructor.specials[ON]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
+
+					me.off(special[TYPE], special[VALUE]);
+				}
+			}
+		},
+
 <span id='core-component-base-method-configure'>		/**
-</span>		 * Add to the component configurations, possibly {@link Object#merge merge} with the existing ones.
+</span>		 * Add to the component configurations, possibly {@link utils.merge merge} with the existing ones.
 		 *
 		 * 		var List = Component.extend({
 		 * 			&quot;sig/start&quot;: function start() {
@@ -127,55 +182,67 @@ define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot
 		 * 		// Added: true
 		 * 		print(dropdown.configuration.shadow);
 		 *
-		 * @param {Object...} [configs] Config(s) to add.
+		 * @param {...Object} [config] Config(s) to add.
 		 * @returns {Object} The new configuration.
 		 */
-		&quot;configure&quot; : function configure() {
+		&quot;configure&quot; : function configure(config) {
 			return merge.apply(this[CONFIGURATION], arguments);
+		},
+
+<span id='core-component-base-method-on'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Context of the callback will always be **this** object.
+		 */
+		&quot;on&quot;: function on(event, callback, data) {
+			var me = this;
+
+			return EMITTER_ON.call(me, event, me, callback, data);
+		},
+
+<span id='core-component-base-method-off'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Context of the callback will always be **this** object.
+		 */
+		&quot;off&quot; : function off(event, callback) {
+			var me = this;
+
+			// Forward
+			return EMITTER_OFF.call(me, event, me, callback);
 		},
 
 <span id='core-component-base-method-signal'>		/**
 </span>		 * Signals the component
-		 * @param _signal {String} Signal
+		 * @param {String} _signal Signal
+		 * @param {...*} [args] signal arguments
 		 * @return {Promise}
 		 */
-		&quot;signal&quot; : function onSignal(_signal) {
+		&quot;signal&quot;: function signal(_signal, args) {
 			var me = this;
-			var args = ARRAY_SLICE.call(arguments, 1);
-			var specials = me.constructor.specials;
-			var signals = (SIG in specials &amp;&amp; specials[SIG][_signal]) || [];
-			var signal;
-			var index = 0;
-			var result = [];
-			var resultLength = -2;
 
-			function next(_args) {
-				// Add result if resultLength is within bounds
-				if (++resultLength &gt; -1) {
-					result[resultLength] = _args;
-				}
+			// Modify first argument
+			arguments[0] = &quot;sig/&quot; + _signal;
 
-				// Return a chained promise of next callback, or a promise resolved with _signal
-				return (signal = signals[index++])
-					? when(signal[VALUE].apply(me, args), next)
-					: when.resolve(result);
-			}
-
-			// Return promise
-			return next(args);
+			// Emit
+			return me.emit.apply(me, arguments);
 		},
 
 <span id='core-component-base-method-start'>		/**
 </span>		 * Start the component life-cycle.
-		 * @return {*}
+		 * @param {...*} [args] arguments
+		 * @return {Promise}
 		 */
-		&quot;start&quot; : function start() {
+		&quot;start&quot; : function start(args) {
 			var me = this;
 			var signal = me.signal;
-			var args = [ INITIALIZE ];
+			var phase;
 
-			// Set phase
-			me[PHASE] = INITIALIZE;
+			// Check PHASE
+			if ((phase = me[PHASE]) !== UNDEFINED &amp;&amp; phase !== FINALIZED) {
+				throw new Error(&quot;Can't transition phase from '&quot; + phase + &quot;' to '&quot; + INITIALIZE + &quot;'&quot;);
+			}
+
+			// Modify args to change signal (and store in PHASE)
+			args = [ me[PHASE] = INITIALIZE ];
 
 			// Add signal to arguments
 			ARRAY_PUSH.apply(args, arguments);
@@ -186,7 +253,7 @@ define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot
 
 				return signal.apply(me, args).then(function started(_started) {
 					// Update phase
-					me[PHASE] = &quot;started&quot;;
+					me[PHASE] = STARTED;
 
 					// Return concatenated result
 					return ARRAY_PROTO.concat(_initialized, _started);
@@ -196,15 +263,21 @@ define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot
 
 <span id='core-component-base-method-stop'>		/**
 </span>		 * Stops the component life-cycle.
-		 * @return {*}
+		 * @param {...*} [args] arguments
+		 * @return {Promise}
 		 */
-		&quot;stop&quot; : function stop() {
+		&quot;stop&quot; : function stop(args) {
 			var me = this;
 			var signal = me.signal;
-			var args = [ STOP ];
+			var phase;
 
-			// Set phase
-			me[PHASE] = STOP;
+			// Check PHASE
+			if ((phase = me[PHASE]) !== STARTED) {
+				throw new Error(&quot;Can't transition phase from '&quot; + phase + &quot;' to '&quot; + STOP + &quot;'&quot;);
+			}
+
+			// Modify args to change signal (and store in PHASE)
+			args = [ me[PHASE] = STOP ];
 
 			// Add signal to arguments
 			ARRAY_PUSH.apply(args, arguments);
@@ -215,7 +288,7 @@ define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot
 
 				return signal.apply(me, args).then(function finalized(_finalized) {
 					// Update phase
-					me[PHASE] = &quot;finalized&quot;;
+					me[PHASE] = FINALIZED;
 
 					// Return concatenated result
 					return ARRAY_PROTO.concat(_stopped, _finalized);
@@ -261,16 +334,6 @@ define([ &quot;./factory&quot;, &quot;when&quot;, &quot;troopjs-utils/merge&quot
 			promise[NAME] = name;
 
 			return me.signal(&quot;task&quot;, promise).yield(promise);
-		},
-
-<span id='core-component-base-method-toString'>		/**
-</span>		 * Gives string representation of this component instance.
-		 * @returns {string} displayName and instanceCount
-		 */
-		&quot;toString&quot; : function _toString() {
-			var me = this;
-
-			return me.displayName + &quot;@&quot; + me[INSTANCE_COUNT];
 		}
 	});
 });

@@ -22,6 +22,7 @@
 define([ &quot;module&quot;, &quot;../component/widget&quot;, &quot;when&quot;, &quot;troopjs-core/registry/service&quot;, &quot;poly/array&quot; ], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
 	&quot;use strict&quot;;
 
+	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
@@ -32,27 +33,32 @@ define([ &quot;module&quot;, &quot;../component/widget&quot;, &quot;when&quot;, 
 	 * @private
 	 * @param {String} _signal Signal to forward
 	 * @param {Array} _args Signal arguments
-	 * @returns {Function}
+	 * @return {Promise} promise of next handler callback execution
 	 */
 	function forward(_signal, _args) {
 		/*jshint validthis:true*/
 		var me = this;
-		var signal = me.signal;
 		var args = [ _signal ];
 		var components = me[REGISTRY].get();
-		var index = 0;
+		var componentsCount = 0;
+		var results = [];
+		var resultsCount = 0;
 
 		ARRAY_PUSH.apply(args, _args);
 
-		var next = function () {
+		var next = function (result, skip) {
 			var component;
 
-			return (component = components[index++])
-				? when(signal.apply(component, args), next)
-				: when.resolve(_args);
+			if (skip !== true) {
+				results[resultsCount++] = result;
+			}
+
+			return (component = components[componentsCount++]) !== UNDEFINED
+				? when(component.signal.apply(component, args), next)
+				: when.resolve(results);
 		};
 
-		return next();
+		return next(UNDEFINED, true);
 	}
 
 <span id='browser-application-widget'>	/**
@@ -64,6 +70,7 @@ define([ &quot;module&quot;, &quot;../component/widget&quot;, &quot;when&quot;, 
 		// Create registry
 		var registry = this[REGISTRY] = RegistryService();
 
+		// TODO only register _services_
 		// Slice and iterate arguments
 		ARRAY_SLICE.call(arguments, 2).forEach(function (component) {
 			// Register component
@@ -78,20 +85,18 @@ define([ &quot;module&quot;, &quot;../component/widget&quot;, &quot;when&quot;, 
 
 		&quot;sig/start&quot; : function onStart() {
 			var me = this;
-			var weave = me.weave;
 			var args = arguments;
 
 			return forward.call(me, &quot;start&quot;, args).then(function started() {
-				return weave.apply(me, args);
+				return me.weave.apply(me, args);
 			});
 		},
 
 		&quot;sig/stop&quot; : function onStop() {
 			var me = this;
-			var unweave = me.unweave;
 			var args = arguments;
 
-			return unweave.apply(me, args).then(function stopped() {
+			return me.unweave.apply(me, args).then(function stopped() {
 				return forward.call(me, &quot;stop&quot;, args);
 			});
 		},

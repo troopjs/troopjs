@@ -1,1 +1,0 @@
-Ext.data.JsonP.troopjs_browser({"title":"Overview","guide":"<h1 id='troopjs_browser-section-troopjs-browser'>troopjs-browser</h1>\n\n<p>Browser related for TroopJS</p>\n"});

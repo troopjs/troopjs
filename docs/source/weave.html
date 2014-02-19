@@ -19,7 +19,7 @@
  * TroopJS browser/loom/weave
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;troopjs-utils/getargs&quot;, &quot;poly/array&quot; ], function WeaveModule(config, parentRequire, when, $, getargs) {
+define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;troopjs-utils/getargs&quot;, &quot;troopjs-utils/defer&quot;, &quot;poly/array&quot; ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
 	&quot;use strict&quot;;
 
 	var UNDEFINED;
@@ -27,6 +27,8 @@ define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jque
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_MAP = ARRAY_PROTO.map;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SHIFT = ARRAY_PROTO.shift;
+	var ARRAY_UNSHIFT = ARRAY_PROTO.unshift;
 	var WEAVE = &quot;weave&quot;;
 	var WOVEN = &quot;woven&quot;;
 	var $WARP = config[&quot;$warp&quot;];
@@ -65,47 +67,52 @@ define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jque
 			var $weave = [];
 			var weave_attr = $element.attr(ATTR_WEAVE) || &quot;&quot;;
 			var weave_args;
-			var re = /[\s,]*(([\w_\-\/\.]+)(?:\(([^\)]+)\))?)/g;
+			var re = /[\s,]*(((?:\w+!)?([\w\d_\-\/\.]+)(?:#[^(\s]+)?)(?:\(([^\)]+)\))?)/g;
 			var matches;
 
 			/*
-			 * Updated attributes
-			 * @param {object} widget Widget
+			 * Updated attributes according to what have been weaved.
+			 * @param {object} widgets List of started widgets.
 			 * @private
 			 */
-			var update_attr = function (widget) {
-				var woven = widget[$WEFT][WOVEN];
+			var update_attr = function (widgets) {
+				var woven = [];
+				widgets.forEach(function (widget) {
+					woven.push(widget[$WEFT][WOVEN]);
+				});
 
 				$element.attr(ATTR_WOVEN, function (index, attr) {
-					var result = [ woven ];
-
-					if (attr !== UNDEFINED) {
-						ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
-					}
-
-					return result.join(&quot; &quot;);
+					return (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(woven).join(&quot; &quot;);
 				});
 			};
 
 			// Make sure to remove ATTR_WEAVE (so we don't try processing this again)
 			$element.removeAttr(ATTR_WEAVE);
 
+			var args;
+
 			// Iterate weave_attr (while re matches)
-			// matches[1] : widget name and arguments - &quot;widget/name(1, 'string', false)&quot;
-			// matches[2] : widget name - &quot;widget/name&quot;
-			// matches[3] : widget arguments - &quot;1, 'string', false&quot;
+			// matches[1] : full widget module name (could be loaded from plugin) - &quot;mv!widget/name#1.x(1, 'string', false)&quot;
+			// matches[2] : widget name and arguments - &quot;widget/name(1, 'string', false)&quot;
+			// matches[3] : widget name - &quot;widget/name&quot;
+			// matches[4] : widget arguments - &quot;1, 'string', false&quot;
 			while ((matches = re.exec(weave_attr)) !== NULL) {
 				/*jshint loopfunc:true*/
 				// Create weave_args
-				weave_args = [ $element, matches[2] ];
+				// Require module, add error handler
+				// Arguments to pass to the widget constructor.
+				args = matches[4];
+
+				// module name, DOM element, widget display name.
+				weave_args = [ matches[2], $element.get(0), matches[3] ];
 
 				// Store matches[1] as WEAVE on weave_args
 				weave_args[WEAVE] = matches[1];
 
 				// If there were additional arguments
-				if (matches[3] !== UNDEFINED) {
+				if (args !== UNDEFINED) {
 					// Parse matches[2] using getargs, map the values and append to weave_args
-					ARRAY_PUSH.apply(weave_args, getargs.call(matches[3]).map(function (value) {
+					ARRAY_PUSH.apply(weave_args, getargs.call(args).map(function (value) {
 						// If value from $data if key exist
 						return value in $data
 							? $data[value]
@@ -123,6 +130,7 @@ define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jque
 				var deferred = when.defer();
 				var resolver = deferred.resolver;
 				var promise = deferred.promise;
+				var module = ARRAY_SHIFT.call(widget_args);
 
 				// Copy WEAVE
 				promise[WEAVE] = widget_args[WEAVE];
@@ -130,12 +138,9 @@ define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jque
 				// Add promise to $warp
 				ARRAY_PUSH.call($warp, promise);
 
-				// Add deferred update of attr
-				when(promise, update_attr);
-
-				// Require module, add error handler
-				parentRequire([ widget_args[1] ], function (Widget) {
+				parentRequire([ module ], function (Widget) {
 					var widget;
+					var startPromise;
 
 					try {
 						// Create widget instance
@@ -147,8 +152,17 @@ define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jque
 						// Add WOVEN to promise
 						promise[WOVEN] = widget.toString();
 
-						// Resolve with start yielding widget
-						resolver.resolve(widget.start.apply(widget, start_args).yield(widget));
+						// TODO: Detecting TroopJS 1.x widget from *version* property.
+						if (widget.trigger) {
+							deferred = Defer();
+							widget.start(deferred);
+							startPromise = deferred.promise;
+						}
+						else {
+							startPromise = widget.start.apply(widget, start_args);
+						}
+
+						resolver.resolve(startPromise.yield(widget));
 					}
 					catch (e) {
 						resolver.reject(e);
@@ -157,9 +171,12 @@ define([ &quot;./config&quot;, &quot;require&quot;, &quot;when&quot;, &quot;jque
 
 				// Return promise
 				return promise;
-			});
+			})
+			// Updating the element attributes with started widgets.
+			.tap(update_attr);
 		}));
 	};
-});</pre>
+});
+</pre>
 </body>
 </html>

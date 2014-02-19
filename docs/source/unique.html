@@ -15,8 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='global-property-'>/**
-</span> * TroopJS utils/unique
+  <pre class="prettyprint lang-js">/*
+ * TroopJS utils/unique
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define(function UniqueModule() {
@@ -24,8 +24,14 @@ define(function UniqueModule() {
 
 	var LENGTH = &quot;length&quot;;
 
-<span id='global-method-'>	/**
-</span>	 * Reduces array to only contain unique values (evals left-right)
+<span id='utils-unique'>	/**
+</span>	 * Function that calls on an array to produces a duplicate-free version of this array, using the specified comparator otherwise
+	 * strictly equals(===) to test object equality.
+	 *
+	 * @class utils.unique
+	 * @param {Function} [fn] The comparator function.
+	 * @param {Function} fn.one One element to compare.
+	 * @param {Function} fn.other The other element to compare with.
 	 * @returns {Number} New length of array
 	 */
 	return function unique(comparator) {
@@ -71,6 +77,7 @@ define(function UniqueModule() {
 		// Return new length
 		return k;
 	};
-});</pre>
+});
+</pre>
 </body>
 </html>

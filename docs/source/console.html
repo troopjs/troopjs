@@ -31,14 +31,14 @@ define([ &quot;../component/base&quot;, &quot;poly/function&quot; ], function Co
 	 */
 
 	/*jshint devel:true*/
-	var CONSOLE = console;
+	var CONSOLE = window.console;
 
 	function noop() {}
 
 	var spec = {};
 	[&quot;info&quot;,&quot;log&quot;,&quot;debug&quot;,&quot;warn&quot;,&quot;error&quot;].reduce(function(memo, feature) {
 			memo[feature] =
-				typeof CONSOLE != 'undefined' &amp;&amp; CONSOLE[feature] ? CONSOLE[feature] : noop;
+				typeof CONSOLE != 'undefined' &amp;&amp; CONSOLE[feature] ? CONSOLE[feature].bind(CONSOLE) : noop;
 			return memo;
 	}, spec);
 
@@ -81,6 +81,7 @@ define([ &quot;../component/base&quot;, &quot;poly/function&quot; ], function Co
 			&quot;displayName&quot; : &quot;core/logger/console&quot;
 		},
 		spec);
-});</pre>
+});
+</pre>
 </body>
 </html>

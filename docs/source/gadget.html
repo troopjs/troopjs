@@ -19,11 +19,15 @@
  * TroopJS core/component/gadget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;../event/emitter&quot;, &quot;when&quot;, &quot;../pubsub/hub&quot; ], function GadgetModule(Emitter, when, hub) {
+define([
+	&quot;./base&quot;,
+	&quot;when&quot;,
+	&quot;../pubsub/hub&quot;
+],function GadgetModule(Component, when, hub) {
 	&quot;use strict&quot;;
 
 <span id='core-component-gadget'>	/**
-</span>	 * Base component that provides events and subscriptions features.
+</span>	 * Component that provides signal and hub features.
 	 *
 	 * 	var one = Gadget.create({
 	 * 		&quot;hub/kick/start&quot;: function(foo) {
@@ -55,103 +59,81 @@ define([ &quot;../event/emitter&quot;, &quot;when&quot;, &quot;../pubsub/hub&quo
 	 * 	});
 	 *
 	 * @class core.component.gadget
-	 * @extends core.event.emitter
+	 * @extends core.component.base
 	 */
 
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var PUBLISH = hub.publish;
-	var REPUBLISH = hub.republish;
-	var SUBSCRIBE = hub.subscribe;
-	var UNSUBSCRIBE = hub.unsubscribe;
+	var UNDEFINED;
 	var LENGTH = &quot;length&quot;;
 	var FEATURES = &quot;features&quot;;
 	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
-	var SUBSCRIPTIONS = &quot;subscriptions&quot;;
-	var EMITTER_PROTO = Emitter.prototype;
-	var ON = EMITTER_PROTO.on;
-	var OFF = EMITTER_PROTO.off;
-	var REEMITT = EMITTER_PROTO.reemit;
-	var PEEK = EMITTER_PROTO.peek;
+	var HUB = &quot;hub&quot;;
 
-	return Emitter.extend(function Gadget() {
-		this[SUBSCRIPTIONS] = [];
-	}, {
+	return Component.extend({
 		&quot;displayName&quot; : &quot;core/component/gadget&quot;,
 
 		&quot;sig/initialize&quot; : function onInitialize() {
 			var me = this;
-			var subscription;
-			var subscriptions = me[SUBSCRIPTIONS];
+			var specials;
 			var special;
-			var specials = me.constructor.specials.hub;
 			var i;
 			var iMax;
-			var type;
-			var value;
 
-			// Iterate specials
-			for (i = 0, iMax = specials ? specials[LENGTH] : 0; i &lt; iMax; i++) {
-				// Get special
-				special = specials[i];
+			// Make sure we have HUB specials
+			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
 
-				// Create subscription
-				subscription = subscriptions[i] = {};
-
-				// Set subscription properties
-				subscription[TYPE] = type = special[TYPE];
-				subscription[FEATURES] = special[FEATURES];
-				subscription[VALUE] = value = special[VALUE];
-
-				// Subscribe
-				SUBSCRIBE.call(hub, type, me, value);
+					// Subscribe
+					hub.subscribe(special[TYPE], me, special[VALUE], special[FEATURES]);
+				}
 			}
 		},
 
 		&quot;sig/start&quot; : function onStart() {
 			var me = this;
-			var args = arguments;
-			var subscription;
-			var subscriptions = me[SUBSCRIPTIONS];
+			var specials;
+			var special;
 			var results = [];
 			var resultsLength = 0;
 			var i;
 			var iMax;
 
-			// Iterate subscriptions
-			for (i = 0, iMax = subscriptions[LENGTH]; i &lt; iMax; i++) {
-				// Get subscription
-				subscription = subscriptions[i];
+			// Make sure we have HUB specials
+			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
 
-				// If this is not a &quot;memory&quot; subscription - continue
-				if (subscription[FEATURES] !== &quot;memory&quot;) {
-					continue;
+					// Check if we need to republish
+					if (special[FEATURES] === &quot;memory&quot;) {
+						// Republish, store result
+						results[resultsLength++] = hub.republish(special[TYPE], me, special[VALUE]);
+					}
 				}
-
-				// Republish, store result
-				results[resultsLength++] = REPUBLISH.call(hub, subscription[TYPE], false, me, subscription[VALUE]);
 			}
 
-			// Return promise that will be fulfilled when all results are, and yield args
-			return when.all(results).yield(args);
+			// Return promise that will be fulfilled when all results are
+			return when.all(results);
 		},
 
 		&quot;sig/finalize&quot; : function onFinalize() {
 			var me = this;
-			var subscription;
-			var subscriptions = me[SUBSCRIPTIONS];
+			var specials;
+			var special;
 			var i;
 			var iMax;
 
-			// Iterate subscriptions
-			for (i = 0, iMax = subscriptions[LENGTH]; i &lt; iMax; i++) {
-				// Get subscription
-				subscription = subscriptions[i];
+			// Make sure we have HUB specials
+			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
+				// Iterate specials
+				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
+					special = specials[i];
 
-				// Unsubscribe
-				UNSUBSCRIBE.call(hub, subscription[TYPE], me, subscription[VALUE]);
+					// Unsubscribe
+					me.unsubscribe(special[TYPE], special[VALUE]);
+				}
 			}
 		},
 
@@ -164,85 +146,29 @@ define([ &quot;../event/emitter&quot;, &quot;when&quot;, &quot;../pubsub/hub&quo
 			return this.publish(&quot;task&quot;, task);
 		},
 
-<span id='core-component-gadget-method-reemit'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Context of the callback will always be **this** object.
-		 */
-		&quot;reemit&quot; : function reemit(event, senile, callback) {
-			var me = this;
-			var args = [ event, senile, me ];
-
-			// Add args
-			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 2));
-
-			// Forward
-			return REEMITT.apply(me, args);
-		},
-
-<span id='core-component-gadget-method-on'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Context of the callback will always be **this** object.
-		 */
-		&quot;on&quot;: function on(event) {
-			var me = this;
-			var args = [ event, me ];
-
-			// Add args
-			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
-
-			// Forward
-			return ON.apply(me, args);
-		},
-
-<span id='core-component-gadget-method-off'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Context of the callback will always be **this** object.
-		 */
-		&quot;off&quot; : function off(event) {
-			var me = this;
-			var args = [ event, me ];
-
-			// Add args
-			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
-
-			// Forward
-			return OFF.apply(me, args);
-		},
-
 <span id='core-component-gadget-method-publish'>		/**
 </span>		 * @inheritdoc core.pubsub.hub#publish
 		 */
 		&quot;publish&quot; : function publish() {
-			return PUBLISH.apply(hub, arguments);
+			return hub.publish.apply(hub, arguments);
 		},
 
 <span id='core-component-gadget-method-republish'>		/**
 </span>		 * @inheritdoc core.pubsub.hub#republish
 		 */
-		&quot;republish&quot; : function republish(event, senile, callback) {
-			var me = this;
-			var args = [ event, senile, me ];
-
-			// Add args
-			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 2));
-
-			// Republish
-			return REPUBLISH.apply(hub, args);
+		&quot;republish&quot; : function republish() {
+			return hub.republish.apply(hub, arguments);
 		},
 
 <span id='core-component-gadget-method-subscribe'>		/**
 </span>		 * @inheritdoc core.pubsub.hub#subscribe
 		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
 		 */
-		&quot;subscribe&quot; : function subscribe(event, callback) {
+		&quot;subscribe&quot; : function subscribe(event, callback, data) {
 			var me = this;
-			var args = [ event, me ];
-
-			// Add args
-			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
 
 			// Subscribe
-			SUBSCRIBE.apply(hub, args);
+			hub.subscribe(event, me, callback, data);
 
 			return me;
 		},
@@ -253,24 +179,18 @@ define([ &quot;../event/emitter&quot;, &quot;when&quot;, &quot;../pubsub/hub&quo
 		 */
 		&quot;unsubscribe&quot; : function unsubscribe(event, callback) {
 			var me = this;
-			var args = [ event, me ];
-
-			// Add args
-			ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
 
 			// Unsubscribe
-			UNSUBSCRIBE.apply(hub, args);
+			hub.unsubscribe(event, me, callback);
 
 			return me;
 		},
 
-<span id='core-component-gadget-method-spy'>		/**
-</span>		 * Spies on the current value in MEMORY on the hub
-		 * @param {String} event event to spy on
-		 * @returns {*} Value in MEMORY
+<span id='core-component-gadget-method-peek'>		/**
+</span>		 * @inheritdoc core.pubsub.hub#peek
 		 */
-		&quot;spy&quot; : function (event) {
-			return PEEK.call(hub, event);
+		&quot;peek&quot; : function peek(event) {
+			return hub.peek(event);
 		}
 	});
 });

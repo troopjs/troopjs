@@ -171,7 +171,7 @@ define([ &quot;../../component/service&quot;, &quot;when&quot;, &quot;poly/array
 						// Check if we should republish
 						if (callback[REPUBLISH] === true) {
 							// Push result from republish on results
-							results.push(hub.republish(source, false, me, callback));
+							results.push(hub.republish(source, me, callback));
 						}
 					});
 				});

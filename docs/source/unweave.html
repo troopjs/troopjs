@@ -19,7 +19,7 @@
  * TroopJS browser/loom/unweave
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/array&quot; ], function UnweaveModule(config, when, $) {
+define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/array&quot;, &quot;troopjs-utils/defer&quot; ], function UnweaveModule(config, when, $, Defer) {
 	&quot;use strict&quot;;
 
 	var UNDEFINED;
@@ -67,22 +67,27 @@ define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/
 			var j;
 
 			/*
-			 * Updated attributes
-			 * @param {object} widget Widget
+			 * Updated attributes according to what have been unweaved.
+			 * @param {object} widgets List of stopped widgets.
 			 * @private
 			 */
-			var update_attr = function (widget) {
-				var $promise = widget[$WEFT];
-				var woven = $promise[WOVEN];
-				var weave = $promise[WEAVE];
+			var update_attr = function (widgets) {
+				var woven = {};
+				var weave = [];
+				widgets.forEach(function (widget) {
+					var $promise = widget[$WEFT];
+					woven[$promise[WOVEN]] = 1;
+					weave.push($promise[WEAVE]);
+				});
 
 				$element
+					// Remove those widgets from data-woven.
 					.attr(ATTR_WOVEN, function (index, attr) {
 						var result = [];
 
 						if (attr !== UNDEFINED) {
 							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR).filter(function (part) {
-								return part !== woven;
+								return !( part in woven );
 							}));
 						}
 
@@ -90,14 +95,9 @@ define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/
 							? null
 							: result.join(&quot; &quot;);
 					})
+					// Added back those widget names to data-weave.
 					.attr(ATTR_WEAVE, function (index, attr) {
-						var result = [ weave ];
-
-						if (attr !== UNDEFINED) {
-							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
-						}
-
-						return result.join(&quot; &quot;);
+							return (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(weave).join(&quot; &quot;);
 					});
 			};
 
@@ -142,17 +142,27 @@ define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/
 
 			// Return promise of mapped $unweave
 			return when.map($unweave, function (widget) {
-				// Store promise of stop yielding widget
-				var promise = widget.stop.apply(widget, stop_args).yield(widget);
+				var deferred;
+				var stopPromise;
+
+				// TODO: Detecting TroopJS 1.x widget from *version* property.
+				if (widget.trigger) {
+					deferred = Defer();
+					widget.stop(deferred);
+					stopPromise = deferred.promise;
+				}
+				else {
+					stopPromise = widget.stop.apply(widget, stop_args);
+				}
 
 				// Add deferred update of attr
-				when(promise, update_attr);
-
-				// Return promise
-				return promise;
-			});
+				return stopPromise.yield(widget);
+			})
+			// Updating the weave/woven attributes with stopped widgets.
+			.tap(update_attr);
 		}));
 	};
-});</pre>
+});
+</pre>
 </body>
 </html>

@@ -40,8 +40,7 @@ define([ &quot;jquery&quot; ], function DestroyModule($) {
 			var me = this;
 
 			if (handleObj) {
-				handleObj.handler.call(me, $.Event({
-					&quot;type&quot; : handleObj.type,
+				handleObj.handler.call(me, $.Event(handleObj.type, {
 					&quot;data&quot; : handleObj.data,
 					&quot;namespace&quot; : handleObj.namespace,
 					&quot;target&quot; : me
