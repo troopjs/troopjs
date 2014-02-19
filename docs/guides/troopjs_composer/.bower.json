@@ -1,0 +1,22 @@
+{
+  "name": "troopjs-composer",
+  "version": "1.0.1",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "troopjs-utils": ">=2.0",
+    "poly": "~0.6"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-composer",
+  "_release": "1.0.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.0.1",
+    "commit": "54b96f134e6605d23e704e2c1d63d574ee61fc2e"
+  },
+  "_source": "git://github.com/troopjs/troopjs-composer.git",
+  "_target": "*",
+  "_originalSource": "troopjs-composer"
+}

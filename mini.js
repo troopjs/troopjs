@@ -4,7 +4,7 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-1+6df27e5 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-1+743c955 ]
  *
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -14,7 +14,7 @@
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/unique',[],function UniqueModule() {
-	"use strict";
+	
 
 	var LENGTH = "length";
 
@@ -82,7 +82,7 @@ define('troopjs-composer/mixin/factory',[
 	"troopjs-utils/unique",
 	"poly/object"
 ], function FactoryModule(module, unique) {
-	"use strict";
+	
 
 	/**
 	 * The factory module establishes the fundamental object composition in TroopJS:
@@ -620,7 +620,7 @@ define('troopjs-core/mixin/base',[ "troopjs-composer/mixin/factory" ], function 
 define('troopjs-core/event/runner/sequence',[
 	"when"
 ], function SequenceModule(when) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var HEAD = "head";
@@ -683,7 +683,7 @@ define('troopjs-core/event/emitter',[
 	"../mixin/base",
 	"./runner/sequence"
 ], function EventEmitterModule(Base, sequence) {
-	"use strict";
+	
 
 	/**
 	 * The event module of TroopJS that provides common event handling capability, and some highlights:
@@ -904,7 +904,7 @@ define('troopjs-core/event/emitter',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var NULL = null;
@@ -995,7 +995,7 @@ define('troopjs-core/component/base',[
 	"troopjs-utils/merge",
 	"poly/array"
 ], function ComponentModule(Emitter, when, merge) {
-	"use strict";
+	
 
 	/**
 	 * Imagine component as an object that has predefined life-cycle, with the following phases:
@@ -1315,7 +1315,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	"./constants",
 	"when"
 ], function PipelineModule(CONSTANTS, when) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var OBJECT_TOSTRING = Object.prototype.toString;
@@ -1407,7 +1407,7 @@ define('troopjs-core/pubsub/hub',[
 	"./runner/pipeline",
 	"when"
 ], function HubModule(Emitter, pipeline, when) {
-	"use strict";
+	
 
 	/**
 	 * The centric "bus" that handlers publishing and subscription.
@@ -1535,7 +1535,7 @@ define('troopjs-core/component/gadget',[
 	"when",
 	"../pubsub/hub"
 ],function GadgetModule(Component, when, hub) {
-	"use strict";
+	
 
 	/**
 	 * Component that provides signal and hub features.
@@ -2104,7 +2104,7 @@ define('troopjs-browser/component/runner/sequence',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], function LoomConfigModule(module, merge) {
-	"use strict";
+	
 
 	/**
 	 * This module is to provide configurations **loom** from it's AMD module config.
@@ -2152,7 +2152,7 @@ define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], functi
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/getargs',[],function GetArgsModule() {
-	"use strict";
+	
 
 	var PUSH = Array.prototype.push;
 	var SUBSTRING = String.prototype.substring;
@@ -2279,7 +2279,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/defer',[ "when", "poly/array" ], function DeferModule(when) {
-	"use strict";
+	
 
 	var ARRAY_SLICE = Array.prototype.slice;
 
@@ -2321,7 +2321,7 @@ define('troopjs-utils/defer',[ "when", "poly/array" ], function DeferModule(when
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "troopjs-utils/getargs", "troopjs-utils/defer", "poly/array" ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var NULL = null;
@@ -2484,7 +2484,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/array", "troopjs-utils/defer" ], function UnweaveModule(config, when, $, Defer) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var NULL = null;
@@ -2633,7 +2633,7 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	"use strict";
+	
 
 	var DESTROY = "destroy";
 
@@ -2677,7 +2677,7 @@ define('troopjs-browser/component/widget',[
 	"../loom/unweave",
 	"troopjs-jquery/destroy"
 ], function WidgetModule($, Gadget, merge, sequence, LOOM_CONF, weave, unweave) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
@@ -2907,7 +2907,7 @@ define('troopjs-browser/component/widget',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	"use strict";
+	
 
 	/**
 	 * Base class for all service alike components, self-registering.
@@ -2936,7 +2936,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/registry/service',[ "../component/service", "poly/object", "poly/array" ], function RegistryServiceModule(Service) {
-	"use strict";
+	
 
 	/**
 	 * A special {@link core.component.service service} presents the registry table for all
@@ -3042,7 +3042,7 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/application/widget',[ "module", "../component/widget", "when", "troopjs-core/registry/service", "poly/array" ], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
-	"use strict";
+	
 
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
@@ -3135,7 +3135,7 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
  * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  */
 define('troopjs-core/net/uri',[ "../mixin/base" ], function URIModule(Base) {
-	"use strict";
+	
 
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
@@ -3379,7 +3379,7 @@ define('troopjs-core/net/uri',[ "../mixin/base" ], function URIModule(Base) {
  * https://github.com/millermedeiros/Hasher
  */
 define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
-	"use strict";
+	
 
 	var INTERVAL = "interval";
 	var HASHCHANGE = "hashchange";
@@ -3545,7 +3545,7 @@ define('troopjs-browser/hash/widget',[
 	"troopjs-core/net/uri",
 	"troopjs-jquery/hashchange"
 ], function (Widget, URI) {
-	"use strict";
+	
 
 	/**
 	 * Widget lives on the window object that handles `window.location.hash` changes.
@@ -3616,7 +3616,7 @@ define('troopjs-browser/hash/widget',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/mvc/route/widget',[ "../../component/widget" ], function (Widget) {
-	"use strict";
+	
 
 	var $ELEMENT = "$element";
 	var DISPLAYNAME = "displayName";

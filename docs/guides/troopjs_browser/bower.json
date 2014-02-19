@@ -1,0 +1,14 @@
+{
+	"name": "troopjs-browser",
+	"version": "3.0.1",
+	"ignore": [
+		"**/.*",
+		"node_modules"
+	],
+	"dependencies": {
+		"troopjs-composer": "*",
+		"troopjs-core": ">=2.1.0",
+		"troopjs-jquery": ">=2.0.0",
+		"troopjs-utils": ">=2.0.0"
+	}
+}

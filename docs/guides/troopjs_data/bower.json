@@ -1,0 +1,13 @@
+{
+	"name": "troopjs-data",
+	"version": "3.0.2",
+	"ignore": [
+		"**/.*",
+		"node_modules"
+	],
+	"dependencies": {
+		"troopjs-core": ">=2.1.0",
+		"troopjs-browser": ">=2.0.0",
+		"troopjs-utils": ">=2.0.0"
+	}
+}

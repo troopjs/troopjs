@@ -1,0 +1,14 @@
+{
+	"name": "troopjs-core",
+	"version": "3.0.0-2",
+	"ignore": [
+		"**/.*",
+		"node_modules"
+	],
+	"dependencies": {
+		"troopjs-composer": "*",
+		"troopjs-utils": ">=2.1.0",
+		"poly": "~0.6",
+		"when": "~2.7"
+	}
+}

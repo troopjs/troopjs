@@ -1,0 +1,21 @@
+{
+  "name": "troopjs-utils",
+  "version": "2.1.1",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "poly": "~0.6"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-utils",
+  "_release": "2.1.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "2.1.1",
+    "commit": "fd623dc25b04ea08b12a7b290c6185df9ba0ab51"
+  },
+  "_source": "git://github.com/troopjs/troopjs-utils.git",
+  "_target": ">=2.0.0",
+  "_originalSource": "troopjs-utils"
+}

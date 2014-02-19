@@ -1,0 +1,23 @@
+{
+  "name": "troopjs-data",
+  "version": "3.0.2",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "troopjs-core": ">=2.1.0",
+    "troopjs-browser": ">=2.0.0",
+    "troopjs-utils": ">=2.0.0"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-data",
+  "_release": "3.0.2",
+  "_resolution": {
+    "type": "version",
+    "tag": "3.0.2",
+    "commit": "2875f98d5394baa1d9a04d2b90b7242c29f29c00"
+  },
+  "_source": "git://github.com/troopjs/troopjs-data.git",
+  "_target": "*",
+  "_originalSource": "troopjs-data"
+}
