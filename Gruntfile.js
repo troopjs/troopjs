@@ -24,7 +24,7 @@ module.exports = function(grunt) {
 
 	// Configure grunt
 	grunt.initConfig({
-		"pkg": grunt.file.readJSON("package.json"),
+		"pkg": grunt.file.readJSON("bower.json"),
 
 		"build" : {
 			"src" : ".",
@@ -49,10 +49,10 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:dist|node_modules|test|tasks|guides|Gruntfile\.js|jsduck\.json|\.(?!travis\.yml|gitignore))/,
+				"fileExclusionRegExp": /^(?:dist|node_modules|test|tasks|guides|version\.js|Gruntfile\.js|jsduck\.json|\.travis\.yml|\.gitignore)/,
 				"packages" : [{
-					"name" : "text",
-					"location" : "empty:"
+					"name": "text",
+					"location": "empty:"
 				}, {
 					"name" : "jquery",
 					"location" : "empty:"
@@ -64,7 +64,8 @@ module.exports = function(grunt) {
 					"location" : "empty:"
 				}, {
 					"name" : "troopjs",
-					"location" : "."
+					"location" : ".",
+					"main" : "maxi"
 				}, {
 					"name" : "troopjs-composer",
 					"location" : "bower_components/troopjs-composer"
@@ -74,6 +75,9 @@ module.exports = function(grunt) {
 				}, {
 					"name" : "troopjs-browser",
 					"location" : "bower_components/troopjs-browser"
+				}, {
+					"name" : "troopjs-net",
+					"location" : "bower_components/troopjs-net"
 				}, {
 					"name" : "troopjs-data",
 					"location" : "bower_components/troopjs-data"
@@ -88,10 +92,7 @@ module.exports = function(grunt) {
 					"location" : "bower_components/troopjs-requirejs"
 				}],
 				"rawText" : {
-					"troopjs/version" : "define(function () { return <%= JSON.stringify(pkg.version) %>; });\n"
-				},
-				"wrap" : {
-					"end" : "define(['troopjs/version'], function (main) { return main; });"
+					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
 				}
 			},
 
@@ -99,14 +100,12 @@ module.exports = function(grunt) {
 				"options" : {
 					"modules" : [{
 						"name" : "troopjs/maxi",
-						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
 							"troopjs/maxi",
 							"troopjs/mini"
 						]
 					}, {
 						"name" : "troopjs/mini",
-						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
 							"troopjs/mini"
 						]

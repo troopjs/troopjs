@@ -12,11 +12,17 @@ var require = {
 		"location" : "bower_components/poly",
 		"main" : "poly"
 	}, {
+		"name" : "troopjs",
+		"location" : "."
+	}, {
 		"name" : "troopjs-composer",
 		"location" : "bower_components/troopjs-composer"
 	}, {
 		"name" : "troopjs-core",
 		"location" : "bower_components/troopjs-core"
+	}, {
+		"name" : "troopjs-net",
+		"location" : "bower_components/troopjs-net"
 	}, {
 		"name" : "troopjs-data",
 		"location" : "bower_components/troopjs-data"
@@ -43,6 +49,7 @@ var require = {
 	"map" : {
 		"*" : {
 			"template" : "troopjs-requirejs/template",
+			"json" : "troopjs-requirejs/json",
 			"text" : "requirejs-text/text",
 			"logger" : "troopjs-core/logger/console"
 		}
