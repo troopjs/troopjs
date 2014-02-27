@@ -1,6 +1,12 @@
 {
   "name": "troopjs",
   "version": "3.0.0-1",
+  "authors": [{
+    "name": "Mikael Karon",
+    "email": "mikael@karon.se"
+  }],
+  "description": "Meta package wiring together all TroopJS submodules",
+  "license": "http://troopjs.mit-license.org/",
   "ignore": [
     "**/.*",
     "node_modules"
