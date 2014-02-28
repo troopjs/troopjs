@@ -9,6 +9,7 @@ module.exports = function(grunt) {
 
 	/**
 	 * Formats a semver
+	 * @private
 	 * @param {semver} version
 	 * @return {string} Formatted semver
 	 */
@@ -24,14 +25,26 @@ module.exports = function(grunt) {
 	}
 
 	/**
+	 * Value replacer
+	 * @private
+	 * @param key {String}
+	 * @param value {*}
+	 * @return {*}
+	 */
+	function replacer(key, value) {
+		return _.isEmpty(value) ? UNDEFINED : value;
+	}
+
+	/**
 	 * Reads from and writes to passing callback
+	 * @private
 	 * @param from {String} From path
 	 * @param to {String} To path
 	 * @param callback {Function} Callback
 	 */
 	function transform(from, to, callback) {
 		grunt.log.write("Transforming from " + from.cyan + " to " + to.cyan + "...");
-		grunt.file.write(to, JSON.stringify(_.transform(from), callback));
+		grunt.file.write(to, JSON.stringify(_.transform(grunt.file.readJSON(from), callback), replacer, "\t"));
 		grunt.log.ok();
 	}
 
