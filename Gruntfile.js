@@ -2,9 +2,10 @@
 module.exports = function(grunt) {
 	"use strict";
 
+	var UNDEFINED;
 	var semver = require("semver");
 	var path = require("path");
-	var UNDEFINED;
+	var _ = require("lodash");
 
 	/**
 	 * Formats a semver
@@ -20,6 +21,18 @@ module.exports = function(grunt) {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Reads from and writes to passing callback
+	 * @param from {String} From path
+	 * @param to {String} To path
+	 * @param callback {Function} Callback
+	 */
+	function transform(from, to, callback) {
+		grunt.log.write("Transforming from " + from.cyan + " to " + to.cyan + "...");
+		grunt.file.write(to, JSON.stringify(_.transform(from), callback));
+		grunt.log.ok();
 	}
 
 	// Configure grunt
@@ -38,7 +51,7 @@ module.exports = function(grunt) {
  *  \\_t:_____r:_______o:____o:___p:/ [ <%= pkg.name %> - <%= pkg.version %> ]\n\
  *\n\
  * @license <%= pkg.license %> © <%= _.pluck(pkg.authors, 'name').join(', ') %>\n\
- */"
+ */\n"
 		},
 
 		"requirejs" : {
@@ -49,7 +62,7 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:dist|node_modules|test|tasks|guides|version\.js|Gruntfile\.js|jsduck\.json|\.travis\.yml|\.gitignore)/,
+				"fileExclusionRegExp": /^(?:dist|node_modules|test|tasks|guides|(?:version|Gruntfile)\.js|(?:package|bower|jsduck)\.json|\.travis\.yml|\.gitignore)/,
 				"packages" : [{
 					"name": "text",
 					"location": "empty:"
@@ -120,9 +133,10 @@ module.exports = function(grunt) {
 
 		"uglify" : {
 			"options" : {
+				"report": "min",
 				"preserveComments" : false
 			},
-			"dist" : {
+			"bundles" : {
 				"files" : [{
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
@@ -142,7 +156,7 @@ module.exports = function(grunt) {
 				"position" : "top",
 				"banner" : "<%= build.banner %>"
 			},
-			"dist" : {
+			"bundles" : {
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
@@ -172,7 +186,7 @@ module.exports = function(grunt) {
 					"user.email" : UNDEFINED
 				}
 			},
-			"dist" : {
+			"bundles" : {
 				"options" : {
 					"branch" : "build/3.x",
 					"dir" : "<%= build.dist %>"
@@ -199,47 +213,38 @@ module.exports = function(grunt) {
 	//Load all local grunt tasks
 	grunt.loadTasks("tasks");
 
-	grunt.registerTask("rewrite", "Rewrite package files", function () {
-		var _ = grunt.util._;
-		var re = /^troopjs-\w+/;
+	grunt.registerTask("transform", "Transform package files", function () {
+		var src = grunt.config("build.src");
+		var dist = grunt.config("build.dist");
+		var version = grunt.config("pkg.version");
 
-		var replacer = function (key, value) {
-			return _.isEmpty(value) ? UNDEFINED : value;
-		}
+		transform(path.join(src, "bower.json"), path.join(dist, "bower.json"), function (result, value, key) {
+			switch (key) {
+				case "version":
+					result[key] = version;
+					break;
 
-		var bower_path = path.join(grunt.config("build.dist"), "bower.json");
-		var package_path = path.join(grunt.config("build.dist"), "package.json");
+				case "dependencies":
+					result[key] = _.omit(value, function (version, name) {
+						return /^troopjs-\w+$/.test(name);
+					});
+					break;
 
-		try {
-			grunt.log.write("Reading " + bower_path + "...");
-			var bower_json = grunt.file.readJSON(bower_path);
-			grunt.log.ok();
+				default:
+					result[key] = value;
+			}
+		});
 
-			grunt.log.write("Omitting troop dependencies...");
-			bower_json.dependencies = _.omit(bower_json.dependencies, function (value, key) {
-				return re.test(key);
-			});
-			grunt.log.ok();
+		transform(path.join(src, "package.json"), path.join(dist, "package.json"), function (result, value, key) {
+			switch (key) {
+				case "version":
+					result[key] = version;
+					break;
 
-			grunt.log.write("Reading " + package_path + "...");
-			var package_json = grunt.file.readJSON(package_path);
-			grunt.log.ok();
-
-			grunt.log.write("Updating versions...");
-			package_json.version = bower_json.version = grunt.config("pkg.version");
-			grunt.log.ok();
-
-			grunt.log.write("Writing " + bower_path + "...");
-			grunt.file.write(bower_path, JSON.stringify(bower_json, replacer, "\t"));
-			grunt.log.ok();
-
-			grunt.log.write("Writing " + package_path + "...");
-			grunt.file.write(package_path, JSON.stringify(package_json, replacer, "\t"));
-			grunt.log.ok();
-		}
-		catch (e) {
-			grunt.fatal(e);
-		}
+				default:
+					result[key] = value;
+			}
+		});
 	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
@@ -271,19 +276,19 @@ module.exports = function(grunt) {
 		switch (phase) {
 			case "prepare":
 				grunt.log.subhead("Preparing release");
-				args.push("clean", "git-dist:dist:clone", "default");
+				args.push("clean", "git-dist:bundles:clone", "default");
 				break;
 
 			case "perform":
 				grunt.log.subhead("Performing release");
-				args.push("git-dist:dist:add", "git-dist:dist:commit");
+				args.push("git-dist:bundles:add", "git-dist:bundles:commit");
 				if (grunt.option("no-tag")) {
 					grunt.log.writeln("Not tagging as " + "--no-tag".cyan + " was passed");
 				}
 				else {
-					args.push("git-dist:dist:tag");
+					args.push("git-dist:bundles:tag");
 				}
-				args.push("git-dist:dist:push");
+				args.push("git-dist:bunles:push");
 				break;
 
 			default:
@@ -293,7 +298,7 @@ module.exports = function(grunt) {
 		grunt.task.run(args);
 	});
 
-	grunt.registerTask("compile", [ "requirejs", "git-describe", "rewrite" ]);
+	grunt.registerTask("compile", [ "git-describe", "transform", "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("docs", [ "jsduck" ]);
