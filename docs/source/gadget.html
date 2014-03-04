@@ -21,9 +21,10 @@
  */
 define([
 	&quot;./base&quot;,
+	&quot;./runner/pipeline&quot;,
 	&quot;when&quot;,
 	&quot;../pubsub/hub&quot;
-],function GadgetModule(Component, when, hub) {
+],function GadgetModule(Component, pipeline, when, hub) {
 	&quot;use strict&quot;;
 
 <span id='core-component-gadget'>	/**
@@ -63,77 +64,89 @@ define([
 	 */
 
 	var UNDEFINED;
-	var LENGTH = &quot;length&quot;;
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var RUNNER = &quot;runner&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var PROXY = &quot;proxy&quot;;
 	var FEATURES = &quot;features&quot;;
+	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
 	var HUB = &quot;hub&quot;;
+	var RE = new RegExp(&quot;^&quot; + HUB + &quot;/(.+)&quot;);
 
 	return Component.extend({
 		&quot;displayName&quot; : &quot;core/component/gadget&quot;,
 
 		&quot;sig/initialize&quot; : function onInitialize() {
 			var me = this;
-			var specials;
-			var special;
-			var i;
-			var iMax;
 
-			// Make sure we have HUB specials
-			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
-					special = specials[i];
-
-					// Subscribe
-					hub.subscribe(special[TYPE], me, special[VALUE], special[FEATURES]);
-				}
-			}
+			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
+				return me.subscribe(special[TYPE], special[VALUE], special[FEATURES]);
+			});
 		},
 
-		&quot;sig/start&quot; : function onStart() {
+		&quot;sig/start&quot; : function onInitialize() {
 			var me = this;
-			var specials;
-			var special;
-			var results = [];
-			var resultsLength = 0;
-			var i;
-			var iMax;
+			var empty = {};
+			var specials = me.constructor.specials[HUB] || ARRAY_PROTO;
 
-			// Make sure we have HUB specials
-			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
-					special = specials[i];
+			// Calculate specials
+			specials = specials
+				.map(function (special) {
+					var memory;
+					var result;
 
-					// Check if we need to republish
-					if (special[FEATURES] === &quot;memory&quot;) {
-						// Republish, store result
-						results[resultsLength++] = hub.republish(special[TYPE], me, special[VALUE]);
+					if (special[FEATURES] === &quot;memory&quot; &amp;&amp; (memory = me.peek(special[TYPE], empty)) !== empty) {
+						// Redefine result
+						result = {};
+						result[TYPE] = special[NAME];
+						result[RUNNER] = pipeline;
+						result[CONTEXT] = me;
+						result[CALLBACK] = special[VALUE];
+						result = [ result ].concat(memory);
 					}
-				}
-			}
 
-			// Return promise that will be fulfilled when all results are
-			return when.all(results);
+					return result;
+				})
+				.filter(function (special) {
+					return special !== UNDEFINED;
+				});
+
+			return when.map(specials, function (special) {
+				return me.emit.apply(me, special);
+			});
 		},
 
-		&quot;sig/finalize&quot; : function onFinalize() {
+		&quot;sig/setup&quot;: function onSetup(type, handlers) {
 			var me = this;
-			var specials;
-			var special;
-			var i;
-			var iMax;
+			var matches;
 
-			// Make sure we have HUB specials
-			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
-					special = specials[i];
+			if ((matches = RE.exec(type)) !== NULL) {
+				hub.subscribe(matches[1], me, handlers[PROXY] = function hub_proxy(args) {
+					// Redefine args
+					args = {};
+					args[TYPE] = type;
+					args[RUNNER] = pipeline;
+					args = [ args ];
 
-					// Unsubscribe
-					me.unsubscribe(special[TYPE], special[VALUE]);
-				}
+					// Push original arguments on args
+					ARRAY_PUSH.apply(args, arguments);
+
+					return me.emit.apply(me, args);
+				});
+			}
+		},
+
+		&quot;sig/teardown&quot;: function onTeardown(type, handlers) {
+			var me = this;
+			var matches;
+
+			if ((matches = RE.exec(type)) !== NULL) {
+				hub.unsubscribe(matches[1], me, handlers[PROXY]);
 			}
 		},
 
@@ -153,24 +166,12 @@ define([
 			return hub.publish.apply(hub, arguments);
 		},
 
-<span id='core-component-gadget-method-republish'>		/**
-</span>		 * @inheritdoc core.pubsub.hub#republish
-		 */
-		&quot;republish&quot; : function republish() {
-			return hub.republish.apply(hub, arguments);
-		},
-
 <span id='core-component-gadget-method-subscribe'>		/**
 </span>		 * @inheritdoc core.pubsub.hub#subscribe
 		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
 		 */
 		&quot;subscribe&quot; : function subscribe(event, callback, data) {
-			var me = this;
-
-			// Subscribe
-			hub.subscribe(event, me, callback, data);
-
-			return me;
+			return this.on(&quot;hub/&quot; + event, callback, data);
 		},
 
 <span id='core-component-gadget-method-unsubscribe'>		/**
@@ -178,19 +179,14 @@ define([
 		 * @localdoc Unsubscribe from public events in context of this component.
 		 */
 		&quot;unsubscribe&quot; : function unsubscribe(event, callback) {
-			var me = this;
-
-			// Unsubscribe
-			hub.unsubscribe(event, me, callback);
-
-			return me;
+			return this.off(&quot;hub/&quot; + event, callback);
 		},
 
 <span id='core-component-gadget-method-peek'>		/**
 </span>		 * @inheritdoc core.pubsub.hub#peek
 		 */
-		&quot;peek&quot; : function peek(event) {
-			return hub.peek(event);
+		&quot;peek&quot; : function peek(event, value) {
+			return hub.peek(event, value);
 		}
 	});
 });

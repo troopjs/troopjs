@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS utils/select
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define(function SelectModule() {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var FALSE = false;
+	var PERIOD = &quot;.&quot;;
+	var LEFT_BRACKET = &quot;[&quot;;
+	var RIGHT_BRACKET = &quot;]&quot;;
+	var SINGLE_QUOTE = &quot;'&quot;;
+	var DOUBLE_QUOTE = &quot;\&quot;&quot;;
+
+	return function select(query) {
+		var node = this;
+		var c;
+		var m;
+		var i;
+		var length;
+		var skip = FALSE;
+
+		for (i = m = 0, length = query.length; i &lt; length &amp;&amp; node !== UNDEFINED; i++) {
+			switch(c = query.charAt(i)) {
+				case PERIOD:
+					if (skip === FALSE &amp;&amp; i &gt; m) {
+						node = node[query.substring(m, i)];
+						m = i + 1;
+					}
+					break;
+
+				case LEFT_BRACKET:
+					if (skip === FALSE) {
+						skip = LEFT_BRACKET;
+						m = i + 1;
+					}
+					break;
+
+				case RIGHT_BRACKET:
+					if (skip === LEFT_BRACKET &amp;&amp; i &gt; m) {
+						node = node[query.substring(m, i)];
+						skip = FALSE;
+						m = i + 2;
+					}
+					break;
+
+				case DOUBLE_QUOTE:
+				case SINGLE_QUOTE:
+					if (skip === c &amp;&amp; i &gt; m) {
+						node = node[query.substring(m, i)];
+						skip = FALSE;
+						m = i + 2;
+					}
+					else {
+						skip = c;
+						m = i + 1;
+					}
+					break;
+			}
+		}
+
+		if (i &gt; m) {
+			node = node[query.substring(m, i)];
+		}
+
+		return node;
+	}
+});</pre>
+</body>
+</html>

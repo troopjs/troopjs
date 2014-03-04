@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+* TroopJS requirejs/json
+* @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+*/
+define([
+	&quot;text&quot;,
+	&quot;troopjs-utils/select&quot;,
+	&quot;poly/json&quot;
+], function (text, select) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var NULL = null;
+	var PATTERN = /(.+?)#(.+)$/;
+	var buildMap = {};
+
+	return {
+		&quot;load&quot;: function (name, req, load, config) {
+			var key = name;
+			var query = &quot;&quot;;
+			var matches;
+
+			if ((matches = PATTERN.exec(name)) !== NULL) {
+				name = matches[1];
+				query = matches[2];
+			}
+
+			text.get(req.toUrl(name), function (source) {
+				var compiled = select.call(JSON.parse(source), query);
+
+				if (config.isBuild) {
+					buildMap[key] = compiled;
+				}
+
+				load(compiled);
+			}, load.error);
+		},
+
+		write : function (pluginName, moduleName, write) {
+			if (moduleName in buildMap) {
+				write.asModule(pluginName + &quot;!&quot; + moduleName, JSON.stringify(buildMap[moduleName]));
+			}
+		}
+	};
+});
+</pre>
+</body>
+</html>

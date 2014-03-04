@@ -37,11 +37,10 @@ define([ "troopjs-browser/component/widget"], function FooWidgetModule(Widget) {
 		"dom/click" : assertClickHandler,
 		"dom:.btn/click": assertClickHandler,
 		"dom:[type='button']/click": assertClickHandler,
+		"dom:[data-type][type='button']/click": assertClickHandler,
+		"dom:.btn:first-child/click": assertClickHandler,
 		"dom:#btn-foo.btn/click": assertClickHandler,
-/*
 		"dom:#btn-foo.btn,.bar/click": assertClickHandler,
-		"dom:.bar,#btn-foo.btn/click": assertClickHandler,
-*/
 
 		"dom:.btn:last-child/click": assertFails,
 		"dom:[type='text']/click": assertFails,

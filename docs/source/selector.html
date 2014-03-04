@@ -21,27 +21,33 @@
  *
  * Heavily influenced by selector-set (https://github.com/josh/selector-set/) Copyright 2013 Joshua Peek
  */
-define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &quot;./config&quot; ], function (Factory, CONSTANTS, CONFIG) {
+define([
+	&quot;troopjs-composer/mixin/factory&quot;,
+	&quot;./config&quot;
+], function (Factory, CONFIG) {
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
 	var LENGTH = &quot;length&quot;;
-	var INDEXES = CONSTANTS[&quot;indexes&quot;];
-	var INDEXED = CONSTANTS[&quot;indexed&quot;];
-	var INDEXER = CONSTANTS[&quot;indexer&quot;];
-	var CLASS = CONSTANTS[&quot;class&quot;];
-	var ID = CONSTANTS[&quot;id&quot;];
-	var TAG = CONSTANTS[&quot;tag&quot;];
-	var UNIVERSAL = CONSTANTS[&quot;universal&quot;];
+	var INDEXES = &quot;indexes&quot;;
+	var INDEXED = &quot;indexed&quot;;
+	var INDEXER = &quot;indexer&quot;;
+	var CLASS = &quot;class&quot;;
+	var ID = &quot;id&quot;;
+	var TAG = &quot;tag&quot;;
+	var UNIVERSAL = &quot;universal&quot;;
 	var SLASH = &quot;\\&quot;;
 	var SPACE = &quot; &quot;;
 	var STAR = &quot;*&quot;;
 	var POUND = &quot;#&quot;;
 	var PERIOD = &quot;.&quot;;
+	var COLON = &quot;:&quot;;
+	var LEFT_BRACKET = &quot;[&quot;;
+	var RIGHT_BRACKET = &quot;]&quot;;
 	var COUNT = &quot;count&quot;;
 	var BASEVAL = &quot;baseVal&quot;;
 	var RE_SPACE = /\s+/;
-	var querySelectorAll = CONFIG[CONSTANTS[&quot;querySelectorAll&quot;]];
-	var matchesSelector = CONFIG[CONSTANTS[&quot;matchesSelector&quot;]];
+	var querySelectorAll = CONFIG[&quot;querySelectorAll&quot;];
+	var matchesSelector = CONFIG[&quot;matchesSelector&quot;];
 
 	/*
 	 * Extracts key for universal indexer
@@ -100,7 +106,19 @@ define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &q
 	}
 
 	/*
-	 * Gets last token from selector
+	 * Gets the last **SIGNIFICANT** of a CSS selector, the &quot;significant&quot; is defined as - any leading id, class name or
+	 * tag name component of the last selector.
+	 *
+	 * Examples:
+	 * 	tail(&quot;div.bar&quot;); 	// &quot;div&quot;
+	 * 	tail(&quot;#foo.bar&quot;); 	// &quot;#foo&quot;
+	 * 	tail(&quot;p &gt; div.bar&quot;); 	// &quot;div&quot;
+	 * 	tail(&quot;p &gt; a:active&quot;); 	// &quot;a&quot;
+	 * 	tail(&quot;.bar&quot;);	// &quot;.bar&quot;
+	 * 	tail(&quot;input.foo[type='button']&quot;);	// &quot;input&quot;
+	 * 	tail(&quot;[type='button']&quot;);	// &quot;*&quot;
+	 *
+	 * @see [CSS3 selector spec](http://www.w3.org/TR/selectors/#w3cselgrammar)
 	 * @private
 	 * @param {String} selector CSS selector
 	 * @return {String} last token
@@ -108,17 +126,17 @@ define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &q
 	function tail(selector) {
 		var start = selector[LENGTH];
 		var stop = start;
-		var c = selector[--start];
+		var c = selector.charAt(--start);
 		var skip = false;
 
-		step: while (start &gt; 0) {
+		step: while (start &gt;= 0) {
 			switch (c) {
 				case SPACE:
 					/* Marks EOT if:
 					 * * Next c is not SLASH
 					 * * Not in skip mode
 					 */
-					if ((c = selector[--start]) !== SLASH &amp;&amp; !skip) {
+					if ((c = selector.charAt(--start)) !== SLASH &amp;&amp; !skip) {
 						// We're 2 steps passed the end of the selector so we should adjust for that
 						start += 2;
 
@@ -127,31 +145,32 @@ define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &q
 					}
 					break;
 
-				case &quot;]&quot;:
+				case RIGHT_BRACKET:
 					/* Marks begin of skip if:
 					 * * Next c is not SLASH
 					 */
-					skip = (c = selector[--start]) !== SLASH;
+					skip = (c = selector.charAt(--start)) !== SLASH;
 					break;
 
-				case &quot;[&quot;:
+				case LEFT_BRACKET:
 					/* Marks end of skip if:
 					 * * Next c is not SLASH
 					 */
-					if (!(skip = (c = selector[--start]) === SLASH)) {
+					if (!(skip = (c = selector.charAt(--start)) === SLASH)) {
 						// Compensate for start already decreased
 						stop = start + 1;
 					}
 					break;
 
 				case POUND:
+				case COLON:
 				case PERIOD:
 					/* Marks stop if:
 					 * * Next c is not SLASH
 					 * * Next c is not SPACE
 					 * * Not in skip mode
 					 */
-					if ((c = selector[--start]) !== SLASH &amp;&amp; c !== SPACE &amp;&amp; !skip) {
+					if ((c = selector.charAt(--start)) &amp;&amp; c!== UNDEFINED &amp;&amp; c!== SLASH &amp;&amp; c !== SPACE &amp;&amp; !skip) {
 						// Compensate for start already decreased
 						stop = start + 1;
 					}
@@ -164,7 +183,7 @@ define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &q
 			}
 		}
 
-		return selector.substring(start, stop);
+		return selector.substring(start, stop) || STAR;
 	}
 
 	/*
@@ -178,7 +197,7 @@ define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &q
 		return a[COUNT] - b[COUNT];
 	}
 
-	var Selector = Factory(function () {
+	var Selector = Factory(function Selector() {
 		var me = this;
 
 		me[INDEXES] = [];
@@ -259,7 +278,7 @@ define([ &quot;troopjs-composer/mixin/factory&quot;, &quot;./constants&quot;, &q
 		 * @param element DOM Element
 		 * @return {Array} Matching array of candidates
 		 */
-		&quot;matches&quot;: function (element) {
+		&quot;matches&quot;: function matches(element) {
 			var me = this;
 			var indexer;
 			var indexed;

@@ -1,11 +1,11 @@
 {
 	"name": "troopjs-utils",
-	"version": "2.1.1",
+	"version": "2.2.1",
 	"ignore": [
 		"**/.*",
 		"node_modules"
 	],
 	"dependencies": {
-		"poly": "~0.6"
+		"poly": "~0"
 	}
 }

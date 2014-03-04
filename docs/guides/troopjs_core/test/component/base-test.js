@@ -3,6 +3,7 @@ buster.testCase("troopjs-core/component/base", function (run) {
 	"use strict";
 
 	var assert = buster.referee.assert;
+	var refute = buster.referee.refute;
 
 	require( [ "troopjs-core/component/base", "when/delay" ] , function (Component, delay) {
 
@@ -132,6 +133,33 @@ buster.testCase("troopjs-core/component/base", function (run) {
 						assert.exception(function() { foo.stop(); });
 					});
 				});
+			},
+			'event handlers - setup/teardown': function() {
+				var setup = this.spy();
+				var teardown = this.spy();
+				var foo = Component.create({
+					"sig/setup": function(type, handlers) {
+						setup(type, handlers);
+					},
+					"sig/teardown": function(type, handlers) {
+						teardown(type, handlers);
+					}
+				});
+
+				function handler1() {}
+				function handler2() {}
+
+				foo.on("foo", handler1).on("foo", handler2);
+
+				var handlers = foo.handlers["foo"];
+				assert.calledOnce(setup);
+				assert.calledWith(setup, "foo", handlers);
+				foo.off("foo", handler1);
+				refute.called(teardown);
+				foo.off("foo", handler2);
+				assert.calledOnce(teardown);
+				assert.calledWith(teardown, "foo", handlers);
+
 			}
 		});
 	});

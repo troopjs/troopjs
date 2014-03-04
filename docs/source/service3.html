@@ -94,7 +94,7 @@ define([ &quot;../component/service&quot;, &quot;poly/object&quot;, &quot;poly/a
 </span>		 * Hub event for adding service.
 		 * @event
 		 * @param {core.component.service} service
-		 * @returns {Mixed}
+		 * @returns {*}
 		 */
 		&quot;hub/registry/add&quot; : function onAdd(service) {
 			return this.add(service);
@@ -104,7 +104,7 @@ define([ &quot;../component/service&quot;, &quot;poly/object&quot;, &quot;poly/a
 </span>		 * Hub event for removing service.
 		 * @event
 		 * @param {core.component.service} service
-		 * @returns {Mixed}
+		 * @returns {*}
 		 */
 		&quot;hub/registry/remove&quot; : function onRemove(service) {
 			return this.remove(service);
@@ -114,7 +114,7 @@ define([ &quot;../component/service&quot;, &quot;poly/object&quot;, &quot;poly/a
 </span>		 * Hub event for finding service(s).
 		 * @event
 		 * @param {String} pattern
-		 * @returns {Mixed}
+		 * @returns {*}
 		 */
 		&quot;hub/registry/get&quot; : function onGet(pattern) {
 			return this.get(pattern);

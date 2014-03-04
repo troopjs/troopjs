@@ -19,12 +19,16 @@
  * TroopJS browser/dom/config
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define([ &quot;module&quot;, &quot;./constants&quot;, &quot;troopjs-utils/merge&quot;, &quot;jquery&quot; ], function (module, CONSTANTS, merge, $) {
+define([
+	&quot;module&quot;,
+	&quot;troopjs-utils/merge&quot;,
+	&quot;jquery&quot;
+], function (module, merge, $) {
 	var config = {};
 
-	config[CONSTANTS[&quot;querySelectorAll&quot;]] = $.find;
+	config[&quot;querySelectorAll&quot;] = $.find;
 
-	config[CONSTANTS[&quot;matchesSelector&quot;]] = $.find.matchesSelector;
+	config[&quot;matchesSelector&quot;] = $.find.matchesSelector;
 
 	return merge.call(config, module.config());
 });</pre>

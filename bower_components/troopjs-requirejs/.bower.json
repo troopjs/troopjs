@@ -1,0 +1,22 @@
+{
+  "name": "troopjs-requirejs",
+  "version": "2.2.1",
+  "ignore": [
+    "**/.*",
+    "node_modules"
+  ],
+  "dependencies": {
+    "troopjs-utils": "~2",
+    "requirejs": "~2"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-requirejs",
+  "_release": "2.2.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "2.2.1",
+    "commit": "944649d05ad3e893ae539dba04db22162dec3900"
+  },
+  "_source": "git://github.com/troopjs/troopjs-requirejs.git",
+  "_target": "*",
+  "_originalSource": "troopjs-requirejs"
+}

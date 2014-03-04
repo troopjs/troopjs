@@ -5,15 +5,15 @@ buster.testCase("troopjs-browser/dom/selector", function (run) {
 	var assert = buster.referee.assert;
 	var refute = buster.referee.refute;
 
-	require([ "troopjs-browser/dom/selector", "troopjs-browser/dom/constants", "jquery" ], function (Selector, CONST, $) {
+	require([ "troopjs-browser/dom/selector", "jquery" ], function (Selector, $) {
 		var tail = Selector.tail;
 
-		var TAG = CONST["tag"];
-		var ID = CONST["id"];
-		var CLASS = CONST["class"];
-		var UNIVERSAL = CONST["universal"];
-		var INDEXES = CONST["indexes"];
-		var INDEXED = CONST["indexed"];
+		var TAG = "tag";
+		var ID = "id";
+		var CLASS = "class";
+		var UNIVERSAL = "universal";
+		var INDEXES = "indexes";
+		var INDEXED = "indexed";
 
 		run({
 			"tail": {
@@ -54,7 +54,7 @@ buster.testCase("troopjs-browser/dom/selector", function (run) {
 				},
 
 				"able to extract from empty selector": function () {
-					assert.equals(tail(""), "");
+					assert.equals(tail(""), "*");
 				}
 			},
 

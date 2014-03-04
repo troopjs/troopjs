@@ -10,7 +10,6 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 	var TOPIC = "TEST";
 	var TEST_ARGS = ["abc", "", 1, 0, false, true, {}];
 	var APPLY_ARGS = ARRAY_CONCAT.call(ARRAY_PROTO, [TOPIC], TEST_ARGS);
-	var EMPTY = "";
 	var NAME_HANDLER = "__test_handlers";
 
 	/**
@@ -22,12 +21,13 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 		}
 	}
 
-	require( [ "troopjs-core/component/gadget", "when" ] , function (Gadget, when) {
+	require( [ "troopjs-core/component/gadget"] , function (Gadget) {
 
 		run({
 			"publish/subscribe": {
 				setUp: function(){
 					var me = this;
+					me.timeout = 500;
 
 					var insts = me.instances = [];
 
@@ -98,31 +98,12 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 					}
 				},
 				// POSITIVE TESTS
-				"without exception" : function () {
-					var g1 = new Gadget();
-
-					this.subscribe(g1, TOPIC, function(test){
-						assert(test);
-					});
-
-					g1
-					.publish(TOPIC, true);
-				},
 				"without exception when there is no subscriber" : function () {
 					var g1 = new Gadget();
 
-					g1
-					.publish(TOPIC);
-					assert(true);
-				},
-				"subscribe empty topic": function(){
-					var g1 = new Gadget();
-
-					this.subscribe(g1, EMPTY, function(test){
-						assert(test);
+					return g1.publish(TOPIC).then(function() {
+						assert(true);
 					});
-
-					g1.publish(EMPTY, true);
 				},
 				"different topics should not interfere with each other": function(){
 					var g1 = new Gadget();
@@ -135,18 +116,16 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						assert(test);
 					});
 
-					g1.publish(TOPIC, true);
+					return g1.publish(TOPIC, true);
 				},
 				"with args" : function () {
 					var g1 = new Gadget();
 
-					this
-					.subscribe(g1, TOPIC, function(){
+					this.subscribe(g1, TOPIC, function(){
 						allSame(arguments, TEST_ARGS);
 					});
 
-					g1
-					.publish.apply(g1, APPLY_ARGS);
+					return g1.publish.apply(g1, APPLY_ARGS);
 				},
 				"multiple times and in order" : function () {
 					var g1 = new Gadget();
@@ -162,9 +141,7 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						allSame(arguments, TEST_ARGS);
 					});
 
-					g1
-					.publish.apply(g1, APPLY_ARGS);
-					return when(1);
+					return g1.publish.apply(g1, APPLY_ARGS);
 				},
 				"cross gadget" : function () {
 
@@ -175,7 +152,7 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						allSame(arguments, TEST_ARGS);
 					});
 
-					g2.publish.apply(g2, APPLY_ARGS);
+					return g2.publish.apply(g2, APPLY_ARGS);
 				}
 			},
 			"on/off/emit": {
@@ -192,7 +169,7 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						allSame(arguments, TEST_ARGS);
 					});
 
-					g1.emit.apply(g1, APPLY_ARGS);
+					return g1.emit.apply(g1, APPLY_ARGS);
 				},
 				"on multiple instance should not interfere with each other": function(){
 					var g1 = new Gadget();
@@ -205,8 +182,7 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						assert(false);
 					});
 
-					g1.emit.apply(g1, APPLY_ARGS);
-					return when(1);
+					return g1.emit.apply(g1, APPLY_ARGS);
 				},
 				"on() multiple times and the handler received in order": function(){
 					var g1 = new Gadget();
@@ -223,8 +199,7 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						assert(false);
 					});
 
-					g1.emit.apply(g1, APPLY_ARGS);
-					return when(1);
+					return g1.emit.apply(g1, APPLY_ARGS);
 				}
 			},
 
@@ -247,7 +222,7 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 
 				var g3 = Gadget.create({});
 
-				g1.start().then(function () {
+				return g1.start().then(function () {
 					g2.start().then(function () {
 						g3.publish('foo').then(function () {
 							assert.same(2, count);
@@ -282,6 +257,21 @@ buster.testCase("troopjs-core/component/gadget", function (run) {
 						assert.calledWithExactly(spy1, "foo", "bar");
 						refute.called(spy2);
 					});
+				});
+			},
+
+			"publish after called .off": function() {
+				var foo = this.spy();
+				var g1 = Gadget.create({
+					'hub/foo': function() {
+						foo();
+					}
+				});
+				return g1.start().then(function() {
+					g1.unsubscribe("foo");
+					return g1.publish("foo").then(function() {
+						refute.called(foo);
+					})
 				});
 			}
 		});

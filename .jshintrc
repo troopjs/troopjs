@@ -1,0 +1,21 @@
+{
+	"browser": true,
+
+	"predef": [
+		"define",
+		"require"
+	],
+
+	"curly": true,
+	"eqeqeq": true,
+	"forin": true,
+	"noarg": true,
+	"noempty": true,
+	"nonew": true,
+	"undef": true,
+	"strict": true,
+	"quotmark": "double",
+	"laxbreak": true,
+	"sub": true,
+	"newcap" : false
+}

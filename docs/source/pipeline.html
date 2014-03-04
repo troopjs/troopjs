@@ -15,10 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">define([
-	&quot;./constants&quot;,
-	&quot;when&quot;
-], function PipelineModule(CONSTANTS, when) {
+  <pre class="prettyprint lang-js">define([ &quot;when&quot; ], function PipelineModule(when) {
 	&quot;use strict&quot;;
 
 	var UNDEFINED;
@@ -29,9 +26,6 @@
 	var CALLBACK = &quot;callback&quot;;
 	var HEAD = &quot;head&quot;;
 	var NEXT = &quot;next&quot;;
-	var PHASE = &quot;phase&quot;;
-	var MEMORY = &quot;memory&quot;;
-	var RE_PHASE = CONSTANTS[&quot;pattern&quot;];
 
 	/*
 	 * Runner that filters and executes candidates in pipeline without overlap
@@ -74,7 +68,6 @@
 		 */
 		var next = function (result) {
 			/*jshint curly:false*/
-			var context;
 			var candidate;
 			var type;
 
@@ -87,16 +80,10 @@
 					: [ result ];                                                  // otherwise we should just wrap it in a new array
 			}
 
-			// TODO Needs cleaner implementation
-			// Iterate until we find a candidate in a blocked phase
-			while ((candidate = candidates[candidatesCount++]) // Has next candidate
-				&amp;&amp; (context = candidate[CONTEXT])                // Has context
-				&amp;&amp; RE_PHASE.test(context[PHASE]));               // In blocked phase
-
 			// Return promise of next callback, or promise resolved with args
-			return candidate !== UNDEFINED
-				? when(candidate[CALLBACK].apply(context, args), next)
-				: when.resolve(handlers[MEMORY] = args);
+			return (candidate = candidates[candidatesCount++]) !== UNDEFINED
+				? when(candidate[CALLBACK].apply(candidate[CONTEXT], args), next)
+				: when.resolve(args);
 		};
 
 		return next(args);

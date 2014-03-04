@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS composer/decorator/extend
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([
+	&quot;../mixin/decorator&quot;,
+	&quot;troopjs-utils/merge&quot;
+], function ExtendDecoratorModule(Decorator, merge) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var VALUE = &quot;value&quot;;
+	var ARRAY_CONCAT = Array.prototype.concat;
+
+<span id='composer-decorator-extend'>	/**
+</span>	 * Create a decorator that is to augment an existing Object property.
+	 *
+	 * @class composer.decorator.extend
+	 * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
+	 * @returns {composer.mixin.decorator}
+	 */
+	return function extend(ext) {
+		var args = arguments;
+
+		return new Decorator(function (descriptor, name, descriptors) {
+			var previous = descriptors[name][VALUE];
+			var val;
+
+			if (typeof ext === &quot;function&quot;) {
+				val = ext(previous);
+			}
+			else if (previous !== UNDEFINED) {
+				val = merge.apply({}, ARRAY_CONCAT.apply([ previous ], args));
+			}
+
+			descriptor[VALUE] = val;
+
+			return descriptor;
+		});
+	}
+});
+</pre>
+</body>
+</html>

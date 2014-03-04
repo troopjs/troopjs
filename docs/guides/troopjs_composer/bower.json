@@ -1,12 +1,12 @@
 {
 	"name": "troopjs-composer",
-	"version": "1.0.1",
+	"version": "2.0.1",
 	"ignore": [
 		"**/.*",
 		"node_modules"
 	],
 	"dependencies": {
-		"troopjs-utils": ">=2.0",
-		"poly": "~0.6"
+		"troopjs-utils": "~2",
+		"poly": "~0"
 	}
 }

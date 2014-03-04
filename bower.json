@@ -1,11 +1,19 @@
 {
 	"name": "troopjs",
-	"version": "3.0.0-1+743c955",
+	"version": "3.0.0-3+5908d7d",
+	"authors": [
+		{
+			"name": "Mikael Karon",
+			"email": "mikael@karon.se"
+		}
+	],
+	"description": "Meta package wiring together all TroopJS submodules",
+	"license": "http://troopjs.mit-license.org/",
 	"ignore": [
 		"**/.*",
 		"node_modules"
 	],
 	"devDependencies": {
-		"requirejs-text": "~2.0.10"
+		"requirejs-text": "~2"
 	}
 }

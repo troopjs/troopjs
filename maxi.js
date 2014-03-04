@@ -4,17 +4,20 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-1+743c955 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-3+5908d7d ]
  *
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
+
+
+define('troopjs/version',[], "3.0.0-3+5908d7d");
 
 /*
  * TroopJS utils/unique
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/unique',[],function UniqueModule() {
-	
+	"use strict";
 
 	var LENGTH = "length";
 
@@ -74,15 +77,48 @@ define('troopjs-utils/unique',[],function UniqueModule() {
 });
 
 /*
+ * TroopJS composer/mixin/decorator
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-composer/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
+	"use strict";
+
+	/**
+	 * Decorator provides customized way to add properties/methods to object created by {@link composer.mixin.factory}.
+	 * @class composer.mixin.decorator
+	 * @constructor
+	 * @param {Function} decorate Function that defines how to override the original one.
+	 */
+	return function Decorator(decorate) {
+
+		// Define properties
+		Object.defineProperties(this, {
+			/**
+			 * Function that decides what decoration is to make.
+			 * @method decorate
+			 * @param {Object} descriptor The object descriptor that is the current property.
+			 * @param {String} name The property name.
+			 * @param {Object} descriptors List of all property descriptors of the host object.
+			 * @member composer.mixin.decorator
+			 */
+			"decorate": {
+				"value": decorate
+			}
+		});
+	}
+});
+
+/*
  * TroopJS composer/mixin/factory
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-composer/mixin/factory',[
 	"module",
 	"troopjs-utils/unique",
+	"./decorator",
 	"poly/object"
-], function FactoryModule(module, unique) {
-	
+], function FactoryModule(module, unique, Decorator) {
+	"use strict";
 
 	/**
 	 * The factory module establishes the fundamental object composition in TroopJS:
@@ -168,10 +204,6 @@ define('troopjs-composer/mixin/factory',[
 	var EXTEND = "extend";
 	var CREATE = "create";
 	var DECORATE = "decorate";
-	var DECORATED = "decorated";
-	var BEFORE = "before";
-	var AFTER = "after";
-	var AROUND = "around";
 	var CONSTRUCTOR = "constructor";
 	var CONSTRUCTORS = "constructors";
 	var SPECIALS = "specials";
@@ -182,10 +214,8 @@ define('troopjs-composer/mixin/factory',[
 	var TYPES = "types";
 	var NAME = "name";
 	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/([-_./\d\w\s]+)$/;
-	var NOOP = function noop () {};
 	var PRAGMAS = module.config().pragmas || [];
 	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
-	var factoryDescriptors = {};
 
 	/**
 	 * Sub classing from this object, and to instantiate it immediately.
@@ -213,111 +243,6 @@ define('troopjs-composer/mixin/factory',[
 		return Factory.apply(null, args);
 	}
 
-	/**
-	 * Creates new Decorator
-	 * @private
-	 * @class composer.mixin.factory.Decorator
-	 * @param {Function} decorated Original function
-	 * @param {Function} decorate Function to re-write descriptor
-	 */
-	function Decorator(decorated, decorate) {
-		var descriptor = {};
-
-		// Add DECORATED to descriptor
-		descriptor[DECORATED] = {
-			"value" : decorated
-		};
-
-		// Add DECORATE to descriptor
-		descriptor[DECORATE] = {
-			"value" : decorate
-		};
-
-		// Define properties
-		Object.defineProperties(this, descriptor);
-	}
-
-	/**
-	 * Create a decorator function property to override the original one from prototype, that runs before
-	 * the start of the former.
-	 *
-	 * @member composer.mixin.factory
-	 * @static
-	 * @param {Function} decorated The decorator function which receives the same arguments as with the original.
-	 * @returns {composer.mixin.factory.Decorator}
-	 */
-	function before(decorated) {
-		return new Decorator(decorated, before[DECORATE]);
-	}
-
-	before[DECORATE] = function (descriptor) {
-		var previous = this[DECORATED];
-		var next = descriptor[VALUE];
-
-		descriptor[VALUE] = next
-			? function () {
-			var me = this;
-			var args = arguments;
-			return next.apply(me, args = previous.apply(me, args) || args);
-		}
-			: previous;
-
-		return descriptor;
-	};
-
-	/**
-	 * Create a decorator function property to override the original one from prototype, that runs after
-	 * the completion of the former.
-	 *
-	 * @member composer.mixin.factory
-	 * @static
-	 * @param {Function} decorated The decorator function which receives the return value from the original.
-	 * @returns {composer.mixin.factory.Decorator}
-	 */
-	function after(decorated) {
-		return new Decorator(decorated, after[DECORATE]);
-	}
-
-	after[DECORATE] = function (descriptor) {
-		var previous = descriptor[VALUE];
-		var next = this[DECORATED];
-
-
-		descriptor[VALUE] = previous
-			? function () {
-				var me = this;
-				var args = arguments;
-				return next.apply(me, args = previous.apply(me, args) || args);
-			}
-			: next;
-
-		return descriptor;
-	};
-
-	/**
-	 * Create a decorator function property to override the original one from prototype, that get passed the original
-	 * function, eventually reach the maximum flexibility on execution flow.
-	 *
-	 * @member composer.mixin.factory
-	 * @static
-	 * @param {Function} decorated The decorator function which receives the original function as parameter.
-	 * @returns {composer.mixin.factory.Decorator}
-	 */
-	function around(decorated) {
-		return new Decorator(decorated, around[DECORATE]);
-	}
-
-	/**
-	 *
-	 * @param {Function} descriptor
-	 * @returns {*}
-	 */
-	around[DECORATE] = function (descriptor) {
-		descriptor[VALUE] = this[DECORATED](descriptor[VALUE] || NOOP);
-
-		return descriptor;
-	};
-
 	/*
 	 * Returns a string representation of this constructor
 	 * @member composer.mixin.factory
@@ -332,7 +257,6 @@ define('troopjs-composer/mixin/factory',[
 			? prototype[DISPLAYNAME]
 			: OBJECT_TOSTRING.call(me);
 	}
-
 
 	/**
 	 * The class composer function.
@@ -449,7 +373,7 @@ define('troopjs-composer/mixin/factory',[
 							"enumerable" : true,
 							"configurable" : true,
 							"writable" : true
-						})
+						}, name, prototypeDescriptors)
 						: descriptor;
 				}
 			}
@@ -557,29 +481,11 @@ define('troopjs-composer/mixin/factory',[
 	}
 
 	// Add CREATE to factoryDescriptors
-	factoryDescriptors[CREATE] = {
-		"value" : function FactoryCreate() {
+	Object.defineProperty(Factory, CREATE, {
+		"value": function FactoryCreate() {
 			return Factory.apply(null, arguments)();
 		}
-	};
-
-	// Add BEFORE to factoryDescriptors
-	factoryDescriptors[BEFORE] = {
-		"value" : before
-	};
-
-	// Add AFTER to factoryDescriptors
-	factoryDescriptors[AFTER] = {
-		"value" : after
-	};
-
-	// Add AROUND to factoryDescriptors
-	factoryDescriptors[AROUND] = {
-		"value" : around
-	};
-
-	// Define factoryDescriptors on Factory
-	Object.defineProperties(Factory, factoryDescriptors);
+	});
 
 	// Return Factory
 	return Factory;
@@ -620,7 +526,7 @@ define('troopjs-core/mixin/base',[ "troopjs-composer/mixin/factory" ], function 
 define('troopjs-core/event/runner/sequence',[
 	"when"
 ], function SequenceModule(when) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var HEAD = "head";
@@ -683,7 +589,7 @@ define('troopjs-core/event/emitter',[
 	"../mixin/base",
 	"./runner/sequence"
 ], function EventEmitterModule(Base, sequence) {
-	
+	"use strict";
 
 	/**
 	 * The event module of TroopJS that provides common event handling capability, and some highlights:
@@ -704,6 +610,7 @@ define('troopjs-core/event/emitter',[
 	var OBJECT_TOSTRING = Object.prototype.toString;
 	var TOSTRING_STRING = "[object String]";
 	var HANDLERS = "handlers";
+	var LENGTH = "length";
 	var TYPE = "type";
 	var RUNNER = "runner";
 	var CONTEXT = "context";
@@ -712,10 +619,29 @@ define('troopjs-core/event/emitter',[
 	var HEAD = "head";
 	var TAIL = "tail";
 	var NEXT = "next";
-	var MODIFIED = "modified";
 
-	return Base.extend(function EventEmitter() {
-		this[HANDLERS] = {};
+	/**
+	 * Helper to initialize the **handlers** object for an event type.
+	 * @static
+	 * @param {String} type The event type.
+	 * @param {Object} [handlers] The handlers object for this event type.
+	 * @return {Object} The created handlers object.
+	 */
+	function createHandlers(type, handlers) {
+		var me = this;
+
+		// Set default handler if needed
+		handlers = handlers || {};
+
+		// Set type
+		handlers[TYPE] = type;
+
+		// Add handler to handlers
+		return me[me[LENGTH]] = me[type] = handlers;
+	}
+
+	var Emitter = Base.extend(function Emitter() {
+		this[HANDLERS] = [];
 	}, {
 		"displayName" : "core/event/emitter",
 
@@ -725,7 +651,7 @@ define('troopjs-core/event/emitter',[
 		 * @param {Object} context The context to scope the callback to.
 		 * @param {Function} callback The event listener function.
 		 * @param {*} [data] Handler data
-		 * @returns this
+		 * @returns {*} this
 		 */
 		"on" : function on(type, context, callback, data) {
 			var me = this;
@@ -760,9 +686,10 @@ define('troopjs-core/event/emitter',[
 			// No handlers
 			else {
 				// Create type handlers
-				handlers = handlers[type] = {};
+				handlers = createHandlers.call(handlers, type, {});
 
-				// Create head and tail
+				// Prepare handlers
+				handlers[TYPE] = type;
 				handlers[HEAD] = handlers[TAIL] = handler = {};
 
 				// Prepare handler
@@ -770,9 +697,6 @@ define('troopjs-core/event/emitter',[
 				handler[CONTEXT] = context;
 				handler[DATA] = data;
 			}
-
-			// Set MODIFIED
-			handlers[MODIFIED] = new Date().getTime();
 
 			return me;
 		},
@@ -784,7 +708,7 @@ define('troopjs-core/event/emitter',[
 		 * @param {String} type The event type subscribed to
 		 * @param {Object} [context] The context to scope the callback to remove
 		 * @param {Function} [callback] The event listener function to remove
-		 * @returns this
+		 * @returns {*} this
 		 */
 		"off" : function off(type, context, callback) {
 			var me = this;
@@ -843,9 +767,6 @@ define('troopjs-core/event/emitter',[
 						delete handlers[TAIL];
 					}
 				}
-
-				// Set MODIFIED
-				handlers[MODIFIED] = new Date().getTime();
 			}
 
 			return me;
@@ -870,33 +791,36 @@ define('troopjs-core/event/emitter',[
 			var me = this;
 			var type = event;
 			var handlers = me[HANDLERS];
-			var runner = sequence;
+			var runner;
 
 			// If event is a plain string, convert to object with props
 			if (OBJECT_TOSTRING.call(event) === TOSTRING_STRING) {
+				// Recreate event
 				event = {};
-				event[RUNNER] = runner;
+				event[RUNNER] = runner = sequence;
 				event[TYPE] = type;
 			}
 			// If event duck-types an event object we just override or use defaults
 			else if (TYPE in event) {
-				event[RUNNER] = runner = event[RUNNER] || runner;
+				event[RUNNER] = runner = event[RUNNER] || sequence;
 				type = event[TYPE];
 			}
 			// Otherwise something is wrong
 			else {
-				throw Error("first argument has to be of type 'String' or have a '" + TYPE + "' property");
+				throw Error("first argument has to be of type '" + TOSTRING_STRING + "' or have a '" + TYPE + "' property");
 			}
 
-			// Get or create handlers[type] as handlers
-			handlers = type in handlers
-				? handlers[type]
-				: handlers[type] = {};
+			// Get or createHandlers handlers[type] as handlers
+			handlers = handlers[type] || createHandlers.call(handlers, type, {});
 
 			// Return result from runner
 			return runner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
 		}
 	});
+
+	Emitter.createHandlers = createHandlers;
+
+	return Emitter;
 });
 
 /*
@@ -904,7 +828,7 @@ define('troopjs-core/event/emitter',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var NULL = null;
@@ -986,16 +910,82 @@ define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
 });
 
 /*
+ * TroopJS composer/decorator/before
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-composer/decorator/before',[ "../mixin/decorator" ], function BeforeDecoratorModule(Decorator) {
+	"use strict";
+
+	var UNDEFINED;
+	var VALUE = "value";
+
+	/**
+	 * Create a decorator method that is to add code that will be executed before the original method.
+	 *
+	 * @class composer.decorator.before
+	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
+	 * value (if not undefined) will be send as the arguments of original function.
+	 * @returns {composer.mixin.decorator}
+	 */
+	return function before(func) {
+		return new Decorator(function (descriptor) {
+			var next = descriptor[VALUE];
+
+			descriptor[VALUE] = next
+				? function decorated_before() {
+					var me = this;
+					var retval = func.apply(me, arguments);
+
+					return next.apply(me, retval !== UNDEFINED ? retval : arguments);
+				}
+				: func;
+
+			return descriptor;
+		});
+	}
+});
+
+/*
+ * TroopJS composer/decorator/around
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-composer/decorator/around',[ "../mixin/decorator" ], function AroundDecoratorModule(Decorator) {
+	"use strict";
+
+	var VALUE = "value";
+	var NOOP = function () {};
+
+	/**
+	 * Create a decorator that is to override an existing method.
+	 *
+	 * @class composer.decorator.around
+	 * @param {Function} func The decorator function which receives the original function as parameter and is supposed to
+	 * return a function that is to replace the original.
+	 * @returns {composer.mixin.decorator}
+	 */
+	return function around(func) {
+		return new Decorator(function (descriptor) {
+			descriptor[VALUE] = func(descriptor[VALUE] || NOOP);
+			return descriptor;
+		});
+	}
+});
+
+/*
  * TroopJS core/component/base
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/base',[
 	"../event/emitter",
-	"when",
+	"../event/runner/sequence",
+	"troopjs/version",
 	"troopjs-utils/merge",
+	"troopjs-composer/decorator/before",
+	"troopjs-composer/decorator/around",
+	"when",
 	"poly/array"
-], function ComponentModule(Emitter, when, merge) {
-	
+], function ComponentModule(Emitter, sequence, version, merge, before, around, when) {
+	"use strict";
 
 	/**
 	 * Imagine component as an object that has predefined life-cycle, with the following phases:
@@ -1044,11 +1034,11 @@ define('troopjs-core/component/base',[
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var EMITTER_PROTO = Emitter.prototype;
-	var EMITTER_ON = EMITTER_PROTO.on;
-	var EMITTER_OFF = EMITTER_PROTO.off;
+	var EMITTER_CREATEHANDLERS = Emitter.createHandlers;
 	var CONFIGURATION = "configuration";
-	var LENGTH = "length";
+	var RUNNER = "runner";
+	var HANDLERS = "handlers";
+	var HEAD = "head";
 	var CONTEXT = "context";
 	var NAME = "name";
 	var TYPE = "type";
@@ -1060,64 +1050,41 @@ define('troopjs-core/component/base',[
 	var FINALIZED = "finalized";
 	var FINISHED = "finished";
 	var SIG = "sig";
+	var SIG_SETUP = SIG + "/setup";
+	var SIG_TEARDOWN = SIG + "/teardown";
 	var ON = "on";
+	var EVENT_TYPE_SIG = new RegExp("^" + SIG + "/(.+)");
 
 	return Emitter.extend(function Component() {
 		var me = this;
-		var specials;
-		var special;
-		var i;
-		var iMax;
+		var specials = me.constructor.specials[SIG] || ARRAY_PROTO;
 
-		// Make sure we have SIG specials
-		if ((specials = me.constructor.specials[SIG]) !== UNDEFINED) {
-			// Iterate specials
-			for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-				special = specials[i];
-
-				me.on(special[NAME], special[VALUE]);
-			}
-		}
+		// Iterate specials
+		specials.forEach(function (special) {
+			me.on(special[NAME], special[VALUE]);
+		});
 
 		// Set configuration
 		me[CONFIGURATION] = {};
 	}, {
+		"version" : version,
+
 		"displayName" : "core/component/base",
 
 		"sig/initialize" : function onInitialize() {
 			var me = this;
-			var specials;
-			var special;
-			var i;
-			var iMax;
 
-			// Make sure we have ON specials
-			if ((specials = me.constructor.specials[ON]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
-
-					me.on(special[TYPE], special[VALUE]);
-				}
-			}
+			return when.map(me.constructor.specials[ON] || ARRAY_PROTO, function (special) {
+				return me.on(special[TYPE], special[VALUE]);
+			});
 		},
 
 		"sig/finalize" : function onFinalize() {
 			var me = this;
-			var specials;
-			var special;
-			var i;
-			var iMax;
 
-			// Make sure we have ON specials
-			if ((specials = me.constructor.specials[ON]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
-
-					me.off(special[TYPE], special[VALUE]);
-				}
-			}
+			return when.map(me[HANDLERS].reverse(), function (handlers) {
+				return me.off(handlers[TYPE]);
+			});
 		},
 
 		/**
@@ -1160,25 +1127,66 @@ define('troopjs-core/component/base',[
 		},
 
 		/**
+		 * @method
 		 * @inheritdoc
 		 * @localdoc Context of the callback will always be **this** object.
 		 */
-		"on": function on(event, callback, data) {
+		"on": before(function on(event, callback, data) {
 			var me = this;
+			var type = event;
+			var all = me[HANDLERS];
+			var handlers = all[type];
 
-			return EMITTER_ON.call(me, event, me, callback, data);
-		},
+			// Initialize the handlers for this type of event on first subscription only.
+			if (handlers === UNDEFINED) {
+				handlers = EMITTER_CREATEHANDLERS.call(all, type);
+			}
+
+			// If this event is NOT a signal, send out a signal to allow setting up handlers.
+			if (!(HEAD in handlers) && !EVENT_TYPE_SIG.test(type)) {
+				event = {};
+				event[TYPE] = SIG_SETUP;
+				event[RUNNER] = sequence;
+				me.emit(event, type, handlers);
+			}
+
+			// context will always be this widget.
+			return [type, me, callback, data];
+		}),
 
 		/**
+		 * @method
 		 * @inheritdoc
 		 * @localdoc Context of the callback will always be **this** object.
 		 */
-		"off" : function off(event, callback) {
-			var me = this;
+		"off": around(function(fn) {
+			return function off(event, callback) {
+				var me = this;
+				var type = event;
 
-			// Forward
-			return EMITTER_OFF.call(me, event, me, callback);
-		},
+				// context will always be this widget.
+				fn.call(me, type, me, callback);
+
+				var all = me[HANDLERS];
+				var handlers = all[type];
+
+				// Initialize the handlers for this type of event on first subscription only.
+				if (handlers === UNDEFINED) {
+					handlers = EMITTER_CREATEHANDLERS.call(all, type);
+				}
+
+				// If this event is NOT a signal, send out a signal to allow finalize handlers.
+				if (!(HEAD in handlers) && !EVENT_TYPE_SIG.test(type)) {
+					debugger;
+					event = {};
+					event[TYPE] = SIG_TEARDOWN;
+					event[RUNNER] = sequence;
+					me.emit(event, type, handlers);
+				}
+
+				return me;
+			};
+		}),
 
 		/**
 		 * Signals the component
@@ -1308,6 +1316,80 @@ define('troopjs-core/component/base',[
 	});
 });
 
+define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineModule(when) {
+	"use strict";
+
+	var UNDEFINED;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARGUMENTS = "[object Arguments]";
+	var TOSTRING_ARRAY = "[object Array]";
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var HEAD = "head";
+	var NEXT = "next";
+
+	/*
+	 * Runner that filters and executes candidates in pipeline without overlap
+	 * @param {Object} event Event object
+	 * @param {Object} handlers List of handlers
+	 * @param {Array} args Initial arguments
+	 * @returns {Promise}
+	 */
+	return function pipeline(event, handlers, args) {
+		var context = event[CONTEXT];
+		var callback = event[CALLBACK];
+		var candidate;
+		var candidates = [];
+		var candidatesCount = 0;
+
+		// Iterate handlers
+		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
+			// Filter candidate[CONTEXT] if we have context
+			if (context !== UNDEFINED && candidate[CONTEXT] !== context) {
+				continue;
+			}
+
+			// Filter candidate[CALLBACK] if we have callback
+			if (callback && candidate[CALLBACK] !== callback) {
+				continue;
+			}
+
+			// Add to candidates
+			candidates[candidatesCount++] = candidate;
+		}
+
+		// Reset candidatesCount
+		candidatesCount = 0;
+
+		/*
+		 * Internal function for piped execution of candidates candidates
+		 * @private
+		 * @param {Array} [result] result from previous candidate callback
+		 * @return {Promise} promise of next candidate callback execution
+		 */
+		var next = function (result) {
+			/*jshint curly:false*/
+			var candidate;
+			var type;
+
+			// Check that result is not UNDEFINED and not equals to args
+			if (result !== UNDEFINED && result !== args) {
+				// Update args to either result or result wrapped in a new array
+				args = (type = OBJECT_TOSTRING.call(result)) === TOSTRING_ARRAY  // if type is TOSTRING_ARRAY
+					|| type === TOSTRING_ARGUMENTS                                 // or type is TOSTRING_ARGUMENTS
+					? result                                                       // then result is array-like enough to be passed to .apply
+					: [ result ];                                                  // otherwise we should just wrap it in a new array
+			}
+
+			// Return promise of next callback, or promise resolved with args
+			return (candidate = candidates[candidatesCount++]) !== UNDEFINED
+				? when(candidate[CALLBACK].apply(candidate[CONTEXT], args), next)
+				: when.resolve(args);
+		};
+
+		return next(args);
+	}
+});
 define('troopjs-core/pubsub/runner/constants',{
 	"pattern" : /^(?:initi|fin)alized?$/
 });
@@ -1315,7 +1397,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	"./constants",
 	"when"
 ], function PipelineModule(CONSTANTS, when) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var OBJECT_TOSTRING = Object.prototype.toString;
@@ -1351,7 +1433,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 			}
 
 			// Filter candidate[CALLBACK] if we have callback
-			if (callback && candidate[CALLBACK] !== callback) {
+			if (callback !== UNDEFINED && candidate[CALLBACK] !== callback) {
 				continue;
 			}
 
@@ -1399,15 +1481,55 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	}
 });
 /*
+ * TroopJS composer/decorator/from
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-composer/decorator/from',[ "../mixin/decorator" ], function FromDecoratorModule(Decorator) {
+	"use strict";
+
+	var UNDEFINED;
+	var VALUE = "value";
+	var PROTOTYPE = "prototype";
+
+	/**
+	 * Create a decorator that is to lend from a particular property from this own or the other factory.
+	 *
+	 * @class composer.decorator.from
+	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
+	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
+	 * @returns {composer.mixin.decorator}
+	 */
+	return function from(which, prop) {
+		// Shifting arguments.
+		if (typeof which === "string") {
+			prop = which;
+			which = UNDEFINED;
+		}
+
+		return new Decorator(function (descriptor, name, descriptors) {
+			// To override a specified property, otherwise simply this property.
+			name = prop || name;
+
+			// Property is from the the other's prototype, otherwise from own descriptor.
+			descriptor[VALUE] = which
+				? which[PROTOTYPE][name]
+				: descriptors[name][VALUE];
+
+			return descriptor;
+		});
+	}
+});
+
+/*
  * TroopJS core/pubsub/hub
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/pubsub/hub',[
 	"../event/emitter",
 	"./runner/pipeline",
-	"when"
-], function HubModule(Emitter, pipeline, when) {
-	
+	"troopjs-composer/decorator/from"
+], function HubModule(Emitter, pipeline, from) {
+	"use strict";
 
 	/**
 	 * The centric "bus" that handlers publishing and subscription.
@@ -1415,9 +1537,6 @@ define('troopjs-core/pubsub/hub',[
 	 * ## Memorized emitting
 	 * A fired event will memorize the "current" value of each event. Each executor may have it's own interpretation
 	 * of what "current" means.
-	 *
-	 * For listeners that are registered after the event emitted thus missing from the call, {@link #republish} will
-	 * compensate the call with memorized data.
 	 *
 	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
 	 * use methods like {@link core.component.gadget#publish} and {@link core.component.gadget#subscribe}
@@ -1429,9 +1548,6 @@ define('troopjs-core/pubsub/hub',[
 	 */
 
 	var UNDEFINED;
-	var COMPONENT_PROTOTYPE = Emitter.prototype;
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
 	var MEMORY = "memory";
 	var HANDLERS = "handlers";
 	var RUNNER = "runner";
@@ -1445,14 +1561,14 @@ define('troopjs-core/pubsub/hub',[
 		 * @inheritdoc #on
 		 * @method
 		 */
-		"subscribe" : COMPONENT_PROTOTYPE.on,
+		"subscribe" : from("on"),
 
 		/**
 		 * Remove a public event listener.
 		 * @inheritdoc #off
 		 * @method
 		 */
-		"unsubscribe" : COMPONENT_PROTOTYPE.off,
+		"unsubscribe" : from("off"),
 
 		/**
 		 * Emit a public event that can be subscribed by other components.
@@ -1466,7 +1582,7 @@ define('troopjs-core/pubsub/hub',[
 		 *
 		 * @param {String} type The topic to publish.
 		 * @param {...*} [args] Additional params that are passed to the handler function.
-		 * @method
+		 * @returns {Promise}
 		 */
 		"publish" : function publish(type, args) {
 			var me = this;
@@ -1484,44 +1600,17 @@ define('troopjs-core/pubsub/hub',[
 		},
 
 		/**
-		 * Re-publish any event that are **previously published**, any (new) listeners will be called with the memorized data
-		 * from the previous event publishing procedure.
-		 *
-		 * @param {String} type The topic to re-publish, dismiss if it's not yet published.
-		 * @param {Object} [context] The context to scope the handler to match with.
-		 * @param {Function} [callback] The handler function to match with.
-		 * @returns {Promise}
-		 */
-		"republish": function republish(type, context, callback) {
-			var me = this;
-			var handlers;
-
-			// Return fast if we don't have handlers for type, or those handlers have no MEMORY
-			if ((handlers = me[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)) {
-				return when.resolve(UNDEFINED);
-			}
-
-			// Prepare event object
-			var event = {};
-			event[TYPE] = type;
-			event[RUNNER] = pipeline;
-			event[CONTEXT] = context;
-			event[CALLBACK] = callback;
-
-			// Delegate the actual emitting to event emitter, with memorized list of values.
-			return me.emit.apply(me, [ event ].concat(handlers[MEMORY]));
-		},
-
-		/**
 		 * Returns value in handlers MEMORY
 		 * @param {String} type event type to peek at
+		 * @param {*} [value] Value to use _only_ if no memory has been recorder
 		 * @returns {*} Value in MEMORY
 		 */
-		"peek": function peek(type) {
+		"peek": function peek(type, value) {
 			var handlers;
 
-			// Return handlers[type][MEMORY]
-			return ((handlers = this[HANDLERS][type]) !== UNDEFINED) && handlers[MEMORY];
+			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
+				? value
+				: handlers[MEMORY];
 		}
 	});
 });
@@ -1532,10 +1621,11 @@ define('troopjs-core/pubsub/hub',[
  */
 define('troopjs-core/component/gadget',[
 	"./base",
+	"./runner/pipeline",
 	"when",
 	"../pubsub/hub"
-],function GadgetModule(Component, when, hub) {
-	
+],function GadgetModule(Component, pipeline, when, hub) {
+	"use strict";
 
 	/**
 	 * Component that provides signal and hub features.
@@ -1574,77 +1664,89 @@ define('troopjs-core/component/gadget',[
 	 */
 
 	var UNDEFINED;
-	var LENGTH = "length";
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var RUNNER = "runner";
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var PROXY = "proxy";
 	var FEATURES = "features";
+	var NAME = "name";
 	var TYPE = "type";
 	var VALUE = "value";
 	var HUB = "hub";
+	var RE = new RegExp("^" + HUB + "/(.+)");
 
 	return Component.extend({
 		"displayName" : "core/component/gadget",
 
 		"sig/initialize" : function onInitialize() {
 			var me = this;
-			var specials;
-			var special;
-			var i;
-			var iMax;
 
-			// Make sure we have HUB specials
-			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
-
-					// Subscribe
-					hub.subscribe(special[TYPE], me, special[VALUE], special[FEATURES]);
-				}
-			}
+			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
+				return me.subscribe(special[TYPE], special[VALUE], special[FEATURES]);
+			});
 		},
 
-		"sig/start" : function onStart() {
+		"sig/start" : function onInitialize() {
 			var me = this;
-			var specials;
-			var special;
-			var results = [];
-			var resultsLength = 0;
-			var i;
-			var iMax;
+			var empty = {};
+			var specials = me.constructor.specials[HUB] || ARRAY_PROTO;
 
-			// Make sure we have HUB specials
-			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
+			// Calculate specials
+			specials = specials
+				.map(function (special) {
+					var memory;
+					var result;
 
-					// Check if we need to republish
-					if (special[FEATURES] === "memory") {
-						// Republish, store result
-						results[resultsLength++] = hub.republish(special[TYPE], me, special[VALUE]);
+					if (special[FEATURES] === "memory" && (memory = me.peek(special[TYPE], empty)) !== empty) {
+						// Redefine result
+						result = {};
+						result[TYPE] = special[NAME];
+						result[RUNNER] = pipeline;
+						result[CONTEXT] = me;
+						result[CALLBACK] = special[VALUE];
+						result = [ result ].concat(memory);
 					}
-				}
-			}
 
-			// Return promise that will be fulfilled when all results are
-			return when.all(results);
+					return result;
+				})
+				.filter(function (special) {
+					return special !== UNDEFINED;
+				});
+
+			return when.map(specials, function (special) {
+				return me.emit.apply(me, special);
+			});
 		},
 
-		"sig/finalize" : function onFinalize() {
+		"sig/setup": function onSetup(type, handlers) {
 			var me = this;
-			var specials;
-			var special;
-			var i;
-			var iMax;
+			var matches;
 
-			// Make sure we have HUB specials
-			if ((specials = me.constructor.specials[HUB]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
+			if ((matches = RE.exec(type)) !== NULL) {
+				hub.subscribe(matches[1], me, handlers[PROXY] = function hub_proxy(args) {
+					// Redefine args
+					args = {};
+					args[TYPE] = type;
+					args[RUNNER] = pipeline;
+					args = [ args ];
 
-					// Unsubscribe
-					me.unsubscribe(special[TYPE], special[VALUE]);
-				}
+					// Push original arguments on args
+					ARRAY_PUSH.apply(args, arguments);
+
+					return me.emit.apply(me, args);
+				});
+			}
+		},
+
+		"sig/teardown": function onTeardown(type, handlers) {
+			var me = this;
+			var matches;
+
+			if ((matches = RE.exec(type)) !== NULL) {
+				hub.unsubscribe(matches[1], me, handlers[PROXY]);
 			}
 		},
 
@@ -1665,23 +1767,11 @@ define('troopjs-core/component/gadget',[
 		},
 
 		/**
-		 * @inheritdoc core.pubsub.hub#republish
-		 */
-		"republish" : function republish() {
-			return hub.republish.apply(hub, arguments);
-		},
-
-		/**
 		 * @inheritdoc core.pubsub.hub#subscribe
 		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
 		 */
 		"subscribe" : function subscribe(event, callback, data) {
-			var me = this;
-
-			// Subscribe
-			hub.subscribe(event, me, callback, data);
-
-			return me;
+			return this.on("hub/" + event, callback, data);
 		},
 
 		/**
@@ -1689,48 +1779,68 @@ define('troopjs-core/component/gadget',[
 		 * @localdoc Unsubscribe from public events in context of this component.
 		 */
 		"unsubscribe" : function unsubscribe(event, callback) {
-			var me = this;
-
-			// Unsubscribe
-			hub.unsubscribe(event, me, callback);
-
-			return me;
+			return this.off("hub/" + event, callback);
 		},
 
 		/**
 		 * @inheritdoc core.pubsub.hub#peek
 		 */
-		"peek" : function peek(event) {
-			return hub.peek(event);
+		"peek" : function peek(event, value) {
+			return hub.peek(event, value);
 		}
 	});
 });
 
 /*
- * TroopJS browser/dom/constants
+ * TroopJS composer/decorator/after
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/dom/constants',{
-	"class" : "class",
-	"id" : "id",
-	"tag" : "tag",
-	"universal" : "universal",
-	"indexes" : "indexes",
-	"indexed" : "indexed",
-	"indexer" : "indexer",
-	"querySelectorAll": "querySelectorAll",
-	"matchesSelector": "matchesSelector"
+define('troopjs-composer/decorator/after',[ "../mixin/decorator" ], function AfterDecoratorModule(Decorator) {
+	"use strict";
+
+	var UNDEFINED;
+	var VALUE = "value";
+
+	/**
+	 * Create a decorator method that is to add code that will be executed after the original method.
+	 *
+	 * @class composer.decorator.after
+	 * @param {Function} func The decorator function which receives the arguments of the original, it's return value (if
+	 * not undefined) will be the used as the new return value.
+	 * @returns {composer.mixin.decorator}
+	 */
+	return function after(func) {
+		return new Decorator(function (descriptor) {
+			var previous = descriptor[VALUE];
+
+			descriptor[VALUE] = previous
+				? function decorated_after() {
+					var me = this;
+					var retval = previous.apply(me, arguments);
+					var newRet = func.apply(me, arguments);
+					return newRet !== UNDEFINED ? newRet : retval;
+				}
+				: func;
+
+			return descriptor;
+		});
+	}
 });
+
 /*
  * TroopJS browser/dom/config
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/dom/config',[ "module", "./constants", "troopjs-utils/merge", "jquery" ], function (module, CONSTANTS, merge, $) {
+define('troopjs-browser/dom/config',[
+	"module",
+	"troopjs-utils/merge",
+	"jquery"
+], function (module, merge, $) {
 	var config = {};
 
-	config[CONSTANTS["querySelectorAll"]] = $.find;
+	config["querySelectorAll"] = $.find;
 
-	config[CONSTANTS["matchesSelector"]] = $.find.matchesSelector;
+	config["matchesSelector"] = $.find.matchesSelector;
 
 	return merge.call(config, module.config());
 });
@@ -1740,27 +1850,33 @@ define('troopjs-browser/dom/config',[ "module", "./constants", "troopjs-utils/me
  *
  * Heavily influenced by selector-set (https://github.com/josh/selector-set/) Copyright 2013 Joshua Peek
  */
-define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./constants", "./config" ], function (Factory, CONSTANTS, CONFIG) {
+define('troopjs-browser/dom/selector',[
+	"troopjs-composer/mixin/factory",
+	"./config"
+], function (Factory, CONFIG) {
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
 	var LENGTH = "length";
-	var INDEXES = CONSTANTS["indexes"];
-	var INDEXED = CONSTANTS["indexed"];
-	var INDEXER = CONSTANTS["indexer"];
-	var CLASS = CONSTANTS["class"];
-	var ID = CONSTANTS["id"];
-	var TAG = CONSTANTS["tag"];
-	var UNIVERSAL = CONSTANTS["universal"];
+	var INDEXES = "indexes";
+	var INDEXED = "indexed";
+	var INDEXER = "indexer";
+	var CLASS = "class";
+	var ID = "id";
+	var TAG = "tag";
+	var UNIVERSAL = "universal";
 	var SLASH = "\\";
 	var SPACE = " ";
 	var STAR = "*";
 	var POUND = "#";
 	var PERIOD = ".";
+	var COLON = ":";
+	var LEFT_BRACKET = "[";
+	var RIGHT_BRACKET = "]";
 	var COUNT = "count";
 	var BASEVAL = "baseVal";
 	var RE_SPACE = /\s+/;
-	var querySelectorAll = CONFIG[CONSTANTS["querySelectorAll"]];
-	var matchesSelector = CONFIG[CONSTANTS["matchesSelector"]];
+	var querySelectorAll = CONFIG["querySelectorAll"];
+	var matchesSelector = CONFIG["matchesSelector"];
 
 	/*
 	 * Extracts key for universal indexer
@@ -1819,7 +1935,19 @@ define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./con
 	}
 
 	/*
-	 * Gets last token from selector
+	 * Gets the last **SIGNIFICANT** of a CSS selector, the "significant" is defined as - any leading id, class name or
+	 * tag name component of the last selector.
+	 *
+	 * Examples:
+	 * 	tail("div.bar"); 	// "div"
+	 * 	tail("#foo.bar"); 	// "#foo"
+	 * 	tail("p > div.bar"); 	// "div"
+	 * 	tail("p > a:active"); 	// "a"
+	 * 	tail(".bar");	// ".bar"
+	 * 	tail("input.foo[type='button']");	// "input"
+	 * 	tail("[type='button']");	// "*"
+	 *
+	 * @see [CSS3 selector spec](http://www.w3.org/TR/selectors/#w3cselgrammar)
 	 * @private
 	 * @param {String} selector CSS selector
 	 * @return {String} last token
@@ -1827,17 +1955,17 @@ define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./con
 	function tail(selector) {
 		var start = selector[LENGTH];
 		var stop = start;
-		var c = selector[--start];
+		var c = selector.charAt(--start);
 		var skip = false;
 
-		step: while (start > 0) {
+		step: while (start >= 0) {
 			switch (c) {
 				case SPACE:
 					/* Marks EOT if:
 					 * * Next c is not SLASH
 					 * * Not in skip mode
 					 */
-					if ((c = selector[--start]) !== SLASH && !skip) {
+					if ((c = selector.charAt(--start)) !== SLASH && !skip) {
 						// We're 2 steps passed the end of the selector so we should adjust for that
 						start += 2;
 
@@ -1846,31 +1974,32 @@ define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./con
 					}
 					break;
 
-				case "]":
+				case RIGHT_BRACKET:
 					/* Marks begin of skip if:
 					 * * Next c is not SLASH
 					 */
-					skip = (c = selector[--start]) !== SLASH;
+					skip = (c = selector.charAt(--start)) !== SLASH;
 					break;
 
-				case "[":
+				case LEFT_BRACKET:
 					/* Marks end of skip if:
 					 * * Next c is not SLASH
 					 */
-					if (!(skip = (c = selector[--start]) === SLASH)) {
+					if (!(skip = (c = selector.charAt(--start)) === SLASH)) {
 						// Compensate for start already decreased
 						stop = start + 1;
 					}
 					break;
 
 				case POUND:
+				case COLON:
 				case PERIOD:
 					/* Marks stop if:
 					 * * Next c is not SLASH
 					 * * Next c is not SPACE
 					 * * Not in skip mode
 					 */
-					if ((c = selector[--start]) !== SLASH && c !== SPACE && !skip) {
+					if ((c = selector.charAt(--start)) && c!== UNDEFINED && c!== SLASH && c !== SPACE && !skip) {
 						// Compensate for start already decreased
 						stop = start + 1;
 					}
@@ -1883,7 +2012,7 @@ define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./con
 			}
 		}
 
-		return selector.substring(start, stop);
+		return selector.substring(start, stop) || STAR;
 	}
 
 	/*
@@ -1897,7 +2026,7 @@ define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./con
 		return a[COUNT] - b[COUNT];
 	}
 
-	var Selector = Factory(function () {
+	var Selector = Factory(function Selector() {
 		var me = this;
 
 		me[INDEXES] = [];
@@ -1978,7 +2107,7 @@ define('troopjs-browser/dom/selector',[ "troopjs-composer/mixin/factory", "./con
 		 * @param element DOM Element
 		 * @return {Array} Matching array of candidates
 		 */
-		"matches": function (element) {
+		"matches": function matches(element) {
 			var me = this;
 			var indexer;
 			var indexed;
@@ -2104,7 +2233,7 @@ define('troopjs-browser/component/runner/sequence',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], function LoomConfigModule(module, merge) {
-	
+	"use strict";
 
 	/**
 	 * This module is to provide configurations **loom** from it's AMD module config.
@@ -2152,7 +2281,7 @@ define('troopjs-browser/loom/config',[ "module", "troopjs-utils/merge" ], functi
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/getargs',[],function GetArgsModule() {
-	
+	"use strict";
 
 	var PUSH = Array.prototype.push;
 	var SUBSTRING = String.prototype.substring;
@@ -2279,7 +2408,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-utils/defer',[ "when", "poly/array" ], function DeferModule(when) {
-	
+	"use strict";
 
 	var ARRAY_SLICE = Array.prototype.slice;
 
@@ -2321,7 +2450,7 @@ define('troopjs-utils/defer',[ "when", "poly/array" ], function DeferModule(when
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "troopjs-utils/getargs", "troopjs-utils/defer", "poly/array" ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var NULL = null;
@@ -2329,7 +2458,6 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 	var ARRAY_MAP = ARRAY_PROTO.map;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var ARRAY_SHIFT = ARRAY_PROTO.shift;
-	var ARRAY_UNSHIFT = ARRAY_PROTO.unshift;
 	var WEAVE = "weave";
 	var WOVEN = "woven";
 	var $WARP = config["$warp"];
@@ -2353,7 +2481,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 	 * 	$el.weave();
 	 * @member browser.loom.weave
 	 * @method weave
-	 * @param {Mixed...} [arg] The params that used to start the widget.
+	 * @param {*...} [arg] The params that used to start the widget.
 	 * @returns {Promise} Promise to the completion of weaving all widgets.
 	 */
 	return function weave() {
@@ -2368,7 +2496,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 			var $weave = [];
 			var weave_attr = $element.attr(ATTR_WEAVE) || "";
 			var weave_args;
-			var re = /[\s,]*(((?:\w+!)?([\w\d_\-\/\.]+)(?:#[^(\s]+)?)(?:\(([^\)]+)\))?)/g;
+			var re = /[\s,]*(((?:\w+!)?([\w\d_\/\.\-]+)(?:#[^(\s]+)?)(?:\(([^\)]+)\))?)/g;
 			var matches;
 
 			/*
@@ -2484,7 +2612,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/array", "troopjs-utils/defer" ], function UnweaveModule(config, when, $, Defer) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var NULL = null;
@@ -2523,7 +2651,7 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 			var $unweave = [];
 			var unweave_attr = $element.attr(ATTR_UNWEAVE);
 			var unweave_re = [];
-			var re = /[\s,]*([\w_\-\/\.]+)(?:@(\d+))?/g;
+			var re = /[\s,]*([\w_\/\.\-]+)(?:@(\d+))?/g;
 			var matches;
 			var $weft;
 			var iMax;
@@ -2633,7 +2761,7 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	
+	"use strict";
 
 	var DESTROY = "destroy";
 
@@ -2668,43 +2796,55 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/component/widget',[
-	"jquery",
 	"troopjs-core/component/gadget",
-	"troopjs-utils/merge",
+	"troopjs-composer/decorator/before",
+	"troopjs-composer/decorator/after",
 	"./runner/sequence",
+	"jquery",
+	"when",
+	"troopjs-utils/merge",
 	"../loom/config",
 	"../loom/weave",
 	"../loom/unweave",
 	"troopjs-jquery/destroy"
-], function WidgetModule($, Gadget, merge, sequence, LOOM_CONF, weave, unweave) {
-	
+], function WidgetModule(Gadget, before, after, sequence, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
+	"use strict";
+
+	/**
+	 * Base DOM component attached to an element, that takes care of widget instantiation.
+	 * @class browser.component.widget
+	 * @extends core.component.gadget
+	 */
 
 	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var ARRAY_PUSH = Array.prototype.push;
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var $GET = $.fn.get;
 	var TYPEOF_FUNCTION = "function";
 	var $ELEMENT = "$element";
-	var $HANDLER = "$handler";
+	var MODIFIED = "modified";
+	var PROXY = "proxy";
 	var DOM = "dom";
 	var FEATURES = "features";
-	var VALUE = "value";
 	var NAME = "name";
-	var TYPES = "types";
-	var LENGTH = "length";
+	var VALUE = "value";
+	var TYPE = "type";
+	var RUNNER = "runner";
 	var $WEFT = LOOM_CONF["$weft"];
 	var SELECTOR_WEAVE = "[" + LOOM_CONF["weave"] + "]";
 	var SELECTOR_WOVEN = "[" + LOOM_CONF["woven"] + "]";
+	var RE = new RegExp("^" + DOM + "/(.+)");
 
-
-	/*
+	/**
 	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
 	 * @private
 	 * @param $fn jQuery method
 	 * @returns {Function} proxied render
 	 */
 	function $render($fn) {
-		/*
+		/**
 		 * Renders contents into element
 		 * @private
 		 * @param {Function|String} contents Template/String to render
@@ -2716,7 +2856,7 @@ define('troopjs-browser/component/widget',[
 			var me = this;
 
 			// Call render with contents (or result of contents if it's a function)
-			return weave.call($fn.call(me[$ELEMENT],
+			return loom_weave.call($fn.call(me[$ELEMENT],
 				typeof contents === TYPEOF_FUNCTION ? contents.apply(me, ARRAY_SLICE.call(arguments, 1)) : contents
 			).find(SELECTOR_WEAVE));
 		}
@@ -2725,10 +2865,24 @@ define('troopjs-browser/component/widget',[
 	}
 
 	/**
-	 * Base DOM component attached to an element, that takes care of widget instantiation.
-	 * @class browser.component.widget
+	 * Sets MODIFIED on handlers
+	 * @private
+	 * @param type {String}
 	 */
-	return Gadget.extend(function ($element, displayName) {
+	function set_modified(type) {
+		if (RE.test(type)) {
+			// Set modified
+			this.handlers[type][MODIFIED] = new Date().getTime();
+		}
+	}
+
+	/**
+	 * Creates a new widget
+	 * @param $element {jQuery}
+	 * @param displayName {String}
+	 * @constructor
+	 */
+	return Gadget.extend(function Widget($element, displayName) {
 		var me = this;
 		var $get;
 
@@ -2754,27 +2908,6 @@ define('troopjs-browser/component/widget',[
 		// Store $ELEMENT
 		me[$ELEMENT] = $element;
 
-		/*
-		 * Handles DOM events by emitting them
-		 * @private
-		 * @param {jQuery.Event} $event jQuery Event
-		 * @param {...*} [args] Additional handler arguments
-		 * @returns {*} Result from last executed handler
-		 */
-		me[$HANDLER] = function $handler($event, args) {
-			// Redefine args
-			args = [ {
-				"type" : "dom/" + $event.type,
-				"runner" : sequence
-			} ];
-
-			// Push original arguments on args
-			ARRAY_PUSH.apply(args, arguments);
-
-			// Return result of emit
-			return me.emit.apply(me, args);
-		};
-
 		if (displayName !== UNDEFINED) {
 			me.displayName = displayName;
 		}
@@ -2784,49 +2917,53 @@ define('troopjs-browser/component/widget',[
 
 		"sig/initialize" : function onInitialize() {
 			var me = this;
-			var $element = me[$ELEMENT];
-			var $handler = me[$HANDLER];
-			var special;
-			var specials;
-			var i;
-			var iMax;
 
-			// Make sure we have DOM specials
-			if ((specials = me.constructor.specials[DOM]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
+			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
+				return me.on(special[NAME], special[VALUE], special[FEATURES]);
+			});
+		},
 
-					// Add special to emitter
-					me.on(special[NAME], special[VALUE], special[FEATURES]);
-				}
+		/**
+		 * @method
+		 * @inheritdoc
+		 */
+		"on": after(set_modified),
 
-				// Bind $handler to $element
-				$element.on(specials[TYPES].join(" "), null, me, $handler);
+		/**
+		 * @method
+		 * @inheritdoc
+		 */
+		"off": before(set_modified),
+
+		"sig/setup": function onSetup(type, handlers) {
+			var me = this;
+			var matches;
+
+			if ((matches = RE.exec(type)) !== NULL) {
+				// $element.on handlers[PROXY]
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
+					// Redefine args
+					args = {};
+					args[TYPE] = type;
+					args[RUNNER] = sequence;
+					args = [ args];
+
+					// Push original arguments on args
+					ARRAY_PUSH.apply(args, arguments);
+
+					// Return result of emit
+					return me.emit.apply(me, args);
+				});
 			}
 		},
 
-		"sig/finalize" : function onFinalize() {
+		"sig/teardown": function onTeardown(type, handlers) {
 			var me = this;
-			var $element = me[$ELEMENT];
-			var $handler = me[$HANDLER];
-			var special;
-			var specials;
-			var i;
-			var iMax;
+			var matches;
 
-			// Make sure we have DOM specials
-			if ((specials = me.constructor.specials[DOM]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i < iMax; i++) {
-					special = specials[i];
-
-					// Remove special from emitter
-					me.off(special[NAME], special[VALUE]);
-				}
-
-				// Unbind $handler from $element
-				$element.off(specials[TYPES].join(" "), null, $handler);
+			if ((matches = RE.exec(type)) !== NULL) {
+				// $element.off handlers[PROXY]
+				me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
 			}
 		},
 
@@ -2835,18 +2972,25 @@ define('troopjs-browser/component/widget',[
 		},
 
 		/**
+		 * Destroy DOM handler
+		 */
+		"dom/destroy" : function onDestroy() {
+			this.unweave();
+		},
+
+		/**
 		 * Weaves all children of $element
 		 * @returns {Promise} from weave
 		 */
-		"weave" : function () {
-			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
+		"weave" : function weave() {
+			return loom_weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
 		},
 
 		/**
 		 * Unweaves all woven children widgets including the widget itself.
 		 * @returns {Promise} Promise of completeness of unweaving all widgets.
 		 */
-		"unweave" : function () {
+		"unweave" : function unweave() {
 			var woven = this[$ELEMENT].find(SELECTOR_WOVEN);
 
 			// Unweave myself only if I am woven.
@@ -2854,14 +2998,7 @@ define('troopjs-browser/component/widget',[
 				woven = woven.addBack();
 			}
 
-			return unweave.apply(woven, arguments);
-		},
-
-		/**
-		 * Destroy DOM handler
-		 */
-		"dom/destroy" : function () {
-			this.unweave();
+			return loom_unweave.apply(woven, arguments);
 		},
 
 		/**
@@ -2907,7 +3044,7 @@ define('troopjs-browser/component/widget',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	
+	"use strict";
 
 	/**
 	 * Base class for all service alike components, self-registering.
@@ -2936,7 +3073,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/registry/service',[ "../component/service", "poly/object", "poly/array" ], function RegistryServiceModule(Service) {
-	
+	"use strict";
 
 	/**
 	 * A special {@link core.component.service service} presents the registry table for all
@@ -3010,7 +3147,7 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
 		 * Hub event for adding service.
 		 * @event
 		 * @param {core.component.service} service
-		 * @returns {Mixed}
+		 * @returns {*}
 		 */
 		"hub/registry/add" : function onAdd(service) {
 			return this.add(service);
@@ -3020,7 +3157,7 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
 		 * Hub event for removing service.
 		 * @event
 		 * @param {core.component.service} service
-		 * @returns {Mixed}
+		 * @returns {*}
 		 */
 		"hub/registry/remove" : function onRemove(service) {
 			return this.remove(service);
@@ -3030,7 +3167,7 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
 		 * Hub event for finding service(s).
 		 * @event
 		 * @param {String} pattern
-		 * @returns {Mixed}
+		 * @returns {*}
 		 */
 		"hub/registry/get" : function onGet(pattern) {
 			return this.get(pattern);
@@ -3042,7 +3179,7 @@ define('troopjs-core/registry/service',[ "../component/service", "poly/object", 
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-browser/application/widget',[ "module", "../component/widget", "when", "troopjs-core/registry/service", "poly/array" ], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
@@ -3087,6 +3224,7 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 	 * The application widget serves as top-most page component
 	 * that bootstrap all other components registered.
 	 * @class browser.application.widget
+	 * @extends browser.component.widget
 	 */
 	return Widget.extend(function ApplicationWidget() {
 		// Create registry
@@ -3129,540 +3267,18 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 	});
 });
 /*
- * TroopJS core/net/uri
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
- */
-define('troopjs-core/net/uri',[ "../mixin/base" ], function URIModule(Base) {
-	
-
-	var NULL = null;
-	var ARRAY_PROTO = Array.prototype;
-	var OBJECT_PROTO = Object.prototype;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var STRING_SPLIT = String.prototype.split;
-	var TOSTRING = OBJECT_PROTO.toString;
-	var TOSTRING_OBJECT = TOSTRING.call(OBJECT_PROTO);
-	var TOSTRING_ARRAY = TOSTRING.call(ARRAY_PROTO);
-	var TOSTRING_FUNCTION = TOSTRING.call(Function.prototype);
-	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:([^?#]*)(?:\?([^#]*))?(?:#(.*))?)/;
-
-	var PROTOCOL = "protocol";
-	var AUTHORITY = "authority";
-	var PATH = "path";
-	var QUERY = "query";
-	var ANCHOR = "anchor";
-
-	var KEYS = [ "source",
-		PROTOCOL,
-		AUTHORITY,
-		"userInfo",
-		"user",
-		"password",
-		"host",
-		"port",
-		PATH,
-		QUERY,
-		ANCHOR ];
-
-	/**
-	 * Parse the **query** part of an URI.
-	 * @class core.net.uri.Query
-	 */
-	function Query(arg) {
-		/*jshint forin:false*/
-		var result = {};
-		var matches;
-		var key = NULL;
-		var value;
-		var re = /(?:&|^)([^&=]*)=?([^&]*)/g;
-
-		result.toString = Query.toString;
-
-		if (TOSTRING.call(arg) === TOSTRING_OBJECT) {
-			for (key in arg) {
-				result[key] = arg[key];
-			}
-		} else {
-			while ((matches = re.exec(arg)) !== NULL) {
-				key = matches[1];
-
-				if (key in result) {
-					value = result[key];
-
-					if (TOSTRING.call(value) === TOSTRING_ARRAY) {
-						value[value.length] = matches[2];
-					}
-					else {
-						result[key] = [ value, matches[2] ];
-					}
-				}
-				else {
-					result[key] = matches[2];
-				}
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Serialize the query in url encoded format like `key1=value1&key2=value2` without having it encoded.
-	 * @member core.net.uri.Query
-	 */
-	Query.toString = function QueryToString() {
-		/*jshint forin:false*/
-		var me = this;
-		var key;
-		var value;
-		var values;
-		var query = [];
-		var i = 0;
-		var j;
-
-		for (key in me) {
-			if (TOSTRING.call(me[key]) === TOSTRING_FUNCTION) {
-				continue;
-			}
-
-			query[i++] = key;
-		}
-
-		query.sort();
-
-		while (i--) {
-			key = query[i];
-			value = me[key];
-
-			if (TOSTRING.call(value) === TOSTRING_ARRAY) {
-				values = value.slice(0);
-
-				values.sort();
-
-				j = values.length;
-
-				while (j--) {
-					value = values[j];
-
-					values[j] = value === ""
-						? key
-						: key + "=" + value;
-				}
-
-				query[i] = values.join("&");
-			}
-			else {
-				query[i] = value === ""
-					? key
-					: key + "=" + value;
-			}
-		}
-
-		return query.join("&");
-	};
-
-	/**
-	 * Parse the **path** part of an URI.
-	 * @class core.net.uri.Path
-	 */
-	function Path(arg) {
-		// Extend on the instance of array rather than subclass it
-		var result = [];
-
-		result.toString = Path.toString;
-
-		ARRAY_PUSH.apply(result, TOSTRING.call(arg) === TOSTRING_ARRAY
-			? arg
-			: STRING_SPLIT.call(arg, "/"));
-
-		return result;
-	}
-
-	/**
-	 * Serialize the URI path using back-slash as delimiter.
-	 * @member core.net.uri.Path
-	 */
-	Path.toString = function PathToString() {
-		return this.join("/");
-	};
-
-	/**
-	 * @class core.net.uri
-	 * @extends core.mixin.base
-	 * The universal URI parser and serializer.
-	 */
-	var URI = Base.extend(function URI(str) {
-		var me = this;
-		var value;
-		var matches;
-		var i;
-
-		if ((matches = RE_URI.exec(str)) !== NULL) {
-			i = matches.length;
-
-			while (i--) {
-				value = matches[i];
-
-				if (value) {
-					me[KEYS[i]] = value;
-				}
-			}
-		}
-
-		if (QUERY in me) {
-			me[QUERY] = Query(me[QUERY]);
-		}
-
-		if (PATH in me) {
-			me[PATH] = Path(me[PATH]);
-		}
-	}, {
-		"displayName" : "core/net/uri",
-
-		/**
-		 * Serialize into the URI string.
-		 * @return {String}
-		 */
-		"toString" : function URIToString() {
-			var me = this;
-			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
-			var i;
-			var key;
-
-			if (!(PROTOCOL in me)) {
-				uri[0] = uri[1] = "";
-			}
-
-			if (!(AUTHORITY in me)) {
-				uri[2] = "";
-			}
-
-			if (!(PATH in me)) {
-				uri[3] = "";
-			}
-
-			if (!(QUERY in me)) {
-				uri[4] = uri[5] = "";
-			}
-
-			if (!(ANCHOR in me)) {
-				uri[6] = uri[7] = "";
-			}
-
-			i = uri.length;
-
-			while (i--) {
-				key = uri[i];
-
-				if (key in me) {
-					uri[i] = me[key];
-				}
-			}
-
-			return uri.join("");
-		}
-	});
-
-	URI.Path = Path;
-
-	URI.Query = Query;
-
-	return URI;
-});
-
-/*
- * TroopJS jquery/hashchange
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Normalized hashchange event, ripped a _lot_ of code from
- * https://github.com/millermedeiros/Hasher
- */
-define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
-	
-
-	var INTERVAL = "interval";
-	var HASHCHANGE = "hashchange";
-	var ONHASHCHANGE = "on" + HASHCHANGE;
-	var RE_HASH = /#(.*)$/;
-	var RE_LOCAL = /\?/;
-
-	// hack based on this: http://webreflection.blogspot.com/2009/01/32-bytes-to-know-if-your-browser-is-ie.html
-	var _isIE = '\v' == 'v';
-
-	function getHash(window) {
-		// parsed full URL instead of getting location.hash because Firefox
-		// decode hash value (and all the other browsers don't)
-		// also because of IE8 bug with hash query in local file
-		var result = RE_HASH.exec(window.location.href);
-
-		return result && result[1]
-			? decodeURIComponent(result[1])
-			: "";
-	}
-
-	function Frame(document) {
-		var me = this;
-		var element;
-
-		me.element = element = document.createElement("iframe");
-		element.src = "about:blank";
-		element.style.display = "none";
-	}
-
-	Frame.prototype = {
-		"getElement" : function () {
-			return this.element;
-		},
-
-		"getHash" : function () {
-			return this.element.contentWindow.frameHash;
-		},
-
-		"update" : function (hash) {
-			/*jshint evil:true*/
-			var me = this;
-			var document = me.element.contentWindow.document;
-
-			// Quick return if hash has not changed
-			if (me.getHash() === hash) {
-				return;
-			}
-
-			// update iframe content to force new history record.
-			// based on Really Simple History, SWFAddress and YUI.history.
-			document.open();
-			document.write("<html><head><title>' + document.title + '</title><script type='text/javascript'>var frameHash='" + hash + "';</script></head><body>&nbsp;</body></html>");
-			document.close();
-		}
-	};
-
-	/**
-	 * jQuery event fired ever when the URL hash has changed.
-	 * @member $
-	 * @event hashchange
-	 */
-	$.event.special[HASHCHANGE] = {
-		"setup" : function onHashChangeSetup() {
-			var window = this;
-
-			// Quick return if we support onHashChange natively
-			// FF3.6+, IE8+, Chrome 5+, Safari 5+
-			if (ONHASHCHANGE in window) {
-				return false;
-			}
-
-			// Make sure we're always a window
-			if (!$.isWindow(window)) {
-				throw new Error("Unable to bind 'hashchange' to a non-window object");
-			}
-
-			var $window = $(window);
-			var hash = getHash(window);
-			var location = window.location;
-
-			$window.data(INTERVAL, window.setInterval(_isIE
-				? (function () {
-					var document = window.document;
-					var _isLocal = location.protocol === "file:";
-
-					var frame = new Frame(document);
-					document.body.appendChild(frame.getElement());
-					frame.update(hash);
-
-					return function () {
-						var oldHash = hash;
-						var newHash;
-						var windowHash = getHash(window);
-						var frameHash = frame.getHash();
-
-						// Detect changes made pressing browser history buttons.
-						// Workaround since history.back() and history.forward() doesn't
-						// update hash value on IE6/7 but updates content of the iframe.
-						if (frameHash !== hash && frameHash !== windowHash) {
-							// Fix IE8 while offline
-							newHash = decodeURIComponent(frameHash);
-
-							if (hash !== newHash) {
-								hash = newHash;
-								frame.update(hash);
-								$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
-							}
-
-							// Sync location.hash with frameHash
-							location.hash = "#" + encodeURI(_isLocal
-								? frameHash.replace(RE_LOCAL, "%3F")
-								: frameHash);
-						}
-						// detect if hash changed (manually or using setHash)
-						else if (windowHash !== hash) {
-							// Fix IE8 while offline
-							newHash = decodeURIComponent(windowHash);
-
-							if (hash !== newHash) {
-								hash = newHash;
-								$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
-							}
-						}
-					};
-				})()
-				: function () {
-					var oldHash = hash;
-					var newHash;
-					var windowHash = getHash(window);
-
-					if (windowHash !== hash) {
-						// Fix IE8 while offline
-						newHash = decodeURIComponent(windowHash);
-
-						if (hash !== newHash) {
-							hash = newHash;
-							$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
-						}
-					}
-				}, 25));
-		},
-
-		"teardown" : function onHashChangeTeardown() {
-			var window = this;
-
-			// Quick return if we support onHashChange natively
-			if (ONHASHCHANGE in window) {
-				return false;
-			}
-
-			window.clearInterval($.data(window, INTERVAL));
-		}
-	};
-});
-
-/*
- * TroopJS browser/hash/widget module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/hash/widget',[
-	"../component/widget",
-	"troopjs-core/net/uri",
-	"troopjs-jquery/hashchange"
-], function (Widget, URI) {
-	
-
-	/**
-	 * Widget lives on the window object that handles `window.location.hash` changes.
-	 * @class browser.hash.widget
-	 */
-	var $ELEMENT = "$element";
-	var HASH = "_hash";
-	var RE = /^#/;
-
-	return Widget.extend({
-		"displayName" : "browser/hash/widget",
-
-		"sig/start" : function () {
-			this[$ELEMENT].trigger("hashchange");
-		},
-
-		"dom/hashchange" : function ($event) {
-			var me = this;
-			var $element = me[$ELEMENT];
-
-			// Create URI
-			var uri = URI($element.get(0).location.hash.replace(RE, ""));
-
-			// Convert to string
-			var hash = uri.toString();
-
-			// Did anything change?
-			if (hash !== me[HASH]) {
-				// Store new value
-				me[HASH] = hash;
-
-				// Retrigger URICHANGE event
-				$element.trigger("urichange", [ uri ]);
-			}
-			else {
-				// Prevent further hashchange handlers from receiving this
-				$event.stopImmediatePropagation()
-			}
-		},
-
-		/**
-		 * Event that changes the URI hash of the current page.
-		 * @param {Object} $event The jQuery DOM event.
-		 * @param {String|core.net.uri} uri The new URI to change the hash to.
-		 * @param {Boolean} silent Change the hash silently without triggering @{link #event-urichange} event.
-		 */
-		"dom/hashset" : function ($event, uri, silent) {
-			var me = this;
-			var hash = uri.toString();
-
-			if (silent === true) {
-				me[HASH] = hash;
-			}
-
-			me[$ELEMENT].get(0).location.hash = hash;
-		}
-
-		/**
-		 * Custom DOM event that tells the page URI hash has changed.
-		 * @event urichange
-		 */
-
-	});
-});
-
-/*
- * TroopJS browser/mvc/route/widget module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/mvc/route/widget',[ "../../component/widget" ], function (Widget) {
-	
-
-	var $ELEMENT = "$element";
-	var DISPLAYNAME = "displayName";
-	var SET = "/set";
-
-	function setRoute(uri) {
-		/* jshint validthis:true */
-		this[$ELEMENT].trigger("hashset", [ uri ]);
-	}
-
-	return Widget.extend({
-		"displayName" : "browser/mvc/route/widget",
-
-		"sig/initialize" : function () {
-			var me = this;
-
-			me.subscribe(me[DISPLAYNAME] + SET, setRoute);
-		},
-
-		"sig/finalize" : function () {
-			var me = this;
-
-			me.unsubscribe(me[DISPLAYNAME] + SET, setRoute);
-		},
-
-		"dom/urichange" : function ($event, uri) {
-			var me = this;
-
-			me.publish(me[DISPLAYNAME], uri, $event);
-		}
-	});
-});
-
-/*
  * TroopJS core/logger/console
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], function ConsoleLogger(Component) {
-	
+define('troopjs-core/logger/console',[ "../mixin/base", "poly/function" ], function ConsoleLogger(Base) {
+	"use strict";
 
 	/**
 	 * Module that provides simple logging feature as a wrapper around the "console" global ever found.
 	 *
 	 * @singleton
 	 * @class core.logger.console
-	 * @extends core.component.base
+	 * @extends core.mixin.base
 	 */
 
 	/*jshint devel:true*/
@@ -3712,7 +3328,7 @@ define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], f
 	 * @param {String} msg
 	 */
 
-	return Component.create({
+	return Base.create({
 			"displayName" : "core/logger/console"
 		},
 		spec);
@@ -3722,19 +3338,20 @@ define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], f
  * TroopJS core/logger/pubsub
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], function PubSubLogger(Component, hub) {
-	
+define('troopjs-core/logger/pubsub',[ "../mixin/base", "../pubsub/hub" ], function PubSubLogger(Base, hub) {
+	"use strict";
 
 	/**
 	 * This module provides a logger that simply publish logging events on hub.
 	 * @class core.logger.pubsub
+	 * @extends core.mixin.base
 	 * @singleton
 	 */
 
 	var ARRAY_PUSH = Array.prototype.push;
 	var PUBLISH = hub.publish;
 
-	return Component.create({
+	return Base.create({
 		"displayName" : "core/logger/pubsub",
 
 		/**
@@ -3785,13 +3402,12 @@ define('troopjs-core/logger/pubsub',[ "../component/base", "../pubsub/hub" ], fu
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/merge", "when" ], function logger(Service, merge, when) {
-	
+	"use strict";
 
 	/**
 	 * Provides logging as a service, with appender support.
-	 * @class core.logger.service
-	 * @constructor
 	 * @param {Function...} appenders One or more message appender(s).
+	 * @class core.logger.service
 	 * @extends core.component.service
 	 */
 
@@ -3922,7 +3538,7 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "when/apply", "poly/array", "poly/object" ], function To1xModule(Service, when, apply) {
-	
+	"use strict";
 
 	/**
 	 * Proxies to 1.x hub
@@ -4135,7 +3751,7 @@ define('troopjs-core/pubsub/proxy/to1x',[ "../../component/service", "when", "wh
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "poly/array", "poly/object" ], function To2xModule(Service, when) {
-	
+	"use strict";
 
 	/**
 	 * Proxies to 2.x hub
@@ -4325,548 +3941,29 @@ define('troopjs-core/pubsub/proxy/to2x',[ "../../component/service", "when", "po
 		});
 });
 /*
- * TroopJS browser/mvc/controller/widget module
+ * TroopJS net/ajax/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/mvc/controller/widget',[
-	"../../component/widget",
-	"../../hash/widget",
-	"poly/object",
-	"poly/array"
-], function (Widget, Hash) {
-	
-
-	var CACHE = "_cache";
-
-	var ARRAY_SLICE = Array.prototype.slice;
-	var currTaskNo = 0;
-
-	function extend() {
-		var me = this;
-
-		ARRAY_SLICE.call(arguments).forEach(function (arg) {
-			Object.keys(arg).forEach(function (key) {
-				me[key] = arg[key];
-			});
-		});
-
-		return me;
-	}
-
-	var indexes = {};
-	// Check if the object has changed since the last retrieval.
-	function checkChanged(key, val) {
-		var curr = this[CACHE][key], hash = this.hash(val);
-		var ischanged = !(curr === val && indexes[key] === hash );
-		ischanged && (indexes[key] = hash);
-		return ischanged;
-	}
-
-	function handleRequests(requests) {
-		var me = this;
-		return me.task(function (resolve, reject) {
-			// Track this task.
-			var taskNo = ++currTaskNo;
-
-			me.request(extend.call({}, me[CACHE], requests))
-				.then(function (results) {
-					// Reject if this promise is not the current pending task.
-					if (taskNo == currTaskNo) {
-						// Calculate updates
-						var updates = {};
-						var updated = Object.keys(results).reduce(function (update, key) {
-							if (checkChanged.apply(me, [key, results[key]])) {
-								updates[key] = results[key];
-								update = true;
-							}
-
-							return update;
-						}, false);
-
-						// Update cache
-						me[CACHE] = results;
-
-						resolve(me.emit("results", results)
-							.then(function () {
-								return updated && me.emit("updates", updates);
-							})
-							.then(function () {
-								// Trigger `hashset`
-								me.$element.trigger("hashset", [me.data2uri(results), true]);
-							})
-							.yield(results));
-					}
-				});
-		});
-	}
-
-	/**
-	 * An abstracted routing widget for single-page application page-flow control. It basically processes the page URI
-	 * through a list of following methods in sequence, most of which are to be implemented by subclassing this widget.
-	 *
-	 *  1. {@link #uri2data} Implement this method to parse the requested URL into a route hash object which is basically a
-	 *  hash composed of URI segments.
-	 *  1. {@link #request} Implement this method to fulfill the requested route hash value with actual application
-	 *  states, potentially loaded from server side.
-	 *  1. {@link #data2uri} Implement this method to serialize the application states to a new URL afterwards.
-	 *  1. {@link #event-updates on/updates} (Optional) Event to notify about the only application states that has changed.
-	 *  1. {@link #event-results on/results} (Optional) Event to notify about the all application states.
-	 *
-	 * Application subscribes to {@link #event-updates} and {@link #event-results} for consuming the processed data.
-	 * @class browser.mvc.controller
-	 */
-	return Widget.extend(function () {
-		this[CACHE] = {};
-	}, {
-		"displayName": "browser/mvc/controller/widget",
-
-		/*
-		 * The "urichange" event is triggered by {@link browser.hash.widget} on application start or page hash changes.
-		 */
-		"dom/urichange": function ($event, uri) {
-			handleRequests(this.uri2data(uri));
-		},
-
-		/**
-		 * Implement this method to load application data requested by the page, e.g. query the server for each of the request key.
-		 *
-		 * @param {Object} spec The value returned from {@link #uri2data} as the page routing request.
-		 * @return {Promise} data The promise that resolved to the page data fulfilled by the application logic.
-		 */
-		"request" : function (spec) {
-			throw new Error("request is not implemented");
-		},
-
-		/**
-		 * Implement this method to convert a {@link core.net.uri} that reflects the current page URL into a hash with key
-		 * values presenting each segment of the URL.
-		 *
-		 * Suppose we load the page with this URL: `http://example.org/foo/#page1/section2/3`, the implementation would look
-		 * like:
-		 *
-		 * 	"uri2data": function (uri){
-		 * 		var data = {};
-		 * 		var path = uri.path;
-		 * 	 	// Let the first path segment (page1) presents the "page".
-		 * 		data["page"] = path[0];
-		 * 		// Let the second path segment (section2) presents the "section"
-		 * 		data["section"] = path[1];
-		 * 		// Let the third path segment (3) be the item no. default to be zero.
-		 * 		data["item"] = path[2] || 0;
-		 * 	}
-		 *
-		 * @param {core.net.uri} uri URI that reflects the requested URI.
-		 * @return {Object} the hash that represents the current URL.
-		 * @method
-		 */
-		"uri2data" : function (uri) {
-			throw new Error("uri2data is not implemented");
-		},
-
-		/**
-		 * Implement this method to convert a hash back to {@link core.net.uri} that reflects the new page URL to change to.
-		 *
-		 * Suppose that we'd like to structure the following application data on page URL:
-		 *
-		 * 	{
-		 * 		"page": {
-		 * 			title: "page1"
-		 * 			...
-		 * 		}
-		 *
-		 * 		"section": {
-		 * 			"name": "section3"
-		 * 			...
-		 * 		}
-		 *
-		 * 		"item": {
-		 * 			"id": 4
-		 * 			...
-		 * 		}
-		 * 	}
-		 *
-		 * The implementation of this method would look like:
-		 *
-		 * 	var URI = require('troopjs-core/net/uri');
-		 * 	"data2uri": function (data){
-		 * 		var uri = URI();
-		 * 		var paths = [data.page.title, data.section.name];
-		 * 		if(data.item)
-		 * 			paths.push(data.item.id);
-		 * 		uri.path = URI.Path(paths);
-		 * 		return uri;
-		 * 	}
-		 *
-		 * @param {Object} data Arbitrary data object that reflects the current states of the page.
-		 * @return {String|core.net.uri} The new URI to update the current location with.
-		 */
-		"data2uri" : function (data) {
-			throw new Error("data2uri is not implemented");
-		},
-
-		/**
-		 * Implement this method to return a "timestamp" alike value that determinate whether a data object has ever changed.
-		 *
-		 * @param {Object} data Arbitrary data object.
-		 * @return {String} The index string that indicates the freshness of the data.
-		 */
-		"hash" : function (data) { return ""; }
-
-		/**
-		 * The hub topic on which data changes are published after each routing, those that reflects the route changes
-		 * happens to the URI.
-		 * @event updates
-		 */
-
-		/**
-		 * The hub topic on which all application route data are published after each routing.
-		 * @event results
-		 */
-
-	}, Hash);
-});
-
-/*
- * TroopJS browser/store/adapter/base module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/store/adapter/base',[ "troopjs-core/component/gadget" ], function BaseAdapterModule(Gadget) {
-	
-	var STORAGE = "storage";
-
-	/**
-	 * Component that lands the {@link data.store.component} on browser.
-	 * @class browser.store.adapter.base
-	 */
-	return Gadget.extend({
-		"displayName" : "browser/store/adapter/base",
-
-		"afterPut" : function (store, key, value) {
-			this[STORAGE].setItem(key, JSON.stringify(value));
-		},
-
-		"beforeGet" : function get(store, key) {
-			return store.put(key, JSON.parse(this[STORAGE].getItem(key)));
-		},
-
-		"clear" : function clear() {
-			return this[STORAGE].clear();
-		}
-	});
-});
-/*
- * TroopJS browser/store/adapter/local module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/store/adapter/local',[ "./base" ], function LocalAdapterModule(Store) {
-	
-
-	/**
-	 * Data stored in browser local storage.
-	 * @class browser.store.adapter.local
-	 * @extends browser.store.adapter.base
-	 */
-	return Store.extend({
-		"displayName" : "browser/store/adapter/local",
-
-		"storage" : window.localStorage
-	});
-});
-/*
- * TroopJS browser/store/adapter/session module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/store/adapter/session',[ "./base" ], function SessionAdapterModule(Store) {
-	
-
-	/**
-	 * Data stored in browser session storage.
-	 * @class browser.store.adapter.session
-	 * @extends browser.store.adapter.base
-	 */
-	return Store.extend({
-		"displayName" : "browser/store/adapter/session",
-
-		"storage": window.sessionStorage
-	});
-});
-
-/*
- * TroopJS jquery/resize
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Heavy inspiration from https://github.com/cowboy/jquery-resize.git
- */
-define('troopjs-jquery/resize',[ "jquery" ], function ResizeModule($) {
-	
-
-	var NULL = null;
-	var RESIZE = "resize";
-	var W = "w";
-	var H = "h";
-	var $ELEMENTS = $([]);
-	var INTERVAL = NULL;
-
-	/*
-	 * Iterator
-	 * @param index
-	 * @param me
-	 */
-	function iterator(index, me) {
-		// Get data
-		var $data = $.data(me);
-
-		// Get reference to $me
-		var $me = $(me);
-
-		// Get previous width and height
-		var w = $me.width();
-		var h = $me.height();
-
-		// Check if width or height has changed since last check
-		if (w !== $data[W] || h !== $data[H]) {
-			$data[W] = w;
-			$data[H] = h;
-
-			$me.trigger(RESIZE, [ w, h ]);
-		}
-	}
-
-	/*
-	 * Internal interval
-	 */
-	function interval() {
-		$ELEMENTS.each(iterator);
-	}
-
-	/**
-	 * jQuery event fired whenever element dimension changes using an interval.
-	 * @member $
-	 * @event resize
-	 */
-	$.event.special[RESIZE] = {
-		"setup" : function onResizeSetup() {
-			var me = this;
-
-			// window has a native resize event, exit fast
-			if ($.isWindow(me)) {
-				return false;
-			}
-
-			// Store data
-			var $data = $.data(me, RESIZE, {});
-
-			// Get reference to $me
-			var $me = $(me);
-
-			// Initialize data
-			$data[W] = $me.width();
-			$data[H] = $me.height();
-
-			// Add to tracked collection
-			$ELEMENTS = $ELEMENTS.add(me);
-
-			// If this is the first element, start interval
-			if($ELEMENTS.length === 1) {
-				INTERVAL = setInterval(interval, 100);
-			}
-		},
-
-		"teardown" : function onResizeTeardown() {
-			var me = this;
-
-			// window has a native resize event, exit fast
-			if ($.isWindow(me)) {
-				return false;
-			}
-
-			// Remove data
-			$.removeData(me, RESIZE);
-
-			// Remove from tracked collection
-			$ELEMENTS = $ELEMENTS.not(me);
-
-			// If this is the last element, stop interval
-			if($ELEMENTS.length === 0 && INTERVAL !== NULL) {
-				clearInterval(INTERVAL);
-			}
-		}
-	};
-});
-
-/*
- * TroopJS jquery/dimensions
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-jquery/dimensions',[ "jquery", "./resize" ], function DimensionsModule($) {
-	
-
-	var NULL = null;
-	var DIMENSIONS = "dimensions";
-	var RESIZE = "resize." + DIMENSIONS;
-	var W = "w";
-	var H = "h";
-	var _W = "_" + W;
-	var _H = "_" + H;
-
-	/*
-	 * Internal comparator used for reverse sorting arrays
-	 */
-	function reverse(a, b) {
-		return b - a;
-	}
-
-	/*
-	 * Internal onResize handler
-	 */
-	function onResize() {
-		/*jshint validthis:true*/
-		var me = this;
-		var $me = $(me);
-		var width = $me.width();
-		var height = $me.height();
-
-		// Iterate all dimensions
-		$.each($.data(me, DIMENSIONS), function dimensionIterator(namespace, dimension) {
-			var w = dimension[W];
-			var h = dimension[H];
-			var _w;
-			var _h;
-			var i;
-
-			i = w.length;
-			_w = w[i - 1];
-			while(w[--i] < width) {
-				_w = w[i];
-			}
-
-			i = h.length;
-			_h = h[i - 1];
-			while(h[--i] < height) {
-				_h = h[i];
-			}
-
-			// If _w or _h has changed, update and trigger
-			if (_w !== dimension[_W] || _h !== dimension[_H]) {
-				dimension[_W] = _w;
-				dimension[_H] = _h;
-
-				$me.trigger(DIMENSIONS + "." + namespace, [ _w, _h ]);
-			}
-		});
-	}
-
-	/**
-	 * jQuery event fired ever since the element size meets the specified dimension.
-	 * @member $
-	 * @event dimensions
-	 */
-	$.event.special[DIMENSIONS] = {
-		setup : function onDimensionsSetup() {
-			$(this)
-				.bind(RESIZE, onResize)
-				.data(DIMENSIONS, {});
-		},
-
-		/*
-		 * Do something each time an event handler is bound to a particular element
-		 * @param handleObj (Object)
-		 */
-		add : function onDimensionsAdd(handleObj) {
-			var me = this;
-			var namespace = handleObj.namespace;
-			var dimension = {};
-			var w = dimension[W] = [];
-			var h = dimension[H] = [];
-			var re = /(w|h)(\d+)/g;
-			var matches;
-
-			while ((matches = re.exec(namespace)) !== NULL) {
-				dimension[matches[1]].push(parseInt(matches[2], 10));
-			}
-
-			w.sort(reverse);
-			h.sort(reverse);
-
-			$.data(me, DIMENSIONS)[namespace] = dimension;
-		},
-
-		/*
-		 * Do something each time an event handler is unbound from a particular element
-		 * @param handleObj (Object)
-		 */
-		remove : function onDimensionsRemove(handleObj) {
-			delete $.data(this, DIMENSIONS)[handleObj.namespace];
-		},
-
-		teardown : function onDimensionsTeardown() {
-			$(this)
-				.removeData(DIMENSIONS)
-				.unbind(RESIZE, onResize);
-		}
-	};
-});
-/*
- * TroopJS browser/dimensions/widget
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/dimensions/widget',[ "../component/widget", "troopjs-jquery/dimensions", "troopjs-jquery/resize" ], function DimensionsModule(Widget) {
-	
-
-	var UNDEFINED;
-	var $ELEMENT = "$element";
-	var DIMENSIONS = "dimensions";
-
-	function onDimensions($event, w, h) {
-		var me = $event.data;
-
-		me.publish(me.displayName, w, h, $event);
-	}
-
-	/**
-	 * A dimension-aware widget that publish dimension change event.
-	 * @class browser.dimensions.widget
-	 */
-	return Widget.extend(function DimensionsWidget($element, displayName, dimensions) {
-		if (dimensions === UNDEFINED) {
-			throw new Error("No dimensions provided");
-		}
-
-		this[DIMENSIONS] = dimensions;
-	}, {
-		"displayName" : "browser/dimensions/widget",
-
-		"sig/initialize" : function initialize() {
-			var me = this;
-
-			me[$ELEMENT].on(DIMENSIONS + "." + me[DIMENSIONS], me, onDimensions);
-		},
-
-		"sig/start" : function start() {
-			this[$ELEMENT].trigger("resize." + DIMENSIONS);
-		},
-
-		"sig/finalize" : function finalize() {
-			var me = this;
-
-			me[$ELEMENT].off(DIMENSIONS + "." + me[DIMENSIONS], onDimensions);
-		}
-	});
-});
-/*
- * TroopJS data/ajax/service
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-data/ajax/service',[
+define('troopjs-net/ajax/service',[
 	"troopjs-core/component/service",
 	"jquery",
 	"troopjs-utils/merge"
 ], function (Service, $, merge) {
-	
+	"use strict";
 
+	/**
+	 * Provides ajax as a service
+	 * @class net.ajax.service
+	 * @extends core.component.service
+	 */
 	return Service.extend({
-		"displayName" : "data/ajax/service",
+		"displayName" : "net/ajax/service",
 
+		/**
+		 * Make ajax request.
+		 * @event
+		 * @param settings
+		 */
 		"hub/ajax" : function ajax(settings) {
 			// Request
 			return $.ajax(merge.call({
@@ -4883,7 +3980,7 @@ define('troopjs-data/ajax/service',[
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/cache/component',[ "troopjs-core/component/base", "poly/object", "poly/array" ], function CacheModule(Component) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var TRUE = true;
@@ -5159,6 +4256,7 @@ define('troopjs-data/cache/component',[ "troopjs-core/component/base", "poly/obj
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/cache/service',[ "troopjs-core/component/service" ], function CacheServiceModule(Service) {
+	"use strict";
 
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
@@ -5257,8 +4355,8 @@ define('troopjs-data/cache/service',[ "troopjs-core/component/service" ], functi
  * TroopJS data/query/component
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-data/query/component',[ "troopjs-core/component/base" ], function QueryModule(Component) {
-	
+define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function QueryModule(Base) {
+	"use strict";
 
 	var UNDEFINED;
 	var TRUE = true;
@@ -5290,9 +4388,9 @@ define('troopjs-data/query/component',[ "troopjs-core/component/base" ], functio
 	/**
 	 * Component who understands the ubiquitous data query string format.
 	 * @class data.query.component
-	 * @extends core.component.base
+	 * @extends core.mixin.base
 	 */
-	return Component.extend(function QueryComponent(query) {
+	return Base.extend(function QueryComponent(query) {
 		var me = this;
 
 		if (query !== UNDEFINED) {
@@ -5638,7 +4736,7 @@ define('troopjs-data/query/component',[ "troopjs-core/component/base" ], functio
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-data/query/service',[ "module", "troopjs-core/component/service", "./component", "troopjs-utils/merge", "when", "when/apply" ], function QueryServiceModule(module, Service, Query, merge, when, apply) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
@@ -5862,43 +4960,11 @@ define('troopjs-data/query/service',[ "module", "troopjs-core/component/service"
 });
 
 /*
- * TroopJS data/component/widget
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], function WidgetModule(Widget) {
-	
-
-	var ARRAY_PUSH = Array.prototype.push;
-
-	/**
-	 * Widget that provides the data query api.
-	 * @class data.component.widget
-	 * @extends browser.component.widget
-	 */
-	return Widget.extend({
-		"displayName" : "data/component/widget",
-
-		/**
-		 * Issues publish on query topic
-		 * @returns {Promise} of query result(s)
-		 */
-		"query" : function query() {
-			var me = this;
-			var args = [ "query" ];
-
-			ARRAY_PUSH.apply(args, arguments);
-
-			return me.publish.apply(me, args);
-		}
-	});
-});
-
-/*
 * TroopJS jquery/noconflict
 * @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
 */
 define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
-	
+	"use strict";
 
 	return $.noConflict(true);
 });
@@ -5908,7 +4974,7 @@ define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
-	
+	"use strict";
 
 	var RE = /(.+?)#(.+)$/;
 	var CONTEXTS = require.s.contexts;
@@ -5942,7 +5008,7 @@ define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
 * @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
 */
 define('troopjs-requirejs/shadow',[ "text" ], function (text) {
-	
+	"use strict";
 
 	var UNDEFINED;
 	var EXPORTS = "exports";
@@ -6039,5 +5105,117 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 	};
 });
 
-define('troopjs/version',[],function () { return "3.0.0-1"; });
-define(['troopjs/version'], function (main) { return main; });
+/*
+ * TroopJS utils/select
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-utils/select',[],function SelectModule() {
+	"use strict";
+
+	var UNDEFINED;
+	var FALSE = false;
+	var PERIOD = ".";
+	var LEFT_BRACKET = "[";
+	var RIGHT_BRACKET = "]";
+	var SINGLE_QUOTE = "'";
+	var DOUBLE_QUOTE = "\"";
+
+	return function select(query) {
+		var node = this;
+		var c;
+		var m;
+		var i;
+		var length;
+		var skip = FALSE;
+
+		for (i = m = 0, length = query.length; i < length && node !== UNDEFINED; i++) {
+			switch(c = query.charAt(i)) {
+				case PERIOD:
+					if (skip === FALSE && i > m) {
+						node = node[query.substring(m, i)];
+						m = i + 1;
+					}
+					break;
+
+				case LEFT_BRACKET:
+					if (skip === FALSE) {
+						skip = LEFT_BRACKET;
+						m = i + 1;
+					}
+					break;
+
+				case RIGHT_BRACKET:
+					if (skip === LEFT_BRACKET && i > m) {
+						node = node[query.substring(m, i)];
+						skip = FALSE;
+						m = i + 2;
+					}
+					break;
+
+				case DOUBLE_QUOTE:
+				case SINGLE_QUOTE:
+					if (skip === c && i > m) {
+						node = node[query.substring(m, i)];
+						skip = FALSE;
+						m = i + 2;
+					}
+					else {
+						skip = c;
+						m = i + 1;
+					}
+					break;
+			}
+		}
+
+		if (i > m) {
+			node = node[query.substring(m, i)];
+		}
+
+		return node;
+	}
+});
+/*
+* TroopJS requirejs/json
+* @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+*/
+define('troopjs-requirejs/json',[
+	"text",
+	"troopjs-utils/select",
+	"poly/json"
+], function (text, select) {
+	"use strict";
+
+	var UNDEFINED;
+	var NULL = null;
+	var PATTERN = /(.+?)#(.+)$/;
+	var buildMap = {};
+
+	return {
+		"load": function (name, req, load, config) {
+			var key = name;
+			var query = "";
+			var matches;
+
+			if ((matches = PATTERN.exec(name)) !== NULL) {
+				name = matches[1];
+				query = matches[2];
+			}
+
+			text.get(req.toUrl(name), function (source) {
+				var compiled = select.call(JSON.parse(source), query);
+
+				if (config.isBuild) {
+					buildMap[key] = compiled;
+				}
+
+				load(compiled);
+			}, load.error);
+		},
+
+		write : function (pluginName, moduleName, write) {
+			if (moduleName in buildMap) {
+				write.asModule(pluginName + "!" + moduleName, JSON.stringify(buildMap[moduleName]));
+			}
+		}
+	};
+});

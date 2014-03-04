@@ -22,8 +22,9 @@
 define([
 	&quot;module&quot;,
 	&quot;troopjs-utils/unique&quot;,
+	&quot;./decorator&quot;,
 	&quot;poly/object&quot;
-], function FactoryModule(module, unique) {
+], function FactoryModule(module, unique, Decorator) {
 	&quot;use strict&quot;;
 
 <span id='composer-mixin-factory'>	/**
@@ -110,10 +111,6 @@ define([
 	var EXTEND = &quot;extend&quot;;
 	var CREATE = &quot;create&quot;;
 	var DECORATE = &quot;decorate&quot;;
-	var DECORATED = &quot;decorated&quot;;
-	var BEFORE = &quot;before&quot;;
-	var AFTER = &quot;after&quot;;
-	var AROUND = &quot;around&quot;;
 	var CONSTRUCTOR = &quot;constructor&quot;;
 	var CONSTRUCTORS = &quot;constructors&quot;;
 	var SPECIALS = &quot;specials&quot;;
@@ -124,10 +121,8 @@ define([
 	var TYPES = &quot;types&quot;;
 	var NAME = &quot;name&quot;;
 	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/([-_./\d\w\s]+)$/;
-	var NOOP = function noop () {};
 	var PRAGMAS = module.config().pragmas || [];
 	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
-	var factoryDescriptors = {};
 
 <span id='composer-mixin-factory-static-method-create'>	/**
 </span>	 * Sub classing from this object, and to instantiate it immediately.
@@ -155,111 +150,6 @@ define([
 		return Factory.apply(null, args);
 	}
 
-<span id='composer-mixin-factory-Decorator'>	/**
-</span>	 * Creates new Decorator
-	 * @private
-	 * @class composer.mixin.factory.Decorator
-	 * @param {Function} decorated Original function
-	 * @param {Function} decorate Function to re-write descriptor
-	 */
-	function Decorator(decorated, decorate) {
-		var descriptor = {};
-
-		// Add DECORATED to descriptor
-		descriptor[DECORATED] = {
-			&quot;value&quot; : decorated
-		};
-
-		// Add DECORATE to descriptor
-		descriptor[DECORATE] = {
-			&quot;value&quot; : decorate
-		};
-
-		// Define properties
-		Object.defineProperties(this, descriptor);
-	}
-
-<span id='composer-mixin-factory-static-method-before'>	/**
-</span>	 * Create a decorator function property to override the original one from prototype, that runs before
-	 * the start of the former.
-	 *
-	 * @member composer.mixin.factory
-	 * @static
-	 * @param {Function} decorated The decorator function which receives the same arguments as with the original.
-	 * @returns {composer.mixin.factory.Decorator}
-	 */
-	function before(decorated) {
-		return new Decorator(decorated, before[DECORATE]);
-	}
-
-	before[DECORATE] = function (descriptor) {
-		var previous = this[DECORATED];
-		var next = descriptor[VALUE];
-
-		descriptor[VALUE] = next
-			? function () {
-			var me = this;
-			var args = arguments;
-			return next.apply(me, args = previous.apply(me, args) || args);
-		}
-			: previous;
-
-		return descriptor;
-	};
-
-<span id='composer-mixin-factory-static-method-after'>	/**
-</span>	 * Create a decorator function property to override the original one from prototype, that runs after
-	 * the completion of the former.
-	 *
-	 * @member composer.mixin.factory
-	 * @static
-	 * @param {Function} decorated The decorator function which receives the return value from the original.
-	 * @returns {composer.mixin.factory.Decorator}
-	 */
-	function after(decorated) {
-		return new Decorator(decorated, after[DECORATE]);
-	}
-
-	after[DECORATE] = function (descriptor) {
-		var previous = descriptor[VALUE];
-		var next = this[DECORATED];
-
-
-		descriptor[VALUE] = previous
-			? function () {
-				var me = this;
-				var args = arguments;
-				return next.apply(me, args = previous.apply(me, args) || args);
-			}
-			: next;
-
-		return descriptor;
-	};
-
-<span id='composer-mixin-factory-static-method-around'>	/**
-</span>	 * Create a decorator function property to override the original one from prototype, that get passed the original
-	 * function, eventually reach the maximum flexibility on execution flow.
-	 *
-	 * @member composer.mixin.factory
-	 * @static
-	 * @param {Function} decorated The decorator function which receives the original function as parameter.
-	 * @returns {composer.mixin.factory.Decorator}
-	 */
-	function around(decorated) {
-		return new Decorator(decorated, around[DECORATE]);
-	}
-
-<span id='composer-mixin-factory-Decorator-method-around[DECORATE]'>	/**
-</span>	 *
-	 * @param {Function} descriptor
-	 * @returns {*}
-	 */
-	around[DECORATE] = function (descriptor) {
-		descriptor[VALUE] = this[DECORATED](descriptor[VALUE] || NOOP);
-
-		return descriptor;
-	};
-
 	/*
 	 * Returns a string representation of this constructor
 	 * @member composer.mixin.factory
@@ -274,7 +164,6 @@ define([
 			? prototype[DISPLAYNAME]
 			: OBJECT_TOSTRING.call(me);
 	}
-
 
 <span id='composer-mixin-factory-method-Factory'>	/**
 </span>	 * The class composer function.
@@ -391,7 +280,7 @@ define([
 							&quot;enumerable&quot; : true,
 							&quot;configurable&quot; : true,
 							&quot;writable&quot; : true
-						})
+						}, name, prototypeDescriptors)
 						: descriptor;
 				}
 			}
@@ -499,29 +388,11 @@ define([
 	}
 
 	// Add CREATE to factoryDescriptors
-	factoryDescriptors[CREATE] = {
-		&quot;value&quot; : function FactoryCreate() {
+	Object.defineProperty(Factory, CREATE, {
+		&quot;value&quot;: function FactoryCreate() {
 			return Factory.apply(null, arguments)();
 		}
-	};
-
-	// Add BEFORE to factoryDescriptors
-	factoryDescriptors[BEFORE] = {
-		&quot;value&quot; : before
-	};
-
-	// Add AFTER to factoryDescriptors
-	factoryDescriptors[AFTER] = {
-		&quot;value&quot; : after
-	};
-
-	// Add AROUND to factoryDescriptors
-	factoryDescriptors[AROUND] = {
-		&quot;value&quot; : around
-	};
-
-	// Define factoryDescriptors on Factory
-	Object.defineProperties(Factory, factoryDescriptors);
+	});
 
 	// Return Factory
 	return Factory;

@@ -20,44 +20,56 @@
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
 define([
-	&quot;jquery&quot;,
 	&quot;troopjs-core/component/gadget&quot;,
-	&quot;troopjs-utils/merge&quot;,
+	&quot;troopjs-composer/decorator/before&quot;,
+	&quot;troopjs-composer/decorator/after&quot;,
 	&quot;./runner/sequence&quot;,
+	&quot;jquery&quot;,
+	&quot;when&quot;,
+	&quot;troopjs-utils/merge&quot;,
 	&quot;../loom/config&quot;,
 	&quot;../loom/weave&quot;,
 	&quot;../loom/unweave&quot;,
 	&quot;troopjs-jquery/destroy&quot;
-], function WidgetModule($, Gadget, merge, sequence, LOOM_CONF, weave, unweave) {
+], function WidgetModule(Gadget, before, after, sequence, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
 	&quot;use strict&quot;;
 
+<span id='browser-component-widget'>	/**
+</span>	 * Base DOM component attached to an element, that takes care of widget instantiation.
+	 * @class browser.component.widget
+	 * @extends core.component.gadget
+	 */
+
 	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var ARRAY_PUSH = Array.prototype.push;
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var $GET = $.fn.get;
 	var TYPEOF_FUNCTION = &quot;function&quot;;
 	var $ELEMENT = &quot;$element&quot;;
-	var $HANDLER = &quot;$handler&quot;;
+	var MODIFIED = &quot;modified&quot;;
+	var PROXY = &quot;proxy&quot;;
 	var DOM = &quot;dom&quot;;
 	var FEATURES = &quot;features&quot;;
-	var VALUE = &quot;value&quot;;
 	var NAME = &quot;name&quot;;
-	var TYPES = &quot;types&quot;;
-	var LENGTH = &quot;length&quot;;
+	var VALUE = &quot;value&quot;;
+	var TYPE = &quot;type&quot;;
+	var RUNNER = &quot;runner&quot;;
 	var $WEFT = LOOM_CONF[&quot;$weft&quot;];
 	var SELECTOR_WEAVE = &quot;[&quot; + LOOM_CONF[&quot;weave&quot;] + &quot;]&quot;;
 	var SELECTOR_WOVEN = &quot;[&quot; + LOOM_CONF[&quot;woven&quot;] + &quot;]&quot;;
+	var RE = new RegExp(&quot;^&quot; + DOM + &quot;/(.+)&quot;);
 
-
-	/*
-	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
+<span id='browser-component-widget-method-S-render'>	/**
+</span>	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
 	 * @private
 	 * @param $fn jQuery method
 	 * @returns {Function} proxied render
 	 */
 	function $render($fn) {
-		/*
-		 * Renders contents into element
+<span id='browser-component-widget-method-render'>		/**
+</span>		 * Renders contents into element
 		 * @private
 		 * @param {Function|String} contents Template/String to render
 		 * @param {...*} [args] Template arguments
@@ -68,7 +80,7 @@ define([
 			var me = this;
 
 			// Call render with contents (or result of contents if it's a function)
-			return weave.call($fn.call(me[$ELEMENT],
+			return loom_weave.call($fn.call(me[$ELEMENT],
 				typeof contents === TYPEOF_FUNCTION ? contents.apply(me, ARRAY_SLICE.call(arguments, 1)) : contents
 			).find(SELECTOR_WEAVE));
 		}
@@ -76,11 +88,25 @@ define([
 		return render;
 	}
 
-<span id='browser-component-widget'>	/**
-</span>	 * Base DOM component attached to an element, that takes care of widget instantiation.
-	 * @class browser.component.widget
+<span id='browser-component-widget-method-set_modified'>	/**
+</span>	 * Sets MODIFIED on handlers
+	 * @private
+	 * @param type {String}
 	 */
-	return Gadget.extend(function ($element, displayName) {
+	function set_modified(type) {
+		if (RE.test(type)) {
+			// Set modified
+			this.handlers[type][MODIFIED] = new Date().getTime();
+		}
+	}
+
+<span id='browser-component-widget-method-constructor'>	/**
+</span>	 * Creates a new widget
+	 * @param $element {jQuery}
+	 * @param displayName {String}
+	 * @constructor
+	 */
+	return Gadget.extend(function Widget($element, displayName) {
 		var me = this;
 		var $get;
 
@@ -106,27 +132,6 @@ define([
 		// Store $ELEMENT
 		me[$ELEMENT] = $element;
 
-		/*
-		 * Handles DOM events by emitting them
-		 * @private
-		 * @param {jQuery.Event} $event jQuery Event
-		 * @param {...*} [args] Additional handler arguments
-		 * @returns {*} Result from last executed handler
-		 */
-		me[$HANDLER] = function $handler($event, args) {
-			// Redefine args
-			args = [ {
-				&quot;type&quot; : &quot;dom/&quot; + $event.type,
-				&quot;runner&quot; : sequence
-			} ];
-
-			// Push original arguments on args
-			ARRAY_PUSH.apply(args, arguments);
-
-			// Return result of emit
-			return me.emit.apply(me, args);
-		};
-
 		if (displayName !== UNDEFINED) {
 			me.displayName = displayName;
 		}
@@ -136,49 +141,53 @@ define([
 
 		&quot;sig/initialize&quot; : function onInitialize() {
 			var me = this;
-			var $element = me[$ELEMENT];
-			var $handler = me[$HANDLER];
-			var special;
-			var specials;
-			var i;
-			var iMax;
 
-			// Make sure we have DOM specials
-			if ((specials = me.constructor.specials[DOM]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
-					special = specials[i];
+			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
+				return me.on(special[NAME], special[VALUE], special[FEATURES]);
+			});
+		},
 
-					// Add special to emitter
-					me.on(special[NAME], special[VALUE], special[FEATURES]);
-				}
+<span id='browser-component-widget-method-on'>		/**
+</span>		 * @method
+		 * @inheritdoc
+		 */
+		&quot;on&quot;: after(set_modified),
 
-				// Bind $handler to $element
-				$element.on(specials[TYPES].join(&quot; &quot;), null, me, $handler);
+<span id='browser-component-widget-method-off'>		/**
+</span>		 * @method
+		 * @inheritdoc
+		 */
+		&quot;off&quot;: before(set_modified),
+
+		&quot;sig/setup&quot;: function onSetup(type, handlers) {
+			var me = this;
+			var matches;
+
+			if ((matches = RE.exec(type)) !== NULL) {
+				// $element.on handlers[PROXY]
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
+					// Redefine args
+					args = {};
+					args[TYPE] = type;
+					args[RUNNER] = sequence;
+					args = [ args];
+
+					// Push original arguments on args
+					ARRAY_PUSH.apply(args, arguments);
+
+					// Return result of emit
+					return me.emit.apply(me, args);
+				});
 			}
 		},
 
-		&quot;sig/finalize&quot; : function onFinalize() {
+		&quot;sig/teardown&quot;: function onTeardown(type, handlers) {
 			var me = this;
-			var $element = me[$ELEMENT];
-			var $handler = me[$HANDLER];
-			var special;
-			var specials;
-			var i;
-			var iMax;
+			var matches;
 
-			// Make sure we have DOM specials
-			if ((specials = me.constructor.specials[DOM]) !== UNDEFINED) {
-				// Iterate specials
-				for (i = 0, iMax = specials[LENGTH]; i &lt; iMax; i++) {
-					special = specials[i];
-
-					// Remove special from emitter
-					me.off(special[NAME], special[VALUE]);
-				}
-
-				// Unbind $handler from $element
-				$element.off(specials[TYPES].join(&quot; &quot;), null, $handler);
+			if ((matches = RE.exec(type)) !== NULL) {
+				// $element.off handlers[PROXY]
+				me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
 			}
 		},
 
@@ -186,19 +195,26 @@ define([
 			this[$ELEMENT].trigger(&quot;task&quot;, [ task ]);
 		},
 
+<span id='browser-component-widget-method-dom/destroy'>		/**
+</span>		 * Destroy DOM handler
+		 */
+		&quot;dom/destroy&quot; : function onDestroy() {
+			this.unweave();
+		},
+
 <span id='browser-component-widget-method-weave'>		/**
 </span>		 * Weaves all children of $element
 		 * @returns {Promise} from weave
 		 */
-		&quot;weave&quot; : function () {
-			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
+		&quot;weave&quot; : function weave() {
+			return loom_weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
 		},
 
 <span id='browser-component-widget-method-unweave'>		/**
 </span>		 * Unweaves all woven children widgets including the widget itself.
 		 * @returns {Promise} Promise of completeness of unweaving all widgets.
 		 */
-		&quot;unweave&quot; : function () {
+		&quot;unweave&quot; : function unweave() {
 			var woven = this[$ELEMENT].find(SELECTOR_WOVEN);
 
 			// Unweave myself only if I am woven.
@@ -206,14 +222,7 @@ define([
 				woven = woven.addBack();
 			}
 
-			return unweave.apply(woven, arguments);
-		},
-
-<span id='browser-component-widget-method-dom/destroy'>		/**
-</span>		 * Destroy DOM handler
-		 */
-		&quot;dom/destroy&quot; : function () {
-			this.unweave();
+			return loom_unweave.apply(woven, arguments);
 		},
 
 <span id='browser-component-widget-method-before'>		/**

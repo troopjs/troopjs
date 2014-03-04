@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">/*
+ * TroopJS composer/decorator/around
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define([ &quot;../mixin/decorator&quot; ], function AroundDecoratorModule(Decorator) {
+	&quot;use strict&quot;;
+
+	var VALUE = &quot;value&quot;;
+	var NOOP = function () {};
+
+<span id='composer-decorator-around'>	/**
+</span>	 * Create a decorator that is to override an existing method.
+	 *
+	 * @class composer.decorator.around
+	 * @param {Function} func The decorator function which receives the original function as parameter and is supposed to
+	 * return a function that is to replace the original.
+	 * @returns {composer.mixin.decorator}
+	 */
+	return function around(func) {
+		return new Decorator(function (descriptor) {
+			descriptor[VALUE] = func(descriptor[VALUE] || NOOP);
+			return descriptor;
+		});
+	}
+});
+</pre>
+</body>
+</html>

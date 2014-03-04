@@ -119,33 +119,69 @@ buster.testCase("troopjs-browser/component/widget", function (run) {
 					}
 				},
 
-				"dom event handlers": function() {
+				"dom event handler - declaritive": function() {
 					// See foo-dom-event.js
-					var $el = this.$el.filter(".foo-dom-event");
+					var me = this;
+					var $el = me.$el.filter(".foo-dom-event");
 					var $btn;
 					var $txt;
-					var spy = this.spy();
-
-					function dispatch() {
-						// Trigger click with two arguments.
-						$btn.trigger("click", ["foo", "bar"]);
-						// Trigger keydown with arbitary object.
-						$txt.trigger("keydown", { "foo": "bar"});
-					}
+					var spy = me.spy();
 
 					return weave.call($el, spy).then(function() {
 						$btn = $el.find("input[type='button']");
 						$txt = $el.find("input[type='text']");
-						dispatch();
 
+						// Assert trigger click with two arguments.
+						$btn.trigger("click", ["foo", "bar"]);
 						// Assert all matched handlers are invoked.
-						assert.equals(spy.callCount, 4);
+						assert.equals(spy.callCount, 7);
+
+						// Assert trigger keydown with arbitary object.
+						spy.reset();
+						$txt.trigger("keydown", { "foo": "bar"});
+						assert.calledOnce(spy);
 
 						unweave.call($el).then(function() {
-							dispatch();
-							// Assert all listeners are removed after widget stopped, no more calls.
-							assert.equals(spy.callCount, 4);
+
+							// Assert all DOM listeners are removed after widget stopped.
+							spy.reset();
+							$btn.trigger("click");
+							$btn.trigger("keydown");
+							refute.called(spy);
 						});
+					});
+				},
+
+				"dom event handler - dynamic": function() {
+					// See foo-dom-event.js
+					var me = this;
+					var $el = me.$el.filter(".foo-dom-event");
+					var $btn;
+					var $txt;
+					var spy = me.spy();
+
+					var foo = Widget($el);
+					return foo.start().then(function() {
+						$btn = $el.find("input[type='button']");
+						$txt = $el.find("input[type='text']");
+
+						foo.on("dom/click", function() {
+							spy();
+						});
+
+						var handlers = foo.handlers['dom/click'];
+						var modified;
+						assert((modified = handlers.modified));
+
+						$btn.trigger("click", ["foo", "bar"]);
+
+						assert.called(spy);
+
+						foo.on("dom/click", function() {}, ".btn");
+
+						refute.equals(handlers.modified, modified, 'assert modified is updated');
+
+						return foo.stop();
 					});
 				},
 

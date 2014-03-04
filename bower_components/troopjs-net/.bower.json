@@ -1,0 +1,30 @@
+{
+  "name": "troopjs-net",
+  "version": "0.0.2",
+  "authors": [
+    "Mikael Karon"
+  ],
+  "description": "TroopJS network module",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ],
+  "dependencies": {
+    "troopjs-core": "~3",
+    "troopjs-utils": "~2",
+    "jquery": ">=1.7.0 <2.1.0"
+  },
+  "homepage": "https://github.com/troopjs/troopjs-net",
+  "_release": "0.0.2",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.0.2",
+    "commit": "4d311329f71cfaf3adc3b75c38021e43f9d59aac"
+  },
+  "_source": "git://github.com/troopjs/troopjs-net.git",
+  "_target": "*",
+  "_originalSource": "troopjs-net"
+}
