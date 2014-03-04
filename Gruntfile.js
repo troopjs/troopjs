@@ -301,7 +301,7 @@ module.exports = function(grunt) {
 				else {
 					args.push("git-dist:bundles:tag");
 				}
-				args.push("git-dist:bunles:push");
+				args.push("git-dist:bundles:push");
 				break;
 
 			default:
