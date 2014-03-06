@@ -7,6 +7,7 @@
 	"--tags": "jsduck/tags.rb",
 	"--footer": "<a href='https://github.com/troopjs'><b>TroopJS</b></a> under <a href='http://troopjs.mit-license.org/'>MIT license</a> ",
 	"--external": [
-		"Promise"
+		"Promise",
+		"jQuery"
 	]
 }
