@@ -45,7 +45,8 @@
 		}
 	],
 	"scripts": {
-		"test": "grunt test"
+		"test": "grunt test",
+		"postinstall": "gem install jsduck-troopjs"
 	},
 	"devDependencies": {
 		"grunt": "~0.4",
