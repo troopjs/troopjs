@@ -197,7 +197,7 @@ module.exports = function JSDuckTask(grunt) {
 		var done = this.async();
 		grunt.log.subhead("Running JSDuck...");
 		var jsduck = grunt.util.spawn({
-			cmd: "jsduck",
+			cmd: "jsduck-troopjs",
 			args: ["--config", CONFIG_FILE]
 		}, function(error, result, code) {
 
