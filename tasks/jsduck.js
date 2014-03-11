@@ -146,7 +146,7 @@ module.exports = function JSDuckTask(grunt) {
 			(function config_json() {
 
 				// Grabbing sources from sub modules.
-				var sources = grunt.file.expand("bower_components/troopjs-*");
+				var sources = grunt.file.expand([ "jsduck.js", "bower_components/troopjs-*" ]);
 
 				// Excludes non-source files from JSDuck run.
 				var excludes = _.reduce(sources, function(excludes, module_path) {
