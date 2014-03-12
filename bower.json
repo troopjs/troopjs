@@ -1,28 +1,28 @@
 {
-  "name": "troopjs",
-  "version": "3.0.0-3",
-  "authors": [
-    {
-      "name": "Mikael Karon",
-      "email": "mikael@karon.se"
-    }
-  ],
-  "description": "Meta package wiring together all TroopJS submodules",
-  "license": "http://troopjs.mit-license.org/",
-  "ignore": [
-    "**/.*",
-    "node_modules"
-  ],
-  "dependencies": {
-    "troopjs-composer": "*",
-    "troopjs-core": "*",
-    "troopjs-browser": "*",
-    "troopjs-net": "*",
-    "troopjs-data": "*",
-    "troopjs-jquery": "*",
-    "troopjs-requirejs": "*"
-  },
-  "devDependencies": {
-    "requirejs-text": "~2"
-  }
+	"name": "troopjs",
+	"version": "3.0.0-4",
+	"authors": [
+		{
+			"name": "Mikael Karon",
+			"email": "mikael@karon.se"
+		}
+	],
+	"description": "Meta package wiring together all TroopJS submodules",
+	"license": "http://troopjs.mit-license.org/",
+	"ignore": [
+		"**/.*",
+		"node_modules"
+	],
+	"dependencies": {
+		"troopjs-composer": "*",
+		"troopjs-core": "*",
+		"troopjs-browser": "*",
+		"troopjs-net": "*",
+		"troopjs-data": "*",
+		"troopjs-jquery": "*",
+		"troopjs-requirejs": "*"
+	},
+	"devDependencies": {
+		"requirejs-text": "~2"
+	}
 }
