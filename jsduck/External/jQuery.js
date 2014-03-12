@@ -1,9 +1,13 @@
 /**
- * Represents the [jQuery](http://jquery.com) object
+ * Represents the [jQuery](http://jquery.com) object and all TroopJS extensions:
+ *
+ *  - custom selector expressions (via properties)
+ *  - plugins methods
+ *  - custom events
+ *
  * @class $
  * @alternateClassName jQuery
  * @extends External
- * @singleton
  */
 
 /**
@@ -12,22 +16,4 @@
  * @param {String} selector A string containing a selector expression
  * @param {HTMLElement|jQuery} context A DOM Element, Document, or jQuery to use as context
  * @returns {jQuery}
- */
-
-/**
- * jQuery events
- * @class $.event
- * @singleton
- */
-
-/**
- * jQuery expressions
- * @class $.expr
- * @singleton
- */
-
-/**
- * jQuery methods
- * @class $.fn
- * @singleton
  */
