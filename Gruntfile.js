@@ -75,7 +75,7 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|test|tasks|guides|jsduck|(?:version|Gruntfile)\.js|(?:package|bower)\.json)/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|test|tasks|guides|jsduck|Gruntfile\.js|(?:package|bower)\.json)/,
 				"packages" : [{
 					"name": "text",
 					"location": "empty:"
@@ -118,7 +118,7 @@ module.exports = function(grunt) {
 					"location" : "bower_components/troopjs-requirejs"
 				}],
 				"rawText" : {
-					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
+					"version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
 				}
 			},
 
