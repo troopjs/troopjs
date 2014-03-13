@@ -15,12 +15,19 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS utils/merge module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;poly/object&quot; ], function MergeModule() {
 	&quot;use strict&quot;;
+
+<span id='utils-merge'>	/**
+</span>	 * Function that calls on an Object, to augments this object with enumerable properties from the source objects,
+	 * subsequent sources will overwrite property assignments of previous sources on primitive values,
+	 * while object and array values will get merged recursively.
+	 * @class utils.merge
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var NULL = null;
@@ -32,13 +39,10 @@ define([ &quot;poly/object&quot; ], function MergeModule() {
 	var TOSTRING_ARRAY = OBJECT_TOSTRING.call(ARRAY_PROTO);
 	var LENGTH = &quot;length&quot;;
 
-<span id='utils-merge'>	/**
-</span>	 * Function that calls on an Object, to augments this object with enumerable properties from the source objects,
-	 * subsequent sources will overwrite property assignments of previous sources on primitive values,
-	 * while object and array values will get merged recursively.
-	 * @class utils.merge
+<span id='utils-merge-method-constructor'>	/**
+</span>	 * @method constructor
 	 * @param {...Object} [source] One or more source objects.
-	 * @return {Object} this
+	 * @return {*} Merged object
 	 */
 	return function merge(source) {
 		var target = this;

@@ -15,20 +15,23 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS composer/decorator/after
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;../mixin/decorator&quot; ], function AfterDecoratorModule(Decorator) {
 	&quot;use strict&quot;;
 
+<span id='composer-decorator-after'>	/**
+</span>	 * @class composer.decorator.after
+	 * @singleton
+	 */
+
 	var UNDEFINED;
 	var VALUE = &quot;value&quot;;
 
-<span id='composer-decorator-after'>	/**
+<span id='composer-decorator-after-method-constructor'>	/**
 </span>	 * Create a decorator method that is to add code that will be executed after the original method.
-	 *
-	 * @class composer.decorator.after
+	 * @method constructor
 	 * @param {Function} func The decorator function which receives the arguments of the original, it's return value (if
 	 * not undefined) will be the used as the new return value.
 	 * @returns {composer.mixin.decorator}

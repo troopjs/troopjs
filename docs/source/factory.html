@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS composer/mixin/factory
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;module&quot;,
@@ -97,6 +96,7 @@ define([
 	 *  		instance.evenMore();
 	 *
 	 * @class composer.mixin.factory
+	 * @singleton
 	 */
 
 	var PROTOTYPE = &quot;prototype&quot;;
@@ -120,40 +120,35 @@ define([
 	var TYPE = &quot;type&quot;;
 	var TYPES = &quot;types&quot;;
 	var NAME = &quot;name&quot;;
-	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/([-_./\d\w\s]+)$/;
+	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/(.+)/;
 	var PRAGMAS = module.config().pragmas || [];
 	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
 
-<span id='composer-mixin-factory-static-method-create'>	/**
-</span>	 * Sub classing from this object, and to instantiate it immediately.
-	 * @member composer.mixin.factory
-	 * @static
-	 * @inheritdoc composer.mixin.factory#Factory
-	 * @returns {Object} Instance of this class.
+<span id='composer-mixin-factory-method-create'>	/**
+</span>	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
+	 * @param {...Function|...Object} mixin One or more constructors or objects to be mixed in.
+	 * @returns {Object} Object instance created out of the mixin of constructors and objects.
 	 */
-	function create() {
+	function create(mixin) {
 		/*jshint validthis:true*/
 		return extend.apply(this, arguments)();
 	}
 
-<span id='composer-mixin-factory-static-method-extend'>	/**
-</span>	 * Sub classing from this object.
-	 * @member composer.mixin.factory
-	 * @static
-	 * @inheritdoc composer.mixin.factory#Factory
+<span id='composer-mixin-factory-method-extend'>	/**
+</span>	 * Extend this constructor from multiple others constructors/objects.
+	 * @param {...Function|...Object} mixin One or more constructors or objects to be mixed in.
 	 * @returns {Function} The extended subclass.
 	 */
-	function extend() {
+	function extend(mixin) {
 		/*jshint validthis:true*/
 		var args = [ this ];
 		ARRAY_PUSH.apply(args, arguments);
 		return Factory.apply(null, args);
 	}
 
-	/*
-	 * Returns a string representation of this constructor
-	 * @member composer.mixin.factory
-	 * @static
+<span id='ConstructorToString'>	/**
+</span>	 * Returns a string representation of this constructor
+	 * @ignore
 	 * @returns {String}
 	 */
 	function ConstructorToString() {
@@ -165,16 +160,14 @@ define([
 			: OBJECT_TOSTRING.call(me);
 	}
 
-<span id='composer-mixin-factory-method-Factory'>	/**
-</span>	 * The class composer function.
+<span id='composer-mixin-factory-method-constructor'>	/**
+</span>	 * Create a new constructor or to extend an existing one from multiple others constructors/objects.
 	 * @member composer.mixin.factory
-	 * @method Factory
-	 * @constructor
-	 * @param {Function...} constructor(s) One or more function(s) to be called upon.
-	 * @param {Object} spec The object specification that describes properties.
-	 * @returns {Function} The constructor(class).
+	 * @method constructor
+	 * @param {...Function|...Object} mixin One or more constructors or objects to be mixed in.
+	 * @returns {Function} The constructor (class).
 	 */
-	function Factory () {
+	function Factory (mixin) {
 		var special;
 		var specials = [];
 		var specialsLength;
@@ -261,7 +254,11 @@ define([
 					special[FEATURES] = matches[2];
 					special[TYPE] = type = matches[3];
 					special[NAME] = group + &quot;/&quot; + type;
-					special[VALUE] = arg[nameRaw];
+
+					// If the VALUE of the special does not duck-type Function, we should not store it
+					if (OBJECT_TOSTRING.call(special[VALUE] = arg[nameRaw]) !== &quot;[object Function]&quot;) {
+						continue;
+					}
 
 					// Unshift special onto specials
 					ARRAY_UNSHIFT.call(specials, special);
@@ -394,7 +391,6 @@ define([
 		}
 	});
 
-	// Return Factory
 	return Factory;
 });
 </pre>

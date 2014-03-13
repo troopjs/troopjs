@@ -15,16 +15,18 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/logger/pubsub
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;../component/service&quot;, &quot;troopjs-utils/merge&quot;, &quot;when&quot; ], function logger(Service, merge, when) {
+define([
+	&quot;../component/service&quot;,
+	&quot;troopjs-utils/merge&quot;,
+	&quot;when&quot;
+], function logger(Service, merge, when) {
 	&quot;use strict&quot;;
 
 <span id='core-logger-service'>	/**
 </span>	 * Provides logging as a service, with appender support.
-	 * @param {Function...} appenders One or more message appender(s).
 	 * @class core.logger.service
 	 * @extends core.component.service
 	 */
@@ -86,64 +88,133 @@ define([ &quot;../component/service&quot;, &quot;troopjs-utils/merge&quot;, &quo
 		}
 	}
 
-	return Service.extend(function LoggerService() {
+<span id='core-logger-service-event-hub-logger-log'>	/**
+</span>	 * Logger `log` event
+	 * @localdoc Triggered when a component wants to record a `log` message
+	 * @event hub/logger/log
+	 * @param {String} msg Message
+	 */
+
+
+<span id='core-logger-service-event-hub-logger-warn'>	/**
+</span>	 * Logger `warn` event
+	 * @localdoc Triggered when a component wants to record a `warn` message
+	 * @event hub/logger/warn
+	 * @param {String} msg Message
+	 */
+
+<span id='core-logger-service-event-hub-logger-debug'>	/**
+</span>	 * Logger `debug` event
+	 * @localdoc Triggered when a component wants to record a `debug` message
+	 * @event hub/logger/debug
+	 * @param {String} msg Message
+	 */
+
+<span id='core-logger-service-event-hub-logger-info'>	/**
+</span>	 * Logger `info` event
+	 * @localdoc Triggered when a component wants to record a `info` message
+	 * @event hub/logger/info
+	 * @param {String} msg Message
+	 */
+
+<span id='core-logger-service-event-hub-logger-error'>	/**
+</span>	 * Logger `error` event
+	 * @localdoc Triggered when a component wants to record a `error` message
+	 * @event hub/logger/error
+	 * @param {String} msg Message
+	 */
+
+<span id='core-logger-service-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {...Function} appender One or more message appender(s).
+	 */
+	return Service.extend(function LoggerService(appender) {
+<span id='core-logger-service-property-appenders'>		/**
+</span>		 * Log appenders
+		 * @private
+		 * @readonly
+		 * @property {...Function[]} appenders
+		 */
 		this[APPENDERS] = ARRAY_SLICE.call(arguments);
 	}, {
 		displayName : &quot;core/logger/service&quot;,
 
+<span id='core-logger-service-handler-sig-initialize'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc Forwards event to #appenders
+		 */
 		&quot;sig/initialize&quot; : function onInitialize() {
 			return forward.call(this, &quot;initialize&quot;, arguments);
 		},
+
+<span id='core-logger-service-handler-sig-start'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc #handler-sig/initialize
+		 */
 		&quot;sig/start&quot; : function onStart() {
 			return forward.call(this, &quot;start&quot;, arguments);
 		},
+
+<span id='core-logger-service-handler-sig-stop'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc #handler-sig/initialize
+		 */
 		&quot;sig/stop&quot; : function onStop() {
 			return forward.call(this, &quot;stop&quot;, arguments);
 		},
+
+<span id='core-logger-service-handler-sig-finalize'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc #handler-sig/initialize
+		 */
 		&quot;sig/finalize&quot; : function onFinalize() {
 			return forward.call(this, &quot;finalize&quot;, arguments);
 		},
 
-<span id='core-logger-service-event-hub/logger/log'>		/**
+<span id='core-logger-service-handler-hub-logger-log'>		/**
 </span>		 * Log a message on hub event.
-		 * @event
-		 * @param message
+		 * @handler
+		 * @inheritdoc #event-hub/logger/log
 		 */
 		&quot;hub/logger/log&quot; : function onLog(message) {
 			append.call(this, convert(&quot;log&quot;, message));
 		},
 
-<span id='core-logger-service-event-hub/logger/warn'>		/**
+<span id='core-logger-service-handler-hub-logger-warn'>		/**
 </span>		 * Log a warn on hub event.
-		 * @event
-		 * @param message
+		 * @handler
+		 * @inheritdoc #event-hub/logger/warn
 		 */
 		&quot;hub/logger/warn&quot; : function onWarn(message) {
 			append.call(this, convert(&quot;warn&quot;, message));
 		},
 
-<span id='core-logger-service-event-hub/logger/debug'>		/**
+<span id='core-logger-service-handler-hub-logger-debug'>		/**
 </span>		 * Log a debug on hub event.
-		 * @event
-		 * @param message
+		 * @handler
+		 * @inheritdoc #event-hub/logger/debug
 		 */
 		&quot;hub/logger/debug&quot; : function onDebug(message) {
 			append.call(this, convert(&quot;debug&quot;, message));
 		},
 
-<span id='core-logger-service-event-hub/logger/info'>		/**
+<span id='core-logger-service-handler-hub-logger-info'>		/**
 </span>		 * Log an info on hub event.
-		 * @event
-		 * @param message
+		 * @handler
+		 * @inheritdoc #event-hub/logger/info
 		 */
 		&quot;hub/logger/info&quot; : function onInfo(message) {
 			append.call(this, convert(&quot;info&quot;, message));
 		},
 
-<span id='core-logger-service-event-hub/logger/error'>		/**
+<span id='core-logger-service-handler-hub-logger-error'>		/**
 </span>		 * Log an error on hub event.
-		 * @event
-		 * @param message
+		 * @handler
+		 * @inheritdoc #event-hub/logger/error
 		 */
 		&quot;hub/logger/error&quot; : function onError(message) {
 			append.call(this, convert(&quot;error&quot;, message));

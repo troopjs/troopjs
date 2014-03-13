@@ -15,24 +15,35 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS browser/loom/woven
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/array&quot; ], function WovenModule(config, when, $) {
+define([
+	&quot;./config&quot;,
+	&quot;when&quot;,
+	&quot;jquery&quot;,
+	&quot;poly/array&quot;
+], function WovenModule(config, when, $) {
 	&quot;use strict&quot;;
+
+<span id='browser-loom-woven'>	/**
+</span>	 * @class browser.loom.woven
+	 * @mixins browser.loom.config
+	 * @singleton
+	 */
+
 	var ARRAY_MAP = Array.prototype.map;
 	var LENGTH = &quot;length&quot;;
 	var WOVEN = &quot;woven&quot;;
 	var $WARP = config[&quot;$warp&quot;];
 
-<span id='browser-loom-woven-method-woven'>	/**
+<span id='browser-loom-woven-method-constructor'>	/**
 </span>	 * Retrieve all or specific widget instances living on this element, that are
-	 * created by {@link browser.loom.weave weaving}.
+	 * created by {@link browser.loom.weave}.
 	 *
-	 * @member browser.loom.woven
-	 * @method woven
-	 * @param {String...} [name] One or more name of the widget to narrow down.
+	 * It also lives as a jquery plugin as {@link $#method-woven}.
+	 * @method constructor
+	 * @param {...String} [widget] One or more widget names to narrow down the returned ones.
 	 * @returns {Promise} Promise to the completion of retrieving the woven widgets array.
 	 */
 	return function woven() {
@@ -43,7 +54,7 @@ define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/
 		// If we have arguments we have convert and filter
 		if (arguments[LENGTH] &gt; 0) {
 			// Map arguments to a regexp
-			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
+			re = new RegExp(ARRAY_MAP.call(arguments, function (widget) {
 				return &quot;^&quot; + widget;
 			}).join(&quot;|&quot;), &quot;m&quot;);
 
@@ -70,6 +81,7 @@ define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/
 		// Return promise of $woven
 		return when.all($woven);
 	};
-});</pre>
+});
+</pre>
 </body>
 </html>

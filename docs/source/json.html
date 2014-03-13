@@ -15,10 +15,9 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
-* TroopJS requirejs/json
-* @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
-*/
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
 define([
 	&quot;text&quot;,
 	&quot;troopjs-utils/select&quot;,
@@ -26,10 +25,19 @@ define([
 ], function (text, select) {
 	&quot;use strict&quot;;
 
-	var UNDEFINED;
+<span id='requirejs-json'>	/**
+</span>	 * RequireJS json plugin
+	 * @class requirejs.json
+	 * @extends requirejs.plugin
+	 * @singleton
+	 */
+
+	//TODO Add usage docs
+
 	var NULL = null;
 	var PATTERN = /(.+?)#(.+)$/;
 	var buildMap = {};
+
 
 	return {
 		&quot;load&quot;: function (name, req, load, config) {

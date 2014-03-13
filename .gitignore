@@ -1,0 +1,12 @@
+# IDE
+.idea
+.project
+.settings
+.externalToolBuilders
+
+# Packages
+node_modules
+bower_components
+
+# Artifacts
+dist/

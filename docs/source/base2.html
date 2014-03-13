@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/mixin/base
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;troopjs-composer/mixin/factory&quot; ], function ObjectBaseModule(Factory) {
 	var INSTANCE_COUNTER = 0;
@@ -27,17 +26,47 @@ define([ &quot;troopjs-composer/mixin/factory&quot; ], function ObjectBaseModule
 </span>	 * Base object with instance count.
 	 * @class core.mixin.base
 	 */
+
+<span id='core-mixin-base-static-method-extend'>	/**
+</span>	 * @method extend
+	 * @inheritdoc composer.mixin.factory#extend
+	 * @static
+	 * @inheritable
+	 */
+
+<span id='core-mixin-base-static-method-create'>	/**
+</span>	 * @method create
+	 * @inheritdoc composer.mixin.factory#create
+	 * @static
+	 * @inheritable
+	 */
+
+<span id='core-mixin-base-method-constructor'>	/**
+</span>	 * Creates a new component instance
+	 * @method constructor
+	 */
 	return Factory(function ObjectBase() {
 		// Update instance count
 		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
 	}, {
+<span id='core-mixin-base-property-instanceCount'>		/**
+</span>		 * Instance counter
+		 * @private
+		 * @readonly
+		 * @property {Number}
+		 */
 		&quot;instanceCount&quot; : INSTANCE_COUNTER,
 
+<span id='core-mixin-base-property-displayName'>		/**
+</span>		 * The hierarchical namespace for this component that indicates it's functionality.
+		 * @readonly
+		 * @property {String}
+		 */
 		&quot;displayName&quot; : &quot;core/mixin/base&quot;,
 
 <span id='core-mixin-base-method-toString'>		/**
 </span>		 * Gives string representation of this component instance.
-		 * @returns {String} displayName and instanceCount
+		 * @returns {String} {@link #displayName} and {@link #instanceCount}
 		 */
 		&quot;toString&quot; : function _toString() {
 			var me = this;

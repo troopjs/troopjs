@@ -15,19 +15,20 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/logger/console
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;../mixin/base&quot;, &quot;poly/function&quot; ], function ConsoleLogger(Base) {
+define([
+	&quot;../mixin/base&quot;,
+	&quot;poly/function&quot;
+], function ConsoleLogger(Base) {
 	&quot;use strict&quot;;
 
 <span id='core-logger-console'>	/**
 </span>	 * Module that provides simple logging feature as a wrapper around the &quot;console&quot; global ever found.
-	 *
-	 * @singleton
 	 * @class core.logger.console
 	 * @extends core.mixin.base
+	 * @singleton
 	 */
 
 	/*jshint devel:true*/
@@ -36,45 +37,63 @@ define([ &quot;../mixin/base&quot;, &quot;poly/function&quot; ], function Consol
 	function noop() {}
 
 	var spec = {};
-	[&quot;info&quot;,&quot;log&quot;,&quot;debug&quot;,&quot;warn&quot;,&quot;error&quot;].reduce(function(memo, feature) {
+
+	[ &quot;info&quot;,&quot;log&quot;,&quot;debug&quot;,&quot;warn&quot;,&quot;error&quot; ].reduce(function(memo, feature) {
 			memo[feature] =
 				typeof CONSOLE != 'undefined' &amp;&amp; CONSOLE[feature] ? CONSOLE[feature].bind(CONSOLE) : noop;
 			return memo;
 	}, spec);
 
 <span id='core-logger-console-method-info'>	/**
-</span>	 * Writes a message to the console that is information alike,
-	 * @member core.logger.console
+</span>	 * Logs a message that is information like
+	 * @localdoc Writes the log message to the console
 	 * @method info
 	 * @param {String} msg
 	 */
 
 <span id='core-logger-console-method-log'>	/**
-</span>	 * Writes a message to the console that is logging alike.
-	 * @member core.logger.console
+</span>	 * Logs a message that is logging like
+	 * @localdoc Writes the log message to the console
 	 * @method log
 	 * @param {String} msg
 	 */
 
 <span id='core-logger-console-method-debug'>	/**
-</span>	 * Writes a message to the console that is debugging alike.
-	 * @member core.logger.console
+</span>	 * Logs a message that is debugging like
+	 * @localdoc Writes the log message to the console
 	 * @method debug
 	 * @param {String} msg
 	 */
 
 <span id='core-logger-console-method-warn'>	/**
-</span>	 * Writes a message to the console that is warning alike.
-	 * @member core.logger.console
+</span>	 * Logs a message that is warning like
+	 * @localdoc Writes the log message to the console
 	 * @method warn
 	 * @param {String} msg
 	 */
 
 <span id='core-logger-console-method-error'>	/**
-</span>	 * Writes a message to the console that is actually an error.
-	 * @member core.logger.console
+</span>	 * Logs a message that is actually an error
+	 * @localdoc Writes the log message to the console
 	 * @method error
 	 * @param {String} msg
+	 */
+
+<span id='core-logger-console-static-method-create'>	/**
+</span>	 * @method create
+	 * @static
+	 * @hide
+	 */
+
+<span id='core-logger-console-static-method-extend'>	/**
+</span>	 * @method extend
+	 * @static
+	 * @hide
+	 */
+
+<span id='core-logger-console-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @hide
 	 */
 
 	return Base.create({

@@ -15,12 +15,17 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS data/query/component
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 	&quot;use strict&quot;;
+
+<span id='data-query-component'>	/**
+</span>	 * Component who understands the ubiquitous data query string format.
+	 * @class data.query.component
+	 * @extends core.mixin.base
+	 */
 
 	var UNDEFINED;
 	var TRUE = true;
@@ -49,10 +54,9 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 	var RE_RAW = /!(.*[!,|.\s]+.*)/;
 	var TO_TEXT = &quot;!'$1'&quot;;
 
-<span id='data-query-component'>	/**
-</span>	 * Component who understands the ubiquitous data query string format.
-	 * @class data.query.component
-	 * @extends core.mixin.base
+<span id='data-query-component-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {String} [query] data query
 	 */
 	return Base.extend(function QueryComponent(query) {
 		var me = this;
@@ -65,8 +69,8 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 
 <span id='data-query-component-method-parse'>		/**
 </span>		 * Parse the query string.
-		 * @param query
-		 * @returns this
+		 * @chainable
+		 * @param {String} query data query
 		 */
 		&quot;parse&quot; : function parse(query) {
 			var me = this;
@@ -176,8 +180,8 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 <span id='data-query-component-method-reduce'>		/**
 </span>		 * Further reduce the query string elements based on the cache content,
 		 * to eliminate unnecessary queries made.
+		 * @chainable
 		 * @param {Object} cache The cache dictionary.
-		 * @returns this
 		 */
 		&quot;reduce&quot; : function reduce(cache) {
 			var me = this;
@@ -357,7 +361,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 
 <span id='data-query-component-method-rewrite'>		/**
 </span>		 * Rebuild the (reduced) query string.
-		 * @returns {String}
+		 * @returns {String} new query string
 		 */
 		&quot;rewrite&quot; : function rewrite() {
 			var me = this;

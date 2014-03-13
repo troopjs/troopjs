@@ -15,10 +15,18 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">define([
-	&quot;when&quot;
-], function SequenceModule(when) {
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([ &quot;when&quot; ], function SequenceModule(when) {
 	&quot;use strict&quot;;
+
+<span id='core-event-runner-sequence'>	/**
+</span>	 * @class core.event.runner.sequence
+	 * @extends core.event.emitter.runner
+	 * @protected
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var HEAD = &quot;head&quot;;
@@ -26,11 +34,10 @@
 	var CALLBACK = &quot;callback&quot;;
 	var CONTEXT = &quot;context&quot;;
 
-	/*
-	 * Runner that executes candidates in sequence without overlap
-	 * @param {Object} event Event object
-	 * @param {Object} handlers List of handlers
-	 * @param {Array} args Initial arguments
+<span id='core-event-runner-sequence-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Run event handlers **asynchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
 	 * @returns {Promise}
 	 */
 	return function sequence(event, handlers, args) {
@@ -48,9 +55,9 @@
 		// Reset candidate count
 		candidatesCount = 0;
 
-		/*
-		 * Internal function for sequential execution of candidates
-		 * @private
+<span id='global-method-next'>		/**
+</span>		 * Internal function for sequential execution of candidates
+		 * @ignore
 		 * @param {Array} [result] result from previous handler callback
 		 * @param {Boolean} [skip] flag indicating if this result should be skipped
 		 * @return {Promise} promise of next handler callback execution
@@ -72,6 +79,7 @@
 
 		return next(args, true);
 	}
-});</pre>
+});
+</pre>
 </body>
 </html>

@@ -15,16 +15,23 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS browser/dom/selector
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Heavily influenced by selector-set (https://github.com/josh/selector-set/) Copyright 2013 Joshua Peek
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;troopjs-composer/mixin/factory&quot;,
 	&quot;./config&quot;
-], function (Factory, CONFIG) {
+], function (Factory, config) {
+	&quot;use strict&quot;;
+
+<span id='browser-dom-selector'>	/**
+</span>	 * An optimized CSS selector matcher that {@link browser.component.runner.sequence} relies on for
+	 * delegating DOM event on {@link browser.component.widget}.
+	 * @class browser.dom.selector
+	 * @mixins browser.dom.config
+	 * @private
+	 */
+
 	var UNDEFINED;
 	var ARRAY_SLICE = Array.prototype.slice;
 	var LENGTH = &quot;length&quot;;
@@ -46,21 +53,21 @@ define([
 	var COUNT = &quot;count&quot;;
 	var BASEVAL = &quot;baseVal&quot;;
 	var RE_SPACE = /\s+/;
-	var querySelectorAll = CONFIG[&quot;querySelectorAll&quot;];
-	var matchesSelector = CONFIG[&quot;matchesSelector&quot;];
+	var querySelectorAll = config[&quot;querySelectorAll&quot;];
+	var matchesSelector = config[&quot;matchesSelector&quot;];
 
-	/*
-	 * Extracts key for universal indexer
-	 * @private
+<span id='global-method-getElementUniversal'>	/**
+</span>	 * Extracts key for universal indexer
+	 * @ignore
 	 * @return {String[]}
 	 */
 	function getElementUniversal() {
 		return [ STAR ];
 	}
 
-	/*
-	 * Extracts key for tag indexer
-	 * @private
+<span id='global-method-getElementTagName'>	/**
+</span>	 * Extracts key for tag indexer
+	 * @ignore
 	 * @param element
 	 * @return {String[]}
 	 */
@@ -68,9 +75,9 @@ define([
 		return [ element.nodeName.toUpperCase() ];
 	}
 
-	/*
-	 * Extracts key for class indexer
-	 * @private
+<span id='global-method-getElementClassNames'>	/**
+</span>	 * Extracts key for class indexer
+	 * @ignore
 	 * @param element
 	 * @return {String[]}
 	 */
@@ -93,9 +100,9 @@ define([
 		return result;
 	}
 
-	/*
-	 * Extracts key for id indexer
-	 * @private
+<span id='global-method-getElementId'>	/**
+</span>	 * Extracts key for id indexer
+	 * @ignore
 	 * @param element
 	 * @return {String[]}
 	 */
@@ -105,21 +112,23 @@ define([
 		return (id = element.id) !== UNDEFINED &amp;&amp; [ id ];
 	}
 
-	/*
-	 * Gets the last **SIGNIFICANT** of a CSS selector, the &quot;significant&quot; is defined as - any leading id, class name or
+<span id='browser-dom-selector-static-method-tail'>	/**
+</span>	 * Gets the last **SIGNIFICANT** of a CSS selector, the &quot;significant&quot; is defined as - any leading id, class name or
 	 * tag name component of the last selector.
 	 *
 	 * Examples:
-	 * 	tail(&quot;div.bar&quot;); 	// &quot;div&quot;
-	 * 	tail(&quot;#foo.bar&quot;); 	// &quot;#foo&quot;
-	 * 	tail(&quot;p &gt; div.bar&quot;); 	// &quot;div&quot;
-	 * 	tail(&quot;p &gt; a:active&quot;); 	// &quot;a&quot;
-	 * 	tail(&quot;.bar&quot;);	// &quot;.bar&quot;
-	 * 	tail(&quot;input.foo[type='button']&quot;);	// &quot;input&quot;
-	 * 	tail(&quot;[type='button']&quot;);	// &quot;*&quot;
 	 *
-	 * @see [CSS3 selector spec](http://www.w3.org/TR/selectors/#w3cselgrammar)
+	 * 	tail(&quot;div.bar&quot;);                  // &quot;div&quot;
+	 * 	tail(&quot;#foo.bar&quot;);                 // &quot;#foo&quot;
+	 * 	tail(&quot;p &gt; div.bar&quot;);              // &quot;div&quot;
+	 * 	tail(&quot;p &gt; a:active&quot;);             // &quot;a&quot;
+	 * 	tail(&quot;.bar&quot;);                     // &quot;.bar&quot;
+	 * 	tail(&quot;input.foo[type='button']&quot;); // &quot;input&quot;
+	 * 	tail(&quot;[type='button']&quot;);          // &quot;*&quot;
+	 *
+	 * For more examples see [CSS3 selector spec](http://www.w3.org/TR/selectors/#w3cselgrammar)
 	 * @private
+	 * @static
 	 * @param {String} selector CSS selector
 	 * @return {String} last token
 	 */
@@ -186,9 +195,9 @@ define([
 		return selector.substring(start, stop) || STAR;
 	}
 
-	/*
-	 * Compares candidates (that have COUNT properties)
-	 * @private
+<span id='global-method-compareCandidates'>	/**
+</span>	 * Compares candidates (that have COUNT properties)
+	 * @ignore
 	 * @param {Object} a
 	 * @param {Object} b
 	 * @return {Number}
@@ -197,17 +206,33 @@ define([
 		return a[COUNT] - b[COUNT];
 	}
 
+<span id='browser-dom-selector-method-constructor'>	/**
+</span>	 * @method constructor
+	 */
 	var Selector = Factory(function Selector() {
 		var me = this;
 
+<span id='browser-dom-selector-property-indexes'>		/**
+</span>		 * Cached indexes
+		 * @protected
+		 * @readonly
+		 * @property {Array} indexes
+		 */
 		me[INDEXES] = [];
+
+<span id='browser-dom-selector-property-count'>		/**
+</span>		 * Index counter
+		 * @private
+		 * @readonly
+		 * @property {Number} count
+		 */
 		me[COUNT] = 0;
 	}, {
-		/*
-		 * Adds candidate
+<span id='browser-dom-selector-method-add'>		/**
+</span>		 * Adds candidate
+		 * @chainable
 		 * @param {String} selector CSS selector
 		 * @param {...*} [args] Additional arguments attached with candidate
-		 * @return {Object} this
 		 */
 		&quot;add&quot;: function add(selector, args) {
 			var me = this;
@@ -273,9 +298,9 @@ define([
 			return me;
 		},
 
-		/*
-		 * Matches candidates against element
-		 * @param element DOM Element
+<span id='browser-dom-selector-method-matches'>		/**
+</span>		 * Matches candidates against element
+		 * @param {HTMLElement} element DOM Element
 		 * @return {Array} Matching array of candidates
 		 */
 		&quot;matches&quot;: function matches(element) {
@@ -325,9 +350,6 @@ define([
 		}
 	});
 
-	/*
-	 * @inheritdoc #tail
-	 */
 	Selector.tail = tail;
 
 	return Selector;

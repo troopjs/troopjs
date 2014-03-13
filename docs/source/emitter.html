@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/event/emitter
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;../mixin/base&quot;,
@@ -26,14 +25,17 @@ define([
 	&quot;use strict&quot;;
 
 <span id='core-event-emitter'>	/**
-</span>	 * The event module of TroopJS that provides common event handling capability, and some highlights:
+</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
+	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism, which makes it supports for both:
 	 *
-	 * ## Asynchronous handlers
-	 * Any event handler can be asynchronous depending on the **return value**:
+	 *  - **synchronous event**: all your event handlers are run in a single loop.
+	 *  - **async event with promise**: you can return a promise where the next handler will be called upon the
+	 *  completion of that promise.
 	 *
-	 *  - a Promise value makes this handler be considered asynchronous, where the next handler will be called
-	 *  upon the completion of this promise.
-	 *  - any non-Promise values make it a ordinary handler, where the next handler will be invoked immediately.
+	 * Event runner can even determinate the **parameters passing** strategy among handlers, which forms in two flavours:
+	 *
+	 *  - sequence: where each handler receives the arguments passed to {@link #method-emit}.
+	 *  - pipeline: where a handler receives the return value of the previous one.
 	 *
 	 * @class core.event.emitter
 	 * @extends core.mixin.base
@@ -57,6 +59,7 @@ define([
 <span id='core-event-emitter-static-method-createHandlers'>	/**
 </span>	 * Helper to initialize the **handlers** object for an event type.
 	 * @static
+	 * @protected
 	 * @param {String} type The event type.
 	 * @param {Object} [handlers] The handlers object for this event type.
 	 * @return {Object} The created handlers object.
@@ -74,18 +77,28 @@ define([
 		return me[me[LENGTH]] = me[type] = handlers;
 	}
 
+<span id='core-event-emitter-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 */
 	var Emitter = Base.extend(function Emitter() {
+<span id='core-event-emitter-property-handlers'>		/**
+</span>		 * Handlers attached to this component, addressable either by key or index
+		 * @protected
+		 * @readonly
+		 * @property {Array} handlers
+		 */
 		this[HANDLERS] = [];
 	}, {
 		&quot;displayName&quot; : &quot;core/event/emitter&quot;,
 
 <span id='core-event-emitter-method-on'>		/**
 </span>		 * Adds a listener for the specified event type.
+		 * @chainable
 		 * @param {String} type The event type to subscribe to.
 		 * @param {Object} context The context to scope the callback to.
 		 * @param {Function} callback The event listener function.
 		 * @param {*} [data] Handler data
-		 * @returns {*} this
 		 */
 		&quot;on&quot; : function on(type, context, callback, data) {
 			var me = this;
@@ -138,11 +151,10 @@ define([
 <span id='core-event-emitter-method-off'>		/**
 </span>		 * Remove callback(s) from a subscribed event type, if no callback is specified,
 		 * remove all callbacks of this type.
-		 *
+		 * @chainable
 		 * @param {String} type The event type subscribed to
 		 * @param {Object} [context] The context to scope the callback to remove
 		 * @param {Function} [callback] The event listener function to remove
-		 * @returns {*} this
 		 */
 		&quot;off&quot; : function off(type, context, callback) {
 			var me = this;

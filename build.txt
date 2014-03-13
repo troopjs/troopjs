@@ -13,7 +13,7 @@ bower_components/troopjs-composer/decorator/before.js
 bower_components/troopjs-composer/decorator/around.js
 bower_components/troopjs-core/component/base.js
 bower_components/troopjs-core/component/runner/pipeline.js
-bower_components/troopjs-core/pubsub/runner/constants.js
+bower_components/troopjs-core/pubsub/runner/config.js
 bower_components/troopjs-core/pubsub/runner/pipeline.js
 bower_components/troopjs-composer/decorator/from.js
 bower_components/troopjs-core/pubsub/hub.js
@@ -62,7 +62,7 @@ bower_components/troopjs-composer/decorator/before.js
 bower_components/troopjs-composer/decorator/around.js
 bower_components/troopjs-core/component/base.js
 bower_components/troopjs-core/component/runner/pipeline.js
-bower_components/troopjs-core/pubsub/runner/constants.js
+bower_components/troopjs-core/pubsub/runner/config.js
 bower_components/troopjs-core/pubsub/runner/pipeline.js
 bower_components/troopjs-composer/decorator/from.js
 bower_components/troopjs-core/pubsub/hub.js

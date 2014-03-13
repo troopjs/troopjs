@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS browser/loom/plugin
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;jquery&quot;,
@@ -42,28 +41,31 @@ define([
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
 
-	/*
-	 * Tests if element has a data-weave attribute
+
+<span id='global-method-hasDataWeaveAttr'>	/**
+</span>	 * Tests if element has a data-weave attribute
 	 * @param element to test
 	 * @returns {boolean}
-	 * @private
+	 * @ignore
 	 */
 	function hasDataWeaveAttr(element) {
 		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
 	}
 
-	/*
-	 * Tests if element has a data-woven attribute
+<span id='global-method-hasDataWovenAttr'>	/**
+</span>	 * Tests if element has a data-woven attribute
 	 * @param element to test
 	 * @returns {boolean}
-	 * @private
+	 * @ignore
 	 */
 	function hasDataWovenAttr(element) {
 		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
 	}
 
-	/*
-	 * :weave expression
+<span id='$-property-weave'>	/**
+</span>	 * jQuery `:weave` expression
+	 * @member $
+	 * @property weave
 	 */
 	$EXPR[&quot;:&quot;][WEAVE] = $CREATEPSEUDO
 		// If we have jQuery &gt;= 1.8 we want to use .createPseudo
@@ -100,8 +102,10 @@ define([
 						}).join(&quot;|&quot;), &quot;m&quot;).test(weave.replace(RE_SEPARATOR, &quot;\n&quot;));
 			};
 
-	/*
-	 * :woven expression
+<span id='$-property-woven'>	/**
+</span>	 * jQuery `:woven` expression
+	 * @member $
+	 * @property woven
 	 */
 	$EXPR[&quot;:&quot;][WOVEN] = $CREATEPSEUDO
 		// If we have jQuery &gt;= 1.8 we want to use .createPseudo
@@ -137,30 +141,24 @@ define([
 					}).join(&quot;|&quot;), &quot;m&quot;).test(attr_woven.replace(RE_SEPARATOR, &quot;\n&quot;));
 		};
 
-<span id='$'>	/**
-</span>	 * @class $
-	 */
-
 <span id='$-method-weave'>	/**
-</span>	 * Weaves elements
-	 * @member $
+</span>	 * @member $
 	 * @method weave
-	 * @returns {Promise} of weaving
+	 * @inheritdoc browser.loom.weave#constructor
 	 */
 	$FN[WEAVE] = weave;
 
 <span id='$-method-unweave'>	/**
-</span>	 * Unweaves elements
-	 * @member $
+</span>	 * @member $
 	 * @method unweave
-	 * @returns {Promise} of unweaving
+	 * @inheritdoc browser.loom.unweave#constructor
 	 */
 	$FN[UNWEAVE] = unweave;
 
 <span id='$-method-woven'>	/**
-</span>	 * Gets woven widgets
+</span>	 * @member $
 	 * @method woven
-	 * @returns {Promise} of woven widgets
+	 * @inheritdoc browser.loom.woven#constructor
 	 */
 	$FN[WOVEN] = woven;
 });

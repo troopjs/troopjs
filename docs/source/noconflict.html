@@ -15,13 +15,18 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
-* TroopJS jquery/noconflict
-* @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
-*/
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
 define([ &quot;jquery&quot; ], function ($) {
 	&quot;use strict&quot;;
 
+<span id='$-static-method-noConflict'>	/**
+</span>	 * Module that simply return a `noConflict` version of jQuery
+	 * @method noConflict
+	 * @member $
+	 * @static
+	 */
 	return $.noConflict(true);
 });
 </pre>

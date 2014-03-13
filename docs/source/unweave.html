@@ -15,12 +15,23 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS browser/loom/unweave
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/array&quot;, &quot;troopjs-utils/defer&quot; ], function UnweaveModule(config, when, $, Defer) {
+define([
+	&quot;./config&quot;,
+	&quot;when&quot;,
+	&quot;jquery&quot;,
+	&quot;poly/array&quot;,
+	&quot;troopjs-utils/defer&quot;
+], function UnweaveModule(config, when, $, Defer) {
 	&quot;use strict&quot;;
+
+<span id='browser-loom-unweave'>	/**
+</span>	 * @class browser.loom.unweave
+	 * @mixins browser.loom.config
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var NULL = null;
@@ -38,18 +49,22 @@ define([ &quot;./config&quot;, &quot;when&quot;, &quot;jquery&quot;, &quot;poly/
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
 
-<span id='browser-loom-unweave-method-unweave'>	/**
+<span id='browser-loom-unweave-method-constructor'>	/**
 </span>	 * Destroy all widget instances living on this element, that are created
-	 * by {@link browser.loom.weave weaving}, it is also to clean up the attributes
+	 * by {@link browser.loom.weave}, it is also to clean up the attributes
 	 * and data references to the previously instantiated widgets.
 	 *
-	 * @member browser.loom.unweave
-	 * @method unweave
-	 * @returns {Promise} Promise to the completion of destroying all woven widgets.
+	 * @localdoc
+	 *
+	 * It also lives as a jquery plugin as {@link $#method-unweave}.
+	 *
+	 * @method constructor
+	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link browser.component.widget#stop stop} method
+	 * @returns {Promise} Promise to the completion of unweaving all woven widgets.
 	 */
-	return function unweave() {
+	return function unweave(stop_args) {
 		// Store stop_args for later
-		var stop_args = arguments;
+		stop_args = arguments;
 
 		// Map elements
 		return when.all(ARRAY_MAP.call(this, function (element) {

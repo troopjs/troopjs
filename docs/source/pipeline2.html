@@ -15,11 +15,22 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">define([
-	&quot;./constants&quot;,
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;./config&quot;,
 	&quot;when&quot;
-], function PipelineModule(CONSTANTS, when) {
+], function PipelineModule(config, when) {
 	&quot;use strict&quot;;
+
+<span id='core-pubsub-runner-pipeline'>	/**
+</span>	 * @class core.pubsub.runner.pipeline
+	 * @extends core.event.emitter.runner
+	 * @mixins core.pubsub.runner.config
+	 * @protected
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var OBJECT_TOSTRING = Object.prototype.toString;
@@ -31,13 +42,12 @@
 	var NEXT = &quot;next&quot;;
 	var PHASE = &quot;phase&quot;;
 	var MEMORY = &quot;memory&quot;;
-	var RE_PHASE = CONSTANTS[&quot;pattern&quot;];
+	var RE_PHASE = config[&quot;pattern&quot;];
 
-	/*
-	 * Runner that filters and executes candidates in pipeline without overlap
-	 * @param {Object} event Event object
-	 * @param {Object} handlers List of handlers
-	 * @param {Array} args Initial arguments
+<span id='core-pubsub-runner-pipeline-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
 	 * @returns {Promise}
 	 */
 	return function pipeline(event, handlers, args) {
@@ -66,9 +76,9 @@
 		// Reset candidatesCount
 		candidatesCount = 0;
 
-		/*
-		 * Internal function for piped execution of candidates candidates
-		 * @private
+<span id='global-method-next'>		/**
+</span>		 * Internal function for piped execution of candidates candidates
+		 * @ignore
 		 * @param {Array} [result] result from previous candidate callback
 		 * @return {Promise} promise of next candidate callback execution
 		 */

@@ -15,22 +15,55 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS browser/dom/config
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;module&quot;,
-	&quot;troopjs-utils/merge&quot;,
-	&quot;jquery&quot;
-], function (module, merge, $) {
-	var config = {};
+	&quot;troopjs-utils/merge&quot;
+], function LoomConfigModule(module, merge) {
+	&quot;use strict&quot;;
 
-	config[&quot;querySelectorAll&quot;] = $.find;
+<span id='browser-loom-config'>	/**
+</span>	 * This module is to provide configurations **loom** from it's AMD module config.
+	 *
+	 * To change the configuration, refer to RequireJS [module config API](http://requirejs.org/docs/api.html#config-moduleconfig):
+	 *
+	 * 	requirejs.config(
+	 * 	{
+	 * 		config: { &quot;troopjs-browser/loom/config&quot; : { &quot;weave&quot; : &quot;data-my-weave&quot;, ...  } }
+	 * 	})
+	 *
+	 * @class browser.loom.config
+	 * @extends requirejs.config
+	 * @protected
+	 * @singleton
+	 */
+	return merge.call({
+<span id='browser-loom-config-cfg-S-warp'>		/**
+</span>		 * @cfg {String} $warp Property of the element's data where the **warp** resides.
+		 */
+		&quot;$warp&quot; : &quot;$warp&quot;,
+<span id='browser-loom-config-cfg-S-weft'>		/**
+</span>		 * @cfg {String} $weft Property of the widget where the **weft** resides.
+		 */
+		&quot;$weft&quot; : &quot;$weft&quot;,
 
-	config[&quot;matchesSelector&quot;] = $.find.matchesSelector;
+<span id='browser-loom-config-cfg-weave'>		/**
+</span>		 * @cfg {String} weave Attribute name of the element where the **weave** resides.
+		 */
+		&quot;weave&quot; : &quot;data-weave&quot;,
 
-	return merge.call(config, module.config());
+<span id='browser-loom-config-cfg-unweave'>		/**
+</span>		 * @cfg {String} unweave Attribute name of the element where the **unweave** resides.
+		 */
+		&quot;unweave&quot; : &quot;data-unweave&quot;,
+
+<span id='browser-loom-config-cfg-woven'>		/**
+</span>		 * @cfg {String} woven Attribute name of the element where the **woven** resides.
+		 */
+		&quot;woven&quot; : &quot;data-woven&quot;
+	}, module.config());
 });</pre>
 </body>
 </html>

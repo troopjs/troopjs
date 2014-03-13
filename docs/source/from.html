@@ -15,21 +15,24 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS composer/decorator/from
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;../mixin/decorator&quot; ], function FromDecoratorModule(Decorator) {
 	&quot;use strict&quot;;
+
+<span id='composer-decorator-from'>	/**
+</span>	 * @class composer.decorator.from
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var VALUE = &quot;value&quot;;
 	var PROTOTYPE = &quot;prototype&quot;;
 
-<span id='composer-decorator-from'>	/**
+<span id='composer-decorator-from-method-constructor'>	/**
 </span>	 * Create a decorator that is to lend from a particular property from this own or the other factory.
-	 *
-	 * @class composer.decorator.from
+	 * @method constructor
 	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
 	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
 	 * @returns {composer.mixin.decorator}

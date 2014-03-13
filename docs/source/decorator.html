@@ -15,18 +15,24 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS composer/mixin/decorator
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;poly/object&quot; ], function DecoratorModule() {
 	&quot;use strict&quot;;
 
-<span id='composer-mixin-decorator-method-constructor'><span id='composer-mixin-decorator'>	/**
-</span></span>	 * Decorator provides customized way to add properties/methods to object created by {@link composer.mixin.factory}.
+<span id='composer-mixin-decorator'>	/**
+</span>	 * Decorator provides customized way to add properties/methods to object created by {@link composer.mixin.factory}.
 	 * @class composer.mixin.decorator
-	 * @constructor
+	 */
+
+<span id='composer-mixin-decorator-method-constructor'>	/**
+</span>	 * Creates a new decorator
+	 * @method constructor
 	 * @param {Function} decorate Function that defines how to override the original one.
+	 * @param {Object} decorate.descriptor The object descriptor that is the current property.
+	 * @param {String} decorate.name The property name.
+	 * @param {Object} decorate.descriptors List of all property descriptors of the host object.
 	 */
 	return function Decorator(decorate) {
 
@@ -38,7 +44,6 @@ define([ &quot;poly/object&quot; ], function DecoratorModule() {
 			 * @param {Object} descriptor The object descriptor that is the current property.
 			 * @param {String} name The property name.
 			 * @param {Object} descriptors List of all property descriptors of the host object.
-			 * @member composer.mixin.decorator
 			 */
 			&quot;decorate&quot;: {
 				&quot;value&quot;: decorate

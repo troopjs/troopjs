@@ -15,19 +15,21 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/pubsub/proxy/to2x
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;../../component/service&quot;, &quot;when&quot;, &quot;poly/array&quot;, &quot;poly/object&quot; ], function To2xModule(Service, when) {
+define([
+	&quot;../../component/service&quot;,
+	&quot;when&quot;,
+	&quot;poly/array&quot;,
+	&quot;poly/object&quot;
+], function To2xModule(Service, when) {
 	&quot;use strict&quot;;
 
-<span id='core-pubsub-proxy-to2x-method-constructor'><span id='core-pubsub-proxy-to2x'>	/**
-</span></span>	 * Proxies to 2.x hub
+<span id='core-pubsub-proxy-to2x'>	/**
+</span>	 * Proxies to 2.x hub
 	 * @class core.pubsub.proxy.to2x
 	 * @extends core.component.service
-	 * @constructor
-	 * @param {Object...} setting Setting
 	 */
 
 	var ARRAY_PROTO = Array.prototype;
@@ -39,175 +41,189 @@ define([ &quot;../../component/service&quot;, &quot;when&quot;, &quot;poly/array
 	var PUBLISH = &quot;publish&quot;;
 	var SUBSCRIBE = &quot;subscribe&quot;;
 	var HUB = &quot;hub&quot;;
-	var SETTINGS = &quot;settings&quot;;
+	var ROUTES = &quot;routes&quot;;
 	var TOPIC = &quot;topic&quot;;
 	var REPUBLISH = &quot;republish&quot;;
 
-	return Service.extend(function To2xService(setting) {
-			this[SETTINGS] = ARRAY_SLICE.call(arguments);
-		}, {
-			&quot;displayName&quot; : &quot;core/pubsub/proxy/to2x&quot;,
+<span id='core-pubsub-proxy-to2x-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {...Object} routes Routes
+	 */
+	return Service.extend(function To2xService(routes) {
+		var config = {};
 
-<span id='core-pubsub-proxy-to2x-method-sig/initialize'>			/**
-</span>			 * @override
-			 */
-			&quot;sig/initialize&quot; : function ()  {
-				var me = this;
+		config[ROUTES] = ARRAY_SLICE.call(arguments);
 
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error(&quot;'&quot; + HUB + &quot;' is missing from setting&quot;);
+		this.configure(config);
+	}, {
+		&quot;displayName&quot; : &quot;core/pubsub/proxy/to2x&quot;,
+
+<span id='core-pubsub-proxy-to2x-handler-sig-initialize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Initializes proxy topics
+		 * @handler
+		 */
+		&quot;sig/initialize&quot; : function ()  {
+			var me = this;
+
+			// Iterate ROUTES
+			me.configure()[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				var publish = routes[PUBLISH] || {};
+				var subscribe = routes[SUBSCRIBE] || {};
+				var hub = routes[HUB];
+
+				// Iterate publish keys
+				OBJECT_KEYS(publish).forEach(function (source) {
+					// Extract target
+					var target = publish[source];
+					var topic;
+
+					// If target is a string set topic to target
+					if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+						topic = target;
+					}
+					// Otherwise just grab topic from target
+					else {
+						// Make sure we have a topic
+						if (!(TOPIC in target)) {
+							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+						}
+
+						// Get topic
+						topic = target[TOPIC];
 					}
 
-					var publish = setting[PUBLISH] || {};
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
+					// Create callback
+					var callback = publish[source] = function () {
+						// Initialize args with topic as the first argument
+						var args = [ topic ];
 
-					// Iterate publish keys
-					OBJECT_KEYS(publish).forEach(function (source) {
-						// Extract target
-						var target = publish[source];
-						var topic;
+						// Push original arguments on args
+						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
 
-						// If target is a string set topic to target
-						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
-							topic = target;
-						}
-						// Otherwise just grab topic from target
-						else {
-							// Make sure we have a topic
-							if (!(TOPIC in target)) {
-								throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
-							}
+						return hub.publish.apply(hub, args);
+					};
 
-							// Get topic
-							topic = target[TOPIC];
-						}
+					// Transfer topic to callback
+					callback[TOPIC] = topic;
 
-						// Create callback
-						var callback = publish[source] = function () {
-							// Initialize args with topic as the first argument
-							var args = [ topic ];
-
-							// Push original arguments on args
-							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
-
-							return hub.publish.apply(hub, args);
-						};
-
-						// Transfer topic to callback
-						callback[TOPIC] = topic;
-
-						me.subscribe(source, callback);
-					});
-
-					// Iterate subscribe keys
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						// Extract target
-						var target = subscribe[source];
-						var topic;
-						var republish;
-
-						// If target is a string set topic to target and republish to false
-						if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
-							topic = target;
-							republish = false;
-						}
-						// Otherwise just grab topic and republish from target
-						else {
-							// Make sure we have a topic
-							if (!(TOPIC in target)) {
-								throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
-							}
-
-							// Get topic
-							topic = target[TOPIC];
-							// Make sure republish is a boolean
-							republish = !!target[REPUBLISH];
-						}
-
-						// Create callback
-						var callback = subscribe[source] = function () {
-							// Initialize args with topic as the first argument
-							var args = [ topic ];
-
-							// Push original arguments on args
-							ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
-
-							// Publish and store promise as result
-							return me.publish.apply(me, args);
-						};
-
-						// Transfer topic and republish to callback
-						callback[TOPIC] = topic;
-						callback[REPUBLISH] = republish;
-
-						hub.subscribe(source, me, callback);
-					});
+					me.subscribe(source, callback);
 				});
-			},
 
-<span id='core-pubsub-proxy-to2x-method-sig/start'>			/**
-</span>			 * @override
-			 */
-			&quot;sig/start&quot; : function () {
-				var me = this;
-				var results = [];
+				// Iterate subscribe keys
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					// Extract target
+					var target = subscribe[source];
+					var topic;
+					var republish;
 
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error(&quot;'&quot; + HUB + &quot;' is missing from setting&quot;);
+					// If target is a string set topic to target and republish to false
+					if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+						topic = target;
+						republish = false;
+					}
+					// Otherwise just grab topic and republish from target
+					else {
+						// Make sure we have a topic
+						if (!(TOPIC in target)) {
+							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+						}
+
+						// Get topic
+						topic = target[TOPIC];
+						// Make sure republish is a boolean
+						republish = !!target[REPUBLISH];
 					}
 
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
+					// Create callback
+					var callback = subscribe[source] = function () {
+						// Initialize args with topic as the first argument
+						var args = [ topic ];
 
-					// Iterate subscribe keys
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						var callback = subscribe[source];
+						// Push original arguments on args
+						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
 
-						// Check if we should republish
-						if (callback[REPUBLISH] === true) {
-							// Push result from republish on results
-							results.push(hub.republish(source, me, callback));
-						}
-					});
+						// Publish and store promise as result
+						return me.publish.apply(me, args);
+					};
+
+					// Transfer topic and republish to callback
+					callback[TOPIC] = topic;
+					callback[REPUBLISH] = republish;
+
+					hub.subscribe(source, me, callback);
 				});
+			});
+		},
 
-				// Return promise that will resolve once all results are resolved
-				return when.all(results);
-			},
+<span id='core-pubsub-proxy-to2x-handler-sig-start'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Republishes memorized values
+		 * @handler
+		 */
+		&quot;sig/start&quot; : function () {
+			var me = this;
+			var results = [];
 
-<span id='core-pubsub-proxy-to2x-method-sig/finalize'>			/**
-</span>			 * @override
-			 */
-			&quot;sig/finalize&quot; : function () {
-				var me = this;
+			// Iterate ROUTES
+			me.configure()[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
 
-				// Iterate SETTINGS
-				me[SETTINGS].forEach(function (setting) {
-					if (!(HUB in setting)) {
-						throw new Error(&quot;'&quot; + HUB + &quot;' is missing from setting&quot;);
+				var subscribe = routes[SUBSCRIBE] || {};
+				var hub = routes[HUB];
+
+				// Iterate subscribe keys
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					var callback = subscribe[source];
+
+					// Check if we should republish
+					if (callback[REPUBLISH] === true) {
+						// Push result from republish on results
+						results.push(hub.republish(source, me, callback));
 					}
-
-					var publish = setting[PUBLISH] || {};
-					var subscribe = setting[SUBSCRIBE] || {};
-					var hub = setting[HUB];
-
-					// Iterate publish keys and unsubscribe
-					OBJECT_KEYS(publish).forEach(function (source) {
-						me.unsubscribe(source, publish[source]);
-					});
-
-					// Iterate subscribe keys and unsubscribe
-					OBJECT_KEYS(subscribe).forEach(function (source) {
-						hub.unsubscribe(source, me, subscribe[source]);
-					});
 				});
-			}
-		});
+			});
+
+			// Return promise that will resolve once all results are resolved
+			return when.all(results);
+		},
+
+<span id='core-pubsub-proxy-to2x-handler-sig-finalize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Finalizes proxy topics
+		 * @handler
+		 */
+		&quot;sig/finalize&quot; : function () {
+			var me = this;
+
+			// Iterate ROUTES
+			me.configure()[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				var publish = routes[PUBLISH] || {};
+				var subscribe = routes[SUBSCRIBE] || {};
+				var hub = routes[HUB];
+
+				// Iterate publish keys and unsubscribe
+				OBJECT_KEYS(publish).forEach(function (source) {
+					me.unsubscribe(source, publish[source]);
+				});
+
+				// Iterate subscribe keys and unsubscribe
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					hub.unsubscribe(source, me, subscribe[source]);
+				});
+			});
+		}
+	});
 });</pre>
 </body>
 </html>

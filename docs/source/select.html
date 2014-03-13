@@ -15,12 +15,16 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS utils/select
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define(function SelectModule() {
 	&quot;use strict&quot;;
+
+<span id='utils-select'>	/**
+</span>	 * @class utils.select
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var FALSE = false;
@@ -30,6 +34,12 @@ define(function SelectModule() {
 	var SINGLE_QUOTE = &quot;'&quot;;
 	var DOUBLE_QUOTE = &quot;\&quot;&quot;;
 
+<span id='utils-select-method-constructor'>	/**
+</span>	 * Function that traverses a JSON object
+	 * @method constructor
+	 * @param {String} query simple JSON query
+	 * @returns {*} Value from traversed query
+	 */
 	return function select(query) {
 		var node = this;
 		var c;

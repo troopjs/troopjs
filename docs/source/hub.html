@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/pubsub/hub
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;../event/emitter&quot;,
@@ -34,12 +33,12 @@ define([
 	 * of what &quot;current&quot; means.
 	 *
 	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
-	 * use methods like {@link core.component.gadget#publish} and {@link core.component.gadget#subscribe}
+	 * use methods like {@link core.component.gadget#publish publish} and {@link core.component.gadget#subscribe subscribe}
 	 * that are provided as shortcuts.
 	 *
 	 * @class core.pubsub.hub
-	 * @singleton
 	 * @extends core.event.emitter
+	 * @singleton
 	 */
 
 	var UNDEFINED;
@@ -48,19 +47,48 @@ define([
 	var RUNNER = &quot;runner&quot;;
 	var TYPE = &quot;type&quot;;
 
+<span id='core-pubsub-hub-static-method-create'>	/**
+</span>	 * @method create
+	 * @static
+	 * @hide
+	 */
+
+<span id='core-pubsub-hub-static-method-extend'>	/**
+</span>	 * @method extend
+	 * @static
+	 * @hide
+	 */
+
+<span id='core-pubsub-hub-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @hide
+	 */
+
+<span id='core-pubsub-hub-method-on'>	/**
+</span>	 * @method on
+	 * @hide
+	 */
+
+<span id='core-pubsub-hub-method-off'>	/**
+</span>	 * @method off
+	 * @hide
+	 */
+
 	return Emitter.create({
 		&quot;displayName&quot;: &quot;core/pubsub/hub&quot;,
 
 <span id='core-pubsub-hub-method-subscribe'>		/**
 </span>		 * Listen to an event that are emitted publicly.
-		 * @inheritdoc #on
+		 * @chainable
+		 * @inheritdoc core.event.emitter#on
 		 * @method
 		 */
 		&quot;subscribe&quot; : from(&quot;on&quot;),
 
 <span id='core-pubsub-hub-method-unsubscribe'>		/**
 </span>		 * Remove a public event listener.
-		 * @inheritdoc #off
+		 * @chainable
+		 * @inheritdoc core.event.emitter#off
 		 * @method
 		 */
 		&quot;unsubscribe&quot; : from(&quot;off&quot;),

@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS core/component/gadget
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;./base&quot;,
@@ -78,9 +77,18 @@ define([
 	var HUB = &quot;hub&quot;;
 	var RE = new RegExp(&quot;^&quot; + HUB + &quot;/(.+)&quot;);
 
+<span id='core-component-gadget-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 */
 	return Component.extend({
 		&quot;displayName&quot; : &quot;core/component/gadget&quot;,
 
+<span id='core-component-gadget-handler-sig-initialize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Registers event handlers declared HUB specials
+		 * @handler
+		 */
 		&quot;sig/initialize&quot; : function onInitialize() {
 			var me = this;
 
@@ -89,6 +97,11 @@ define([
 			});
 		},
 
+<span id='core-component-gadget-handler-sig-start'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Triggers memorized values on HUB specials
+		 * @handler
+		 */
 		&quot;sig/start&quot; : function onInitialize() {
 			var me = this;
 			var empty = {};
@@ -121,6 +134,11 @@ define([
 			});
 		},
 
+<span id='core-component-gadget-handler-sig-setup'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Registers remote proxy on the {@link core.pubsub.hub hub} that will re-publish on this component
+		 * @handler
+		 */
 		&quot;sig/setup&quot;: function onSetup(type, handlers) {
 			var me = this;
 			var matches;
@@ -141,6 +159,11 @@ define([
 			}
 		},
 
+<span id='core-component-gadget-handler-sig-teardown'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Removes remote proxy on the {@link core.pubsub.hub hub} that was previously registred in {@link #handler-sig/setup}
+		 * @handler
+		 */
 		&quot;sig/teardown&quot;: function onTeardown(type, handlers) {
 			var me = this;
 			var matches;
@@ -150,10 +173,10 @@ define([
 			}
 		},
 
-		/*
-		 * Signal handler for 'task'
-		 * @param {Promise} task
-		 * @returns {Promise}
+<span id='core-component-gadget-handler-sig-task'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Publishes `task` on the {@link core.pubsub.hub hub} whenever a {@link #event-sig/task task} event is emitted
+		 * @handler
 		 */
 		&quot;sig/task&quot; : function onTask(task) {
 			return this.publish(&quot;task&quot;, task);
@@ -167,7 +190,8 @@ define([
 		},
 
 <span id='core-component-gadget-method-subscribe'>		/**
-</span>		 * @inheritdoc core.pubsub.hub#subscribe
+</span>		 * @chainable
+		 * @inheritdoc core.pubsub.hub#subscribe
 		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
 		 */
 		&quot;subscribe&quot; : function subscribe(event, callback, data) {
@@ -175,7 +199,8 @@ define([
 		},
 
 <span id='core-component-gadget-method-unsubscribe'>		/**
-</span>		 * @inheritdoc core.pubsub.hub#unsubscribe
+</span>		 * @chainable
+		 * @inheritdoc core.pubsub.hub#unsubscribe
 		 * @localdoc Unsubscribe from public events in context of this component.
 		 */
 		&quot;unsubscribe&quot; : function unsubscribe(event, callback) {

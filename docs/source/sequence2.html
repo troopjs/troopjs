@@ -15,8 +15,18 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">define([ &quot;poly/array&quot; ], function SequenceModule() {
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([ &quot;poly/array&quot; ], function SequenceModule() {
 	&quot;use strict&quot;;
+
+<span id='core-component-runner-sequence'>	/**
+</span>	 * @class core.component.runner.sequence
+	 * @extends core.event.emitter.runner
+	 * @protected
+	 * @singleton
+	 */
 
 	var UNDEFINED;
 	var HEAD = &quot;head&quot;;
@@ -24,12 +34,11 @@
 	var CALLBACK = &quot;callback&quot;;
 	var CONTEXT = &quot;context&quot;;
 
-	/*
-	 * Runner that executes candidates in sequence without overlap
-	 * @param {Object} event Event object
-	 * @param {Object} handlers List of handlers
-	 * @param {Array} args Initial arguments
-	 * @returns {Array}
+<span id='core-component-runner-sequence-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Run event handlers **synchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
+	 * @returns {*[]} Result from each executed handler
 	 */
 	return function sequence(event, handlers, args) {
 		var context = event[CONTEXT];
@@ -58,6 +67,7 @@
 			return candidate[CALLBACK].apply(candidate[CONTEXT], args);
 		});
 	}
-});</pre>
+});
+</pre>
 </body>
 </html>

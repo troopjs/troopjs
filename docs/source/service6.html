@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS net/ajax/service
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;troopjs-core/component/service&quot;,
@@ -31,13 +30,23 @@ define([
 	 * @class net.ajax.service
 	 * @extends core.component.service
 	 */
+
+<span id='net-ajax-service-method-constructor'>	/**
+</span>	 * @method constructor
+	 */
 	return Service.extend({
 		&quot;displayName&quot; : &quot;net/ajax/service&quot;,
 
-<span id='net-ajax-service-event-hub/ajax'>		/**
+<span id='net-ajax-service-event-hub-ajax'>		/**
+</span>		 * The ajax event
+		 * @event hub/ajax
+		 * @param {Object} settings Ajax settings
+		 */
+
+<span id='net-ajax-service-handler-hub-ajax'>		/**
 </span>		 * Make ajax request.
-		 * @event
-		 * @param settings
+		 * @handler
+		 * @inheritdoc #event-hub/ajax
 		 */
 		&quot;hub/ajax&quot; : function ajax(settings) {
 			// Request

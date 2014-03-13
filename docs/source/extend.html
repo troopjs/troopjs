@@ -15,9 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">/*
- * TroopJS composer/decorator/extend
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
 	&quot;../mixin/decorator&quot;,
@@ -25,14 +24,18 @@ define([
 ], function ExtendDecoratorModule(Decorator, merge) {
 	&quot;use strict&quot;;
 
+<span id='composer-decorator-extend'>	/**
+</span>	 * @class composer.decorator.extend
+	 * @singleton
+	 */
+
 	var UNDEFINED;
 	var VALUE = &quot;value&quot;;
 	var ARRAY_CONCAT = Array.prototype.concat;
 
-<span id='composer-decorator-extend'>	/**
+<span id='composer-decorator-extend-method-constructor'>	/**
 </span>	 * Create a decorator that is to augment an existing Object property.
-	 *
-	 * @class composer.decorator.extend
+	 * @method constructor
 	 * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
 	 * @returns {composer.mixin.decorator}
 	 */
