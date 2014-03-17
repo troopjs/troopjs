@@ -25,10 +25,12 @@
 
 
 <span id='composer-mixin-static-method-extend'>/**
-</span> * @method extend
- * @inheritdoc composer.mixin.factory#extend
- * @static
+</span> * Extend this constructor from multiple others constructors/objects.
+ * @method extend
  * @inheritable
+ * @static
+ * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
+ * @returns {composer.mixin} The extended subclass.
  */
 
 <span id='composer-mixin-static-method-create'>/**

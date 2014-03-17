@@ -14,6 +14,172 @@ define('troopjs/version',[], "3.0.0-4+772c4ca");
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
+define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
+	
+
+	/**
+	 * @class utils.merge
+	 * @extends Function
+	 * @static
+	 */
+
+	var UNDEFINED;
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_CONCAT = ARRAY_PROTO.concat;
+	var OBJECT_PROTO = Object.prototype;
+	var OBJECT_TOSTRING = OBJECT_PROTO.toString;
+	var TOSTRING_OBJECT = OBJECT_TOSTRING.call(OBJECT_PROTO);
+	var TOSTRING_ARRAY = OBJECT_TOSTRING.call(ARRAY_PROTO);
+	var LENGTH = "length";
+
+	/**
+	 * @method constructor
+	 * @hide
+	 */
+
+	/**
+	 * Function that calls on an Object, to augments this object with enumerable properties from the source objects,
+	 * subsequent sources will overwrite property assignments of previous sources on primitive values,
+	 * while object and array values will get merged recursively.
+	 * @method constructor
+	 * @static
+	 * @param {...Object} [source] One or more source objects.
+	 * @return {*} Merged object
+	 */
+	return function merge(source) {
+		var target = this;
+		var key;
+		var keys;
+		var i;
+		var j;
+		var iMax;
+		var jMax;
+		var source_value;
+		var target_value;
+		var source_tostring;
+		var target_tostring;
+
+		// Check that we can use target
+		if (target !== UNDEFINED && target !== NULL) {
+			// Iterate arguments
+			for (i = 0, iMax = arguments[LENGTH]; i < iMax; i++) {
+				// Get source, and continue if it's UNDEFINED or NULL
+				if ((source = arguments[i]) === UNDEFINED || source === NULL) {
+					continue;
+				}
+
+				// Get source keys
+				keys = Object.keys(source);
+
+				// Iterate keys
+				for (j = 0, jMax = keys[LENGTH]; j < jMax; j++) {
+					key = keys[j];
+					source_value = source[key];
+					target_value = target[key];
+
+					// No merge - copy source_value
+					if (!(key in target)) {
+						target[key] = source_value;
+						continue;
+					}
+
+					// Get 'types'
+					source_tostring = OBJECT_TOSTRING.call(source_value);
+					target_tostring = OBJECT_TOSTRING.call(target_value);
+
+					// Can we merge objects?
+					if (target_tostring === TOSTRING_OBJECT && source_tostring === TOSTRING_OBJECT) {
+						merge.call(target_value, source_value);
+					}
+					// Can we merge arrays?
+					else if (target_tostring === TOSTRING_ARRAY && source_tostring === TOSTRING_ARRAY) {
+						target[key] = ARRAY_CONCAT.call(target_value, source_value);
+					}
+					// No merge - override target[key]
+					else {
+						target[key] = source_value;
+					}
+				}
+			}
+		}
+
+		return target;
+	};
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-composer/mixin/config',[
+	"module",
+	"troopjs-utils/merge"
+], function (module, merge) {
+	
+
+	/**
+	 * @class composer.mixin.config
+	 * @extends requirejs.config
+	 * @inheritdoc
+	 * @localdoc This module is to provide configuration for the {@link composer.mixin.factory}.
+	 * @protected
+	 * @static
+	 */
+	return merge.call({
+		/**
+		 * @cfg {RegExp} pattern RegExp used to determine if a method is a special
+		 */
+		"pattern": /^(\w+)(?::(.+?))?\/(.+)/,
+
+		/**
+		 * @cfg {Object[]} pragmas Pragmas used to rewrite methods before processing
+		 * @cfg {RegExp} pragmas.pattern Matching pattern
+		 * @cfg {String} pragmas.replace Replacement string
+		 */
+		"pragmas": []
+	}, module.config());
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-composer/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
+	
+
+	/**
+	 * Decorator provides customized way to add properties/methods to object created by {@link composer.mixin.factory}.
+	 * @class composer.mixin.decorator
+	 */
+
+	/**
+	 * Creates a new decorator
+	 * @method constructor
+	 * @param {Function} decorate Function that defines how to override the original one.
+	 * @param {Object} decorate.descriptor The object descriptor that is the current property.
+	 * @param {String} decorate.name The property name.
+	 * @param {Object} decorate.descriptors List of all property descriptors of the host object.
+	 */
+	return function Decorator(decorate) {
+
+		// Define properties
+		Object.defineProperties(this, {
+			/**
+			 * Function that decides what decoration is to make.
+			 * @method decorate
+			 * @param {Object} descriptor The object descriptor that is the current property.
+			 * @param {String} name The property name.
+			 * @param {Object} descriptors List of all property descriptors of the host object.
+			 */
+			"decorate": {
+				"value": decorate
+			}
+		});
+	}
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define('troopjs-utils/unique',[],function UniqueModule() {
 	
 
@@ -88,49 +254,12 @@ define('troopjs-utils/unique',[],function UniqueModule() {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-composer/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
-	
-
-	/**
-	 * Decorator provides customized way to add properties/methods to object created by {@link composer.mixin.factory}.
-	 * @class composer.mixin.decorator
-	 */
-
-	/**
-	 * Creates a new decorator
-	 * @method constructor
-	 * @param {Function} decorate Function that defines how to override the original one.
-	 * @param {Object} decorate.descriptor The object descriptor that is the current property.
-	 * @param {String} decorate.name The property name.
-	 * @param {Object} decorate.descriptors List of all property descriptors of the host object.
-	 */
-	return function Decorator(decorate) {
-
-		// Define properties
-		Object.defineProperties(this, {
-			/**
-			 * Function that decides what decoration is to make.
-			 * @method decorate
-			 * @param {Object} descriptor The object descriptor that is the current property.
-			 * @param {String} name The property name.
-			 * @param {Object} descriptors List of all property descriptors of the host object.
-			 */
-			"decorate": {
-				"value": decorate
-			}
-		});
-	}
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
 define('troopjs-composer/mixin/factory',[
-	"module",
-	"troopjs-utils/unique",
+	"./config",
 	"./decorator",
+	"troopjs-utils/unique",
 	"poly/object"
-], function FactoryModule(module, unique, Decorator) {
+], function FactoryModule(config, Decorator, unique) {
 	
 
 	/**
@@ -203,6 +332,7 @@ define('troopjs-composer/mixin/factory',[
 	 *  		instance.evenMore();
 	 *
 	 * @class composer.mixin.factory
+	 * @mixin composer.mixin.config
 	 * @static
 	 */
 
@@ -227,8 +357,8 @@ define('troopjs-composer/mixin/factory',[
 	var TYPE = "type";
 	var TYPES = "types";
 	var NAME = "name";
-	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/(.+)/;
-	var PRAGMAS = module.config().pragmas || [];
+	var RE_SPECIAL = config["pattern"];
+	var PRAGMAS = config["pragmas"];
 	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
 
 	/**
@@ -242,12 +372,6 @@ define('troopjs-composer/mixin/factory',[
 		return extend.apply(this, arguments)();
 	}
 
-	/**
-	 * Extend this constructor from multiple others constructors/objects.
-	 * @static
-	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @returns {composer.mixin} The extended subclass.
-	 */
 	function extend(mixin) {
 		/*jshint validthis:true*/
 		var args = [ this ];
@@ -918,103 +1042,6 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function Seque
 				: result;
 		}, UNDEFINED);
 	}
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
-	
-
-	/**
-	 * @class utils.merge
-	 * @extends Function
-	 * @static
-	 */
-
-	var UNDEFINED;
-	var NULL = null;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_CONCAT = ARRAY_PROTO.concat;
-	var OBJECT_PROTO = Object.prototype;
-	var OBJECT_TOSTRING = OBJECT_PROTO.toString;
-	var TOSTRING_OBJECT = OBJECT_TOSTRING.call(OBJECT_PROTO);
-	var TOSTRING_ARRAY = OBJECT_TOSTRING.call(ARRAY_PROTO);
-	var LENGTH = "length";
-
-	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
-	 * Function that calls on an Object, to augments this object with enumerable properties from the source objects,
-	 * subsequent sources will overwrite property assignments of previous sources on primitive values,
-	 * while object and array values will get merged recursively.
-	 * @method constructor
-	 * @static
-	 * @param {...Object} [source] One or more source objects.
-	 * @return {*} Merged object
-	 */
-	return function merge(source) {
-		var target = this;
-		var key;
-		var keys;
-		var i;
-		var j;
-		var iMax;
-		var jMax;
-		var source_value;
-		var target_value;
-		var source_tostring;
-		var target_tostring;
-
-		// Check that we can use target
-		if (target !== UNDEFINED && target !== NULL) {
-			// Iterate arguments
-			for (i = 0, iMax = arguments[LENGTH]; i < iMax; i++) {
-				// Get source, and continue if it's UNDEFINED or NULL
-				if ((source = arguments[i]) === UNDEFINED || source === NULL) {
-					continue;
-				}
-
-				// Get source keys
-				keys = Object.keys(source);
-
-				// Iterate keys
-				for (j = 0, jMax = keys[LENGTH]; j < jMax; j++) {
-					key = keys[j];
-					source_value = source[key];
-					target_value = target[key];
-
-					// No merge - copy source_value
-					if (!(key in target)) {
-						target[key] = source_value;
-						continue;
-					}
-
-					// Get 'types'
-					source_tostring = OBJECT_TOSTRING.call(source_value);
-					target_tostring = OBJECT_TOSTRING.call(target_value);
-
-					// Can we merge objects?
-					if (target_tostring === TOSTRING_OBJECT && source_tostring === TOSTRING_OBJECT) {
-						merge.call(target_value, source_value);
-					}
-					// Can we merge arrays?
-					else if (target_tostring === TOSTRING_ARRAY && source_tostring === TOSTRING_ARRAY) {
-						target[key] = ARRAY_CONCAT.call(target_value, source_value);
-					}
-					// No merge - override target[key]
-					else {
-						target[key] = source_value;
-					}
-				}
-			}
-		}
-
-		return target;
-	};
 });
 
 /**
@@ -3640,7 +3667,7 @@ define('troopjs-core/registry/service',[
 		 * Registred services
 		 * @private
 		 * @readonly
-		 * @param {core.component.service[]} services
+		 * @property {core.component.service[]} services
 		 */
 		me[SERVICES] = {};
 

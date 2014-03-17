@@ -85,11 +85,11 @@ define([ &quot;troopjs-core/component/service&quot; ], function CacheServiceModu
 	 * @param {...data.cache.component} cache One or more cache components
 	 */
 	return Service.extend(function CacheService(cache) {
-<span id='data-cache-service-property-this[CACHES]'>		/**
+<span id='data-cache-service-property-caches'>		/**
 </span>		 * Internal caches
 		 * @private
 		 * @readonly
-		 * @type {data.cache.component[]} caches
+		 * @property {data.cache.component[]} caches
 		 */
 		this[CACHES] = ARRAY_SLICE.call(arguments);
 	}, {

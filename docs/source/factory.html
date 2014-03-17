@@ -19,11 +19,11 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;module&quot;,
-	&quot;troopjs-utils/unique&quot;,
+	&quot;./config&quot;,
 	&quot;./decorator&quot;,
+	&quot;troopjs-utils/unique&quot;,
 	&quot;poly/object&quot;
-], function FactoryModule(module, unique, Decorator) {
+], function FactoryModule(config, Decorator, unique) {
 	&quot;use strict&quot;;
 
 <span id='composer-mixin-factory'>	/**
@@ -96,6 +96,7 @@ define([
 	 *  		instance.evenMore();
 	 *
 	 * @class composer.mixin.factory
+	 * @mixin composer.mixin.config
 	 * @static
 	 */
 
@@ -120,8 +121,8 @@ define([
 	var TYPE = &quot;type&quot;;
 	var TYPES = &quot;types&quot;;
 	var NAME = &quot;name&quot;;
-	var RE_SPECIAL = /^(\w+)(?::(.+?))?\/(.+)/;
-	var PRAGMAS = module.config().pragmas || [];
+	var RE_SPECIAL = config[&quot;pattern&quot;];
+	var PRAGMAS = config[&quot;pragmas&quot;];
 	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
 
 <span id='composer-mixin-factory-static-method-create'>	/**
@@ -135,12 +136,6 @@ define([
 		return extend.apply(this, arguments)();
 	}
 
-<span id='composer-mixin-factory-static-method-extend'>	/**
-</span>	 * Extend this constructor from multiple others constructors/objects.
-	 * @static
-	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @returns {composer.mixin} The extended subclass.
-	 */
 	function extend(mixin) {
 		/*jshint validthis:true*/
 		var args = [ this ];

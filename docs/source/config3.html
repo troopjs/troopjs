@@ -21,23 +21,31 @@
 define([
 	&quot;module&quot;,
 	&quot;troopjs-utils/merge&quot;
-], function LoomConfigModule(module, merge) {
+], function (module, merge) {
 	&quot;use strict&quot;;
 
-<span id='core-pubsub-runner-config'>	/**
-</span>	 * @class core.pubsub.runner.config
+<span id='composer-mixin-config'>	/**
+</span>	 * @class composer.mixin.config
 	 * @extends requirejs.config
 	 * @inheritdoc
-	 * @localdoc This module provide configuration for the **pubsub runners** from it's AMD module config.
+	 * @localdoc This module is to provide configuration for the {@link composer.mixin.factory}.
 	 * @protected
 	 * @static
 	 */
 	return merge.call({
-<span id='core-pubsub-runner-config-cfg-pattern'>		/**
-</span>		 * @cfg {RegExp} pattern RegExp used to determine if a {@link core.component.base#phase phase} should be protected
+<span id='composer-mixin-config-cfg-pattern'>		/**
+</span>		 * @cfg {RegExp} pattern RegExp used to determine if a method is a special
 		 */
-		&quot;pattern&quot; : /^(?:initi|fin)alized?$/
+		&quot;pattern&quot;: /^(\w+)(?::(.+?))?\/(.+)/,
+
+<span id='composer-mixin-config-cfg-pragmas'>		/**
+</span>		 * @cfg {Object[]} pragmas Pragmas used to rewrite methods before processing
+		 * @cfg {RegExp} pragmas.pattern Matching pattern
+		 * @cfg {String} pragmas.replace Replacement string
+		 */
+		&quot;pragmas&quot;: []
 	}, module.config());
-});</pre>
+});
+</pre>
 </body>
 </html>
