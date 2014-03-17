@@ -4,6 +4,7 @@
  * > **Note** : This documentation was copied from the [when.js API documentation](https://github.com/cujojs/when/blob/master/docs/api.md#when).
  * when is part of the cujo.js family of libraries (http://cujojs.com/)
  * @class When
+ * @static
  */
 
 /**
