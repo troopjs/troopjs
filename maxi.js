@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-4+772c4ca ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-4+a87d086 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-define('troopjs/version',[], "3.0.0-4+772c4ca");
+define('troopjs/version',[], "3.0.0-4+a87d086");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
