@@ -27,14 +27,21 @@ define([
 <span id='utils-defer'>	/**
 </span>	 * `when.defer` patched with jQuery/deferred compatibility.
 	 * @class utils.defer
-	 * @singleton
+	 * @extends Function
+	 * @static
 	 */
 
 	var ARRAY_SLICE = Array.prototype.slice;
 
 <span id='utils-defer-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @hide
+	 */
+
+<span id='utils-defer-static-method-constructor'>	/**
 </span>	 * Creates a wrapped when.defer object, which can be send to anything that expects a jQuery/deferred.
 	 * @method constructor
+	 * @static
 	 * @return {Deferred}
 	 */
 	return function Defer() {

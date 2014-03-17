@@ -18,13 +18,22 @@
   <pre class="prettyprint lang-js"><span id='core-event-emitter-runner'>/**
 </span> * The runner interface
  * @class core.event.emitter.runner
+ * @extends Function
+ * @protected
+ * @static
  * @abstract
  */
 
 <span id='core-event-emitter-runner-method-constructor'>/**
+</span> * @method constructor
+ * @hide
+ */
+
+<span id='core-event-emitter-runner-static-method-constructor'>/**
 </span> * Run event handlers.
- * @abstract
  * @method constructor
+ * @static
+ * @abstract
  * @param {Object} event Event object
  * @param {String} event.context Event context
  * @param {Function} event.callback Event callback

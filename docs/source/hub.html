@@ -66,12 +66,20 @@ define([
 
 <span id='core-pubsub-hub-method-on'>	/**
 </span>	 * @method on
-	 * @hide
+	 * @inheritdoc
+	 * @private
 	 */
 
 <span id='core-pubsub-hub-method-off'>	/**
 </span>	 * @method off
-	 * @hide
+	 * @inheritdoc
+	 * @private
+	 */
+
+<span id='core-pubsub-hub-method-emit'>	/**
+</span>	 * @method emit
+	 * @inheritdoc
+	 * @private
 	 */
 
 	return Emitter.create({
@@ -80,7 +88,7 @@ define([
 <span id='core-pubsub-hub-method-subscribe'>		/**
 </span>		 * Listen to an event that are emitted publicly.
 		 * @chainable
-		 * @inheritdoc core.event.emitter#on
+		 * @inheritdoc #on
 		 * @method
 		 */
 		&quot;subscribe&quot; : from(&quot;on&quot;),
@@ -88,7 +96,7 @@ define([
 <span id='core-pubsub-hub-method-unsubscribe'>		/**
 </span>		 * Remove a public event listener.
 		 * @chainable
-		 * @inheritdoc core.event.emitter#off
+		 * @inheritdoc #off
 		 * @method
 		 */
 		&quot;unsubscribe&quot; : from(&quot;off&quot;),

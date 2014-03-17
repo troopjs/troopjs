@@ -15,17 +15,27 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='requirejs-config'>/**
-</span> * RequireJS config interface
- * @class requirejs.config
+  <pre class="prettyprint lang-js"><span id='composer-mixin'>/**
+</span> * Mixin interface.
+ *
+ * Represents any constructor or instance returned by any {@link composer.mixin.factory} method.
+ * @class composer.mixin
  * @abstract
- *
- * To change the configuration, refer to RequireJS [module config API](http://requirejs.org/docs/api.html#config-moduleconfig):
- *
- * 	requirejs.config(
- * 	{
-	 * 		config: { &quot;component.name&quot; : { &quot;configOption&quot; : &quot;configValue&quot;, ...  } }
-	 * 	})
+ */
+
+
+<span id='composer-mixin-static-method-extend'>/**
+</span> * @method extend
+ * @inheritdoc composer.mixin.factory#extend
+ * @static
+ * @inheritable
+ */
+
+<span id='composer-mixin-static-method-create'>/**
+</span> * @method create
+ * @inheritdoc composer.mixin.factory#create
+ * @static
+ * @inheritable
  */</pre>
 </body>
 </html>

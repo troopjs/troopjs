@@ -8,8 +8,8 @@ bower_components/troopjs-composer/mixin/factory.js
 bower_components/troopjs-core/mixin/base.js
 bower_components/troopjs-core/event/runner/sequence.js
 bower_components/troopjs-core/event/emitter.js
+bower_components/troopjs-core/component/runner/sequence.js
 bower_components/troopjs-utils/merge.js
-bower_components/troopjs-composer/decorator/before.js
 bower_components/troopjs-composer/decorator/around.js
 bower_components/troopjs-core/component/base.js
 bower_components/troopjs-core/component/runner/pipeline.js
@@ -18,7 +18,6 @@ bower_components/troopjs-core/pubsub/runner/pipeline.js
 bower_components/troopjs-composer/decorator/from.js
 bower_components/troopjs-core/pubsub/hub.js
 bower_components/troopjs-core/component/gadget.js
-bower_components/troopjs-composer/decorator/after.js
 bower_components/troopjs-browser/dom/config.js
 bower_components/troopjs-browser/dom/selector.js
 bower_components/troopjs-browser/component/runner/sequence.js
@@ -57,8 +56,8 @@ bower_components/troopjs-composer/mixin/factory.js
 bower_components/troopjs-core/mixin/base.js
 bower_components/troopjs-core/event/runner/sequence.js
 bower_components/troopjs-core/event/emitter.js
+bower_components/troopjs-core/component/runner/sequence.js
 bower_components/troopjs-utils/merge.js
-bower_components/troopjs-composer/decorator/before.js
 bower_components/troopjs-composer/decorator/around.js
 bower_components/troopjs-core/component/base.js
 bower_components/troopjs-core/component/runner/pipeline.js
@@ -67,7 +66,6 @@ bower_components/troopjs-core/pubsub/runner/pipeline.js
 bower_components/troopjs-composer/decorator/from.js
 bower_components/troopjs-core/pubsub/hub.js
 bower_components/troopjs-core/component/gadget.js
-bower_components/troopjs-composer/decorator/after.js
 bower_components/troopjs-browser/dom/config.js
 bower_components/troopjs-browser/dom/selector.js
 bower_components/troopjs-browser/component/runner/sequence.js

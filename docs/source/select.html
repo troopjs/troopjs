@@ -23,7 +23,8 @@ define(function SelectModule() {
 
 <span id='utils-select'>	/**
 </span>	 * @class utils.select
-	 * @singleton
+	 * @extends Function
+	 * @static
 	 */
 
 	var UNDEFINED;
@@ -35,8 +36,14 @@ define(function SelectModule() {
 	var DOUBLE_QUOTE = &quot;\&quot;&quot;;
 
 <span id='utils-select-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @hide
+	 */
+
+<span id='utils-select-static-method-constructor'>	/**
 </span>	 * Function that traverses a JSON object
 	 * @method constructor
+	 * @static
 	 * @param {String} query simple JSON query
 	 * @returns {*} Value from traversed query
 	 */

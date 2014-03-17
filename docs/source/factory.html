@@ -96,7 +96,7 @@ define([
 	 *  		instance.evenMore();
 	 *
 	 * @class composer.mixin.factory
-	 * @singleton
+	 * @static
 	 */
 
 	var PROTOTYPE = &quot;prototype&quot;;
@@ -124,20 +124,22 @@ define([
 	var PRAGMAS = module.config().pragmas || [];
 	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
 
-<span id='composer-mixin-factory-method-create'>	/**
+<span id='composer-mixin-factory-static-method-create'>	/**
 </span>	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
-	 * @param {...Function|...Object} mixin One or more constructors or objects to be mixed in.
-	 * @returns {Object} Object instance created out of the mixin of constructors and objects.
+	 * @static
+	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
+	 * @returns {composer.mixin} Object instance created out of the mixin of constructors and objects.
 	 */
 	function create(mixin) {
 		/*jshint validthis:true*/
 		return extend.apply(this, arguments)();
 	}
 
-<span id='composer-mixin-factory-method-extend'>	/**
+<span id='composer-mixin-factory-static-method-extend'>	/**
 </span>	 * Extend this constructor from multiple others constructors/objects.
-	 * @param {...Function|...Object} mixin One or more constructors or objects to be mixed in.
-	 * @returns {Function} The extended subclass.
+	 * @static
+	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
+	 * @returns {composer.mixin} The extended subclass.
 	 */
 	function extend(mixin) {
 		/*jshint validthis:true*/
@@ -160,12 +162,13 @@ define([
 			: OBJECT_TOSTRING.call(me);
 	}
 
-<span id='composer-mixin-factory-method-constructor'>	/**
+<span id='composer-mixin-factory-static-method-constructor'>	/**
 </span>	 * Create a new constructor or to extend an existing one from multiple others constructors/objects.
 	 * @member composer.mixin.factory
 	 * @method constructor
-	 * @param {...Function|...Object} mixin One or more constructors or objects to be mixed in.
-	 * @returns {Function} The constructor (class).
+	 * @static
+	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
+	 * @returns {composer.mixin} The constructor (class).
 	 */
 	function Factory (mixin) {
 		var special;

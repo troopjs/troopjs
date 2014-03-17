@@ -28,7 +28,7 @@ define([
 </span>	 * @class browser.component.runner.sequence
 	 * @extends core.event.emitter.runner
 	 * @protected
-	 * @singleton
+	 * @static
 	 */
 
 	var UNDEFINED;
@@ -40,8 +40,9 @@ define([
 	var SELECTOR = &quot;selector&quot;;
 	var MODIFIED = &quot;modified&quot;;
 
-<span id='browser-component-runner-sequence-method-constructor'>	/**
+<span id='browser-component-runner-sequence-static-method-constructor'>	/**
 </span>	 * @method constructor
+	 * @static
 	 * @inheritdoc
 	 * @localdoc Runner that executes DOM candidates in sequence without overlap
 	 * @returns {*} Result from last handler

@@ -25,7 +25,7 @@ define([ &quot;when&quot; ], function SequenceModule(when) {
 </span>	 * @class core.event.runner.sequence
 	 * @extends core.event.emitter.runner
 	 * @protected
-	 * @singleton
+	 * @static
 	 */
 
 	var UNDEFINED;
@@ -34,8 +34,9 @@ define([ &quot;when&quot; ], function SequenceModule(when) {
 	var CALLBACK = &quot;callback&quot;;
 	var CONTEXT = &quot;context&quot;;
 
-<span id='core-event-runner-sequence-method-constructor'>	/**
+<span id='core-event-runner-sequence-static-method-constructor'>	/**
 </span>	 * @method constructor
+	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
 	 * @returns {Promise}

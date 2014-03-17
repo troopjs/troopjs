@@ -23,15 +23,17 @@ define([ &quot;../mixin/decorator&quot; ], function AroundDecoratorModule(Decora
 
 <span id='composer-decorator-around'>	/**
 </span>	 * @class composer.decorator.around
-	 * @singleton
+	 * @extends composer.decorator
+	 * @static
 	 */
 
 	var VALUE = &quot;value&quot;;
 	var NOOP = function () {};
 
-<span id='composer-decorator-around-method-constructor'>	/**
+<span id='composer-decorator-around-static-method-constructor'>	/**
 </span>	 * Create a decorator that is to override an existing method.
 	 * @method constructor
+	 * @static
 	 * @param {Function} func The decorator function which receives the original function as parameter and is supposed to
 	 * return a function that is to replace the original.
 	 * @returns {composer.mixin.decorator}

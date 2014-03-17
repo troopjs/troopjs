@@ -26,21 +26,12 @@ define([
 	&quot;use strict&quot;;
 
 <span id='browser-dom-config'>	/**
-</span>	 * This module is to provide configurations **dom** from it's AMD module config.
-	 *
-	 * To change the configuration, refer to RequireJS [module config API](http://requirejs.org/docs/api.html#config-moduleconfig):
-	 *
-	 * 	requirejs.config(
-	 * 	{
-	 * 		config: { &quot;troopjs-browser/dom/config&quot; : { &quot;querySelectorAll&quot; : $.find, ...  } }
-	 * 	})
-	 *
-	 * [1]: http://requirejs.org/docs/api.html#config-moduleconfig
-	 *
-	 * @class browser.dom.config
+</span>	 * @class browser.dom.config
 	 * @extends requirejs.config
+	 * @inheritdoc
+	 * @localdoc This module is to provide configurations **dom** from it's AMD module config.
 	 * @protected
-	 * @singleton
+	 * @static
 	 */
 	return merge.call({
 <span id='browser-dom-config-cfg-querySelectorAll'>		/**

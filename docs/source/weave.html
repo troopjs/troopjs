@@ -31,8 +31,14 @@ define([
 
 <span id='browser-loom-weave'>	/**
 </span>	 * @class browser.loom.weave
+	 * @extends Function
 	 * @mixins browser.loom.config
-	 * @singleton
+	 * @static
+	 */
+
+<span id='browser-loom-weave-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @hide
 	 */
 
 	var UNDEFINED;
@@ -49,7 +55,7 @@ define([
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
 
-<span id='browser-loom-weave-method-constructor'>	/**
+<span id='browser-loom-weave-static-method-constructor'>	/**
 </span>	 * Instantiate all {@link browser.component.widget widgets}  specified in the {@link browser.loom.config#weave weave attribute}
 	 * of this element, and to signal the widget for start with the arguments.
 	 *
@@ -70,6 +76,7 @@ define([
 	 * 	$el.weave();
 	 *
 	 * @method constructor
+	 * @static
 	 * @param {...*} [start_args] Arguments that will be passed to each widget's {@link browser.component.widget#start start} method
 	 * @returns {Promise} Promise for the completion of weaving all widgets.
 	 */

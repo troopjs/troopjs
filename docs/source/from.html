@@ -23,16 +23,18 @@ define([ &quot;../mixin/decorator&quot; ], function FromDecoratorModule(Decorato
 
 <span id='composer-decorator-from'>	/**
 </span>	 * @class composer.decorator.from
-	 * @singleton
+	 * @extends composer.decorator
+	 * @static
 	 */
 
 	var UNDEFINED;
 	var VALUE = &quot;value&quot;;
 	var PROTOTYPE = &quot;prototype&quot;;
 
-<span id='composer-decorator-from-method-constructor'>	/**
+<span id='composer-decorator-from-static-method-constructor'>	/**
 </span>	 * Create a decorator that is to lend from a particular property from this own or the other factory.
 	 * @method constructor
+	 * @static
 	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
 	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
 	 * @returns {composer.mixin.decorator}

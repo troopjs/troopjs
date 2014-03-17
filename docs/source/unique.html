@@ -23,15 +23,22 @@ define(function UniqueModule() {
 
 <span id='utils-unique'>	/**
 </span>	 * @class utils.unique
-	 * @singleton
+	 * @extends Function
+	 * @static
 	 */
 
 	var LENGTH = &quot;length&quot;;
 
 <span id='utils-unique-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @hide
+	 */
+
+<span id='utils-unique-static-method-constructor'>	/**
 </span>	 * Function that calls on an array to produces a duplicate-free version of this array, using the specified comparator otherwise
 	 * strictly equals(`===`) to test object equality.
 	 * @method constructor
+	 * @static
 	 * @param {Function} [fn] The comparator function.
 	 * @param {Function} fn.one One element to compare.
 	 * @param {Function} fn.other The other element to compare with.

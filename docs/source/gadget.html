@@ -65,11 +65,9 @@ define([
 	var UNDEFINED;
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var RUNNER = &quot;runner&quot;;
 	var CONTEXT = &quot;context&quot;;
 	var CALLBACK = &quot;callback&quot;;
-	var PROXY = &quot;proxy&quot;;
 	var FEATURES = &quot;features&quot;;
 	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
@@ -102,7 +100,7 @@ define([
 		 * @localdoc Triggers memorized values on HUB specials
 		 * @handler
 		 */
-		&quot;sig/start&quot; : function onInitialize() {
+		&quot;sig/start&quot; : function onStart() {
 			var me = this;
 			var empty = {};
 			var specials = me.constructor.specials[HUB] || ARRAY_PROTO;
@@ -134,42 +132,31 @@ define([
 			});
 		},
 
-<span id='core-component-gadget-handler-sig-setup'>		/**
+<span id='core-component-gadget-handler-sig-add'>		/**
 </span>		 * @inheritdoc
-		 * @localdoc Registers remote proxy on the {@link core.pubsub.hub hub} that will re-publish on this component
+		 * @localdoc Registers subscription on the {@link core.pubsub.hub hub} for matching callbacks
 		 * @handler
 		 */
-		&quot;sig/setup&quot;: function onSetup(type, handlers) {
+		&quot;sig/add&quot;: function onAdd(handlers, type, callback) {
 			var me = this;
 			var matches;
 
 			if ((matches = RE.exec(type)) !== NULL) {
-				hub.subscribe(matches[1], me, handlers[PROXY] = function hub_proxy(args) {
-					// Redefine args
-					args = {};
-					args[TYPE] = type;
-					args[RUNNER] = pipeline;
-					args = [ args ];
-
-					// Push original arguments on args
-					ARRAY_PUSH.apply(args, arguments);
-
-					return me.emit.apply(me, args);
-				});
+				hub.subscribe(matches[1], me, callback);
 			}
 		},
 
-<span id='core-component-gadget-handler-sig-teardown'>		/**
+<span id='core-component-gadget-handler-sig-remove'>		/**
 </span>		 * @inheritdoc
-		 * @localdoc Removes remote proxy on the {@link core.pubsub.hub hub} that was previously registred in {@link #handler-sig/setup}
+		 * @localdoc Removes remote subscription from the {@link core.pubsub.hub hub} that was previously registered in {@link #handler-sig/add}
 		 * @handler
 		 */
-		&quot;sig/teardown&quot;: function onTeardown(type, handlers) {
+		&quot;sig/remove&quot;: function onRemove(handlers, type, callback) {
 			var me = this;
 			var matches;
 
 			if ((matches = RE.exec(type)) !== NULL) {
-				hub.unsubscribe(matches[1], me, handlers[PROXY]);
+				hub.unsubscribe(matches[1], me, callback);
 			}
 		},
 

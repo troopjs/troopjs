@@ -77,8 +77,7 @@ define([
 	 * @inheritdoc
 	 * @param {jQuery|HTMLElement} $element The element that this widget should be attached to
 	 * @param {String} displayName A friendly name for this widget
-	 * @param {...core.component.service|...browser.component.widget} gadget List of services or widgets to
-	 * start before starting the application.
+	 * @param {...core.component.gadget} gadget List of gadgets to start before starting the application.
 	 */
 	return Widget.extend(function ApplicationWidget($element, displayName, gadget) {
 <span id='browser-application-widget-property-registry'>		/**

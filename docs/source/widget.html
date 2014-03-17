@@ -20,8 +20,6 @@
  */
 define([
 	&quot;troopjs-core/component/gadget&quot;,
-	&quot;troopjs-composer/decorator/before&quot;,
-	&quot;troopjs-composer/decorator/after&quot;,
 	&quot;./runner/sequence&quot;,
 	&quot;jquery&quot;,
 	&quot;when&quot;,
@@ -30,7 +28,7 @@ define([
 	&quot;../loom/weave&quot;,
 	&quot;../loom/unweave&quot;,
 	&quot;troopjs-jquery/destroy&quot;
-], function WidgetModule(Gadget, before, after, sequence, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
+], function WidgetModule(Gadget, sequence, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
 	&quot;use strict&quot;;
 
 <span id='browser-component-widget'>	/**
@@ -55,7 +53,7 @@ define([
 	var VALUE = &quot;value&quot;;
 	var TYPE = &quot;type&quot;;
 	var RUNNER = &quot;runner&quot;;
-	var $WEFT = LOOM_CONF[&quot;$weft&quot;];
+	var FINALIZE = &quot;finalize&quot;;
 	var SELECTOR_WEAVE = &quot;[&quot; + LOOM_CONF[&quot;weave&quot;] + &quot;]&quot;;
 	var SELECTOR_WOVEN = &quot;[&quot; + LOOM_CONF[&quot;woven&quot;] + &quot;]&quot;;
 	var RE = new RegExp(&quot;^&quot; + DOM + &quot;/(.+)&quot;);
@@ -89,12 +87,13 @@ define([
 <span id='global-method-set_modified'>	/**
 </span>	 * Sets MODIFIED on handlers
 	 * @ignore
-	 * @param type {String} Topic type
+	 * @param {Object} handlers
+	 * @param {String} type
 	 */
-	function set_modified(type) {
+	function set_modified(handlers, type) {
 		if (RE.test(type)) {
 			// Set modified
-			this.handlers[type][MODIFIED] = new Date().getTime();
+			handlers[MODIFIED] = new Date().getTime();
 		}
 	}
 
@@ -163,7 +162,7 @@ define([
 		 * re-dispatches those events.
 		 * @inheritdoc
 		 */
-		&quot;sig/setup&quot;: function onSetup(type, handlers) {
+		&quot;sig/setup&quot;: function onSetup(handlers, type) {
 			var me = this;
 			var matches;
 
@@ -185,12 +184,26 @@ define([
 			}
 		},
 
+<span id='browser-component-widget-handler-sig-add'>		/**
+</span>		 * @handler
+		 * @localdoc Sets MODIFIED on handlers for matching types
+		 * @inheritdoc
+		 */
+		&quot;sig/add&quot;: set_modified,
+
+<span id='browser-component-widget-handler-sig-remove'>		/**
+</span>		 * @handler
+		 * @localdoc Sets MODIFIED on handlers for matching types
+		 * @inheritdoc
+		 */
+		&quot;sig/remove&quot;: set_modified,
+
 <span id='browser-component-widget-handler-sig-teardown'>		/**
 </span>		 * @handler
 		 * @localdoc Remove for the DOM event handler proxies that are registered on the DOM element.
 		 * @inheritdoc
 		 */
-		&quot;sig/teardown&quot;: function onTeardown(type, handlers) {
+		&quot;sig/teardown&quot;: function onTeardown(handlers, type) {
 			var me = this;
 			var matches;
 
@@ -225,24 +238,10 @@ define([
 		 * @localdoc Triggered when this widget is removed from the DOM
 		 */
 		&quot;dom/destroy&quot; : function onDestroy() {
-			this.unweave();
+			if (this.phase !== FINALIZE) {
+				loom_unweave.call(this[$ELEMENT]);
+			}
 		},
-
-<span id='browser-component-widget-method-on'>		/**
-</span>		 * @chainable
-		 * @method
-		 * @inheritdoc
-		 * @localdoc MODIFIED will be set **before** handler is added
-		 */
-		&quot;on&quot;: after(set_modified),
-
-<span id='browser-component-widget-method-off'>		/**
-</span>		 * @chainable
-		 * @method
-		 * @inheritdoc
-		 * @localdoc MODIFIED will be set **after** handler is removed
-		 */
-		&quot;off&quot;: before(set_modified),
 
 <span id='browser-component-widget-method-weave'>		/**
 </span>		 * @inheritdoc browser.loom.weave#constructor
@@ -255,14 +254,7 @@ define([
 </span>		 * @inheritdoc browser.loom.unweave#constructor
 		 */
 		&quot;unweave&quot; : function unweave() {
-			var woven = this[$ELEMENT].find(SELECTOR_WOVEN);
-
-			// Unweave myself only if I am woven.
-			if(this[$WEFT]) {
-				woven = woven.addBack();
-			}
-
-			return loom_unweave.apply(woven, arguments);
+			return loom_unweave.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
 		},
 
 <span id='browser-component-widget-method-before'>		/**

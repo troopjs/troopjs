@@ -20,14 +20,12 @@
  */
 define([
 	&quot;../event/emitter&quot;,
-	&quot;../event/runner/sequence&quot;,
-	&quot;troopjs/version&quot;,
+	&quot;./runner/sequence&quot;,
 	&quot;troopjs-utils/merge&quot;,
-	&quot;troopjs-composer/decorator/before&quot;,
 	&quot;troopjs-composer/decorator/around&quot;,
 	&quot;when&quot;,
 	&quot;poly/array&quot;
-], function ComponentModule(Emitter, sequence, version, merge, before, around, when) {
+], function ComponentModule(Emitter, sequence, merge, around, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-base'>	/**
@@ -76,13 +74,14 @@ define([
 	 */
 
 	var UNDEFINED;
+	var FALSE = false;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var EMITTER_CREATEHANDLERS = Emitter.createHandlers;
 	var CONFIGURATION = &quot;configuration&quot;;
 	var RUNNER = &quot;runner&quot;;
 	var HANDLERS = &quot;handlers&quot;;
 	var HEAD = &quot;head&quot;;
+	var TAIL = &quot;tail&quot;;
 	var CONTEXT = &quot;context&quot;;
 	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
@@ -95,6 +94,8 @@ define([
 	var FINISHED = &quot;finished&quot;;
 	var SIG = &quot;sig&quot;;
 	var SIG_SETUP = SIG + &quot;/setup&quot;;
+	var SIG_ADD = SIG + &quot;/add&quot;;
+	var SIG_REMOVE = SIG + &quot;/remove&quot;;
 	var SIG_TEARDOWN = SIG + &quot;/teardown&quot;;
 	var ON = &quot;on&quot;;
 	var EVENT_TYPE_SIG = new RegExp(&quot;^&quot; + SIG + &quot;/(.+)&quot;);
@@ -126,14 +127,6 @@ define([
 		 * @protected
 		 * @property {&quot;initialized&quot;|&quot;started&quot;|&quot;stopped&quot;|&quot;finalized&quot;} phase
 		 */
-
-<span id='core-component-base-property-version'>		/**
-</span>		 * The exact semantic version that reflects the version defined in bower.json file of troopjs package.
-		 * @readonly
-		 * @since 3.0
-		 * @property {String}
-		 */
-		&quot;version&quot; : version,
 
 		&quot;displayName&quot; : &quot;core/component/base&quot;,
 
@@ -170,8 +163,34 @@ define([
 		 * @event sig/setup
 		 * @localdoc Triggered when the first event handler of a particular type is added via {@link #method-on}.
 		 * @since 3.0
-		 * @param {String} type
+		 * @preventable
 		 * @param {Object} handlers
+		 * @param {String} type
+		 * @param {Function} callback
+		 * @param {*} [data]
+		 */
+
+<span id='core-component-base-event-sig-add'>		/**
+</span>		 * Add signal
+		 * @event sig/add
+		 * @localdoc Triggered when a event handler of a particular type is added via {@link #method-on}.
+		 * @since 3.0
+		 * @preventable
+		 * @param {Object} handlers
+		 * @param {String} type
+		 * @param {Function} callback
+		 * @param {*} [data]
+		 */
+
+<span id='core-component-base-event-sig-remove'>		/**
+</span>		 * Remove signal
+		 * @event sig/remove
+		 * @localdoc Triggered when a event handler of a particular type is removed via {@link #method-off}.
+		 * @since 3.0
+		 * @preventable
+		 * @param {Object} handlers
+		 * @param {String} type
+		 * @param {Function} callback
 		 */
 
 <span id='core-component-base-event-sig-teardown'>		/**
@@ -179,8 +198,10 @@ define([
 		 * @event sig/teardown
 		 * @localdoc Triggered when the last event handler of type is removed for a particular type via {@link #method-off}.
 		 * @since 3.0
-		 * @param {String} type
+		 * @preventable
 		 * @param {Object} handlers
+		 * @param {String} type
+		 * @param {Function} callback
 		 */
 
 <span id='core-component-base-event-sig-task'>		/**
@@ -245,7 +266,23 @@ define([
 		 * @handler sig/setup
 		 * @inheritdoc #event-sig/setup
 		 * @template
-		 * @return {Promise}
+		 * @return {*|Boolean}
+		 */
+
+<span id='core-component-base-handler-sig-add'>		/**
+</span>		 * Handles an event add
+		 * @handler sig/add
+		 * @inheritdoc #event-sig/add
+		 * @template
+		 * @return {*|Boolean}
+		 */
+
+<span id='core-component-base-handler-sig-remove'>		/**
+</span>		 * Handles an event remove
+		 * @handler sig/remove
+		 * @inheritdoc #event-sig/remove
+		 * @template
+		 * @return {*|Boolean}
 		 */
 
 <span id='core-component-base-handler-sig-teardown'>		/**
@@ -253,7 +290,7 @@ define([
 		 * @handler sig/teardown
 		 * @inheritdoc #event-sig/teardown
 		 * @template
-		 * @return {Promise}
+		 * @return {*|Boolean}
 		 */
 
 <span id='core-component-base-handler-sig-task'>		/**
@@ -311,28 +348,52 @@ define([
 		 * @param {String} type The event type to subscribe to.
 		 * @param {Function} callback The event listener function.
 		 * @param {*} [data] Handler data
+		 * @fires sig/setup
+		 * @fires sig/add
 		 */
-		&quot;on&quot;: before(function on(event, callback, data) {
-			var me = this;
-			var type = event;
-			var all = me[HANDLERS];
-			var handlers = all[type];
+		&quot;on&quot;: around(function (fn) {
+			return function on(type, callback, data) {
+				var me = this;
+				var event;
+				var handlers;
+				var result;
 
-			// Initialize the handlers for this type of event on first subscription only.
-			if (handlers === UNDEFINED) {
-				handlers = EMITTER_CREATEHANDLERS.call(all, type);
-			}
+				// If this type is NOT a signal we don't have to event try
+				if (!EVENT_TYPE_SIG.test(type)) {
+					// Initialize the handlers for this type if they don't exist.
+					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
+						handlers = {};
+						handlers[TYPE] = type;
+					}
 
-			// If this event is NOT a signal, send out a signal to allow setting up handlers.
-			if (!(HEAD in handlers) &amp;&amp; !EVENT_TYPE_SIG.test(type)) {
-				event = {};
-				event[TYPE] = SIG_SETUP;
-				event[RUNNER] = sequence;
-				me.emit(event, type, handlers);
-			}
+					// Initialize event
+					event = {};
+					event[RUNNER] = sequence;
 
-			// context will always be this widget.
-			return [ type, me, callback, data ];
+					// If this is the first handler signal SIG_SETUP
+					if (!(HEAD in handlers)) {
+						event[TYPE] = SIG_SETUP;
+						result = me.emit(event, handlers, type, callback, data);
+					}
+
+					// If we were not interrupted
+					if (result !== FALSE) {
+						// Signal SIG_ADD
+						event[TYPE] = SIG_ADD;
+						result = me.emit(event, handlers, type, callback, data);
+					}
+
+					// If we were not interrupted and `handlers` is not the list for `type` append it
+					if (result !== FALSE &amp;&amp; me[HANDLERS][type] !== handlers) {
+						ARRAY_PUSH.call(me[HANDLERS], me[HANDLERS][type] = handlers);
+					}
+				}
+
+				// If we were not interrupted return result from super.on, otherwise just this
+				return result !== FALSE
+						? fn.call(me, type, me, callback, data)
+						: me;
+			};
 		}),
 
 <span id='core-component-base-method-off'>		/**
@@ -342,32 +403,47 @@ define([
 		 * @localdoc Context of the callback will always be **this** object.
 		 * @param {String} type The event type subscribed to
 		 * @param {Function} [callback] The event listener function to remove
+		 * @fires sig/remove
+		 * @fires sig/teardown
 		 */
 		&quot;off&quot;: around(function(fn) {
-			return function off(event, callback) {
+			return function off(type, callback) {
 				var me = this;
-				var type = event;
+				var event;
+				var handlers;
+				var result;
 
-				// context will always be this widget.
-				fn.call(me, type, me, callback);
+				if (!EVENT_TYPE_SIG.test(type)) {
+					// Initialize the handlers for this type if they don't exist.
+					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
+						handlers = {};
+						handlers[TYPE] = type;
+					}
 
-				var all = me[HANDLERS];
-				var handlers = all[type];
-
-				// Initialize the handlers for this type of event on first subscription only.
-				if (handlers === UNDEFINED) {
-					handlers = EMITTER_CREATEHANDLERS.call(all, type);
-				}
-
-				// If this event is NOT a signal, send out a signal to allow finalize handlers.
-				if (!(HEAD in handlers) &amp;&amp; !EVENT_TYPE_SIG.test(type)) {
+					// Initialize event
 					event = {};
-					event[TYPE] = SIG_TEARDOWN;
 					event[RUNNER] = sequence;
-					me.emit(event, type, handlers);4
+
+					// Signal SIG_REMOVE
+					event[TYPE] = SIG_REMOVE;
+					result = me.emit(event, handlers, type, callback);
+
+					// If we were not interrupted and this is the last handler signal SIG_TEARDOWN
+					if (result !== FALSE &amp;&amp; handlers[HEAD] === handlers[TAIL]) {
+						event[TYPE] = SIG_TEARDOWN;
+						result = me.emit(event, handlers, type, callback);
+					}
+
+					// If we were not interrupted and `handlers` is not the list for `type` append it
+					if (result !== FALSE &amp;&amp; me[HANDLERS][type] !== handlers) {
+						ARRAY_PUSH.call(me[HANDLERS], me[HANDLERS][type] = handlers);
+					}
 				}
 
-				return me;
+				// If we were not interrupted return result from super.off, otherwise just this
+				return result !== FALSE
+					? fn.call(me, type, me, callback)
+					: me;
 			};
 		}),
 

@@ -25,20 +25,7 @@ define([ &quot;troopjs-composer/mixin/factory&quot; ], function ObjectBaseModule
 <span id='core-mixin-base'>	/**
 </span>	 * Base object with instance count.
 	 * @class core.mixin.base
-	 */
-
-<span id='core-mixin-base-static-method-extend'>	/**
-</span>	 * @method extend
-	 * @inheritdoc composer.mixin.factory#extend
-	 * @static
-	 * @inheritable
-	 */
-
-<span id='core-mixin-base-static-method-create'>	/**
-</span>	 * @method create
-	 * @inheritdoc composer.mixin.factory#create
-	 * @static
-	 * @inheritable
+	 * @extends composer.mixin
 	 */
 
 <span id='core-mixin-base-method-constructor'>	/**
@@ -59,6 +46,7 @@ define([ &quot;troopjs-composer/mixin/factory&quot; ], function ObjectBaseModule
 
 <span id='core-mixin-base-property-displayName'>		/**
 </span>		 * The hierarchical namespace for this component that indicates it's functionality.
+		 * @private
 		 * @readonly
 		 * @property {String}
 		 */
@@ -66,7 +54,8 @@ define([ &quot;troopjs-composer/mixin/factory&quot; ], function ObjectBaseModule
 
 <span id='core-mixin-base-method-toString'>		/**
 </span>		 * Gives string representation of this component instance.
-		 * @returns {String} {@link #displayName} and {@link #instanceCount}
+		 * @returns {String} {@link #displayName}`@`{@link #instanceCount}
+		 * @protected
 		 */
 		&quot;toString&quot; : function _toString() {
 			var me = this;

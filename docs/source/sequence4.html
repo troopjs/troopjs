@@ -29,7 +29,7 @@ define([
 	 * @extends core.event.emitter.runner
 	 * @mixins core.pubsub.runner.config
 	 * @protected
-	 * @singleton
+	 * @static
 	 */
 
 	var UNDEFINED;
@@ -41,8 +41,9 @@ define([
 	var MEMORY = &quot;memory&quot;;
 	var RE_PHASE = config[&quot;pattern&quot;];
 
-<span id='core-pubsub-runner-sequence-method-constructor'>	/**
+<span id='core-pubsub-runner-sequence-static-method-constructor'>	/**
 </span>	 * @method constructor
+	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
 	 * @returns {Promise}

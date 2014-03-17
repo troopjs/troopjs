@@ -25,7 +25,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 </span>	 * @class core.component.runner.sequence
 	 * @extends core.event.emitter.runner
 	 * @protected
-	 * @singleton
+	 * @static
 	 */
 
 	var UNDEFINED;
@@ -34,8 +34,9 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 	var CALLBACK = &quot;callback&quot;;
 	var CONTEXT = &quot;context&quot;;
 
-<span id='core-component-runner-sequence-method-constructor'>	/**
+<span id='core-component-runner-sequence-static-method-constructor'>	/**
 </span>	 * @method constructor
+	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **synchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
 	 * @returns {*[]} Result from each executed handler
@@ -46,6 +47,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 		var candidate;
 		var candidates = [];
 		var candidatesCount = 0;
+		var result;
 
 		// Iterate handlers
 		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
@@ -62,10 +64,18 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 			candidates[candidatesCount++] = candidate;
 		}
 
-		// Map and return
-		return candidates.map(function (candidate) {
-			return candidate[CALLBACK].apply(candidate[CONTEXT], args);
-		});
+		// Reduce and return
+		return candidates.reduce(function (current, candidate) {
+			// Store result if not UNDEFINED
+			if (current !== UNDEFINED) {
+				result = current;
+			}
+
+			// If result is _not_ false, return result of candidate[CALLBACK], otherwise just false
+			return result !== false
+				? candidate[CALLBACK].apply(candidate[CONTEXT], args)
+				: result;
+		}, UNDEFINED);
 	}
 });
 </pre>
