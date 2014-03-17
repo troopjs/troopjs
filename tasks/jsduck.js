@@ -67,8 +67,6 @@ module.exports = function JSDuckTask(grunt) {
 							return path.lastIndexOf("bower_components") <= 0;
 						}
 					},
-					// Module README.
-					"**/troopjs-*/**/README.md",
 					// Additional Guidelines.
 					"**/guides/**/README.md",
 					// Excludes the dist.
