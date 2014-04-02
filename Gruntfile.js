@@ -72,6 +72,9 @@ module.exports = function(grunt) {
 					"name" : "troopjs-utils",
 					"location" : "bower_components/troopjs-utils"
 				}, {
+					"name" : "troopjs-net",
+					"location" : "bower_components/troopjs-net"
+				}, {
 					"name" : "troopjs-jquery",
 					"location" : "bower_components/troopjs-jquery"
 				}, {
