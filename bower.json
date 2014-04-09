@@ -14,7 +14,7 @@
 		"node_modules"
 	],
 	"dependencies": {
-		"troopjs-composer": "*",
+		"troopjs-compose": "*",
 		"troopjs-core": "*",
 		"troopjs-browser": "*",
 		"troopjs-net": "*",

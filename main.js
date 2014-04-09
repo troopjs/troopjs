@@ -4,7 +4,7 @@
 
 define(["module"], function(thisModule) {
 	// List of current sub module names.
-	var MODULE_NAMES = [ "composer", "core", "browser", "net", "data", "jquery", "requirejs", "utils" ];
+	var MODULE_NAMES = [ "compose", "core", "browser", "net", "data", "jquery", "requirejs", "util" ];
 
 	var base = thisModule.uri + "/../bower_components";
 	var packages = [];

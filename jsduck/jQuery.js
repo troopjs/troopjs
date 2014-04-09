@@ -7,7 +7,7 @@
  *
  * @class $
  * @alternateClassName jQuery
- * @extends External
+ * @singleton
  */
 
 /**
@@ -16,4 +16,9 @@
  * @param {String} selector A string containing a selector expression
  * @param {HTMLElement|jQuery} context A DOM Element, Document, or jQuery to use as context
  * @returns {jQuery}
+ */
+
+/**
+ * The number of elements in the jQuery object.
+ * @property {Number} length
  */

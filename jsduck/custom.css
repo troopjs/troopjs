@@ -5,3 +5,15 @@
 	padding: 2px 0;
 	font-size: 12px;
 }
+
+.notice {
+	background-color: #FFC;
+	border: 1px solid #E8E8E8;
+	border-radius: 5px;
+	color: #314E64;
+	margin: 10px 0 14px;
+	max-width: 900px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 10px 12px;
+}

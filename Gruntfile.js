@@ -93,8 +93,11 @@ module.exports = function(grunt) {
 					"location" : ".",
 					"main" : "maxi"
 				}, {
-					"name" : "troopjs-composer",
-					"location" : "bower_components/troopjs-composer"
+					"name" : "troopjs-log",
+					"location" : "bower_components/troopjs-log"
+				}, {
+					"name" : "troopjs-compose",
+					"location" : "bower_components/troopjs-compose"
 				}, {
 					"name" : "troopjs-core",
 					"location" : "bower_components/troopjs-core"
@@ -108,8 +111,8 @@ module.exports = function(grunt) {
 					"name" : "troopjs-data",
 					"location" : "bower_components/troopjs-data"
 				}, {
-					"name" : "troopjs-utils",
-					"location" : "bower_components/troopjs-utils"
+					"name" : "troopjs-util",
+					"location" : "bower_components/troopjs-util"
 				}, {
 					"name" : "troopjs-jquery",
 					"location" : "bower_components/troopjs-jquery"
