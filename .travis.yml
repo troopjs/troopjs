@@ -1,7 +1,7 @@
 language: node_js
 before_script:
   - npm install -g grunt-cli bower buster phantomjs
-  - gem install jsduck
+  - gem install troopjs-jsduck
   - bower install
 branches:
   except:
