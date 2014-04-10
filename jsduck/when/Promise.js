@@ -1,20 +1,52 @@
 /**
- * The promise represents the _eventual outcome_, which is either fulfillment (success) and an associated value,
- * or rejection (failure) and an associated reason. The promise provides mechanisms for arranging to call a
- * function on its value or reason, and produces a new promise for the result.
  *
- * 	// Create a pending promise whose fate is detemined by
- * 	// the provided resolver function
- * 	var promise = when.promise(resolver);
+ * A Promise represents the pending result of a computation that may not have completed yet.
  *
- * 	// Or a resolved promise
- * 	var promise = when.resolve(promiseOrValue);
+ * ## Promise states
  *
- * 	// Or a rejected promise
- * 	var promise = when.reject(reason);
+ * A Promise starts in an *unresolved* or *pending* state.  For example, the Promise for a computation
+ * that hasn't yet completed is in the *pending* state. At some point the computation will either complete
+ * successfully, thus producing a result, or fail, either generating some sort of error or *reason* why
+ * it could not complete.
+ *
+ * If the computation completes successfully, its Promise will transition to the *fulfilled* state, and
+ * all consumers (see below) will be notified of the actual result. In other words, their callback will
+ * be invoked and passed the result.
+ *
+ * If the computation fails, its Promise will transition to the *rejected* state, and all consumers will
+ * be notified of the error or reason for the failure.  In other words, their `errorback` will be invoked
+ * and passed the result.
+ *
+ * Once in the fulfilled or rejected state, a Promise become *immutable*--neither its state nor its result
+ * (or error/reason) can be modified.
+ *
+ * ## Consumers
+ *
+ * A Promise can be safely given to any number of consumers, who can register to observe the result
+ * (or error/reason) of the promise using {@link when#constructor}, or the promise's {@link #then}.
+ *
+ *     when(promise,
+ *       function(result) {
+ *         console.log("success: " + result);
+ *       },
+ *       function(reason) {
+ *         console.log("failed: " + reason);
+ *       }
+ *     );
+ *
+ * or similarly with {@link #then}
+ *
+ *     promise.then(
+ *       function(result) {
+ *         console.log("success: " + result);
+ *       },
+ *       function(reason) {
+ *         console.log("failed: " + reason);
+ *       }
+ *     );
  *
  * <div class="notice">
- * Documentation for this class comes from <a href="https://github.com/cujojs/when/blob/master/docs/api.md#promise">when.js</a>
+ * Documentation for this class comes from <a href="https://github.com/cujojs/when/blob/master/docs/api.md">when.js</a>
  * and is available under <a href="ttp://www.opensource.org/licenses/mit-license.php">MIT license</a>.
  * </div>
  *
@@ -271,6 +303,7 @@
  * @method timeout
  * @since 3.0
  * @param {Number} milliseconds Milliseconds to wait before timeout
+ * @param {*} [reason=Error] Custom reason for the timeout rejection
  * @return {Promise}
  */
 

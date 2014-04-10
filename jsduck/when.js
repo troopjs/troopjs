@@ -174,14 +174,25 @@
  */
 
 /**
- * Create a {promise, resolver} pair, aka Deferred. In some scenarios it can be convenient to have
- * access to both the promise and it's associated resolving functions, for example, to give each out to a separate party. In such cases it can be convenient to use when.defer().
+ * > **Note**: The use of {@link #defer} is discouraged. In most cases, using {@link #promise}, {@link #try}, or {@link #lift}
+ * > provides better separation of concerns.
  *
- * 	var deferred = when.defer();
- * 	var promise = deferred.promise;
- * 	...
- * 	defered.resolver.resolve();
- * 	defered.resolver.reject();
+ * Create a `{{@link Deferred#promise promise}, {@link Deferred#resolve resolve}, {@link Deferred#reject reject}, {@link Deferred#notify notify}}` tuple.
+ * In certain (rare) scenarios it can be convenient to have access to both the promise and it's associated resolving
+ * functions.
+ *
+ *     var promise = deferred.promise;
+ *     // Resolve the promise, x may be a promise or non-promise
+ *     deferred.resolve(x)
+ *
+ *     // Reject the promise with error as the reason
+ *     deferred.reject(error)
+ *
+ *     // Notify promise consumers of a progress update
+ *     deferred.notify(x)
+ *
+ * Note that {@link Deferred#resolve resolve}, {@link Deferred#reject reject}, and {@link Deferred#notify notify} all become [no-ops](https://en.wikipedia.org/wiki/NOP)
+ * after either resolve or reject has been called the first time.
  *
  * @method defer
  * @return {Deferred}
