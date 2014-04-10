@@ -1,7 +1,8 @@
 language: node_js
-before_script:
-  - npm install -g grunt-cli bower@~1.1 buster@~0.6
+before_install:
+  - npm install -g grunt-cli bower buster
+  - gem install jsduck-troopjs
   - bower install
 branches:
   except:
-     - /^build\//
+    - /^build\/.*$/

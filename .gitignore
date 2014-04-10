@@ -1,7 +1,5 @@
-# IDEA
+# IDE
 .idea
-
-# Eclipse
 .project
 .settings
 .externalToolBuilders
@@ -12,4 +10,3 @@ bower_components
 
 # Artifacts
 dist/
-docs/

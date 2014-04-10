@@ -2,12 +2,14 @@
 module.exports = function(grunt) {
 	"use strict";
 
+	var UNDEFINED;
 	var semver = require("semver");
 	var path = require("path");
-	var UNDEFINED;
+	var _ = require("lodash");
 
 	/**
 	 * Formats a semver
+	 * @private
 	 * @param {semver} version
 	 * @return {string} Formatted semver
 	 */
@@ -22,17 +24,47 @@ module.exports = function(grunt) {
 		return result;
 	}
 
+	/**
+	 * Value replacer
+	 * @private
+	 * @param key {String}
+	 * @param value {*}
+	 * @return {*}
+	 */
+	function replacer(key, value) {
+		return _.isEmpty(value) ? UNDEFINED : value;
+	}
+
+	/**
+	 * Reads from and writes to passing callback
+	 * @private
+	 * @param from {String} From path
+	 * @param to {String} To path
+	 * @param callback {Function} Callback
+	 */
+	function transform(from, to, callback) {
+		grunt.log.write("Transforming from " + from.cyan + " to " + to.cyan + "...");
+		grunt.file.write(to, JSON.stringify(_.transform(grunt.file.readJSON(from), callback), replacer, "\t"));
+		grunt.log.ok();
+	}
+
 	// Configure grunt
 	grunt.initConfig({
-		"pkg": grunt.file.readJSON("package.json"),
+		"pkg": grunt.file.readJSON("bower.json"),
 
 		"build" : {
 			"src" : ".",
 			"dist" : "dist",
-			"banner" : "/**\n" +
-				" * <%= pkg.name %> - <%= pkg.version %> © <%= pkg.author.name %> mailto:<%= pkg.author.email %>\n" +
-				" * @license <%= _.pluck(pkg.licenses, 'type').join(', ') %> <%= _.pluck(pkg.licenses, 'url').join(', ') %>\n" +
-				" */"
+			"banner" : "/**\n\
+ *   ____ .     ____  ____  ____    ____.\n\
+ *   \\   (/_\\___\\  (__\\  (__\\  (\\___\\  (/\n\
+ *   / ._/  ( . _   \\  . /   . /  . _   \\_\n\
+ * _/    ___/   /____ /  \\_ /  \\_    ____/\n\
+ * \\   _/ \\____/   \\____________/   /\n\
+ *  \\_t:_____r:_______o:____o:___p:/ [ <%= pkg.name %> - <%= pkg.version %> ]\n\
+ *\n\
+ * @license <%= pkg.license %> © <%= _.pluck(pkg.authors, 'name').join(', ') %>\n\
+ */\n"
 		},
 
 		"requirejs" : {
@@ -43,10 +75,10 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:dist|node_modules|test|Gruntfile\.js|\.(?!travis\.yml|gitignore))/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|test|tasks|guides|jsduck|(?:version|Gruntfile)\.js|(?:package|bower)\.json)/,
 				"packages" : [{
-					"name" : "text",
-					"location" : "empty:"
+					"name": "text",
+					"location": "empty:"
 				}, {
 					"name" : "jquery",
 					"location" : "empty:"
@@ -58,7 +90,14 @@ module.exports = function(grunt) {
 					"location" : "empty:"
 				}, {
 					"name" : "troopjs",
-					"location" : "."
+					"location" : ".",
+					"main" : "maxi"
+				}, {
+					"name" : "troopjs-log",
+					"location" : "bower_components/troopjs-log"
+				}, {
+					"name" : "troopjs-compose",
+					"location" : "bower_components/troopjs-compose"
 				}, {
 					"name" : "troopjs-core",
 					"location" : "bower_components/troopjs-core"
@@ -66,11 +105,14 @@ module.exports = function(grunt) {
 					"name" : "troopjs-browser",
 					"location" : "bower_components/troopjs-browser"
 				}, {
+					"name" : "troopjs-net",
+					"location" : "bower_components/troopjs-net"
+				}, {
 					"name" : "troopjs-data",
 					"location" : "bower_components/troopjs-data"
 				}, {
-					"name" : "troopjs-utils",
-					"location" : "bower_components/troopjs-utils"
+					"name" : "troopjs-util",
+					"location" : "bower_components/troopjs-util"
 				}, {
 					"name" : "troopjs-jquery",
 					"location" : "bower_components/troopjs-jquery"
@@ -79,10 +121,7 @@ module.exports = function(grunt) {
 					"location" : "bower_components/troopjs-requirejs"
 				}],
 				"rawText" : {
-					"troopjs/version" : "define(function () { return <%= JSON.stringify(pkg.version) %>; });\n"
-				},
-				"wrap" : {
-					"end" : "define(['troopjs/version'], function (main) { return main; });"
+					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
 				}
 			},
 
@@ -90,23 +129,15 @@ module.exports = function(grunt) {
 				"options" : {
 					"modules" : [{
 						"name" : "troopjs/maxi",
-						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
 							"troopjs/maxi",
-							"troopjs/mini",
-							"troopjs/micro"
+							"troopjs/mini"
 						]
 					}, {
 						"name" : "troopjs/mini",
-						"include" : [ "troopjs/version" ],
 						"excludeShallow" : [
-							"troopjs/mini",
-							"troopjs/micro"
+							"troopjs/mini"
 						]
-					}, {
-						"name" : "troopjs/micro",
-						"include" : [ "troopjs/version" ],
-						"excludeShallow" : [ "troopjs/micro" ]
 					}]
 				}
 			}
@@ -118,14 +149,15 @@ module.exports = function(grunt) {
 
 		"uglify" : {
 			"options" : {
+				"report": "min",
 				"preserveComments" : false
 			},
-			"dist" : {
+			"bundles" : {
 				"files" : [{
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
 					"cwd" : "<%= build.dist %>",
-					"src" : [ "{micro,mini,maxi}.js" ],
+					"src" : [ "{mini,maxi}.js" ],
 					"ext" : ".min.js"
 				}]
 			}
@@ -140,13 +172,13 @@ module.exports = function(grunt) {
 				"position" : "top",
 				"banner" : "<%= build.banner %>"
 			},
-			"dist" : {
+			"bundles" : {
 				"files" : [{
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
 					"src" : [
-						"{micro,mini,maxi}.js",
-						"{micro,mini,maxi}.min.js"
+						"{mini,maxi}.js",
+						"{mini,maxi}.min.js"
 					]
 				}]
 			}
@@ -170,9 +202,9 @@ module.exports = function(grunt) {
 					"user.email" : UNDEFINED
 				}
 			},
-			"dist" : {
+			"bundles" : {
 				"options" : {
-					"branch" : "build/2.x",
+					"branch" : "build/3.x",
 					"dir" : "<%= build.dist %>"
 				}
 			}
@@ -180,6 +212,10 @@ module.exports = function(grunt) {
 
 		"buster" : {
 			"troopjs" : {}
+		},
+
+		"jsduck" : {
+			"config_file" : "jsduck.json"
 		}
 	});
 
@@ -187,50 +223,44 @@ module.exports = function(grunt) {
 		grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + git_version.object)));
 	});
 
-	// Load all grunt tasks
-	require("matchdep").filterDev("grunt-*").forEach(grunt.loadNpmTasks);
+	// Load all grunt tasks from package.json
+	require("load-grunt-tasks")(grunt);
 
-	grunt.registerTask("rewrite", "Rewrite package files", function () {
-		var _ = grunt.util._;
-		var re = /^troopjs-\w+/;
+	//Load all local grunt tasks
+	grunt.loadTasks("tasks");
 
-		var replacer = function (key, value) {
-			return _.isEmpty(value) ? UNDEFINED : value;
-		}
+	grunt.registerTask("transform", "Transform package files", function () {
+		var src = grunt.config("build.src");
+		var dist = grunt.config("build.dist");
+		var version = grunt.config("pkg.version");
 
-		var bower_path = path.join(grunt.config("build.dist"), "bower.json");
-		var package_path = path.join(grunt.config("build.dist"), "package.json");
+		transform(path.join(src, "bower.json"), path.join(dist, "bower.json"), function (result, value, key) {
+			switch (key) {
+				case "version":
+					result[key] = version;
+					break;
 
-		try {
-			grunt.log.write("Reading " + bower_path + "...");
-			var bower_json = grunt.file.readJSON(bower_path);
-			grunt.log.ok();
+				case "dependencies":
+					result[key] = _.omit(value, function (version, name) {
+						return /^troopjs-\w+$/.test(name);
+					});
+					break;
 
-			grunt.log.write("Omitting troop dependencies...");
-			bower_json.dependencies = _.omit(bower_json.dependencies, function (value, key) {
-				return re.test(key);
-			});
-			grunt.log.ok();
+				default:
+					result[key] = value;
+			}
+		});
 
-			grunt.log.write("Reading " + package_path + "...");
-			var package_json = grunt.file.readJSON(package_path);
-			grunt.log.ok();
+		transform(path.join(src, "package.json"), path.join(dist, "package.json"), function (result, value, key) {
+			switch (key) {
+				case "version":
+					result[key] = version;
+					break;
 
-			grunt.log.write("Updating versions...");
-			package_json.version = bower_json.version = grunt.config("pkg.version");
-			grunt.log.ok();
-
-			grunt.log.write("Writing " + bower_path + "...");
-			grunt.file.write(bower_path, JSON.stringify(bower_json, replacer, "\t"));
-			grunt.log.ok();
-
-			grunt.log.write("Writing " + package_path + "...");
-			grunt.file.write(package_path, JSON.stringify(package_json, replacer, "\t"));
-			grunt.log.ok();
-		}
-		catch (e) {
-			grunt.fatal(e);
-		}
+				default:
+					result[key] = value;
+			}
+		});
 	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
@@ -262,19 +292,19 @@ module.exports = function(grunt) {
 		switch (phase) {
 			case "prepare":
 				grunt.log.subhead("Preparing release");
-				args.push("clean", "git-dist:dist:clone", "default");
+				args.push("clean", "git-dist:bundles:clone", "default");
 				break;
 
 			case "perform":
 				grunt.log.subhead("Performing release");
-				args.push("git-dist:dist:add", "git-dist:dist:commit");
+				args.push("git-dist:bundles:add", "git-dist:bundles:commit");
 				if (grunt.option("no-tag")) {
 					grunt.log.writeln("Not tagging as " + "--no-tag".cyan + " was passed");
 				}
 				else {
-					args.push("git-dist:dist:tag");
+					args.push("git-dist:bundles:tag");
 				}
-				args.push("git-dist:dist:push");
+				args.push("git-dist:bundles:push");
 				break;
 
 			default:
@@ -284,8 +314,9 @@ module.exports = function(grunt) {
 		grunt.task.run(args);
 	});
 
-	grunt.registerTask("compile", [ "requirejs", "git-describe", "rewrite" ]);
+	grunt.registerTask("compile", [ "git-describe", "transform", "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("default", [ "compile", "compress", "usebanner" ]);
+	grunt.registerTask("docs", [ "jsduck" ]);
+	grunt.registerTask("default", [ "troopjs-lint", "compile", "compress", "usebanner", "docs" ]);
 };
