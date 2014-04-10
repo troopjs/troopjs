@@ -26,9 +26,10 @@ define([
 
 <span id='browser-component-runner-sequence'>	/**
 </span>	 * @class browser.component.runner.sequence
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -40,13 +41,6 @@ define([
 	var SELECTOR = &quot;selector&quot;;
 	var MODIFIED = &quot;modified&quot;;
 
-<span id='browser-component-runner-sequence-static-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @static
-	 * @inheritdoc
-	 * @localdoc Runner that executes DOM candidates in sequence without overlap
-	 * @returns {*} Result from last handler
-	 */
 	return function sequence(event, handlers, args) {
 		var modified = handlers[MODIFIED];
 		var $event = args[0];
@@ -91,6 +85,12 @@ define([
 				return candidate[CALLBACK].apply(candidate[CONTEXT], args);
 			}, UNDEFINED);
 	}
+<span id='browser-component-runner-sequence-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that executes DOM candidates in sequence without overlap
+	 * @returns {*} Result from last handler
+	 */
 });</pre>
 </body>
 </html>

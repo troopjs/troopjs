@@ -4,22 +4,22 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-4+a87d086 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-5+af099d4 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-define('troopjs/version',[], "3.0.0-4+a87d086");
+define('troopjs/version',[], "3.0.0-5+af099d4");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
+define('troopjs-util/merge',[ "poly/object" ], function MergeModule() {
 	
 
 	/**
-	 * @class utils.merge
-	 * @extends Function
+	 * @class util.merge
+	 * @mixin Function
 	 * @static
 	 */
 
@@ -34,16 +34,10 @@ define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
 	var LENGTH = "length";
 
 	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
 	 * Function that calls on an Object, to augments this object with enumerable properties from the source objects,
 	 * subsequent sources will overwrite property assignments of previous sources on primitive values,
 	 * while object and array values will get merged recursively.
 	 * @method constructor
-	 * @static
 	 * @param {...Object} [source] One or more source objects.
 	 * @return {*} Merged object
 	 */
@@ -111,23 +105,23 @@ define('troopjs-utils/merge',[ "poly/object" ], function MergeModule() {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-composer/mixin/config',[
+define('troopjs-compose/mixin/config',[
 	"module",
-	"troopjs-utils/merge"
+	"troopjs-util/merge"
 ], function (module, merge) {
 	
 
 	/**
-	 * @class composer.mixin.config
-	 * @extends requirejs.config
-	 * @inheritdoc
-	 * @localdoc This module is to provide configuration for the {@link composer.mixin.factory}.
+	 * Provides configuration for the {@link compose.mixin.factory}
+	 * @class compose.mixin.config
 	 * @protected
-	 * @static
+	 * @alias feature.config
 	 */
+
 	return merge.call({
 		/**
 		 * @cfg {RegExp} pattern RegExp used to determine if a method is a special
+		 * @private
 		 */
 		"pattern": /^(\w+)(?::(.+?))?\/(.+)/,
 
@@ -135,6 +129,7 @@ define('troopjs-composer/mixin/config',[
 		 * @cfg {Object[]} pragmas Pragmas used to rewrite methods before processing
 		 * @cfg {RegExp} pragmas.pattern Matching pattern
 		 * @cfg {String} pragmas.replace Replacement string
+		 * @protected
 		 */
 		"pragmas": []
 	}, module.config());
@@ -143,12 +138,12 @@ define('troopjs-composer/mixin/config',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-composer/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
+define('troopjs-compose/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
 	
 
 	/**
-	 * Decorator provides customized way to add properties/methods to object created by {@link composer.mixin.factory}.
-	 * @class composer.mixin.decorator
+	 * Decorator provides customized way to add properties/methods to object created by {@link compose.mixin.factory}.
+	 * @class compose.mixin.decorator
 	 */
 
 	/**
@@ -180,27 +175,21 @@ define('troopjs-composer/mixin/decorator',[ "poly/object" ], function DecoratorM
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-utils/unique',[],function UniqueModule() {
+define('troopjs-util/unique',[],function UniqueModule() {
 	
 
 	/**
-	 * @class utils.unique
-	 * @extends Function
+	 * @class util.unique
+	 * @mixin Function
 	 * @static
 	 */
 
 	var LENGTH = "length";
 
 	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
 	 * Function that calls on an array to produces a duplicate-free version of this array, using the specified comparator otherwise
 	 * strictly equals(`===`) to test object equality.
 	 * @method constructor
-	 * @static
 	 * @param {Function} [fn] The comparator function.
 	 * @param {Function} fn.one One element to compare.
 	 * @param {Function} fn.other The other element to compare with.
@@ -254,10 +243,10 @@ define('troopjs-utils/unique',[],function UniqueModule() {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-composer/mixin/factory',[
+define('troopjs-compose/mixin/factory',[
 	"./config",
 	"./decorator",
-	"troopjs-utils/unique",
+	"troopjs-util/unique",
 	"poly/object"
 ], function FactoryModule(config, Decorator, unique) {
 	
@@ -331,8 +320,8 @@ define('troopjs-composer/mixin/factory',[
 	 *  		instance.somethingElse();
 	 *  		instance.evenMore();
 	 *
-	 * @class composer.mixin.factory
-	 * @mixin composer.mixin.config
+	 * @class compose.mixin.factory
+	 * @mixin compose.mixin.config
 	 * @static
 	 */
 
@@ -365,7 +354,7 @@ define('troopjs-composer/mixin/factory',[
 	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
 	 * @static
 	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @returns {composer.mixin} Object instance created out of the mixin of constructors and objects.
+	 * @returns {compose.mixin} Object instance created out of the mixin of constructors and objects.
 	 */
 	function create(mixin) {
 		/*jshint validthis:true*/
@@ -395,11 +384,9 @@ define('troopjs-composer/mixin/factory',[
 
 	/**
 	 * Create a new constructor or to extend an existing one from multiple others constructors/objects.
-	 * @member composer.mixin.factory
 	 * @method constructor
-	 * @static
 	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @returns {composer.mixin} The constructor (class).
+	 * @returns {compose.mixin} The constructor (class).
 	 */
 	function Factory (mixin) {
 		var special;
@@ -631,14 +618,91 @@ define('troopjs-composer/mixin/factory',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/mixin/base',[ "troopjs-composer/mixin/factory" ], function ObjectBaseModule(Factory) {
+define('troopjs-log/sink/methods',[], function SinkMethodModule() {
+	return [ "assert", "debug", "dir", "error", "info", "log", "time", "timeEnd", "trace", "warn" ]
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-log/sink/console',[
+	"./methods",
+	"poly/array"
+], function ConsoleModule(METHODS) {
+	
+
+	/**
+	 * This class implements the {@link log.console} API and can acts like a sink for {@link log.sink.forward}.
+	 * @localdoc
+	 * On platforms where the native `console` object doesn't support the full {@link log.console} API,
+	 * this class acts like a polyfill for the missing methods.
+	 * @class log.sink.console
+	 * @implement log.console
+	 * @singleton
+	 * @alias feature.logger
+	 */
+
+	/**
+	 * Creates a poly-filled version of the console object
+	 * @method constructor
+	 * @param {console} console Client console object
+	 * @ignore
+	 */
+	return (function (console) {
+		var me = this;
+		var nop = function () {};
+
+		METHODS.forEach(function (method) {
+			me[method] = console[method] || nop;
+		});
+
+		return me;
+	}).call({}, console || {});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-log/logger',[ "./sink/console" ], function LoggerModule(logger) {
+	
+
+	/**
+	 * This is a _virtual_ class that under normal circumstances is an alias for the {@link log.sink.console} sink.
+	 *
+	 * If you want to change logger sink in your application you should use the [requirejs map config](http://requirejs.org/docs/api.html#config-map)
+	 * to map this class to any module that implements the {@link log.console} API.
+	 *
+	 * An example configuration that would change the logger to {@link log.sink.null} would look like this:
+	 *
+	 *     requirejs.config({
+	 *       "map": {
+	 *         "*": {
+	 *           "troopjs-log/logger": "troopjs-log/null"
+	 *         }
+	 *       }
+	 *     });
+	 *
+	 * @class log.logger
+	 * @implement log.console
+	 * @singleton
+	 * @alias feature.logger
+	 */
+
+	return logger;
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/mixin/base',[
+	"troopjs-compose/mixin/factory",
+	"troopjs-log/logger"
+], function ObjectBaseModule(Factory, logger) {
 	var INSTANCE_COUNTER = 0;
 	var INSTANCE_COUNT = "instanceCount";
 
 	/**
 	 * Base object with instance count.
 	 * @class core.mixin.base
-	 * @extends composer.mixin
+	 * @implement compose.mixin
+	 * @mixin log.logger
 	 */
 
 	/**
@@ -648,7 +712,7 @@ define('troopjs-core/mixin/base',[ "troopjs-composer/mixin/factory" ], function 
 	return Factory(function ObjectBase() {
 		// Update instance count
 		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
-	}, {
+	}, logger, {
 		/**
 		 * Instance counter
 		 * @private
@@ -686,9 +750,10 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function SequenceModule(
 
 	/**
 	 * @class core.event.runner.sequence
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -699,7 +764,6 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function SequenceModule(
 
 	/**
 	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in "sequence", passing to each handler the same arguments from emitting.
 	 * @returns {Promise}
@@ -988,9 +1052,10 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function Seque
 
 	/**
 	 * @class core.component.runner.sequence
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -1001,7 +1066,6 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function Seque
 
 	/**
 	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **synchronously** in "sequence", passing to each handler the same arguments from emitting.
 	 * @returns {*[]} Result from each executed handler
@@ -1047,13 +1111,534 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function Seque
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-composer/decorator/around',[ "../mixin/decorator" ], function AroundDecoratorModule(Decorator) {
+define('troopjs-core/registry/component',[
+	"../mixin/base",
+	"poly/array"
+], function RegistryModule(Base) {
 	
 
 	/**
-	 * @class composer.decorator.around
-	 * @extends composer.decorator
+	 * A light weight implementation to register key/value pairs by key and index
+	 * @class core.registry.component
+	 * @extends core.mixin.base
+	 */
+
+	var UNDEFINED;
+	var LENGTH = "length";
+	var INDEX = "index";
+	var KEY = "key";
+	var VALUE = "value";
+	var INDEX_KEY = "index_key";
+	var INDEX_POS = "index_pos";
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_STRING = "[object String]";
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 */
+	return Base.extend(function Registry() {
+		/**
+		 * Registry key storage
+		 * @private
+		 * @readonly
+		 * @property {Object[]} index_key
+		 * @property {String} index_key.key Entry key
+		 * @property {Number} index_key.index Entry index
+		 * @property {*} index_key.value Entry value
+		 */
+		this[INDEX_KEY] = {};
+
+		/**
+		 * Registry pos storage
+		 * @private
+		 * @readonly
+		 * @property {Object[]} index_pos
+		 * @property {String} index_pos.key Entry key
+		 * @property {Number} index_pos.index Entry index
+		 * @property {*} index_pos.value Entry value
+		 */
+		this[INDEX_POS] = [];
+	}, {
+		"displayName": "core/registry/component",
+
+		/**
+		 * Either gets or puts values into the registry.
+		 *
+		 * - If no key is provided, all entries in the registry are returned.
+		 * - If no value is provided the current value for key is returned.
+		 * - If value is provided it replaces the current value for the key
+		 * @param {String|Number} [key] Entry key or index
+		 * @param {*} [value] Entry value
+		 * @return {*} All values if no key, current value for key if no value provided, otherwise the provided value if a new entry is created
+		 * @throws Error if a new entry is created and key is not of type String
+		 */
+		"access": function access(key, value) {
+			var index_key = this[INDEX_KEY];
+			var index_pos = this[INDEX_POS];
+			var result;
+			var argc;
+
+			// Reading _all_
+			if ((argc = arguments[LENGTH]) === 0) {
+				result = index_pos.map(function (item) {
+					return item[VALUE];
+				});
+			}
+			else {
+				result = (typeof key === 'number' ? index_pos : index_key)[key];
+
+				// Reading
+				if (argc === 1) {
+					result = result !== UNDEFINED ? result[VALUE] : UNDEFINED;
+				}
+				// Writing
+				else {
+					// Replace existing entry
+					if (result !== UNDEFINED) {
+						result = result[VALUE] = value;
+					}
+					// Check type of key (as now we're creating a new one)
+					else if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
+						throw Error("key has to be of type String");
+					}
+					// Create new entry
+					else {
+						result = {};
+						result = index_key[result[KEY] = key] = index_pos[result[INDEX] = index_pos[LENGTH]] = result;
+						result = result[VALUE] = value;
+					}
+				}
+			}
+
+			return result;
+		},
+
+		/**
+		 * Removes entries from the registry
+		 * TODO: Fixed screwed up index when item is removed from registry.
+		 *
+		 * - If no key is provided, all entries in the registry are removed.
+		 * - Otherwise only the corresponding entry for key is removed.
+		 * @param {String|Number} [key] Entry key or index
+		 *
+		 */
+		"remove": function remove(key) {
+			var me = this;
+			var result;
+			var index_key = me[INDEX_KEY];
+			var index_pos = me[INDEX_POS];
+
+			// Remove all entries
+			if (arguments[LENGTH] === 0) {
+				me[INDEX_KEY] = {};
+				me[INDEX_POS] = [];
+			}
+			// Remove entry by key
+			else if ((result = index_key[key]) !== UNDEFINED) {
+				delete index_key[result[KEY]];
+				delete index_pos[result[INDEX]];
+			}
+		},
+
+		"compact": function compact() {
+
+		}
+	});
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/runner/config',[
+	"module",
+	"troopjs-util/merge"
+], function LoomConfigModule(module, merge) {
+	
+
+	/**
+	 * Provides configuration for the pubsub package
+	 * @class core.pubsub.runner.config
+	 * @protected
 	 * @static
+	 * @alias feature.config
+	 */
+	return merge.call({
+		/**
+		 * @cfg {RegExp} pattern RegExp used to determine if a {@link core.component.base#phase phase} should be protected
+		 * @private
+		 */
+		"pattern" : /^(?:initi|fin)alized?$/
+	}, module.config());
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/runner/pipeline',[
+	"./config",
+	"when"
+], function PipelineModule(config, when) {
+	
+
+	/**
+	 * @class core.pubsub.runner.pipeline
+	 * @implement core.event.emitter.runner
+	 * @mixin core.pubsub.runner.config
+	 * @protected
+	 * @static
+	 * @alias feature.runner
+	 */
+
+	var UNDEFINED;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARGUMENTS = "[object Arguments]";
+	var TOSTRING_ARRAY = "[object Array]";
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var HEAD = "head";
+	var NEXT = "next";
+	var PHASE = "phase";
+	var MEMORY = "memory";
+	var RE_PHASE = config["pattern"];
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
+	 * @returns {Promise}
+	 */
+	return function pipeline(event, handlers, args) {
+		var context = event[CONTEXT];
+		var callback = event[CALLBACK];
+		var candidate;
+		var candidates = [];
+		var candidatesCount = 0;
+
+		// Iterate handlers
+		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
+			// Filter candidate[CONTEXT] if we have context
+			if (context !== UNDEFINED && candidate[CONTEXT] !== context) {
+				continue;
+			}
+
+			// Filter candidate[CALLBACK] if we have callback
+			if (callback !== UNDEFINED && candidate[CALLBACK] !== callback) {
+				continue;
+			}
+
+			// Add to candidates
+			candidates[candidatesCount++] = candidate;
+		}
+
+		// Reset candidatesCount
+		candidatesCount = 0;
+
+		/**
+		 * Internal function for piped execution of candidates candidates
+		 * @ignore
+		 * @param {Array} [result] result from previous candidate callback
+		 * @return {Promise} promise of next candidate callback execution
+		 */
+		var next = function (result) {
+			/*jshint curly:false*/
+			var context;
+			var candidate;
+			var type;
+
+			// Check that result is not UNDEFINED and not equals to args
+			if (result !== UNDEFINED && result !== args) {
+				// Update args to either result or result wrapped in a new array
+				args = (type = OBJECT_TOSTRING.call(result)) === TOSTRING_ARRAY  // if type is TOSTRING_ARRAY
+					|| type === TOSTRING_ARGUMENTS                                 // or type is TOSTRING_ARGUMENTS
+					? result                                                       // then result is array-like enough to be passed to .apply
+					: [ result ];                                                  // otherwise we should just wrap it in a new array
+			}
+
+			// TODO Needs cleaner implementation
+			// Iterate until we find a candidate in a blocked phase
+			while ((candidate = candidates[candidatesCount++]) // Has next candidate
+				&& (context = candidate[CONTEXT])                // Has context
+				&& RE_PHASE.test(context[PHASE]));               // In blocked phase
+
+			// Return promise of next callback, or promise resolved with args
+			return candidate !== UNDEFINED
+				? when(candidate[CALLBACK].apply(context, args), next)
+				: when.resolve(handlers[MEMORY] = args);
+		};
+
+		return next(args);
+	}
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function FromDecoratorModule(Decorator) {
+	
+
+	/**
+	 * @class compose.decorator.from
+	 * @static
+	 * @alias feature.decorator
+	 */
+
+	var UNDEFINED;
+	var VALUE = "value";
+	var PROTOTYPE = "prototype";
+
+	/**
+	 * Create a decorator that is to lend from a particular property from this own or the other factory.
+	 * @method constructor
+	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
+	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
+	 * @returns {compose.mixin.decorator}
+	 */
+	return function from(which, prop) {
+		// Shifting arguments.
+		if (typeof which === "string") {
+			prop = which;
+			which = UNDEFINED;
+		}
+
+		return new Decorator(function (descriptor, name, descriptors) {
+			// To override a specified property, otherwise simply this property.
+			name = prop || name;
+
+			// Property is from the the other's prototype, otherwise from own descriptor.
+			descriptor[VALUE] = which
+				? which[PROTOTYPE][name]
+				: descriptors[name][VALUE];
+
+			return descriptor;
+		});
+	}
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/hub',[
+	"../event/emitter",
+	"./runner/pipeline",
+	"troopjs-compose/decorator/from"
+], function HubModule(Emitter, pipeline, from) {
+	
+
+	/**
+	 * The centric "bus" that handlers publishing and subscription.
+	 *
+	 * ## Memorized emitting
+	 * A fired event will memorize the "current" value of each event. Each executor may have it's own interpretation
+	 * of what "current" means.
+	 *
+	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
+	 * use methods like {@link core.component.gadget#publish publish} and {@link core.component.gadget#subscribe subscribe}
+	 * that are provided as shortcuts.
+	 *
+	 * @class core.pubsub.hub
+	 * @extends core.event.emitter
+	 * @singleton
+	 */
+
+	var UNDEFINED;
+	var MEMORY = "memory";
+	var HANDLERS = "handlers";
+	var RUNNER = "runner";
+	var TYPE = "type";
+
+	/**
+	 * @method create
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method extend
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method constructor
+	 * @hide
+	 */
+
+	/**
+	 * @method on
+	 * @inheritdoc
+	 * @private
+	 */
+
+	/**
+	 * @method off
+	 * @inheritdoc
+	 * @private
+	 */
+
+	/**
+	 * @method emit
+	 * @inheritdoc
+	 * @private
+	 */
+
+	return Emitter.create({
+		"displayName": "core/pubsub/hub",
+
+		/**
+		 * Listen to an event that are emitted publicly.
+		 * @chainable
+		 * @inheritdoc #on
+		 * @method
+		 */
+		"subscribe" : from("on"),
+
+		/**
+		 * Remove a public event listener.
+		 * @chainable
+		 * @inheritdoc #off
+		 * @method
+		 */
+		"unsubscribe" : from("off"),
+
+		/**
+		 * Emit a public event that can be subscribed by other components.
+		 *
+		 * Handlers are run in a pipeline, in which each handler will receive muted
+		 * data params depending on the return value of the previous handler:
+		 *
+		 *   - The original data params from {@link #publish} if this's the first handler, or the previous handler returns `undefined`.
+		 *   - One value as the single argument if the previous handler return a non-array.
+		 *   - Each argument value deconstructed from the returning array of the previous handler.
+		 *
+		 * @param {String} type The topic to publish.
+		 * @param {...*} [args] Additional params that are passed to the handler function.
+		 * @returns {Promise}
+		 */
+		"publish" : function publish(type, args) {
+			var me = this;
+
+			// Prepare event object
+			var event = {};
+			event[TYPE] = type;
+			event[RUNNER] = pipeline;
+
+			// Modify first argument
+			arguments[0] = event;
+
+			// Delegate the actual emitting to event emitter.
+			return me.emit.apply(me, arguments);
+		},
+
+		/**
+		 * Returns value in handlers MEMORY
+		 * @param {String} type event type to peek at
+		 * @param {*} [value] Value to use _only_ if no memory has been recorder
+		 * @returns {*} Value in MEMORY
+		 */
+		"peek": function peek(type, value) {
+			var handlers;
+
+			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
+				? value
+				: handlers[MEMORY];
+		}
+	});
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/component/registry',[
+	"../registry/component",
+	"../pubsub/hub"
+], function ComponentRegistryModule(Registry, hub) {
+	
+
+	/**
+	 * @class core.component.registry
+	 * @extend core.registry.component
+	 * @singleton
+	 */
+
+	/**
+	 * @method create
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method extend
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method constructor
+	 * @hide
+	 */
+
+	return Registry.create(function ComponentRegistry() {
+		var me = this;
+
+		// Register the hub
+		me.access(hub.toString(), hub);
+
+		// Register ourselves
+		me.access(me.toString(), me);
+	}, {
+		"displayName": "core/component/registry"
+	});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/task/registry',[
+	"../registry/component",
+	"../component/registry"
+], function TaskRegistryModule(Registry, componentRegistry) {
+	
+
+	/**
+	 * @class core.task.registry
+	 * @extend core.registry.component
+	 * @singleton
+	 */
+
+	/**
+	 * @method create
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method extend
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method constructor
+	 * @hide
+	 */
+
+	return Registry.create(function TaskRegistry() {
+		var me = this;
+
+		// Register ourselves
+		componentRegistry.access(me.toString(), me);
+	}, {
+		"displayName": "core/task/registry"
+	});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function AroundDecoratorModule(Decorator) {
+	
+
+	/**
+	 * @class compose.decorator.around
+	 * @static
+	 * @alias feature.decorator
 	 */
 
 	var VALUE = "value";
@@ -1062,10 +1647,9 @@ define('troopjs-composer/decorator/around',[ "../mixin/decorator" ], function Ar
 	/**
 	 * Create a decorator that is to override an existing method.
 	 * @method constructor
-	 * @static
 	 * @param {Function} func The decorator function which receives the original function as parameter and is supposed to
 	 * return a function that is to replace the original.
-	 * @returns {composer.mixin.decorator}
+	 * @returns {compose.mixin.decorator}
 	 */
 	return function around(func) {
 		return new Decorator(function (descriptor) {
@@ -1081,11 +1665,13 @@ define('troopjs-composer/decorator/around',[ "../mixin/decorator" ], function Ar
 define('troopjs-core/component/base',[
 	"../event/emitter",
 	"./runner/sequence",
-	"troopjs-utils/merge",
-	"troopjs-composer/decorator/around",
+	"./registry",
+	"../task/registry",
+	"troopjs-util/merge",
+	"troopjs-compose/decorator/around",
 	"when",
 	"poly/array"
-], function ComponentModule(Emitter, sequence, merge, around, when) {
+], function ComponentModule(Emitter, sequence, componentRegistry, taskRegistry, merge, around, when) {
 	
 
 	/**
@@ -1147,6 +1733,7 @@ define('troopjs-core/component/base',[
 	var TYPE = "type";
 	var VALUE = "value";
 	var PHASE = "phase";
+	var TASK = "task";
 	var STOP = "stop";
 	var INITIALIZE = "initialize";
 	var STARTED = "started";
@@ -1159,6 +1746,146 @@ define('troopjs-core/component/base',[
 	var SIG_TEARDOWN = SIG + "/teardown";
 	var ON = "on";
 	var EVENT_TYPE_SIG = new RegExp("^" + SIG + "/(.+)");
+
+	/**
+	 * Current lifecycle phase
+	 * @readonly
+	 * @protected
+	 * @property {"initialized"|"started"|"stopped"|"finalized"} phase
+	 */
+
+	/**
+	 * Initialize signal
+	 * @event sig/initialize
+	 * @localdoc Triggered when this component enters the initialize phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+	/**
+	 * Start signal
+	 * @event sig/start
+	 * @localdoc Triggered when this component enters the start phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+	/**
+	 * Stop signal
+	 * @localdoc Triggered when this component enters the stop phase
+	 * @event sig/stop
+	 * @param {...*} [args] Stop arguments
+	 */
+
+	/**
+	 * Finalize signal
+	 * @event sig/finalize
+	 * @localdoc Triggered when this component enters the finalize phase
+	 * @param {...*} [args] Finalize arguments
+	 */
+
+	/**
+	 * Setup signal
+	 * @event sig/setup
+	 * @localdoc Triggered when the first event handler of a particular type is added via {@link #method-on}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {*} [data]
+	 */
+
+	/**
+	 * Add signal
+	 * @event sig/add
+	 * @localdoc Triggered when a event handler of a particular type is added via {@link #method-on}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {*} [data]
+	 */
+
+	/**
+	 * Remove signal
+	 * @event sig/remove
+	 * @localdoc Triggered when a event handler of a particular type is removed via {@link #method-off}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 */
+
+	/**
+	 * Teardown signal
+	 * @event sig/teardown
+	 * @localdoc Triggered when the last event handler of type is removed for a particular type via {@link #method-off}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 */
+
+	/**
+	 * Task signal
+	 * @event sig/task
+	 * @localdoc Triggered when this component starts a {@link #method-task}.
+	 * @param {Promise} task Task
+	 * @param {Object} task.context Task context
+	 * @param {Date} task.started Task start date
+	 * @param {String} task.name Task name
+	 * @return {Promise}
+	 */
+
+	/**
+	 * Handles the component start
+	 * @handler sig/start
+	 * @inheritdoc #event-sig/start
+	 * @template
+	 * @return {Promise}
+	 */
+
+	/**
+	 * Handles the component stop
+	 * @handler sig/stop
+	 * @inheritdoc #event-sig/stop
+	 * @template
+	 * @return {Promise}
+	 */
+
+	/**
+	 * Handles an event setup
+	 * @handler sig/setup
+	 * @inheritdoc #event-sig/setup
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+	/**
+	 * Handles an event add
+	 * @handler sig/add
+	 * @inheritdoc #event-sig/add
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+	/**
+	 * Handles an event remove
+	 * @handler sig/remove
+	 * @inheritdoc #event-sig/remove
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+	/**
+	 * Handles an event teardown
+	 * @handler sig/teardown
+	 * @inheritdoc #event-sig/teardown
+	 * @template
+	 * @return {*|Boolean}
+	 */
 
 	/**
 	 * @method constructor
@@ -1181,99 +1908,7 @@ define('troopjs-core/component/base',[
 		 */
 		me[CONFIGURATION] = {};
 	}, {
-		/**
-		 * Current lifecycle phase
-		 * @readonly
-		 * @protected
-		 * @property {"initialized"|"started"|"stopped"|"finalized"} phase
-		 */
-
 		"displayName" : "core/component/base",
-
-		/**
-		 * Initialize signal
-		 * @event sig/initialize
-		 * @localdoc Triggered when this component enters the initialize phase
-		 * @param {...*} [args] Initialize arguments
-		 */
-
-		/**
-		 * Start signal
-		 * @event sig/start
-		 * @localdoc Triggered when this component enters the start phase
-		 * @param {...*} [args] Initialize arguments
-		 */
-
-		/**
-		 * Stop signal
-		 * @localdoc Triggered when this component enters the stop phase
-		 * @event sig/stop
-		 * @param {...*} [args] Stop arguments
-		 */
-
-		/**
-		 * Finalize signal
-		 * @event sig/finalize
-		 * @localdoc Triggered when this component enters the finalize phase
-		 * @param {...*} [args] Finalize arguments
-		 */
-
-		/**
-		 * Setup signal
-		 * @event sig/setup
-		 * @localdoc Triggered when the first event handler of a particular type is added via {@link #method-on}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 * @param {*} [data]
-		 */
-
-		/**
-		 * Add signal
-		 * @event sig/add
-		 * @localdoc Triggered when a event handler of a particular type is added via {@link #method-on}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 * @param {*} [data]
-		 */
-
-		/**
-		 * Remove signal
-		 * @event sig/remove
-		 * @localdoc Triggered when a event handler of a particular type is removed via {@link #method-off}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 */
-
-		/**
-		 * Teardown signal
-		 * @event sig/teardown
-		 * @localdoc Triggered when the last event handler of type is removed for a particular type via {@link #method-off}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 */
-
-		/**
-		 * Task signal
-		 * @event sig/task
-		 * @localdoc Triggered when this component starts a {@link #method-task}.
-		 * @param {Promise} task Task
-		 * @param {Object} task.context Task context
-		 * @param {Date} task.started Task start date
-		 * @param {String} task.name Task name
-		 * @return {Promise}
-		 */
 
 		/**
 		 * Handles the component initialization.
@@ -1285,6 +1920,10 @@ define('troopjs-core/component/base',[
 		"sig/initialize" : function onInitialize() {
 			var me = this;
 
+			// Register component
+			componentRegistry.access(me.toString(), me);
+
+			// Initialize ON specials
 			return when.map(me.constructor.specials[ON] || ARRAY_PROTO, function (special) {
 				return me.on(special[TYPE], special[VALUE]);
 			});
@@ -1300,58 +1939,14 @@ define('troopjs-core/component/base',[
 		"sig/finalize" : function onFinalize() {
 			var me = this;
 
+			// Unregister component
+			componentRegistry.remove(me.toString());
+
+			// Finialize all handlers, in reverse
 			return when.map(me[HANDLERS].reverse(), function (handlers) {
 				return me.off(handlers[TYPE]);
 			});
 		},
-
-		/**
-		 * Handles the component start
-		 * @handler sig/start
-		 * @inheritdoc #event-sig/start
-		 * @template
-		 * @return {Promise}
-		 */
-
-		/**
-		 * Handles the component stop
-		 * @handler sig/stop
-		 * @inheritdoc #event-sig/stop
-		 * @template
-		 * @return {Promise}
-		 */
-
-		/**
-		 * Handles an event setup
-		 * @handler sig/setup
-		 * @inheritdoc #event-sig/setup
-		 * @template
-		 * @return {*|Boolean}
-		 */
-
-		/**
-		 * Handles an event add
-		 * @handler sig/add
-		 * @inheritdoc #event-sig/add
-		 * @template
-		 * @return {*|Boolean}
-		 */
-
-		/**
-		 * Handles an event remove
-		 * @handler sig/remove
-		 * @inheritdoc #event-sig/remove
-		 * @template
-		 * @return {*|Boolean}
-		 */
-
-		/**
-		 * Handles an event teardown
-		 * @handler sig/teardown
-		 * @inheritdoc #event-sig/teardown
-		 * @template
-		 * @return {*|Boolean}
-		 */
 
 		/**
 		 * Handles a component task
@@ -1360,9 +1955,18 @@ define('troopjs-core/component/base',[
 		 * @template
 		 * @return {Promise}
 		 */
+		"sig/task": function onTask(task) {
+			// Compute task key
+			var key = task[NAME] + "@" + task[STARTED];
+
+			// Register task with remove callback
+			return taskRegistry.access(key, task.ensure(function () {
+				taskRegistry.remove(key);
+			}));
+		},
 
 		/**
-		 * Add to the component {@link #configuration configuration}, possibly {@link utils.merge merge} with the existing one.
+		 * Add to the component {@link #configuration configuration}, possibly {@link util.merge merge} with the existing one.
 		 *
 		 * 		var List = Component.extend({
 		 * 			"sig/start": function start() {
@@ -1614,10 +2218,7 @@ define('troopjs-core/component/base',[
 		 * 		$(this.$element).fadeOut(resolve);
 		 * 	}, 'animate');
 		 *
-		 * @param {Function} resolver The task resolver function.
-		 * @param {Function} resolver.resolve Resolve the task.
-		 * @param {Function} resolver.reject Reject the task.
-		 * @param {Function} resolver.notify Notify the progress of this task.
+		 * @param {Resolver} resolver The task resolver.
 		 * @param {String} [name]
 		 * @returns {Promise}
 		 * @fires sig/task
@@ -1633,9 +2234,9 @@ define('troopjs-core/component/base',[
 
 			promise[CONTEXT] = me;
 			promise[STARTED] = new Date();
-			promise[NAME] = name;
+			promise[NAME] = name || TASK;
 
-			return me.signal("task", promise).yield(promise);
+			return me.signal(TASK, promise).yield(promise);
 		}
 	});
 });
@@ -1648,9 +2249,10 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineMod
 
 	/**
 	 * @class core.component.runner.pipeline
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -1664,7 +2266,6 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineMod
 
 	/**
 	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in "pipeline", passing the resolved return value (unless it's undefined) of the previous listen to the next handler as arguments.
 	 * @returns {Promise}
@@ -1723,304 +2324,6 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineMod
 
 		return next(args);
 	}
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/runner/config',[
-	"module",
-	"troopjs-utils/merge"
-], function LoomConfigModule(module, merge) {
-	
-
-	/**
-	 * @class core.pubsub.runner.config
-	 * @extends requirejs.config
-	 * @inheritdoc
-	 * @localdoc This module provide configuration for the **pubsub runners** from it's AMD module config.
-	 * @protected
-	 * @static
-	 */
-	return merge.call({
-		/**
-		 * @cfg {RegExp} pattern RegExp used to determine if a {@link core.component.base#phase phase} should be protected
-		 */
-		"pattern" : /^(?:initi|fin)alized?$/
-	}, module.config());
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/runner/pipeline',[
-	"./config",
-	"when"
-], function PipelineModule(config, when) {
-	
-
-	/**
-	 * @class core.pubsub.runner.pipeline
-	 * @extends core.event.emitter.runner
-	 * @mixins core.pubsub.runner.config
-	 * @protected
-	 * @static
-	 */
-
-	var UNDEFINED;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_ARGUMENTS = "[object Arguments]";
-	var TOSTRING_ARRAY = "[object Array]";
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var HEAD = "head";
-	var NEXT = "next";
-	var PHASE = "phase";
-	var MEMORY = "memory";
-	var RE_PHASE = config["pattern"];
-
-	/**
-	 * @method constructor
-	 * @static
-	 * @inheritdoc
-	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
-	 * @returns {Promise}
-	 */
-	return function pipeline(event, handlers, args) {
-		var context = event[CONTEXT];
-		var callback = event[CALLBACK];
-		var candidate;
-		var candidates = [];
-		var candidatesCount = 0;
-
-		// Iterate handlers
-		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-			// Filter candidate[CONTEXT] if we have context
-			if (context !== UNDEFINED && candidate[CONTEXT] !== context) {
-				continue;
-			}
-
-			// Filter candidate[CALLBACK] if we have callback
-			if (callback !== UNDEFINED && candidate[CALLBACK] !== callback) {
-				continue;
-			}
-
-			// Add to candidates
-			candidates[candidatesCount++] = candidate;
-		}
-
-		// Reset candidatesCount
-		candidatesCount = 0;
-
-		/**
-		 * Internal function for piped execution of candidates candidates
-		 * @ignore
-		 * @param {Array} [result] result from previous candidate callback
-		 * @return {Promise} promise of next candidate callback execution
-		 */
-		var next = function (result) {
-			/*jshint curly:false*/
-			var context;
-			var candidate;
-			var type;
-
-			// Check that result is not UNDEFINED and not equals to args
-			if (result !== UNDEFINED && result !== args) {
-				// Update args to either result or result wrapped in a new array
-				args = (type = OBJECT_TOSTRING.call(result)) === TOSTRING_ARRAY  // if type is TOSTRING_ARRAY
-					|| type === TOSTRING_ARGUMENTS                                 // or type is TOSTRING_ARGUMENTS
-					? result                                                       // then result is array-like enough to be passed to .apply
-					: [ result ];                                                  // otherwise we should just wrap it in a new array
-			}
-
-			// TODO Needs cleaner implementation
-			// Iterate until we find a candidate in a blocked phase
-			while ((candidate = candidates[candidatesCount++]) // Has next candidate
-				&& (context = candidate[CONTEXT])                // Has context
-				&& RE_PHASE.test(context[PHASE]));               // In blocked phase
-
-			// Return promise of next callback, or promise resolved with args
-			return candidate !== UNDEFINED
-				? when(candidate[CALLBACK].apply(context, args), next)
-				: when.resolve(handlers[MEMORY] = args);
-		};
-
-		return next(args);
-	}
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-composer/decorator/from',[ "../mixin/decorator" ], function FromDecoratorModule(Decorator) {
-	
-
-	/**
-	 * @class composer.decorator.from
-	 * @extends composer.decorator
-	 * @static
-	 */
-
-	var UNDEFINED;
-	var VALUE = "value";
-	var PROTOTYPE = "prototype";
-
-	/**
-	 * Create a decorator that is to lend from a particular property from this own or the other factory.
-	 * @method constructor
-	 * @static
-	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
-	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
-	 * @returns {composer.mixin.decorator}
-	 */
-	return function from(which, prop) {
-		// Shifting arguments.
-		if (typeof which === "string") {
-			prop = which;
-			which = UNDEFINED;
-		}
-
-		return new Decorator(function (descriptor, name, descriptors) {
-			// To override a specified property, otherwise simply this property.
-			name = prop || name;
-
-			// Property is from the the other's prototype, otherwise from own descriptor.
-			descriptor[VALUE] = which
-				? which[PROTOTYPE][name]
-				: descriptors[name][VALUE];
-
-			return descriptor;
-		});
-	}
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/hub',[
-	"../event/emitter",
-	"./runner/pipeline",
-	"troopjs-composer/decorator/from"
-], function HubModule(Emitter, pipeline, from) {
-	
-
-	/**
-	 * The centric "bus" that handlers publishing and subscription.
-	 *
-	 * ## Memorized emitting
-	 * A fired event will memorize the "current" value of each event. Each executor may have it's own interpretation
-	 * of what "current" means.
-	 *
-	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
-	 * use methods like {@link core.component.gadget#publish publish} and {@link core.component.gadget#subscribe subscribe}
-	 * that are provided as shortcuts.
-	 *
-	 * @class core.pubsub.hub
-	 * @extends core.event.emitter
-	 * @singleton
-	 */
-
-	var UNDEFINED;
-	var MEMORY = "memory";
-	var HANDLERS = "handlers";
-	var RUNNER = "runner";
-	var TYPE = "type";
-
-	/**
-	 * @method create
-	 * @static
-	 * @hide
-	 */
-
-	/**
-	 * @method extend
-	 * @static
-	 * @hide
-	 */
-
-	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
-	 * @method on
-	 * @inheritdoc
-	 * @private
-	 */
-
-	/**
-	 * @method off
-	 * @inheritdoc
-	 * @private
-	 */
-
-	/**
-	 * @method emit
-	 * @inheritdoc
-	 * @private
-	 */
-
-	return Emitter.create({
-		"displayName": "core/pubsub/hub",
-
-		/**
-		 * Listen to an event that are emitted publicly.
-		 * @chainable
-		 * @inheritdoc #on
-		 * @method
-		 */
-		"subscribe" : from("on"),
-
-		/**
-		 * Remove a public event listener.
-		 * @chainable
-		 * @inheritdoc #off
-		 * @method
-		 */
-		"unsubscribe" : from("off"),
-
-		/**
-		 * Emit a public event that can be subscribed by other components.
-		 *
-		 * Handlers are run in a pipeline, in which each handler will receive muted
-		 * data params depending on the return value of the previous handler:
-		 *
-		 *   - The original data params from {@link #publish} if this's the first handler, or the previous handler returns `undefined`.
-		 *   - One value as the single argument if the previous handler return a non-array.
-		 *   - Each argument value deconstructed from the returning array of the previous handler.
-		 *
-		 * @param {String} type The topic to publish.
-		 * @param {...*} [args] Additional params that are passed to the handler function.
-		 * @returns {Promise}
-		 */
-		"publish" : function publish(type, args) {
-			var me = this;
-
-			// Prepare event object
-			var event = {};
-			event[TYPE] = type;
-			event[RUNNER] = pipeline;
-
-			// Modify first argument
-			arguments[0] = event;
-
-			// Delegate the actual emitting to event emitter.
-			return me.emit.apply(me, arguments);
-		},
-
-		/**
-		 * Returns value in handlers MEMORY
-		 * @param {String} type event type to peek at
-		 * @param {*} [value] Value to use _only_ if no memory has been recorder
-		 * @returns {*} Value in MEMORY
-		 */
-		"peek": function peek(type, value) {
-			var handlers;
-
-			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
-				? value
-				: handlers[MEMORY];
-		}
-	});
 });
 
 /**
@@ -2216,18 +2519,16 @@ define('troopjs-core/component/gadget',[
  */
 define('troopjs-browser/dom/config',[
 	"module",
-	"troopjs-utils/merge",
+	"troopjs-util/merge",
 	"jquery"
 ], function (module, merge, $) {
 	
 
 	/**
+	 * Provides configuration for the dom package
 	 * @class browser.dom.config
-	 * @extends requirejs.config
-	 * @inheritdoc
-	 * @localdoc This module is to provide configurations **dom** from it's AMD module config.
 	 * @protected
-	 * @static
+	 * @alias feature.config
 	 */
 	return merge.call({
 		/**
@@ -2246,7 +2547,7 @@ define('troopjs-browser/dom/config',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-browser/dom/selector',[
-	"troopjs-composer/mixin/factory",
+	"troopjs-compose/mixin/factory",
 	"./config"
 ], function (Factory, config) {
 	
@@ -2255,8 +2556,8 @@ define('troopjs-browser/dom/selector',[
 	 * An optimized CSS selector matcher that {@link browser.component.runner.sequence} relies on for
 	 * delegating DOM event on {@link browser.component.widget}.
 	 * @class browser.dom.selector
-	 * @extends composer.mixin
-	 * @mixins browser.dom.config
+	 * @implement compose.mixin
+	 * @mixin browser.dom.config
 	 * @private
 	 */
 
@@ -2594,9 +2895,10 @@ define('troopjs-browser/component/runner/sequence',[
 
 	/**
 	 * @class browser.component.runner.sequence
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -2608,13 +2910,6 @@ define('troopjs-browser/component/runner/sequence',[
 	var SELECTOR = "selector";
 	var MODIFIED = "modified";
 
-	/**
-	 * @method constructor
-	 * @static
-	 * @inheritdoc
-	 * @localdoc Runner that executes DOM candidates in sequence without overlap
-	 * @returns {*} Result from last handler
-	 */
 	return function sequence(event, handlers, args) {
 		var modified = handlers[MODIFIED];
 		var $event = args[0];
@@ -2659,24 +2954,29 @@ define('troopjs-browser/component/runner/sequence',[
 				return candidate[CALLBACK].apply(candidate[CONTEXT], args);
 			}, UNDEFINED);
 	}
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that executes DOM candidates in sequence without overlap
+	 * @returns {*} Result from last handler
+	 */
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-browser/loom/config',[
 	"module",
-	"troopjs-utils/merge"
+	"troopjs-util/merge"
 ], function LoomConfigModule(module, merge) {
 	
 
 	/**
+	 * Provides configuration for the loom package
 	 * @class browser.loom.config
-	 * @extends requirejs.config
-	 * @inheritdoc
-	 * @localdoc This module is to provide configurations **loom** from it's AMD module config.
 	 * @protected
-	 * @static
+	 * @alias feature.config
 	 */
+
 	return merge.call({
 		/**
 		 * @cfg {String} $warp Property of the element's data where the **warp** resides.
@@ -2706,12 +3006,12 @@ define('troopjs-browser/loom/config',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-utils/getargs',[],function GetArgsModule() {
+define('troopjs-util/getargs',[],function GetArgsModule() {
 	
 
 	/**
-	 * @class utils.getargs
-	 * @extends Function
+	 * @class util.getargs
+	 * @mixin Function
 	 * @static
 	 */
 
@@ -2722,18 +3022,12 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 	var RE_DIGIT = /^\d+$/;
 
 	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
 	 * Function that calls on a String, to parses it as function parameters delimited by commas.
 	 *
 	 * 	" 1  , '2' , 3  ,false,5 " => [ 1, "2", 3, false, 5]
 	 * 	'1, 2 ',  3,\"4\", 5  => [ "1, 2 ", 3, "4", 5 ]
 	 *
 	 * @method constructor
-	 * @static
 	 * @return {Array} the array of parsed params.
 	 */
 	return function getargs() {
@@ -2843,7 +3137,7 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-utils/defer',[
+define('troopjs-util/defer',[
 	"when",
 	"poly/array"
 ], function DeferModule(when) {
@@ -2851,22 +3145,16 @@ define('troopjs-utils/defer',[
 
 	/**
 	 * `when.defer` patched with jQuery/deferred compatibility.
-	 * @class utils.defer
-	 * @extends Function
+	 * @class util.defer
+	 * @mixin Function
 	 * @static
 	 */
 
 	var ARRAY_SLICE = Array.prototype.slice;
 
 	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
 	 * Creates a wrapped when.defer object, which can be send to anything that expects a jQuery/deferred.
 	 * @method constructor
-	 * @static
 	 * @return {Deferred}
 	 */
 	return function Defer() {
@@ -2906,22 +3194,17 @@ define('troopjs-browser/loom/weave',[
 	"require",
 	"when",
 	"jquery",
-	"troopjs-utils/getargs",
-	"troopjs-utils/defer",
+	"troopjs-util/getargs",
+	"troopjs-util/defer",
 	"poly/array"
 ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
 	
 
 	/**
 	 * @class browser.loom.weave
-	 * @extends Function
-	 * @mixins browser.loom.config
+	 * @mixin browser.loom.config
+	 * @mixin Function
 	 * @static
-	 */
-
-	/**
-	 * @method constructor
-	 * @hide
 	 */
 
 	var UNDEFINED;
@@ -2947,7 +3230,7 @@ define('troopjs-browser/loom/weave',[
 	 *  - Updates the {@link browser.loom.config#weave woven attribute} with the created widget instances names.
 	 *  - The {@link browser.loom.config#$warp $warp data property} will reference the widget instances.
 	 *
-	 *@localdoc
+	 * @localdoc
 	 *
 	 * It also lives as a jquery plugin as {@link $#method-weave}.
 	 *
@@ -2959,7 +3242,6 @@ define('troopjs-browser/loom/weave',[
 	 * 	$el.weave();
 	 *
 	 * @method constructor
-	 * @static
 	 * @param {...*} [start_args] Arguments that will be passed to each widget's {@link browser.component.widget#start start} method
 	 * @returns {Promise} Promise for the completion of weaving all widgets.
 	 */
@@ -3094,14 +3376,14 @@ define('troopjs-browser/loom/unweave',[
 	"when",
 	"jquery",
 	"poly/array",
-	"troopjs-utils/defer"
+	"troopjs-util/defer"
 ], function UnweaveModule(config, when, $, Defer) {
 	
 
 	/**
 	 * @class browser.loom.unweave
-	 * @extends Function
-	 * @mixins browser.loom.config
+	 * @mixin browser.loom.config
+	 * @mixin Function
 	 * @static
 	 */
 
@@ -3122,11 +3404,6 @@ define('troopjs-browser/loom/unweave',[
 	var RE_SEPARATOR = /[\s,]+/;
 
 	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
 	 * Destroy all widget instances living on this element, that are created
 	 * by {@link browser.loom.weave}, it is also to clean up the attributes
 	 * and data references to the previously instantiated widgets.
@@ -3136,7 +3413,6 @@ define('troopjs-browser/loom/unweave',[
 	 * It also lives as a jquery plugin as {@link $#method-unweave}.
 	 *
 	 * @method constructor
-	 * @static
 	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link browser.component.widget#stop stop} method
 	 * @returns {Promise} Promise to the completion of unweaving all woven widgets.
 	 */
@@ -3263,6 +3539,15 @@ define('troopjs-browser/loom/unweave',[
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 	
 
+	/**
+	 * Extends {@link jQuery} with:
+	 *
+	 *  - {@link $#event-destroy} event
+	 *
+	 * @class jquery.destroy
+	 * @alias plugin.jquery
+	 */
+
 	var DESTROY = "destroy";
 
 	/**
@@ -3299,7 +3584,7 @@ define('troopjs-browser/component/widget',[
 	"./runner/sequence",
 	"jquery",
 	"when",
-	"troopjs-utils/merge",
+	"troopjs-util/merge",
 	"../loom/config",
 	"../loom/weave",
 	"../loom/unweave",
@@ -3311,6 +3596,7 @@ define('troopjs-browser/component/widget',[
 	 * Component that attaches to an DOM element, considerably delegates all DOM manipulations.
 	 * @class browser.component.widget
 	 * @extends core.component.gadget
+	 * @alias widget.component
 	 */
 
 	var UNDEFINED;
@@ -3582,252 +3868,37 @@ define('troopjs-browser/component/widget',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	
-
-	/**
-	 * Base class for all service alike components, self-registering.
-	 *
-	 * @class core.component.service
-	 * @extends core.component.gadget
-	 */
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 */
-	return Gadget.extend({
-		"displayName" : "core/component/service",
-
-		/**
-		 * @inheritdoc
-		 * @localdoc Registers service with the {@link core.registry.service service registry}
-		 * @handler
-		 */
-		"sig/initialize" : function onInitialize() {
-			var me = this;
-
-			return me.publish("registry/add", me);
-		},
-
-		/**
-		 * @inheritdoc
-		 * @localdoc Un-registers service with the {@link core.registry.service service registry}
-		 * @handler
-		 */
-		"sig/finalize" : function onFinalize() {
-			var me = this;
-
-			return me.publish("registry/remove", me);
-		}
-	});
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/registry/service',[
-	"../component/service",
-	"poly/object",
-	"poly/array"
-], function RegistryServiceModule(Service) {
-	
-
-	/**
-	 * A special {@link core.component.service service} presents the registry table for all
-	 * other services across the application.
-	 *
-	 * 	// Upon instantiation this service is registered.
-	 * 	Service.create({
-	 *
-	 * 		// This will be the service key.
-	 * 		displayName: "my/provided",
-	 *
-	 * 		// Provide actual services on hub.
-	 * 		"hub/my/provided/service" : function() {
-	 * 			// Do some dirty lift.
-	 * 		}
-	 * 	});
-	 *
-	 * 	// Now we can look for it in registry.
-	 * 	var service = registry.get("my/provided")[0];
-	 *
-	 * @class core.registry.service
-	 * @extends core.component.service
-	 */
-
-	var SERVICES = "services";
-
-	/**
-	 * @method constructor
-	 */
-	return Service.extend(function RegistryService() {
-		var me = this;
-
-		/**
-		 * Registred services
-		 * @private
-		 * @readonly
-		 * @property {core.component.service[]} services
-		 */
-		me[SERVICES] = {};
-
-		me.add(me);
-	},{
-		"displayName" : "core/registry/service",
-
-		/**
-		 * Register a service.
-		 * @chainable
-		 * @param {core.component.service} service
-		 */
-		"add" : function add(service) {
-			var me = this;
-
-			me[SERVICES][service.toString()] = service;
-
-			return me;
-		},
-
-		/**
-		 * Remove a service from the registry.
-		 * @chainable
-		 * @param {core.component.service} service
-		 */
-		"remove": function remove(service) {
-			var me = this;
-
-			delete me[SERVICES][service.toString()];
-
-			return me;
-		},
-
-		/**
-		 * Find registered service(s) by service name.
-		 * @param {String} pattern Regexp that matches the service name.
-		 * @returns {Array|null}
-		 */
-		"get" : function get(pattern) {
-			var re = new RegExp(pattern);
-			var services = this[SERVICES];
-
-			return Object.keys(services)
-				.filter(function filter(serviceName) {
-					return re.test(serviceName);
-				})
-				.map(function map(serviceName) {
-					return services[serviceName];
-				});
-		},
-
-		/**
-		 * Hub event for adding service.
-		 * @handler
-		 * @param {core.component.service} service
-		 */
-		"hub/registry/add" : function onAdd(service) {
-			this.add(service);
-		},
-
-		/**
-		 * Hub event for removing service.
-		 * @handler
-		 * @param {core.component.service} service
-		 */
-		"hub/registry/remove" : function onRemove(service) {
-			this.remove(service);
-		},
-
-		/**
-		 * Hub event for finding service(s).
-		 * @handler
-		 * @param {String} pattern
-		 * @returns {core.component.service[]}
-		 */
-		"hub/registry/get" : function onGet(pattern) {
-			return this.get(pattern);
-		}
-	});
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
 define('troopjs-browser/application/widget',[
-	"module",
 	"../component/widget",
-	"when",
-	"troopjs-core/registry/service",
-	"poly/array"
-], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
+	"when"
+], function ApplicationWidgetModule(Widget, when) {
 	
 
 	/**
 	 * The application widget serves as a container for all troop components that bootstrap the page.
 	 * @class browser.application.widget
 	 * @extends browser.component.widget
+	 * @alias widget.application
 	 */
 
-	var UNDEFINED;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var REGISTRY = "registry";
-
-	/**
-	 * Forwards _signal to components
-	 * @ignore
-	 * @param {String} _signal Signal to forward
-	 * @param {Array} _args Signal arguments
-	 * @return {Promise} promise of next handler callback execution
-	 */
-	function forward(_signal, _args) {
-		/*jshint validthis:true*/
-		var me = this;
-		var args = [ _signal ];
-		var components = me[REGISTRY].get();
-		var componentsCount = 0;
-		var results = [];
-		var resultsCount = 0;
-
-		ARRAY_PUSH.apply(args, _args);
-
-		var next = function (result, skip) {
-			var component;
-
-			if (skip !== true) {
-				results[resultsCount++] = result;
-			}
-
-			return (component = components[componentsCount++]) !== UNDEFINED
-				? when(component.signal.apply(component, args), next)
-				: when.resolve(results);
-		};
-
-		return next(UNDEFINED, true);
-	}
+	var ARRAY_SLICE = Array.prototype.slice;
+	var COMPONENTS = "components";
 
 	/**
 	 * @method constructor
 	 * @inheritdoc
 	 * @param {jQuery|HTMLElement} $element The element that this widget should be attached to
 	 * @param {String} displayName A friendly name for this widget
-	 * @param {...core.component.gadget} gadget List of gadgets to start before starting the application.
+	 * @param {...core.component.base} component List of components to start before starting the application.
 	 */
-	return Widget.extend(function ApplicationWidget($element, displayName, gadget) {
+	return Widget.extend(function ApplicationWidget($element, displayName, component) {
 		/**
-		 * Service registry
+		 * Application components
 		 * @private
 		 * @readonly
-		 * @property {core.registry.service} registry
+		 * @property {core.component.base[]} components
 		 */
-		var registry = this[REGISTRY] = RegistryService();
-
-		// TODO only register _services_
-		// Slice and iterate arguments
-		ARRAY_SLICE.call(arguments, 2).forEach(function (component) {
-			// Register component
-			registry.add(component);
-		});
+		this[COMPONENTS] = ARRAY_SLICE.call(arguments, 2);
 	}, {
 		"displayName" : "browser/application/widget",
 
@@ -3837,7 +3908,11 @@ define('troopjs-browser/application/widget',[
 		 * @inheritdoc
 		 */
 		"sig/initialize" : function onInitialize() {
-			return forward.call(this, "initialize", arguments);
+			var args = arguments;
+
+			return when.map(this[COMPONENTS], function (component) {
+				return component.signal("initialize", args);
+			});
 		},
 
 		/**
@@ -3849,9 +3924,12 @@ define('troopjs-browser/application/widget',[
 			var me = this;
 			var args = arguments;
 
-			return forward.call(me, "start", args).then(function started() {
-				return me.weave.apply(me, args);
-			});
+			return when
+				.map(me[COMPONENTS], function (component) {
+					return component.signal("start", args);
+				}).then(function started() {
+					return me.weave.apply(me, args);
+				});
 		},
 
 		/**
@@ -3859,12 +3937,14 @@ define('troopjs-browser/application/widget',[
 		 * @localdoc stop all woven widgets that are within this element.
 		 * @inheritdoc
 		 */
-		"sig/stop" : function onStop() {
+		"sig/stop": function onStop() {
 			var me = this;
 			var args = arguments;
 
 			return me.unweave.apply(me, args).then(function stopped() {
-				return forward.call(me, "stop", args);
+				return when.map(me[COMPONENTS], function (child) {
+					return child.signal("stop", args);
+				});
 			});
 		},
 
@@ -3874,7 +3954,11 @@ define('troopjs-browser/application/widget',[
 		 * @inheritdoc
 		 */
 		"sig/finalize" : function onFinalize() {
-			return forward.call(this, "finalize", arguments);
+			var args = arguments;
+
+			return when.map(this[COMPONENTS], function (component) {
+				return component.signal("finalize", args);
+			});
 		}
 	});
 });

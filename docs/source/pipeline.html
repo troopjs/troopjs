@@ -23,9 +23,10 @@ define([ &quot;when&quot; ], function PipelineModule(when) {
 
 <span id='core-component-runner-pipeline'>	/**
 </span>	 * @class core.component.runner.pipeline
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -37,9 +38,8 @@ define([ &quot;when&quot; ], function PipelineModule(when) {
 	var HEAD = &quot;head&quot;;
 	var NEXT = &quot;next&quot;;
 
-<span id='core-component-runner-pipeline-static-method-constructor'>	/**
+<span id='core-component-runner-pipeline-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in &quot;pipeline&quot;, passing the resolved return value (unless it's undefined) of the previous listen to the next handler as arguments.
 	 * @returns {Promise}

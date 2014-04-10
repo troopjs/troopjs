@@ -18,19 +18,21 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define(function MultiversionModule() {
+define(function MultiVersionModule() {
 	&quot;use strict&quot;;
 
 <span id='requirejs-multiversion'>	/**
 </span>	 * RequireJS multiversion plugin
 	 * @class requirejs.multiversion
-	 * @extends requirejs.plugin
 	 * @static
+	 * @alias plugin.requirejs
 	 */
 
 	//TODO Add usage docs
 
+	var UNDEFINED;
 	var RE = /(.+?)#(.+)$/;
+	var RE_EMPTY = /^empty:/;
 	var CONTEXTS = require.s.contexts;
 
 	return {
@@ -51,11 +53,17 @@ define(function MultiversionModule() {
 				}
 			}
 
-			parentRequire([ name ], function (module) {
-				onload(module);
-			}, onload.error);
+			if (RE_EMPTY.test(parentRequire.toUrl(name + &quot;.js&quot;))) {
+				onload(UNDEFINED);
+			}
+			else {
+				parentRequire([ name ], function (module) {
+					onload(module);
+				}, onload.error);
+			}
 		}
 	};
-});</pre>
+});
+</pre>
 </body>
 </html>

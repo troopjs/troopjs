@@ -23,9 +23,10 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 
 <span id='core-component-runner-sequence'>	/**
 </span>	 * @class core.component.runner.sequence
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -34,9 +35,8 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 	var CALLBACK = &quot;callback&quot;;
 	var CONTEXT = &quot;context&quot;;
 
-<span id='core-component-runner-sequence-static-method-constructor'>	/**
+<span id='core-component-runner-sequence-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Run event handlers **synchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
 	 * @returns {*[]} Result from each executed handler

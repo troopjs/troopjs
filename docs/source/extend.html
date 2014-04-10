@@ -20,26 +20,25 @@
  */
 define([
 	&quot;../mixin/decorator&quot;,
-	&quot;troopjs-utils/merge&quot;
+	&quot;troopjs-util/merge&quot;
 ], function ExtendDecoratorModule(Decorator, merge) {
 	&quot;use strict&quot;;
 
-<span id='composer-decorator-extend'>	/**
-</span>	 * @class composer.decorator.extend
-	 * @extends composer.decorator
+<span id='compose-decorator-extend'>	/**
+</span>	 * @class compose.decorator.extend
 	 * @static
+	 * @alias feature.decorator
 	 */
 
 	var UNDEFINED;
 	var VALUE = &quot;value&quot;;
 	var ARRAY_CONCAT = Array.prototype.concat;
 
-<span id='composer-decorator-extend-static-method-constructor'>	/**
+<span id='compose-decorator-extend-method-constructor'>	/**
 </span>	 * Create a decorator that is to augment an existing Object property.
 	 * @method constructor
-	 * @static
 	 * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
-	 * @returns {composer.mixin.decorator}
+	 * @returns {compose.mixin.decorator}
 	 */
 	return function extend(ext) {
 		var args = arguments;

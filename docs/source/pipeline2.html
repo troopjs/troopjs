@@ -26,10 +26,11 @@ define([
 
 <span id='core-pubsub-runner-pipeline'>	/**
 </span>	 * @class core.pubsub.runner.pipeline
-	 * @extends core.event.emitter.runner
-	 * @mixins core.pubsub.runner.config
+	 * @implement core.event.emitter.runner
+	 * @mixin core.pubsub.runner.config
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -44,9 +45,8 @@ define([
 	var MEMORY = &quot;memory&quot;;
 	var RE_PHASE = config[&quot;pattern&quot;];
 
-<span id='core-pubsub-runner-pipeline-static-method-constructor'>	/**
+<span id='core-pubsub-runner-pipeline-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
 	 * @returns {Promise}

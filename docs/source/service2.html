@@ -19,205 +19,264 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../component/service&quot;,
-	&quot;troopjs-utils/merge&quot;,
+	&quot;module&quot;,
+	&quot;troopjs-core/component/service&quot;,
+	&quot;./component&quot;,
+	&quot;troopjs-util/merge&quot;,
 	&quot;when&quot;
-], function logger(Service, merge, when) {
+], function QueryServiceModule(module, Service, Query, merge, when) {
 	&quot;use strict&quot;;
 
-<span id='core-logger-service'>	/**
-</span>	 * Provides logging as a service, with appender support.
-	 * @class core.logger.service
+<span id='data-query-service'>	/**
+</span>	 * Service that batch processes the query requests send to server and cache the results.
+	 * @class data.query.service
 	 * @extends core.component.service
+	 * @uses net.ajax.service
 	 */
 
+	var UNDEFINED;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_CONCAT = ARRAY_PROTO.concat;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_OBJECT = &quot;[object Object]&quot;;
 	var LENGTH = &quot;length&quot;;
-	var APPENDERS = &quot;appenders&quot;;
+	var BATCHES = &quot;batches&quot;;
+	var INTERVAL = &quot;interval&quot;;
+	var CACHE = &quot;cache&quot;;
+	var QUERIES = &quot;queries&quot;;
+	var RESOLVED = &quot;resolved&quot;;
+	var CONFIGURATION = &quot;configuration&quot;;
+	var RAW = &quot;raw&quot;;
+	var ID = &quot;id&quot;;
+	var Q = &quot;q&quot;;
+	var MODULE_CONFIG = module.config();
 
-	function forward(_signal, _args) {
-		/*jshint validthis:true*/
-		var me = this;
-		var signal = me.signal;
-		var args = [ _signal ];
-		var appenders = me[APPENDERS];
-		var index = 0;
-
-		ARRAY_PUSH.apply(args, _args);
-
-		var next = function () {
-			var appender;
-
-			return (appender = appenders[index++])
-				? when(signal.apply(appender, args), next)
-				: when.resolve(_args);
-		};
-
-		return next();
-	}
-
-	function convert(cat, message) {
-		var result = {
-			&quot;cat&quot; : cat,
-			&quot;time&quot;: new Date().getTime()
-		};
-
-		if (OBJECT_TOSTRING.call(message) === TOSTRING_OBJECT) {
-			merge.call(result, message);
-		}
-		else {
-			result.msg = message;
-		}
-
-		return result;
-	}
-
-	function append(obj) {
-		/*jshint validthis:true*/
-		var me = this;
-		var appenders = me[APPENDERS];
-		var i;
-		var iMax;
-
-		for (i = 0, iMax = appenders[LENGTH]; i &lt; iMax; i++) {
-			appenders[i].append(obj);
-		}
-	}
-
-<span id='core-logger-service-event-hub-logger-log'>	/**
-</span>	 * Logger `log` event
-	 * @localdoc Triggered when a component wants to record a `log` message
-	 * @event hub/logger/log
-	 * @param {String} msg Message
-	 */
-
-
-<span id='core-logger-service-event-hub-logger-warn'>	/**
-</span>	 * Logger `warn` event
-	 * @localdoc Triggered when a component wants to record a `warn` message
-	 * @event hub/logger/warn
-	 * @param {String} msg Message
-	 */
-
-<span id='core-logger-service-event-hub-logger-debug'>	/**
-</span>	 * Logger `debug` event
-	 * @localdoc Triggered when a component wants to record a `debug` message
-	 * @event hub/logger/debug
-	 * @param {String} msg Message
-	 */
-
-<span id='core-logger-service-event-hub-logger-info'>	/**
-</span>	 * Logger `info` event
-	 * @localdoc Triggered when a component wants to record a `info` message
-	 * @event hub/logger/info
-	 * @param {String} msg Message
-	 */
-
-<span id='core-logger-service-event-hub-logger-error'>	/**
-</span>	 * Logger `error` event
-	 * @localdoc Triggered when a component wants to record a `error` message
-	 * @event hub/logger/error
-	 * @param {String} msg Message
-	 */
-
-<span id='core-logger-service-method-constructor'>	/**
+<span id='data-query-service-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @param {...Function} appender One or more message appender(s).
+	 * @param {data.cache.component} cache Cache
+	 * @throws {Error} If no cache is provided
 	 */
-	return Service.extend(function LoggerService(appender) {
-<span id='core-logger-service-property-appenders'>		/**
-</span>		 * Log appenders
+	return Service.extend(function QueryService(cache) {
+		var me = this;
+
+		if (cache === UNDEFINED) {
+			throw new Error(&quot;No cache provided&quot;);
+		}
+
+<span id='data-query-service-property-batches'>		/**
+</span>		 * Current batches
 		 * @private
 		 * @readonly
-		 * @property {...Function[]} appenders
+		 * @property {Array} batches
 		 */
-		this[APPENDERS] = ARRAY_SLICE.call(arguments);
+		me[BATCHES] = [];
+
+<span id='data-query-service-property-cache'>		/**
+</span>		 * Current cache
+		 * @private
+		 * @readonly
+		 * @property {data.cache.component} cache
+		 */
+		me[CACHE] = cache;
+
+		me.configure(MODULE_CONFIG);
 	}, {
-		displayName : &quot;core/logger/service&quot;,
+		&quot;displayName&quot; : &quot;data/query/service&quot;,
 
-<span id='core-logger-service-handler-sig-initialize'>		/**
+<span id='data-query-service-handler-sig-start'>		/**
 </span>		 * @handler
 		 * @inheritdoc
-		 * @localdoc Forwards event to #appenders
+		 * @localdoc Starts batch interval
 		 */
-		&quot;sig/initialize&quot; : function onInitialize() {
-			return forward.call(this, &quot;initialize&quot;, arguments);
+		&quot;sig/start&quot; : function start() {
+			var me = this;
+			var cache = me[CACHE];
+
+			// Set interval (if we don't have one)
+			me[INTERVAL] = INTERVAL in me
+				? me[INTERVAL]
+				: setInterval(function scan() {
+				var batches = me[BATCHES];
+
+				// Return fast if there is nothing to do
+				if (batches[LENGTH] === 0) {
+					return;
+				}
+
+				// Reset batches
+				me[BATCHES] = [];
+
+<span id='global-method-request'>				/**
+</span>				 * Requests via ajax
+				 * @ignore
+				 * @fires net.ajax.service#event-hub/ajax
+				 */
+				function request() {
+					var q = [];
+					var i;
+
+					// Iterate batches
+					for (i = batches[LENGTH]; i--;) {
+						// Add batch[Q] to q
+						ARRAY_PUSH.apply(q, batches[i][Q]);
+					}
+
+					// Publish ajax
+					return me.publish(&quot;ajax&quot;, merge.call({
+						&quot;data&quot;: {
+							&quot;q&quot;: q.join(&quot;|&quot;)
+						}
+					}, me[CONFIGURATION]));
+				}
+
+				function done(data) {
+					var batch;
+					var queries;
+					var id;
+					var i;
+					var j;
+
+					// Add all new data to cache
+					cache.put(data);
+
+					// Iterate batches
+					for (i = batches[LENGTH]; i--;) {
+						batch = batches[i];
+						queries = batch[QUERIES];
+						id = batch[ID];
+
+						// Iterate queries
+						for (j = queries[LENGTH]; j--;) {
+							// If we have a corresponding ID, fetch from cache
+							if (j in id) {
+								queries[j] = cache[id[j]];
+							}
+						}
+
+						// Resolve batch
+						batch.resolve(queries);
+					}
+				}
+
+				function fail() {
+					var batch;
+					var i;
+
+					// Iterate batches
+					for (i = batches[LENGTH]; i--;) {
+						batch = batches[i];
+
+						// Reject (with original queries as argument)
+						batch.reject(batch[QUERIES]);
+					}
+				}
+
+				// Request and handle response
+				request().then(done, fail);
+			}, 200);
 		},
 
-<span id='core-logger-service-handler-sig-start'>		/**
+<span id='data-query-service-handler-sig-stop'>		/**
 </span>		 * @handler
 		 * @inheritdoc
-		 * @localdoc #handler-sig/initialize
+		 * @localdoc Stops batch interval
 		 */
-		&quot;sig/start&quot; : function onStart() {
-			return forward.call(this, &quot;start&quot;, arguments);
+		&quot;sig/stop&quot; : function stop() {
+			var me = this;
+
+			// Only do this if we have an interval
+			if (INTERVAL in me) {
+				// Clear interval
+				clearInterval(me[INTERVAL]);
+
+				// Reset interval
+				delete me[INTERVAL];
+			}
 		},
 
-<span id='core-logger-service-handler-sig-stop'>		/**
-</span>		 * @handler
-		 * @inheritdoc
-		 * @localdoc #handler-sig/initialize
-		 */
-		&quot;sig/stop&quot; : function onStop() {
-			return forward.call(this, &quot;stop&quot;, arguments);
-		},
-
-<span id='core-logger-service-handler-sig-finalize'>		/**
-</span>		 * @handler
-		 * @inheritdoc
-		 * @localdoc #handler-sig/initialize
-		 */
-		&quot;sig/finalize&quot; : function onFinalize() {
-			return forward.call(this, &quot;finalize&quot;, arguments);
-		},
-
-<span id='core-logger-service-handler-hub-logger-log'>		/**
-</span>		 * Log a message on hub event.
+<span id='data-query-service-handler-hub-query'>		/**
+</span>		 * Handle query request on hub event.
 		 * @handler
-		 * @inheritdoc #event-hub/logger/log
+		 * @param {...String} query TroopJS data query
+		 * @returns {Promise}
 		 */
-		&quot;hub/logger/log&quot; : function onLog(message) {
-			append.call(this, convert(&quot;log&quot;, message));
-		},
+		&quot;hub/query&quot; : function hubQuery(query) {
+			var me = this;
+			var batches = me[BATCHES];
+			var cache = me[CACHE];
+			var q = [];
+			var id = [];
+			var ast;
+			var i;
+			var j;
+			var iMax;
+			var queries;
 
-<span id='core-logger-service-handler-hub-logger-warn'>		/**
-</span>		 * Log a warn on hub event.
-		 * @handler
-		 * @inheritdoc #event-hub/logger/warn
-		 */
-		&quot;hub/logger/warn&quot; : function onWarn(message) {
-			append.call(this, convert(&quot;warn&quot;, message));
-		},
+			// Create deferred batch
+			var deferred = when.defer();
+			var resolver = deferred.resolver;
 
-<span id='core-logger-service-handler-hub-logger-debug'>		/**
-</span>		 * Log a debug on hub event.
-		 * @handler
-		 * @inheritdoc #event-hub/logger/debug
-		 */
-		&quot;hub/logger/debug&quot; : function onDebug(message) {
-			append.call(this, convert(&quot;debug&quot;, message));
-		},
+			try {
+				// Slice and flatten queries
+				queries = ARRAY_CONCAT.apply(ARRAY_PROTO, ARRAY_SLICE.call(arguments));
 
-<span id='core-logger-service-handler-hub-logger-info'>		/**
-</span>		 * Log an info on hub event.
-		 * @handler
-		 * @inheritdoc #event-hub/logger/info
-		 */
-		&quot;hub/logger/info&quot; : function onInfo(message) {
-			append.call(this, convert(&quot;info&quot;, message));
-		},
+				// Iterate queries
+				for (i = 0, iMax = queries[LENGTH]; i &lt; iMax; i++) {
+					// Init Query
+					query = Query(queries[i]);
 
-<span id='core-logger-service-handler-hub-logger-error'>		/**
-</span>		 * Log an error on hub event.
-		 * @handler
-		 * @inheritdoc #event-hub/logger/error
-		 */
-		&quot;hub/logger/error&quot; : function onError(message) {
-			append.call(this, convert(&quot;error&quot;, message));
+					// Get AST
+					ast = query.ast();
+
+					// If we have an ID
+					if (ast[LENGTH] &gt; 0) {
+						// Store raw ID
+						id[i] = ast[0][RAW];
+					}
+
+					// Get reduced AST
+					ast = query.reduce(cache).ast();
+
+					// Step backwards through AST
+					for (j = ast[LENGTH]; j-- &gt; 0;) {
+						// If this op is not resolved
+						if (!ast[j][RESOLVED]) {
+							// Add rewritten (and reduced) query to q
+							ARRAY_PUSH.call(q, query.rewrite());
+							break;
+						}
+					}
+				}
+
+				// If all queries were fully reduced, we can quick resolve
+				if (q[LENGTH] === 0) {
+					// Iterate queries
+					for (i = 0; i &lt; iMax; i++) {
+						// If we have a corresponding ID, fetch from cache
+						if (i in id) {
+							queries[i] = cache[id[i]];
+						}
+					}
+
+					// Resolve batch resolver
+					resolver.resolve(queries);
+				}
+				else {
+					// Store properties on batch
+					resolver[QUERIES] = queries;
+					resolver[ID] = id;
+					resolver[Q] = q;
+
+					// Add batch to batches
+					batches.push(resolver);
+				}
+			}
+			catch (e) {
+				resolver.reject(e);
+			}
+
+			// Return promise
+			return deferred.promise;
 		}
 	});
 });

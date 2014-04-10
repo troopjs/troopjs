@@ -21,22 +21,21 @@
 define([ &quot;../mixin/decorator&quot; ], function BeforeDecoratorModule(Decorator) {
 	&quot;use strict&quot;;
 
-<span id='composer-decorator-before'>	/**
-</span>	 * @class composer.decorator.before
-	 * @extends composer.decorator
+<span id='compose-decorator-before'>	/**
+</span>	 * @class compose.decorator.before
 	 * @static
+	 * @alias feature.decorator
 	 */
 
 	var UNDEFINED;
 	var VALUE = &quot;value&quot;;
 
-<span id='composer-decorator-before-static-method-constructor'>	/**
+<span id='compose-decorator-before-method-constructor'>	/**
 </span>	 * Create a decorator method that is to add code that will be executed before the original method.
 	 * @method constructor
-	 * @static
 	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
 	 * value (if not undefined) will be send as the arguments of original function.
-	 * @returns {composer.mixin.decorator}
+	 * @returns {compose.mixin.decorator}
 	 */
 	return function before(func) {
 		return new Decorator(function (descriptor) {

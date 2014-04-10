@@ -25,10 +25,20 @@ define([
 	&quot;./weave&quot;,
 	&quot;./unweave&quot;,
 	&quot;./woven&quot;,
-	&quot;troopjs-utils/getargs&quot;,
+	&quot;troopjs-util/getargs&quot;,
 	&quot;poly/array&quot;
 ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
 	&quot;use strict&quot;;
+
+<span id='browser-loom-plugin'>	/**
+</span>	 * Extends {@link jQuery} with:
+	 *
+	 *  - {@link $#property-weave} and {@link $#property-woven} properties
+	 *  - {@link $#method-weave}, {@link $#method-unweave} and {@link $#method-woven} methods
+	 *
+	 * @class browser.loom.plugin
+	 * @alias plugin.jquery
+	 */
 
 	var UNDEFINED;
 	var $FN = $.fn;
@@ -40,7 +50,6 @@ define([
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
-
 
 <span id='global-method-hasDataWeaveAttr'>	/**
 </span>	 * Tests if element has a data-weave attribute

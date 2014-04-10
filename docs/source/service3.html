@@ -18,45 +18,128 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;./gadget&quot; ], function ServiceModule(Gadget) {
+define([ &quot;troopjs-core/component/service&quot; ], function CacheServiceModule(Service) {
 	&quot;use strict&quot;;
 
-<span id='core-component-service'>	/**
-</span>	 * Base class for all service alike components, self-registering.
-	 *
-	 * @class core.component.service
-	 * @extends core.component.gadget
+<span id='data-cache-service'>	/**
+</span>	 * Service for evicting values from one or more {@link data.cache.component caches}
+	 * @class data.cache.service
+	 * @extends core.component.service
 	 */
 
-<span id='core-component-service-method-constructor'>	/**
+	var UNDEFINED;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var CACHES = &quot;_caches&quot;;
+	var TIMEOUT = &quot;_timeout&quot;;
+	var SECOND = 1000;
+	var GENERATIONS = &quot;generations&quot;;
+	var HEAD = &quot;head&quot;;
+	var NEXT = &quot;next&quot;;
+	var EXPIRES = &quot;expires&quot;;
+	var LENGTH = &quot;length&quot;;
+
+	function sweep(expires) {
+		/*jshint forin:false*/
+		var me = this;
+		var generations = me[GENERATIONS];
+		var property;
+		var current;
+
+		// Get head
+		current = generations[HEAD];
+
+		// Fail fast if there's no head
+		if (current === UNDEFINED) {
+			return;
+		}
+
+		do {
+			// Exit if this generation is to young
+			if (current[EXPIRES] &gt; expires) {
+				break;
+			}
+
+			// Iterate all properties on current
+			for (property in current) {
+				// And is it not a reserved property
+				if (property === EXPIRES || property === NEXT || property === GENERATIONS) {
+					continue;
+				}
+
+				// Delete from me (cache)
+				delete me[property];
+			}
+
+			// Delete generation
+			delete generations[current[EXPIRES]];
+		}
+			// While there's a next
+		while ((current = current[NEXT]));
+
+		// Reset head
+		generations[HEAD] = current;
+	}
+
+<span id='data-cache-service-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @inheritdoc
+	 * @param {...data.cache.component} cache One or more cache components
 	 */
-	return Gadget.extend({
-		&quot;displayName&quot; : &quot;core/component/service&quot;,
-
-<span id='core-component-service-handler-sig-initialize'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Registers service with the {@link core.registry.service service registry}
-		 * @handler
+	return Service.extend(function CacheService(cache) {
+<span id='data-cache-service-property-caches'>		/**
+</span>		 * Internal caches
+		 * @private
+		 * @readonly
+		 * @property {data.cache.component[]} caches
 		 */
-		&quot;sig/initialize&quot; : function onInitialize() {
+		this[CACHES] = ARRAY_SLICE.call(arguments);
+	}, {
+<span id='data-cache-service-handler-sig-start'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc Starts the cache eviction
+		 * @param {Number} delay Delay between cache eviction sweeps
+		 */
+		&quot;sig/start&quot; : function start(delay) {
 			var me = this;
+			var caches = me[CACHES];
 
-			return me.publish(&quot;registry/add&quot;, me);
+			if (delay === UNDEFINED) {
+				delay = (60 * SECOND);
+			}
+
+			function loop() {
+				// Calculate expiration of this generation
+				var expires = 0 | new Date().getTime() / SECOND;
+				var i;
+				var iMax;
+
+				//. Loop over caches
+				for (i = 0, iMax = caches[LENGTH]; i &lt; iMax; i++) {
+					// Call sweep on each cache
+					sweep.call(caches[i], expires);
+
+					// Set timeout for next execution
+					me[TIMEOUT] = setTimeout(loop, delay);
+				}
+			}
+
+			// Start loop
+			loop();
 		},
 
-<span id='core-component-service-handler-sig-finalize'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Un-registers service with the {@link core.registry.service service registry}
-		 * @handler
+<span id='data-cache-service-handler-sig-stop'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc Stops the cache eviction
 		 */
-		&quot;sig/finalize&quot; : function onFinalize() {
+		&quot;sig/stop&quot; : function stop() {
 			var me = this;
 
-			return me.publish(&quot;registry/remove&quot;, me);
+			// Clear timeout
+			clearTimeout(me[TIMEOUT]);
 		}
 	});
-});</pre>
+});
+</pre>
 </body>
 </html>

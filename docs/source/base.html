@@ -21,11 +21,13 @@
 define([
 	&quot;../event/emitter&quot;,
 	&quot;./runner/sequence&quot;,
-	&quot;troopjs-utils/merge&quot;,
-	&quot;troopjs-composer/decorator/around&quot;,
+	&quot;./registry&quot;,
+	&quot;../task/registry&quot;,
+	&quot;troopjs-util/merge&quot;,
+	&quot;troopjs-compose/decorator/around&quot;,
 	&quot;when&quot;,
 	&quot;poly/array&quot;
-], function ComponentModule(Emitter, sequence, merge, around, when) {
+], function ComponentModule(Emitter, sequence, componentRegistry, taskRegistry, merge, around, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-base'>	/**
@@ -87,6 +89,7 @@ define([
 	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
 	var PHASE = &quot;phase&quot;;
+	var TASK = &quot;task&quot;;
 	var STOP = &quot;stop&quot;;
 	var INITIALIZE = &quot;initialize&quot;;
 	var STARTED = &quot;started&quot;;
@@ -99,6 +102,146 @@ define([
 	var SIG_TEARDOWN = SIG + &quot;/teardown&quot;;
 	var ON = &quot;on&quot;;
 	var EVENT_TYPE_SIG = new RegExp(&quot;^&quot; + SIG + &quot;/(.+)&quot;);
+
+<span id='core-component-base-property-phase'>	/**
+</span>	 * Current lifecycle phase
+	 * @readonly
+	 * @protected
+	 * @property {&quot;initialized&quot;|&quot;started&quot;|&quot;stopped&quot;|&quot;finalized&quot;} phase
+	 */
+
+<span id='core-component-base-event-sig-initialize'>	/**
+</span>	 * Initialize signal
+	 * @event sig/initialize
+	 * @localdoc Triggered when this component enters the initialize phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+<span id='core-component-base-event-sig-start'>	/**
+</span>	 * Start signal
+	 * @event sig/start
+	 * @localdoc Triggered when this component enters the start phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+<span id='core-component-base-event-sig-stop'>	/**
+</span>	 * Stop signal
+	 * @localdoc Triggered when this component enters the stop phase
+	 * @event sig/stop
+	 * @param {...*} [args] Stop arguments
+	 */
+
+<span id='core-component-base-event-sig-finalize'>	/**
+</span>	 * Finalize signal
+	 * @event sig/finalize
+	 * @localdoc Triggered when this component enters the finalize phase
+	 * @param {...*} [args] Finalize arguments
+	 */
+
+<span id='core-component-base-event-sig-setup'>	/**
+</span>	 * Setup signal
+	 * @event sig/setup
+	 * @localdoc Triggered when the first event handler of a particular type is added via {@link #method-on}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {*} [data]
+	 */
+
+<span id='core-component-base-event-sig-add'>	/**
+</span>	 * Add signal
+	 * @event sig/add
+	 * @localdoc Triggered when a event handler of a particular type is added via {@link #method-on}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {*} [data]
+	 */
+
+<span id='core-component-base-event-sig-remove'>	/**
+</span>	 * Remove signal
+	 * @event sig/remove
+	 * @localdoc Triggered when a event handler of a particular type is removed via {@link #method-off}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 */
+
+<span id='core-component-base-event-sig-teardown'>	/**
+</span>	 * Teardown signal
+	 * @event sig/teardown
+	 * @localdoc Triggered when the last event handler of type is removed for a particular type via {@link #method-off}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 */
+
+<span id='core-component-base-event-sig-task'>	/**
+</span>	 * Task signal
+	 * @event sig/task
+	 * @localdoc Triggered when this component starts a {@link #method-task}.
+	 * @param {Promise} task Task
+	 * @param {Object} task.context Task context
+	 * @param {Date} task.started Task start date
+	 * @param {String} task.name Task name
+	 * @return {Promise}
+	 */
+
+<span id='core-component-base-handler-sig-start'>	/**
+</span>	 * Handles the component start
+	 * @handler sig/start
+	 * @inheritdoc #event-sig/start
+	 * @template
+	 * @return {Promise}
+	 */
+
+<span id='core-component-base-handler-sig-stop'>	/**
+</span>	 * Handles the component stop
+	 * @handler sig/stop
+	 * @inheritdoc #event-sig/stop
+	 * @template
+	 * @return {Promise}
+	 */
+
+<span id='core-component-base-handler-sig-setup'>	/**
+</span>	 * Handles an event setup
+	 * @handler sig/setup
+	 * @inheritdoc #event-sig/setup
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-base-handler-sig-add'>	/**
+</span>	 * Handles an event add
+	 * @handler sig/add
+	 * @inheritdoc #event-sig/add
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-base-handler-sig-remove'>	/**
+</span>	 * Handles an event remove
+	 * @handler sig/remove
+	 * @inheritdoc #event-sig/remove
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-base-handler-sig-teardown'>	/**
+</span>	 * Handles an event teardown
+	 * @handler sig/teardown
+	 * @inheritdoc #event-sig/teardown
+	 * @template
+	 * @return {*|Boolean}
+	 */
 
 <span id='core-component-base-method-constructor'>	/**
 </span>	 * @method constructor
@@ -121,99 +264,7 @@ define([
 		 */
 		me[CONFIGURATION] = {};
 	}, {
-<span id='core-component-base-property-phase'>		/**
-</span>		 * Current lifecycle phase
-		 * @readonly
-		 * @protected
-		 * @property {&quot;initialized&quot;|&quot;started&quot;|&quot;stopped&quot;|&quot;finalized&quot;} phase
-		 */
-
 		&quot;displayName&quot; : &quot;core/component/base&quot;,
-
-<span id='core-component-base-event-sig-initialize'>		/**
-</span>		 * Initialize signal
-		 * @event sig/initialize
-		 * @localdoc Triggered when this component enters the initialize phase
-		 * @param {...*} [args] Initialize arguments
-		 */
-
-<span id='core-component-base-event-sig-start'>		/**
-</span>		 * Start signal
-		 * @event sig/start
-		 * @localdoc Triggered when this component enters the start phase
-		 * @param {...*} [args] Initialize arguments
-		 */
-
-<span id='core-component-base-event-sig-stop'>		/**
-</span>		 * Stop signal
-		 * @localdoc Triggered when this component enters the stop phase
-		 * @event sig/stop
-		 * @param {...*} [args] Stop arguments
-		 */
-
-<span id='core-component-base-event-sig-finalize'>		/**
-</span>		 * Finalize signal
-		 * @event sig/finalize
-		 * @localdoc Triggered when this component enters the finalize phase
-		 * @param {...*} [args] Finalize arguments
-		 */
-
-<span id='core-component-base-event-sig-setup'>		/**
-</span>		 * Setup signal
-		 * @event sig/setup
-		 * @localdoc Triggered when the first event handler of a particular type is added via {@link #method-on}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 * @param {*} [data]
-		 */
-
-<span id='core-component-base-event-sig-add'>		/**
-</span>		 * Add signal
-		 * @event sig/add
-		 * @localdoc Triggered when a event handler of a particular type is added via {@link #method-on}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 * @param {*} [data]
-		 */
-
-<span id='core-component-base-event-sig-remove'>		/**
-</span>		 * Remove signal
-		 * @event sig/remove
-		 * @localdoc Triggered when a event handler of a particular type is removed via {@link #method-off}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 */
-
-<span id='core-component-base-event-sig-teardown'>		/**
-</span>		 * Teardown signal
-		 * @event sig/teardown
-		 * @localdoc Triggered when the last event handler of type is removed for a particular type via {@link #method-off}.
-		 * @since 3.0
-		 * @preventable
-		 * @param {Object} handlers
-		 * @param {String} type
-		 * @param {Function} callback
-		 */
-
-<span id='core-component-base-event-sig-task'>		/**
-</span>		 * Task signal
-		 * @event sig/task
-		 * @localdoc Triggered when this component starts a {@link #method-task}.
-		 * @param {Promise} task Task
-		 * @param {Object} task.context Task context
-		 * @param {Date} task.started Task start date
-		 * @param {String} task.name Task name
-		 * @return {Promise}
-		 */
 
 <span id='core-component-base-handler-sig-initialize'>		/**
 </span>		 * Handles the component initialization.
@@ -225,6 +276,10 @@ define([
 		&quot;sig/initialize&quot; : function onInitialize() {
 			var me = this;
 
+			// Register component
+			componentRegistry.access(me.toString(), me);
+
+			// Initialize ON specials
 			return when.map(me.constructor.specials[ON] || ARRAY_PROTO, function (special) {
 				return me.on(special[TYPE], special[VALUE]);
 			});
@@ -240,58 +295,14 @@ define([
 		&quot;sig/finalize&quot; : function onFinalize() {
 			var me = this;
 
+			// Unregister component
+			componentRegistry.remove(me.toString());
+
+			// Finialize all handlers, in reverse
 			return when.map(me[HANDLERS].reverse(), function (handlers) {
 				return me.off(handlers[TYPE]);
 			});
 		},
-
-<span id='core-component-base-handler-sig-start'>		/**
-</span>		 * Handles the component start
-		 * @handler sig/start
-		 * @inheritdoc #event-sig/start
-		 * @template
-		 * @return {Promise}
-		 */
-
-<span id='core-component-base-handler-sig-stop'>		/**
-</span>		 * Handles the component stop
-		 * @handler sig/stop
-		 * @inheritdoc #event-sig/stop
-		 * @template
-		 * @return {Promise}
-		 */
-
-<span id='core-component-base-handler-sig-setup'>		/**
-</span>		 * Handles an event setup
-		 * @handler sig/setup
-		 * @inheritdoc #event-sig/setup
-		 * @template
-		 * @return {*|Boolean}
-		 */
-
-<span id='core-component-base-handler-sig-add'>		/**
-</span>		 * Handles an event add
-		 * @handler sig/add
-		 * @inheritdoc #event-sig/add
-		 * @template
-		 * @return {*|Boolean}
-		 */
-
-<span id='core-component-base-handler-sig-remove'>		/**
-</span>		 * Handles an event remove
-		 * @handler sig/remove
-		 * @inheritdoc #event-sig/remove
-		 * @template
-		 * @return {*|Boolean}
-		 */
-
-<span id='core-component-base-handler-sig-teardown'>		/**
-</span>		 * Handles an event teardown
-		 * @handler sig/teardown
-		 * @inheritdoc #event-sig/teardown
-		 * @template
-		 * @return {*|Boolean}
-		 */
 
 <span id='core-component-base-handler-sig-task'>		/**
 </span>		 * Handles a component task
@@ -300,9 +311,18 @@ define([
 		 * @template
 		 * @return {Promise}
 		 */
+		&quot;sig/task&quot;: function onTask(task) {
+			// Compute task key
+			var key = task[NAME] + &quot;@&quot; + task[STARTED];
+
+			// Register task with remove callback
+			return taskRegistry.access(key, task.ensure(function () {
+				taskRegistry.remove(key);
+			}));
+		},
 
 <span id='core-component-base-method-configure'>		/**
-</span>		 * Add to the component {@link #configuration configuration}, possibly {@link utils.merge merge} with the existing one.
+</span>		 * Add to the component {@link #configuration configuration}, possibly {@link util.merge merge} with the existing one.
 		 *
 		 * 		var List = Component.extend({
 		 * 			&quot;sig/start&quot;: function start() {
@@ -554,10 +574,7 @@ define([
 		 * 		$(this.$element).fadeOut(resolve);
 		 * 	}, 'animate');
 		 *
-		 * @param {Function} resolver The task resolver function.
-		 * @param {Function} resolver.resolve Resolve the task.
-		 * @param {Function} resolver.reject Reject the task.
-		 * @param {Function} resolver.notify Notify the progress of this task.
+		 * @param {Resolver} resolver The task resolver.
 		 * @param {String} [name]
 		 * @returns {Promise}
 		 * @fires sig/task
@@ -573,9 +590,9 @@ define([
 
 			promise[CONTEXT] = me;
 			promise[STARTED] = new Date();
-			promise[NAME] = name;
+			promise[NAME] = name || TASK;
 
-			return me.signal(&quot;task&quot;, promise).yield(promise);
+			return me.signal(TASK, promise).yield(promise);
 		}
 	});
 });

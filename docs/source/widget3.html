@@ -19,81 +19,36 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;module&quot;,
 	&quot;../component/widget&quot;,
-	&quot;when&quot;,
-	&quot;troopjs-core/registry/service&quot;,
-	&quot;poly/array&quot;
-], function ApplicationWidgetModule(module, Widget, when, RegistryService) {
+	&quot;when&quot;
+], function ApplicationWidgetModule(Widget, when) {
 	&quot;use strict&quot;;
 
 <span id='browser-application-widget'>	/**
 </span>	 * The application widget serves as a container for all troop components that bootstrap the page.
 	 * @class browser.application.widget
 	 * @extends browser.component.widget
+	 * @alias widget.application
 	 */
 
-	var UNDEFINED;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var REGISTRY = &quot;registry&quot;;
-
-<span id='global-method-forward'>	/**
-</span>	 * Forwards _signal to components
-	 * @ignore
-	 * @param {String} _signal Signal to forward
-	 * @param {Array} _args Signal arguments
-	 * @return {Promise} promise of next handler callback execution
-	 */
-	function forward(_signal, _args) {
-		/*jshint validthis:true*/
-		var me = this;
-		var args = [ _signal ];
-		var components = me[REGISTRY].get();
-		var componentsCount = 0;
-		var results = [];
-		var resultsCount = 0;
-
-		ARRAY_PUSH.apply(args, _args);
-
-		var next = function (result, skip) {
-			var component;
-
-			if (skip !== true) {
-				results[resultsCount++] = result;
-			}
-
-			return (component = components[componentsCount++]) !== UNDEFINED
-				? when(component.signal.apply(component, args), next)
-				: when.resolve(results);
-		};
-
-		return next(UNDEFINED, true);
-	}
+	var ARRAY_SLICE = Array.prototype.slice;
+	var COMPONENTS = &quot;components&quot;;
 
 <span id='browser-application-widget-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
 	 * @param {jQuery|HTMLElement} $element The element that this widget should be attached to
 	 * @param {String} displayName A friendly name for this widget
-	 * @param {...core.component.gadget} gadget List of gadgets to start before starting the application.
+	 * @param {...core.component.base} component List of components to start before starting the application.
 	 */
-	return Widget.extend(function ApplicationWidget($element, displayName, gadget) {
-<span id='browser-application-widget-property-registry'>		/**
-</span>		 * Service registry
+	return Widget.extend(function ApplicationWidget($element, displayName, component) {
+<span id='browser-application-widget-property-components'>		/**
+</span>		 * Application components
 		 * @private
 		 * @readonly
-		 * @property {core.registry.service} registry
+		 * @property {core.component.base[]} components
 		 */
-		var registry = this[REGISTRY] = RegistryService();
-
-		// TODO only register _services_
-		// Slice and iterate arguments
-		ARRAY_SLICE.call(arguments, 2).forEach(function (component) {
-			// Register component
-			registry.add(component);
-		});
+		this[COMPONENTS] = ARRAY_SLICE.call(arguments, 2);
 	}, {
 		&quot;displayName&quot; : &quot;browser/application/widget&quot;,
 
@@ -103,7 +58,11 @@ define([
 		 * @inheritdoc
 		 */
 		&quot;sig/initialize&quot; : function onInitialize() {
-			return forward.call(this, &quot;initialize&quot;, arguments);
+			var args = arguments;
+
+			return when.map(this[COMPONENTS], function (component) {
+				return component.signal(&quot;initialize&quot;, args);
+			});
 		},
 
 <span id='browser-application-widget-handler-sig-start'>		/**
@@ -115,9 +74,12 @@ define([
 			var me = this;
 			var args = arguments;
 
-			return forward.call(me, &quot;start&quot;, args).then(function started() {
-				return me.weave.apply(me, args);
-			});
+			return when
+				.map(me[COMPONENTS], function (component) {
+					return component.signal(&quot;start&quot;, args);
+				}).then(function started() {
+					return me.weave.apply(me, args);
+				});
 		},
 
 <span id='browser-application-widget-handler-sig-stop'>		/**
@@ -125,12 +87,14 @@ define([
 		 * @localdoc stop all woven widgets that are within this element.
 		 * @inheritdoc
 		 */
-		&quot;sig/stop&quot; : function onStop() {
+		&quot;sig/stop&quot;: function onStop() {
 			var me = this;
 			var args = arguments;
 
 			return me.unweave.apply(me, args).then(function stopped() {
-				return forward.call(me, &quot;stop&quot;, args);
+				return when.map(me[COMPONENTS], function (child) {
+					return child.signal(&quot;stop&quot;, args);
+				});
 			});
 		},
 
@@ -140,7 +104,11 @@ define([
 		 * @inheritdoc
 		 */
 		&quot;sig/finalize&quot; : function onFinalize() {
-			return forward.call(this, &quot;finalize&quot;, arguments);
+			var args = arguments;
+
+			return when.map(this[COMPONENTS], function (component) {
+				return component.signal(&quot;finalize&quot;, args);
+			});
 		}
 	});
 });

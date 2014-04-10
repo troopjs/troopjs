@@ -19,88 +19,38 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../mixin/base&quot;,
-	&quot;poly/function&quot;
-], function ConsoleLogger(Base) {
+	&quot;./methods&quot;,
+	&quot;poly/array&quot;
+], function ConsoleModule(METHODS) {
 	&quot;use strict&quot;;
 
-<span id='core-logger-console'>	/**
-</span>	 * Module that provides simple logging feature as a wrapper around the &quot;console&quot; global ever found.
-	 * @class core.logger.console
-	 * @extends core.mixin.base
+<span id='log-sink-console'>	/**
+</span>	 * This class implements the {@link log.console} API and can acts like a sink for {@link log.sink.forward}.
+	 * @localdoc
+	 * On platforms where the native `console` object doesn't support the full {@link log.console} API,
+	 * this class acts like a polyfill for the missing methods.
+	 * @class log.sink.console
+	 * @implement log.console
 	 * @singleton
+	 * @alias feature.logger
 	 */
 
-	/*jshint devel:true*/
-	var CONSOLE = window.console;
-
-	function noop() {}
-
-	var spec = {};
-
-	[ &quot;info&quot;,&quot;log&quot;,&quot;debug&quot;,&quot;warn&quot;,&quot;error&quot; ].reduce(function(memo, feature) {
-			memo[feature] =
-				typeof CONSOLE != 'undefined' &amp;&amp; CONSOLE[feature] ? CONSOLE[feature].bind(CONSOLE) : noop;
-			return memo;
-	}, spec);
-
-<span id='core-logger-console-method-info'>	/**
-</span>	 * Logs a message that is information like
-	 * @localdoc Writes the log message to the console
-	 * @method info
-	 * @param {String} msg
+<span id='global-method-constructor'>	/**
+</span>	 * Creates a poly-filled version of the console object
+	 * @method constructor
+	 * @param {console} console Client console object
+	 * @ignore
 	 */
+	return (function (console) {
+		var me = this;
+		var nop = function () {};
 
-<span id='core-logger-console-method-log'>	/**
-</span>	 * Logs a message that is logging like
-	 * @localdoc Writes the log message to the console
-	 * @method log
-	 * @param {String} msg
-	 */
+		METHODS.forEach(function (method) {
+			me[method] = console[method] || nop;
+		});
 
-<span id='core-logger-console-method-debug'>	/**
-</span>	 * Logs a message that is debugging like
-	 * @localdoc Writes the log message to the console
-	 * @method debug
-	 * @param {String} msg
-	 */
-
-<span id='core-logger-console-method-warn'>	/**
-</span>	 * Logs a message that is warning like
-	 * @localdoc Writes the log message to the console
-	 * @method warn
-	 * @param {String} msg
-	 */
-
-<span id='core-logger-console-method-error'>	/**
-</span>	 * Logs a message that is actually an error
-	 * @localdoc Writes the log message to the console
-	 * @method error
-	 * @param {String} msg
-	 */
-
-<span id='core-logger-console-static-method-create'>	/**
-</span>	 * @method create
-	 * @static
-	 * @hide
-	 */
-
-<span id='core-logger-console-static-method-extend'>	/**
-</span>	 * @method extend
-	 * @static
-	 * @hide
-	 */
-
-<span id='core-logger-console-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @hide
-	 */
-
-	return Base.create({
-			&quot;displayName&quot; : &quot;core/logger/console&quot;
-		},
-		spec);
-});
-</pre>
+		return me;
+	}).call({}, console || {});
+});</pre>
 </body>
 </html>

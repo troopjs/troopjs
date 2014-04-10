@@ -18,129 +18,23 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;../component/service&quot;,
-	&quot;poly/object&quot;,
-	&quot;poly/array&quot;
-], function RegistryServiceModule(Service) {
+define([ &quot;./gadget&quot; ], function ServiceModule(Gadget) {
 	&quot;use strict&quot;;
 
-<span id='core-registry-service'>	/**
-</span>	 * A special {@link core.component.service service} presents the registry table for all
-	 * other services across the application.
+<span id='core-component-service'>	/**
+</span>	 * Base class for all service alike components.
 	 *
-	 * 	// Upon instantiation this service is registered.
-	 * 	Service.create({
-	 *
-	 * 		// This will be the service key.
-	 * 		displayName: &quot;my/provided&quot;,
-	 *
-	 * 		// Provide actual services on hub.
-	 * 		&quot;hub/my/provided/service&quot; : function() {
-	 * 			// Do some dirty lift.
-	 * 		}
-	 * 	});
-	 *
-	 * 	// Now we can look for it in registry.
-	 * 	var service = registry.get(&quot;my/provided&quot;)[0];
-	 *
-	 * @class core.registry.service
-	 * @extends core.component.service
+	 * @class core.component.service
+	 * @extends core.component.gadget
 	 */
 
-	var SERVICES = &quot;services&quot;;
-
-<span id='core-registry-service-method-constructor'>	/**
+<span id='core-component-service-method-constructor'>	/**
 </span>	 * @method constructor
+	 * @inheritdoc
 	 */
-	return Service.extend(function RegistryService() {
-		var me = this;
-
-<span id='core-registry-service-property-services'>		/**
-</span>		 * Registred services
-		 * @private
-		 * @readonly
-		 * @property {core.component.service[]} services
-		 */
-		me[SERVICES] = {};
-
-		me.add(me);
-	},{
-		&quot;displayName&quot; : &quot;core/registry/service&quot;,
-
-<span id='core-registry-service-method-add'>		/**
-</span>		 * Register a service.
-		 * @chainable
-		 * @param {core.component.service} service
-		 */
-		&quot;add&quot; : function add(service) {
-			var me = this;
-
-			me[SERVICES][service.toString()] = service;
-
-			return me;
-		},
-
-<span id='core-registry-service-method-remove'>		/**
-</span>		 * Remove a service from the registry.
-		 * @chainable
-		 * @param {core.component.service} service
-		 */
-		&quot;remove&quot;: function remove(service) {
-			var me = this;
-
-			delete me[SERVICES][service.toString()];
-
-			return me;
-		},
-
-<span id='core-registry-service-method-get'>		/**
-</span>		 * Find registered service(s) by service name.
-		 * @param {String} pattern Regexp that matches the service name.
-		 * @returns {Array|null}
-		 */
-		&quot;get&quot; : function get(pattern) {
-			var re = new RegExp(pattern);
-			var services = this[SERVICES];
-
-			return Object.keys(services)
-				.filter(function filter(serviceName) {
-					return re.test(serviceName);
-				})
-				.map(function map(serviceName) {
-					return services[serviceName];
-				});
-		},
-
-<span id='core-registry-service-handler-hub-registry-add'>		/**
-</span>		 * Hub event for adding service.
-		 * @handler
-		 * @param {core.component.service} service
-		 */
-		&quot;hub/registry/add&quot; : function onAdd(service) {
-			this.add(service);
-		},
-
-<span id='core-registry-service-handler-hub-registry-remove'>		/**
-</span>		 * Hub event for removing service.
-		 * @handler
-		 * @param {core.component.service} service
-		 */
-		&quot;hub/registry/remove&quot; : function onRemove(service) {
-			this.remove(service);
-		},
-
-<span id='core-registry-service-handler-hub-registry-get'>		/**
-</span>		 * Hub event for finding service(s).
-		 * @handler
-		 * @param {String} pattern
-		 * @returns {core.component.service[]}
-		 */
-		&quot;hub/registry/get&quot; : function onGet(pattern) {
-			return this.get(pattern);
-		}
+	return Gadget.extend({
+		&quot;displayName&quot; : &quot;core/component/service&quot;
 	});
-});
-</pre>
+});</pre>
 </body>
 </html>

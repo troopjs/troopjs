@@ -26,9 +26,10 @@ define([
 
 <span id='browser-route-runner-sequence'>	/**
 </span>	 * @class browser.route.runner.sequence
-	 * @extends core.event.emitter.runner
+	 * @implement core.event.emitter.runner
 	 * @protected
 	 * @static
+	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
@@ -41,9 +42,8 @@ define([
 	var NAVIGATOR = &quot;navigator&quot;;
 	var MODIFIED = &quot;modified&quot;;
 
-<span id='browser-route-runner-sequence-static-method-constructor'>	/**
+<span id='browser-route-runner-sequence-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @static
 	 * @inheritdoc
 	 * @localdoc Runner that executes ROUTE candidates in sequence without overlap
 	 * @returns {*} Result from last handler

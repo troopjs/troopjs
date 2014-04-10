@@ -1,7 +1,7 @@
 {
 	"name": "troopjs",
 	"description": "TroopJS package",
-	"version": "3.0.0-4+a87d086",
+	"version": "3.0.0-5+af099d4",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -45,8 +45,7 @@
 		}
 	],
 	"scripts": {
-		"test": "grunt test",
-		"postinstall": "gem install jsduck-troopjs"
+		"test": "grunt test"
 	},
 	"devDependencies": {
 		"grunt": "~0.4",

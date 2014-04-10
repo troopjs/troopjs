@@ -21,9 +21,9 @@
 define([ &quot;poly/object&quot; ], function MergeModule() {
 	&quot;use strict&quot;;
 
-<span id='utils-merge'>	/**
-</span>	 * @class utils.merge
-	 * @extends Function
+<span id='util-merge'>	/**
+</span>	 * @class util.merge
+	 * @mixin Function
 	 * @static
 	 */
 
@@ -37,17 +37,11 @@ define([ &quot;poly/object&quot; ], function MergeModule() {
 	var TOSTRING_ARRAY = OBJECT_TOSTRING.call(ARRAY_PROTO);
 	var LENGTH = &quot;length&quot;;
 
-<span id='utils-merge-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @hide
-	 */
-
-<span id='utils-merge-static-method-constructor'>	/**
+<span id='util-merge-method-constructor'>	/**
 </span>	 * Function that calls on an Object, to augments this object with enumerable properties from the source objects,
 	 * subsequent sources will overwrite property assignments of previous sources on primitive values,
 	 * while object and array values will get merged recursively.
 	 * @method constructor
-	 * @static
 	 * @param {...Object} [source] One or more source objects.
 	 * @return {*} Merged object
 	 */

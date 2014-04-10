@@ -18,297 +18,386 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;troopjs-core/component/base&quot;,
-	&quot;poly/object&quot;,
-	&quot;poly/array&quot;
-], function CacheModule(Component) {
+define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 	&quot;use strict&quot;;
 
-<span id='data-cache-component'>	/**
-</span>	 * Component for handling effective object caching with cycle references concerned.
-	 * @class data.cache.component
-	 * @extends core.component.base
+<span id='data-query-component'>	/**
+</span>	 * Component who understands the ubiquitous data query string format.
+	 * @class data.query.component
+	 * @extends core.mixin.base
 	 */
 
 	var UNDEFINED;
 	var TRUE = true;
 	var FALSE = false;
-	var NULL = null;
 	var OBJECT = Object;
 	var ARRAY = Array;
-
-	var SECOND = 1000;
-	var GENERATIONS = &quot;generations&quot;;
-	var HEAD = &quot;head&quot;;
-	var NEXT = &quot;next&quot;;
-	var EXPIRES = &quot;expires&quot;;
 	var CONSTRUCTOR = &quot;constructor&quot;;
 	var LENGTH = &quot;length&quot;;
 
+	var OP = &quot;op&quot;;
+	var OP_ID = &quot;!&quot;;
+	var OP_PROPERTY = &quot;.&quot;;
+	var OP_PATH = &quot;,&quot;;
+	var OP_QUERY = &quot;|&quot;;
+	var TEXT = &quot;text&quot;;
+	var RAW = &quot;raw&quot;;
+	var RESOLVED = &quot;resolved&quot;;
 	var _ID = &quot;id&quot;;
-	var _MAXAGE = &quot;maxAge&quot;;
 	var _EXPIRES = &quot;expires&quot;;
-	var _INDEXED = &quot;indexed&quot;;
 	var _COLLAPSED = &quot;collapsed&quot;;
+	var _AST = &quot;_ast&quot;;
+	var _QUERY = &quot;_query&quot;;
 
-<span id='global-method-_put'>	/**
-</span>	 * Internal method to put a node in the cache
-	 * @ignore
-	 * @param node Node
-	 * @param _constructor Constructor of value
-	 * @param now Current time (seconds)
-	 * @returns Cached node
-	 */
-	function _put(node, _constructor, now) {
-		/*jshint validthis:true, forin:false, curly:false, -W086*/
-		var me = this;
-		var result;
-		var id;
-		var i;
-		var iMax;
-		var expires;
-		var expired;
-		var head;
-		var current;
-		var next;
-		var generation;
-		var generations = me[GENERATIONS];
-		var property;
-		var value;
+	var RE_TEXT = /(&quot;|')(.*?)\1/;
+	var TO_RAW = &quot;$2&quot;;
+	var RE_RAW = /!(.*[!,|.\s]+.*)/;
+	var TO_TEXT = &quot;!'$1'&quot;;
 
-		// First add node to cache (or get the already cached instance)
-		cache : {
-			// Can't cache if there is no _ID
-			if (!(_ID in node)) {
-				result = node;          // Reuse ref to node (avoids object creation)
-				break cache;
-			}
-
-			// Update _INDEXED
-			node[_INDEXED] = now;
-
-			// Get _ID
-			id = node[_ID];
-
-			// In cache, get it!
-			if (id in me) {
-				result = me[id];
-
-				// Bypass collapsed object that already exists in cache.
-				if(node[_COLLAPSED] === TRUE) {
-					return result;
-				}
-
-				break cache;
-			}
-
-			// Not in cache, add it!
-			result = me[id] = node;   // Reuse ref to node (avoids object creation)
-		}
-
-		// We have to deep traverse the graph before we do any expiration (as more data for this object can be available)
-
-		// Check that this is an ARRAY
-		if (_constructor === ARRAY) {
-			// Index all values
-			for (i = 0, iMax = node[LENGTH]; i &lt; iMax; i++) {
-
-				// Keep value
-				value = node[i];
-
-				// Get _constructor of value (safely, falling back to UNDEFINED)
-				_constructor = value === NULL || value === UNDEFINED
-					? UNDEFINED
-					: value[CONSTRUCTOR];
-
-				// Do magic comparison to see if we recursively put this in the cache, or plain put
-				result[i] = (_constructor === OBJECT || _constructor === ARRAY &amp;&amp; value[LENGTH] !== 0)
-					? _put.call(me, value, _constructor, now)
-					: value;
-			}
-		}
-
-		// Check that this is an OBJECT
-		else if (_constructor === OBJECT) {
-			// Check if _not_ _COLLAPSED
-			if (node[_COLLAPSED] === FALSE) {
-				// Prune properties from result
-				for (property in result) {
-					// Except the _ID property
-					// or the _COLLAPSED property
-					// or the _EXPIRES property
-					// if property is _not_ present in node
-					if (property !== _ID
-						&amp;&amp; property !== _COLLAPSED
-						&amp;&amp; property !== _EXPIRES
-						&amp;&amp; !(property in node)) {
-						delete result[property];
-					}
-				}
-			}
-
-			// Index all properties
-			for (property in node) {
-				// Except the _ID property
-				// or the _COLLAPSED property, if it's false
-				if (property === _ID
-					|| (property === _COLLAPSED &amp;&amp; result[_COLLAPSED] === FALSE)) {
-					continue;
-				}
-
-				// Keep value
-				value = node[property];
-
-				// Get _constructor of value (safely, falling back to UNDEFINED)
-				_constructor = value === NULL || value === UNDEFINED
-					? UNDEFINED
-					: value[CONSTRUCTOR];
-
-				// Do magic comparison to see if we recursively put this in the cache, or plain put
-				result[property] = (_constructor === OBJECT || _constructor === ARRAY &amp;&amp; value[LENGTH] !== 0)
-					? _put.call(me, value, _constructor, now)
-					: value;
-			}
-		}
-
-		// Check if we need to move result between generations
-		move : {
-			// Break fast if id is UNDEFINED
-			if (id === UNDEFINED) {
-				break move;
-			}
-
-			// Calculate expiration and floor
-			// '&gt;&gt;&gt;' means convert anything other than posiitive integer into 0
-			expires = 0 | now + (result[_MAXAGE] &gt;&gt;&gt; 0);
-
-			remove : {
-				// Fail fast if there is no old expiration
-				if (!(_EXPIRES in result)) {
-					break remove;
-				}
-
-				// Get current expiration
-				expired = result[_EXPIRES];
-
-				// If expiration has not changed, we can continue
-				if (expired === expires) {
-					break move;
-				}
-
-				// Remove ref from generation (if that generation exists)
-				if (expired in generations) {
-					delete generations[expired][id];
-				}
-			}
-
-			add : {
-				// Collapsed object should not be collected by GC.
-				if(result[_COLLAPSED] === TRUE) {
-					break add;
-				}
-
-				// Update expiration time
-				result[_EXPIRES] = expires;
-
-				// Existing generation
-				if (expires in generations) {
-					// Add result to generation
-					generations[expires][id] = result;
-					break add;
-				}
-
-				// Create generation with expiration set
-				(generation = generations[expires] = {})[EXPIRES] = expires;
-
-				// Add result to generation
-				generation[id] = result;
-
-				// Short circuit if there is no head
-				if (generations[HEAD] === UNDEFINED) {
-					generations[HEAD] = generation;
-					break add;
-				}
-
-				// Step through list as long as there is a next, and expiration is &quot;older&quot; than the next expiration
-				for (current = head = generations[HEAD]; (next = current[NEXT]) !== UNDEFINED &amp;&amp; next[EXPIRES] &lt; expires; current = next);
-
-				// Check if we're still on the head and if we're younger
-				if (current === head &amp;&amp; current[EXPIRES] &gt; expires) {
-					// Next generation is the current one (head)
-					generation[NEXT] = current;
-
-					// Reset head to new generation
-					generations[HEAD] = generation;
-					break add;
-				}
-
-				// Insert new generation between current and current.next
-				generation[NEXT] = current[NEXT];
-				current[NEXT] = generation;
-			}
-		}
-
-		return result;
-	}
-
-<span id='data-cache-component-method-constructor'>	/**
+<span id='data-query-component-method-constructor'>	/**
 </span>	 * @method constructor
+	 * @param {String} [query] data query
 	 */
-	return Component.extend(function CacheComponent() {
-<span id='data-cache-component-property-generations'>		/**
-</span>		 * Cache generations
-		 * @private
-		 * @readonly
-		 * @property {Object} generations
-		 */
-		this[GENERATIONS] = {};
-	}, {
-		&quot;displayName&quot; : &quot;data/cache/component&quot;,
+	return Base.extend(function QueryComponent(query) {
+		var me = this;
 
-<span id='data-cache-component-handler-sig-finalize'>		/**
-</span>		 * @handler
-		 * @inheritdoc
-		 * @localdoc Purges all objects that duck-type cache-able
+		if (query !== UNDEFINED) {
+			me[_QUERY] = query;
+		}
+	}, {
+		&quot;displayName&quot; : &quot;data/query/component&quot;,
+
+<span id='data-query-component-method-parse'>		/**
+</span>		 * Parse the query string.
+		 * @chainable
+		 * @param {String} query data query
 		 */
-		&quot;sig/finalize&quot; : function finalize() {
+		&quot;parse&quot; : function parse(query) {
 			var me = this;
 
-			// Iterate all properties on me
-			Object.keys(me).forEach(function (property) {
-				var value;
+			// Reset _AST
+			delete me[_AST];
 
-				// Check if we should delete this property
-				if ((value = me[property]) !== UNDEFINED // value is not UNDEFINED
-					&amp;&amp; [CONSTRUCTOR] === OBJECT            // and value[CONSTRUCTOR] is OBJECT
-					&amp;&amp; value.hasOwnProperty(_ID)) {        // and value ducktypes cachable
-					// Delete from me (cache)
-					delete me[property];
+			// Set _QUERY
+			query = me[_QUERY] = (query || me[_QUERY] || &quot;&quot;);
+
+			var i;          // Index
+			var l;          // Length
+			var c;          // Current character
+			var m;          // Current mark
+			var q;          // Current quote
+			var o;          // Current operation
+			var ast = [];   // _AST
+
+			// Step through the query
+			for (i = m = 0, l = query[LENGTH]; i &lt; l; i++) {
+				c = query.charAt(i);
+
+				switch (c) {
+					case &quot;\&quot;&quot; : // Double quote
+					/* falls through */
+					case &quot;'&quot; :  // Single quote
+						// Set / unset quote char
+						q = q === c
+							? UNDEFINED
+							: c;
+						break;
+
+					case OP_ID :
+						// Break fast if we're quoted
+						if (q !== UNDEFINED) {
+							break;
+						}
+
+						// Init new op
+						o = {};
+						o[OP] = c;
+						break;
+
+					case OP_PROPERTY :
+					/* falls through */
+					case OP_PATH :
+						// Break fast if we're quoted
+						if (q !== UNDEFINED) {
+							break;
+						}
+
+						// If there's an active op, store TEXT and push on _AST
+						if (o !== UNDEFINED) {
+							o[RAW] = (o[TEXT] = query.substring(m, i)).replace(RE_TEXT, TO_RAW);
+							ast.push(o);
+						}
+
+						// Init new op
+						o = {};
+						o[OP] = c;
+
+						// Set mark
+						m = i + 1;
+						break;
+
+					case OP_QUERY :
+					/* falls through */
+					case &quot; &quot; :  // Space
+					/* falls through */
+					case &quot;\t&quot; : // Horizontal tab
+					/* falls through */
+					case &quot;\r&quot; : // Carriage return
+					/* falls through */
+					case &quot;\n&quot; : // Newline
+						// Break fast if we're quoted
+						if (q !== UNDEFINED) {
+							break;
+						}
+
+						// If there's an active op, store TEXT and push on _AST
+						if (o !== UNDEFINED) {
+							o[RAW] = (o[TEXT] = query.substring(m, i)).replace(RE_TEXT, TO_RAW);
+							ast.push(o);
+						}
+
+						// Reset op
+						o = UNDEFINED;
+
+						// Set mark
+						m = i + 1;
+						break;
 				}
-			});
+			}
+
+			// If there's an active op, store TEXT and push on _AST
+			if (o !== UNDEFINED) {
+				o[RAW] = (o[TEXT] = query.substring(m, l)).replace(RE_TEXT, TO_RAW);
+				ast.push(o);
+			}
+
+			// Set _AST
+			me[_AST] = ast;
+
+			return me;
 		},
 
-<span id='data-cache-component-method-put'>		/**
-</span>		 * Puts a node into the cache
-		 * @param node Node to add (object || array)
-		 * @returns Cached node (if it existed in the cache before), otherwise the node sent in
+<span id='data-query-component-method-reduce'>		/**
+</span>		 * Further reduce the query string elements based on the cache content,
+		 * to eliminate unnecessary queries made.
+		 * @chainable
+		 * @param {Object} cache The cache dictionary.
 		 */
-		&quot;put&quot; : function put(node) {
+		&quot;reduce&quot; : function reduce(cache) {
+			var me = this;
+			var now = 0 | new Date().getTime() / 1000;
+
+			// If we're not parsed - parse
+			if (!(_AST in me)) {
+				me.parse();
+			}
+
+			var ast = me[_AST]; // _AST
+			var result = [];    // Result
+			var i;              // Index
+			var j;
+			var c;
+			var l;              // Length
+			var o;              // Current operation
+			var x;              // Current raw
+			var r;              // Current root
+			var n;              // Current node
+			var d = FALSE;      // Dead flag
+			var k = FALSE;      // Keep flag
+
+			// First step is to resolve what we can from the _AST
+			for (i = 0, l = ast[LENGTH]; i &lt; l; i++) {
+				o = ast[i];
+
+				switch (o[OP]) {
+					case OP_ID :
+						// Set root
+						r = o;
+
+						// Get e from o
+						x = o[RAW];
+
+						// Do we have this item in cache
+						if (x in cache) {
+							// Set current node
+							n = cache[x];
+							// Set dead and RESOLVED if we're not collapsed or expired
+							d = o[RESOLVED] = n[_COLLAPSED] !== TRUE &amp;&amp; !(_EXPIRES in n &amp;&amp; n[_EXPIRES] &lt; now);
+						}
+						else {
+							// Reset current root and node
+							n = UNDEFINED;
+							// Reset dead and RESOLVED
+							d = o[RESOLVED] = FALSE;
+						}
+						break;
+
+					case OP_PROPERTY :
+						// Get e from o
+						x = o[RAW];
+
+						// Was previous op dead?
+						if (!d) {
+							o[RESOLVED] = FALSE;
+						}
+						// Do we have a node and this item in the node
+						else if (n &amp;&amp; x in n) {
+							// Set current node
+							n = n[x];
+
+							// Get constructor
+							c = n[CONSTRUCTOR];
+
+							// If the constructor is an array
+							if (c === ARRAY) {
+								// Set naive resolved
+								o[RESOLVED] = TRUE;
+
+								// Iterate backwards over n
+								for (j = n[LENGTH]; j-- &gt; 0;) {
+									// Get item
+									c = n[j];
+
+									// If the constructor is not an object
+									// or the object does not duck-type _ID
+									// or the object is not collapsed
+									// and the object does not duck-type _EXPIRES
+									// or the objects is not expired
+									if (c[CONSTRUCTOR] !== OBJECT
+										|| !(_ID in c)
+										|| c[_COLLAPSED] !== TRUE
+										&amp;&amp; !(_EXPIRES in c &amp;&amp; c[_EXPIRES] &lt; now)) {
+										continue;
+									}
+
+									// Change RESOLVED
+									o[RESOLVED] = FALSE;
+									break;
+								}
+							}
+							// If the constructor is _not_ an object or n does not duck-type _ID
+							else if (c !== OBJECT || !(_ID in n)) {
+								o[RESOLVED] = TRUE;
+							}
+							// We know c _is_ and object and n _does_ duck-type _ID
+							else {
+								// Change OP to OP_ID
+								o[OP] = OP_ID;
+								// Update RAW to _ID and TEXT to escaped version of RAW
+								o[TEXT] = (o[RAW] = n[_ID]).replace(RE_RAW, TO_TEXT);
+								// Set RESOLVED if we're not collapsed or expired
+								o[RESOLVED] = n[_COLLAPSED] !== TRUE &amp;&amp; !(_EXPIRES in n &amp;&amp; n[_EXPIRES] &lt; now);
+							}
+						}
+						else {
+							// Reset current node and RESOLVED
+							n = UNDEFINED;
+							o[RESOLVED] = FALSE;
+						}
+						break;
+
+					case OP_PATH :
+						// Get e from r
+						x = r[RAW];
+
+						// Set current node
+						n = cache[x];
+
+						// Change OP to OP_ID
+						o[OP] = OP_ID;
+
+						// Copy properties from r
+						o[TEXT] = r[TEXT];
+						o[RAW] = x;
+						o[RESOLVED] = r[RESOLVED];
+						break;
+				}
+			}
+
+			// After that we want to reduce 'dead' operations from the _AST
+			while (l-- &gt; 0) {
+				o = ast[l];
+
+				switch(o[OP]) {
+					case OP_ID :
+						// If the keep flag is set, or the op is not RESOLVED
+						if (k || o[RESOLVED] !== TRUE) {
+							result.unshift(o);
+						}
+
+						// Reset keep flag
+						k = FALSE;
+						break;
+
+					case OP_PROPERTY :
+						result.unshift(o);
+
+						// Set keep flag
+						k = TRUE;
+						break;
+				}
+			}
+
+			// Update _AST
+			me[_AST] = result;
+
+			return me;
+		},
+
+<span id='data-query-component-method-ast'>		/**
+</span>		 * Retrieve the AST as the parsed result.
+		 * @returns {Array} the result AST.
+		 */
+		&quot;ast&quot; : function ast() {
 			var me = this;
 
-			// Get _constructor of node (safely, falling back to UNDEFINED)
-			var _constructor = node === NULL || node === UNDEFINED
-				? UNDEFINED
-				: node[CONSTRUCTOR];
+			// If we're not parsed - parse
+			if (!(_AST in me)) {
+				me.parse();
+			}
 
-			// Do magic comparison to see if we should cache this object
-			return _constructor === OBJECT || _constructor === ARRAY &amp;&amp; node[LENGTH] !== 0
-				? _put.call(me, node, _constructor, 0 | new Date().getTime() / SECOND)
-				: node;
+			return me[_AST];
+		},
+
+<span id='data-query-component-method-rewrite'>		/**
+</span>		 * Rebuild the (reduced) query string.
+		 * @returns {String} new query string
+		 */
+		&quot;rewrite&quot; : function rewrite() {
+			var me = this;
+
+			// If we're not parsed - parse
+			if (!(_AST in me)) {
+				me.parse();
+			}
+
+			var ast = me[_AST]; // AST
+			var result = &quot;&quot;;    // Result
+			var l;              // Current length
+			var i;              // Current index
+			var o;              // Current operation
+
+			// Step through AST
+			for (i = 0, l = ast[LENGTH]; i &lt; l; i++) {
+				o = ast[i];
+
+				switch(o[OP]) {
+					case OP_ID :
+						// If this is the first OP_ID, there's no need to add OP_QUERY
+						result += i === 0
+							? o[TEXT]
+							: OP_QUERY + o[TEXT];
+						break;
+
+					case OP_PROPERTY :
+						result += OP_PROPERTY + o[TEXT];
+						break;
+				}
+			}
+
+			return result;
 		}
 	});
-});
-</pre>
+});</pre>
 </body>
 </html>

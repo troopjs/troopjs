@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;./methods&quot;,
+	&quot;../config&quot;,
+	&quot;poly/array&quot;
+], function ForwardModule(METHODS, CONF) {
+	&quot;use strict&quot;;
+
+<span id='log-sink-forward'>	/**
+</span>	 * The forward log sink acts as a forwarder to other log sinks.
+	 *
+	 * It's mainly configured via the {@link log.config#sinks} configuration.
+	 * To configure the forwarder for both the {@link log.sink.console} and the {@link log.sink.null} sink, one could
+	 * do this:
+	 *
+	 *     require.config({
+	 *       &quot;map&quot;: {
+	 *         &quot;*&quot;: {
+	 *           &quot;troopjs-log/logger&quot;: &quot;troopjs-log/sink/forward&quot; // Changes the framework logger
+	 *         }
+	 *       },
+	 *       &quot;deps&quot;: [ &quot;troopjs-log/config&quot;, &quot;troopjs-log/sink/console&quot;, &quot;troopjs-log/sink/null&quot; ],
+	 *       &quot;callback&quot;: function (loggingConfig, consoleSink, nullSink) {
+	 *         loggingConfig.sinks.push(consoleSink, nullSink); // Add sinks
+	 *       }
+	 *     });
+	 *
+	 * @class log.sink.forward
+	 * @implement log.console
+	 * @mixin log.config
+	 * @singleton
+	 * @inheritdoc log.sink.console
+	 * @alias feature.logger
+	 */
+
+	var FUNCTION_APPLY = Function.apply;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var SINKS = CONF[&quot;sinks&quot;];
+
+	return (function () {
+		var me = this;
+		var forward = function (method) {
+			var args = ARRAY_SLICE.call(arguments, 1);
+
+			SINKS.forEach(function (sink) {
+				FUNCTION_APPLY.call(sink[method], me, args);
+			});
+		};
+
+		METHODS.forEach(function (method) {
+			me[method] = forward.bind(me, method);
+		});
+
+		return me;
+	}).call({});
+});</pre>
+</body>
+</html>

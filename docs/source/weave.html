@@ -23,22 +23,17 @@ define([
 	&quot;require&quot;,
 	&quot;when&quot;,
 	&quot;jquery&quot;,
-	&quot;troopjs-utils/getargs&quot;,
-	&quot;troopjs-utils/defer&quot;,
+	&quot;troopjs-util/getargs&quot;,
+	&quot;troopjs-util/defer&quot;,
 	&quot;poly/array&quot;
 ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
 	&quot;use strict&quot;;
 
 <span id='browser-loom-weave'>	/**
 </span>	 * @class browser.loom.weave
-	 * @extends Function
-	 * @mixins browser.loom.config
+	 * @mixin browser.loom.config
+	 * @mixin Function
 	 * @static
-	 */
-
-<span id='browser-loom-weave-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @hide
 	 */
 
 	var UNDEFINED;
@@ -55,7 +50,7 @@ define([
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
 
-<span id='browser-loom-weave-static-method-constructor'>	/**
+<span id='browser-loom-weave-method-constructor'>	/**
 </span>	 * Instantiate all {@link browser.component.widget widgets}  specified in the {@link browser.loom.config#weave weave attribute}
 	 * of this element, and to signal the widget for start with the arguments.
 	 *
@@ -64,7 +59,7 @@ define([
 	 *  - Updates the {@link browser.loom.config#weave woven attribute} with the created widget instances names.
 	 *  - The {@link browser.loom.config#$warp $warp data property} will reference the widget instances.
 	 *
-	 *@localdoc
+	 * @localdoc
 	 *
 	 * It also lives as a jquery plugin as {@link $#method-weave}.
 	 *
@@ -76,7 +71,6 @@ define([
 	 * 	$el.weave();
 	 *
 	 * @method constructor
-	 * @static
 	 * @param {...*} [start_args] Arguments that will be passed to each widget's {@link browser.component.widget#start start} method
 	 * @returns {Promise} Promise for the completion of weaving all widgets.
 	 */

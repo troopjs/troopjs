@@ -19,7 +19,7 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-composer/mixin/factory&quot;,
+	&quot;troopjs-compose/mixin/factory&quot;,
 	&quot;./config&quot;
 ], function (Factory, config) {
 	&quot;use strict&quot;;
@@ -28,8 +28,8 @@ define([
 </span>	 * An optimized CSS selector matcher that {@link browser.component.runner.sequence} relies on for
 	 * delegating DOM event on {@link browser.component.widget}.
 	 * @class browser.dom.selector
-	 * @extends composer.mixin
-	 * @mixins browser.dom.config
+	 * @implement compose.mixin
+	 * @mixin browser.dom.config
 	 * @private
 	 */
 

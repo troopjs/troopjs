@@ -19,338 +19,140 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/mixin/base&quot;,
-	&quot;when&quot;,
-	&quot;when/apply&quot;,
+	&quot;../mixin/base&quot;,
 	&quot;poly/array&quot;
-], function StoreModule(Base, when, apply) {
+], function RegistryModule(Base) {
 	&quot;use strict&quot;;
 
-<span id='data-store-component'>	/**
-</span>	 * A simple key-value store that supports **dot separated key** format.
-	 * @class data.store.component
+<span id='core-registry-component'>	/**
+</span>	 * A light weight implementation to register key/value pairs by key and index
+	 * @class core.registry.component
 	 * @extends core.mixin.base
 	 */
 
 	var UNDEFINED;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
-	var TOSTRING_OBJECT = &quot;[object Object]&quot;;
-	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
-	var TOSTRING_STRING = &quot;[object String]&quot;;
-	var ARRAY_SLICE = Array.prototype.slice;
 	var LENGTH = &quot;length&quot;;
-	var ADAPTERS = &quot;adapters&quot;;
-	var STORAGE = &quot;storage&quot;;
-	var BEFORE_GET = &quot;beforeGet&quot;;
-	var AFTER_PUT = &quot;afterPut&quot;;
-	var CLEAR = &quot;clear&quot;;
-	var LOCKS = &quot;locks&quot;;
+	var INDEX = &quot;index&quot;;
+	var KEY = &quot;key&quot;;
+	var VALUE = &quot;value&quot;;
+	var INDEX_KEY = &quot;index_key&quot;;
+	var INDEX_POS = &quot;index_pos&quot;;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_STRING = &quot;[object String]&quot;;
 
-<span id='global-method-applyMethod'>	/**
-</span>	 * Applies method to this (if it exists)
-	 * @param {string} method Method name
-	 * @returns {boolean|*}
-	 * @ignore
-	 */
-	function applyMethod(method) {
-		/*jshint validthis:true*/
-		var me = this;
-
-		return method in me &amp;&amp; me[method].apply(me, ARRAY_SLICE.call(arguments, 1));
-	}
-
-<span id='global-method-put'>	/**
-</span>	 * Puts value
-	 * @param {string|null} key Key - can be dot separated for sub keys
-	 * @param {*} value Value
-	 * @returns {Promise} Promise of put
-	 * @ignore
-	 */
-	function put(key, value) {
-		/*jshint validthis:true*/
-		var me = this;
-		var node = me[STORAGE];
-		var parts = key
-			? key.split(&quot;.&quot;)
-			: [];
-		var part;
-		var last = parts.pop();
-
-		while (node &amp;&amp; (part = parts.shift())) {
-			switch (OBJECT_TOSTRING.call(node)) {
-				case TOSTRING_ARRAY :
-				/* falls through */
-
-				case TOSTRING_OBJECT :
-					if (part in node) {
-						node = node[part];
-						break;
-					}
-				/* falls through */
-
-				default :
-					node = node[part] = {};
-			}
-		}
-
-		// Evaluate value if needed
-		if (OBJECT_TOSTRING.call(value) === TOSTRING_FUNCTION) {
-			value = value.call(me, {
-				&quot;get&quot; : function () {
-					return get.apply(me, arguments);
-				},
-				&quot;has&quot; : function () {
-					return has.apply(me, arguments);
-				}
-			}, key);
-		}
-
-		return last !== UNDEFINED
-			// First store the promise, then override with the true value once resolved
-			? when(value, function (result) {
-				node[last] = result;
-
-				return result;
-			})
-			// No key provided, just return a promise of the value
-			: when(value);
-	}
-
-<span id='global-method-get'>	/**
-</span>	 * Gets value
-	 * @param {string} key Key - can be dot separated for sub keys
-	 * @returns {*} Value
-	 * @ignore
-	 */
-	function get(key) {
-		/*jshint validthis:true*/
-		var node = this[STORAGE];
-		var parts = key.split(&quot;.&quot;);
-		var part;
-
-		while (node &amp;&amp; (part = parts.shift())) {
-			switch (OBJECT_TOSTRING.call(node)) {
-				case TOSTRING_ARRAY :
-				/* falls through */
-
-				case TOSTRING_OBJECT :
-					if (part in node) {
-						node = node[part];
-						break;
-					}
-				/* falls through */
-
-				default :
-					node = UNDEFINED;
-			}
-		}
-
-		return node;
-	}
-
-<span id='global-method-has'>	/**
-</span>	 * Check is key exists
-	 * @param key {string} key Key - can be dot separated for sub keys
-	 * @returns {boolean}
-	 * @ignore
-	 */
-	function has(key) {
-		/*jshint validthis:true*/
-		var node = this[STORAGE];
-		var parts = key.split(&quot;.&quot;);
-		var part;
-		var last = parts.pop();
-
-		while (node &amp;&amp; (part = parts.shift())) {
-			switch (OBJECT_TOSTRING.call(node)) {
-				case TOSTRING_ARRAY :
-				/* falls through */
-
-				case TOSTRING_OBJECT :
-					if (part in node) {
-						node = node[part];
-						break;
-					}
-				/* falls through */
-
-				default :
-					node = UNDEFINED;
-			}
-		}
-
-		return node !== UNDEFINED &amp;&amp; last in node;
-	}
-
-<span id='data-store-component-method-constructor'>	/**
+<span id='core-registry-component-method-constructor'>	/**
 </span>	 * @method constructor
-	 * @param {...Object} adapter One or more adapters
-	 * @throws {Error} If no adapter was provided
+	 * @inheritdoc
 	 */
-	return Base.extend(function StoreComponent(adapter) {
-		if (arguments[LENGTH] === 0) {
-			throw new Error(&quot;No adapter(s) provided&quot;);
-		}
-
-		var me = this;
-
-<span id='data-store-component-property-adapters'>		/**
-</span>		 * Current adapters
+	return Base.extend(function Registry() {
+<span id='core-registry-component-property-index_key'>		/**
+</span>		 * Registry key storage
 		 * @private
 		 * @readonly
-		 * @property {Array} adapters
+		 * @property {Object[]} index_key
+		 * @property {String} index_key.key Entry key
+		 * @property {Number} index_key.index Entry index
+		 * @property {*} index_key.value Entry value
 		 */
-		me[ADAPTERS] = ARRAY_SLICE.call(arguments);
+		this[INDEX_KEY] = {};
 
-<span id='data-store-component-property-storage'>		/**
-</span>		 * Current storage
+<span id='core-registry-component-property-index_pos'>		/**
+</span>		 * Registry pos storage
 		 * @private
 		 * @readonly
-		 * @property {Object} storage
+		 * @property {Object[]} index_pos
+		 * @property {String} index_pos.key Entry key
+		 * @property {Number} index_pos.index Entry index
+		 * @property {*} index_pos.value Entry value
 		 */
-		me[STORAGE] = {};
-
-<span id='data-store-component-property-locks'>		/**
-</span>		 * Current locks
-		 * @private
-		 * @readonly
-		 * @property {Object} locks
-		 */
-		me[LOCKS] = {};
+		this[INDEX_POS] = [];
 	}, {
-		&quot;displayName&quot; : &quot;data/store/component&quot;,
+		&quot;displayName&quot;: &quot;core/registry/component&quot;,
 
-<span id='data-store-component-method-lock'>		/**
-</span>		 * Waits for store to be &quot;locked&quot;
-		 * @param {String} key Key
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of ready
+<span id='core-registry-component-method-access'>		/**
+</span>		 * Either gets or puts values into the registry.
+		 *
+		 * - If no key is provided, all entries in the registry are returned.
+		 * - If no value is provided the current value for key is returned.
+		 * - If value is provided it replaces the current value for the key
+		 * @param {String|Number} [key] Entry key or index
+		 * @param {*} [value] Entry value
+		 * @return {*} All values if no key, current value for key if no value provided, otherwise the provided value if a new entry is created
+		 * @throws Error if a new entry is created and key is not of type String
 		 */
-		&quot;lock&quot; : function (key, onFulfilled, onRejected, onProgress) {
-			var locks = this[LOCKS];
+		&quot;access&quot;: function access(key, value) {
+			var index_key = this[INDEX_KEY];
+			var index_pos = this[INDEX_POS];
 			var result;
+			var argc;
 
-			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
-				throw new Error(&quot;key has to be of type string&quot;);
+			// Reading _all_
+			if ((argc = arguments[LENGTH]) === 0) {
+				result = index_pos.map(function (item) {
+					return item[VALUE];
+				});
 			}
+			else {
+				result = (typeof key === 'number' ? index_pos : index_key)[key];
 
-			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
+				// Reading
+				if (argc === 1) {
+					result = result !== UNDEFINED ? result[VALUE] : UNDEFINED;
+				}
+				// Writing
+				else {
+					// Replace existing entry
+					if (result !== UNDEFINED) {
+						result = result[VALUE] = value;
+					}
+					// Check type of key (as now we're creating a new one)
+					else if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
+						throw Error(&quot;key has to be of type String&quot;);
+					}
+					// Create new entry
+					else {
+						result = {};
+						result = index_key[result[KEY] = key] = index_pos[result[INDEX] = index_pos[LENGTH]] = result;
+						result = result[VALUE] = value;
+					}
+				}
+			}
 
 			return result;
 		},
 
-<span id='data-store-component-method-get'>		/**
-</span>		 * Gets state value
-		 * @param {...String} key Key - can be dot separated for sub keys
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of value
+<span id='core-registry-component-method-remove'>		/**
+</span>		 * Removes entries from the registry
+		 * TODO: Fixed screwed up index when item is removed from registry.
+		 *
+		 * - If no key is provided, all entries in the registry are removed.
+		 * - Otherwise only the corresponding entry for key is removed.
+		 * @param {String|Number} [key] Entry key or index
+		 *
 		 */
-		&quot;get&quot; : function (key, onFulfilled, onRejected, onProgress) {
-			/*jshint curly:false*/
+		&quot;remove&quot;: function remove(key) {
 			var me = this;
-			var keys = ARRAY_SLICE.call(arguments);
-			var i;
-			var iMax;
+			var result;
+			var index_key = me[INDEX_KEY];
+			var index_pos = me[INDEX_POS];
 
-			// Step until we hit the end or keys[i] is not a string
-			for (i = 0, iMax = keys[LENGTH]; i &lt; iMax &amp;&amp; OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
-
-			// Update callbacks
-			onFulfilled = keys[i];
-			onRejected = keys[i+1];
-			onProgress = keys[i+2];
-
-			// Set the new length of keys
-			keys[LENGTH] = i;
-
-			return when
-				.map(keys, function (key) {
-					return when
-						// Map adapters and BEFORE_GET on each adapter
-						.map(me[ADAPTERS], function (adapter) {
-							return when(applyMethod.call(adapter, BEFORE_GET, me, key));
-						})
-						// Get value from STORAGE
-						.then(function () {
-							return get.call(me, key);
-						});
-				})
-				// Add callbacks
-				.then(onFulfilled &amp;&amp; apply(onFulfilled), onRejected, onProgress);
+			// Remove all entries
+			if (arguments[LENGTH] === 0) {
+				me[INDEX_KEY] = {};
+				me[INDEX_POS] = [];
+			}
+			// Remove entry by key
+			else if ((result = index_key[key]) !== UNDEFINED) {
+				delete index_key[result[KEY]];
+				delete index_pos[result[INDEX]];
+			}
 		},
 
-<span id='data-store-component-method-put'>		/**
-</span>		 * Puts state value
-		 * @param {string} key Key - can be dot separated for sub keys
-		 * @param {*} value Value
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of value
-		 */
-		&quot;put&quot; : function (key, value, onFulfilled, onRejected, onProgress) {
-			var me = this;
+		&quot;compact&quot;: function compact() {
 
-			return when(put.call(me, key, value), function (result) {
-				return when
-					// Map adapters and AFTER_PUT on each adapter
-					.map(me[ADAPTERS], function (adapter) {
-						return when(applyMethod.call(adapter, AFTER_PUT, me, key, result));
-					})
-					.yield(result);
-			})
-				// Add callbacks
-				.then(onFulfilled, onRejected, onProgress);
-		},
-
-<span id='data-store-component-method-putIfNotHas'>		/**
-</span>		 * Puts state value if key is UNDEFINED
-		 * @param {string} key Key - can be dot separated for sub keys
-		 * @param {*} value Value
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of value
-		 */
-		&quot;putIfNotHas&quot; : function (key, value, onFulfilled, onRejected, onProgress) {
-			var me = this;
-
-			return !me.has(key)
-				? me.put(key, value, onFulfilled, onRejected, onProgress)
-				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
-		},
-
-<span id='data-store-component-method-has'>		/**
-</span>		 * Checks if key exists
-		 * @param {String} key Key - can be dot separated for sub keys
-		 * @returns {Boolean} True if key exists, otherwise false
-		 */
-		&quot;has&quot; : function (key) {
-			return has.call(this, key);
-		},
-
-<span id='data-store-component-method-clear'>		/**
-</span>		 * Clears all adapters
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
-		 * @returns {Promise} Promise of clear
-		 */
-		&quot;clear&quot; : function (onFulfilled, onRejected, onProgress) {
-			var me = this;
-
-			return when
-				.map(me[ADAPTERS], function (adapter) {
-					return when(applyMethod.call(adapter, CLEAR, me));
-				})
-				// Add callbacks
-				.then(onFulfilled &amp;&amp; apply(onFulfilled), onRejected, onProgress);
 		}
 	});
-});</pre>
+});
+</pre>
 </body>
 </html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([ &quot;./sink/console&quot; ], function LoggerModule(logger) {
+	&quot;use strict&quot;;
+
+<span id='log-logger'>	/**
+</span>	 * This is a _virtual_ class that under normal circumstances is an alias for the {@link log.sink.console} sink.
+	 *
+	 * If you want to change logger sink in your application you should use the [requirejs map config](http://requirejs.org/docs/api.html#config-map)
+	 * to map this class to any module that implements the {@link log.console} API.
+	 *
+	 * An example configuration that would change the logger to {@link log.sink.null} would look like this:
+	 *
+	 *     requirejs.config({
+	 *       &quot;map&quot;: {
+	 *         &quot;*&quot;: {
+	 *           &quot;troopjs-log/logger&quot;: &quot;troopjs-log/null&quot;
+	 *         }
+	 *       }
+	 *     });
+	 *
+	 * @class log.logger
+	 * @implement log.console
+	 * @singleton
+	 * @alias feature.logger
+	 */
+
+	return logger;
+});</pre>
+</body>
+</html>

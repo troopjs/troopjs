@@ -21,9 +21,9 @@
 define(function GetArgsModule() {
 	&quot;use strict&quot;;
 
-<span id='utils-getargs'>	/**
-</span>	 * @class utils.getargs
-	 * @extends Function
+<span id='util-getargs'>	/**
+</span>	 * @class util.getargs
+	 * @mixin Function
 	 * @static
 	 */
 
@@ -33,19 +33,13 @@ define(function GetArgsModule() {
 	var RE_BOOLEAN_TRUE = /^true$/i;
 	var RE_DIGIT = /^\d+$/;
 
-<span id='utils-getargs-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @hide
-	 */
-
-<span id='utils-getargs-static-method-constructor'>	/**
+<span id='util-getargs-method-constructor'>	/**
 </span>	 * Function that calls on a String, to parses it as function parameters delimited by commas.
 	 *
 	 * 	&quot; 1  , '2' , 3  ,false,5 &quot; =&gt; [ 1, &quot;2&quot;, 3, false, 5]
 	 * 	'1, 2 ',  3,\&quot;4\&quot;, 5  =&gt; [ &quot;1, 2 &quot;, 3, &quot;4&quot;, 5 ]
 	 *
 	 * @method constructor
-	 * @static
 	 * @return {Array} the array of parsed params.
 	 */
 	return function getargs() {

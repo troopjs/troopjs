@@ -23,14 +23,14 @@ define([
 	&quot;when&quot;,
 	&quot;jquery&quot;,
 	&quot;poly/array&quot;,
-	&quot;troopjs-utils/defer&quot;
+	&quot;troopjs-util/defer&quot;
 ], function UnweaveModule(config, when, $, Defer) {
 	&quot;use strict&quot;;
 
 <span id='browser-loom-unweave'>	/**
 </span>	 * @class browser.loom.unweave
-	 * @extends Function
-	 * @mixins browser.loom.config
+	 * @mixin browser.loom.config
+	 * @mixin Function
 	 * @static
 	 */
 
@@ -51,11 +51,6 @@ define([
 	var RE_SEPARATOR = /[\s,]+/;
 
 <span id='browser-loom-unweave-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @hide
-	 */
-
-<span id='browser-loom-unweave-static-method-constructor'>	/**
 </span>	 * Destroy all widget instances living on this element, that are created
 	 * by {@link browser.loom.weave}, it is also to clean up the attributes
 	 * and data references to the previously instantiated widgets.
@@ -65,7 +60,6 @@ define([
 	 * It also lives as a jquery plugin as {@link $#method-unweave}.
 	 *
 	 * @method constructor
-	 * @static
 	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link browser.component.widget#stop stop} method
 	 * @returns {Promise} Promise to the completion of unweaving all woven widgets.
 	 */
