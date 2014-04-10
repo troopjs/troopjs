@@ -1,9 +1,9 @@
 language: node_js
 install:
-  - bower install
-  - gem install jsduck-troopjs
   - npm install -g grunt-cli bower buster
   - npm install phantomjs
+  - gem install jsduck-troopjs
+  - bower install
 branches:
   except:
     - /^build\/.*$/
