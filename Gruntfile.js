@@ -119,6 +119,9 @@ module.exports = function(grunt) {
 				}, {
 					"name" : "troopjs-requirejs",
 					"location" : "bower_components/troopjs-requirejs"
+				}, {
+					"name" : "troopjs-opt",
+					"location" : "bower_components/troopjs-opt"
 				}],
 				"rawText" : {
 					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"

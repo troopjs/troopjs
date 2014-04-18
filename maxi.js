@@ -2,6 +2,8 @@ define([
 	"./mini",
 	"troopjs-core/pubsub/proxy/to1x",
 	"troopjs-core/pubsub/proxy/to2x",
+	"troopjs-opt/route/gadget",
+	"troopjs-opt/store/component",
 	"troopjs-net/ajax/service",
 	"troopjs-data/cache/component",
 	"troopjs-data/cache/service",
