@@ -1,6 +1,6 @@
 define([
 	"./version",
-	"troopjs-browser/application/widget"
+	"troopjs-dom/application/widget"
 ], function (version) {
 	return version;
 });

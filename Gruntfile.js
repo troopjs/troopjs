@@ -102,8 +102,8 @@ module.exports = function(grunt) {
 					"name" : "troopjs-core",
 					"location" : "bower_components/troopjs-core"
 				}, {
-					"name" : "troopjs-browser",
-					"location" : "bower_components/troopjs-browser"
+					"name" : "troopjs-dom",
+					"location" : "bower_components/troopjs-dom"
 				}, {
 					"name" : "troopjs-net",
 					"location" : "bower_components/troopjs-net"

@@ -14,15 +14,15 @@
 		"node_modules"
 	],
 	"dependencies": {
-		"troopjs-browser": "*",
 		"troopjs-compose": "*",
 		"troopjs-core": "*",
-		"troopjs-data": "*",
-		"troopjs-jquery": "*",
+		"troopjs-dom": "*",
 		"troopjs-log": "*",
 		"troopjs-net": "*",
-		"troopjs-requirejs": "*",
-		"troopjs-opt": "*"
+		"troopjs-data": "*",
+		"troopjs-opt": "*",
+		"troopjs-jquery": "*",
+		"troopjs-requirejs": "*"
 	},
 	"devDependencies": {
 		"requirejs-text": "~2"
