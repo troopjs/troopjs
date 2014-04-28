@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-8+c472868 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.2-8+e051bdc © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -539,7 +539,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var INSTANCE_COUNT = "instanceCount";
 	var CONFIGURATION = "configuration";
 	var CONTEXT = "context";
-	var ID = "id";
 	var NAME = "name";
 	var VALUE = "value";
 	var PHASE = "phase";
@@ -549,7 +548,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var STOP = "stop";
 	var SIG = "sig";
 	var INSTANCE_COUNTER = 0;
-	var TASK_COUNTER = 0;
 
 	return Factory(
 	/**
@@ -681,14 +679,11 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 					promise[FINISHED] = new Date();
 				});
 
-			promise[ID] = ++TASK_COUNTER;
 			promise[CONTEXT] = me;
 			promise[STARTED] = new Date();
 			promise[NAME] = name;
 
-			return me.signal("task", promise).then(function () {
-				return promise;
-			});
+			return me.signal("task", promise).yield(promise);
 		},
 
 		/**
@@ -715,24 +710,17 @@ define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], f
 
 	function noop() {}
 
+	var spec = {};
+	["info","log","debug","warn","error"].reduce(function(memo, feature) {
+			memo[feature] =
+				typeof CONSOLE != 'undefined' && CONSOLE[feature] ? CONSOLE[feature] : noop;
+			return memo;
+	}, spec);
+
 	return Component.create({
 			"displayName" : "core/logger/console"
 		},
-		CONSOLE
-			? {
-			"log" : CONSOLE.log.bind(CONSOLE),
-			"warn" : CONSOLE.warn.bind(CONSOLE),
-			"debug" : CONSOLE.debug.bind(CONSOLE),
-			"info" : CONSOLE.info.bind(CONSOLE),
-			"error" : CONSOLE.error.bind(CONSOLE)
-		}
-			: {
-			"log" : noop,
-			"warn" : noop,
-			"debug" : noop,
-			"info" : noop,
-			"error" : noop
-		});
+		spec);
 });
 /**
  * TroopJS core/event/emitter
@@ -1629,33 +1617,41 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
 	});
 });
 
-/**
- * TroopJS browser/ajax/service
+/*
+ * TroopJS net/ajax/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquery", "troopjs-utils/merge", "when" ], function AjaxModule(Service, $, merge, when) {
+define('troopjs-net/ajax/service',[
+	"troopjs-core/component/service",
+	"jquery",
+	"troopjs-utils/merge"
+], function (Service, $, merge) {
 	"use strict";
 
-	var ARRAY_SLICE = Array.prototype.slice;
-
+	/**
+	 * Provides ajax as a service
+	 * @class net.ajax.service
+	 * @extends core.component.service
+	 */
 	return Service.extend({
-		"displayName" : "browser/ajax/service",
+		"displayName" : "net/ajax/service",
 
+		/**
+		 * Make ajax request.
+		 * @event
+		 * @param settings
+		 */
 		"hub/ajax" : function ajax(settings) {
 			// Request
-			var request = $.ajax(merge.call({
+			return $.ajax(merge.call({
 				"headers": {
-					"x-request-id": new Date().getTime()
+					"x-troopjs-request-id": new Date().getTime()
 				}
 			}, settings));
-
-			// Wrap and return
-			return when(request, function () {
-				return ARRAY_SLICE.call(arguments);
-			});
 		}
 	});
 });
+
 /**
  * TroopJS browser/loom/config
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -1876,7 +1872,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 			}
 
 			// Return promise of mapped $weave
-			return when.map($weave, function (widget_args) {
+			return when.all($weave.map(function (widget_args) {
 				// Create deferred
 				var deferred = when.defer();
 				var resolver = deferred.resolver;
@@ -1915,10 +1911,11 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 
 				// Return promise
 				return promise;
-			});
+			}));
 		}));
 	};
 });
+
 /**
  * TroopJS browser/loom/unweave
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -2054,6 +2051,200 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 	};
 });
 /**
+ * TroopJS browser/loom/woven
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
+	"use strict";
+	var ARRAY_MAP = Array.prototype.map;
+	var LENGTH = "length";
+	var WOVEN = "woven";
+	var $WARP = config["$warp"];
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	return function woven() {
+		var $woven = [];
+		var $wovenLength = 0;
+		var re;
+
+		// If we have arguments we have convert and filter
+		if (arguments[LENGTH] > 0) {
+			// Map arguments to a regexp
+			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Iterate
+			$(this).each(function (index, element) {
+				// Filter widget promises
+				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
+					return re.test($weft[WOVEN]);
+				});
+
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($widgets);
+			});
+		}
+		// Otherwise we can use a faster approach
+		else {
+			// Iterate
+			$(this).each(function (index, element) {
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($.data(element, $WARP));
+			});
+		}
+
+		// Return promise of $woven
+		return when.all($woven);
+	};
+});
+/**
+ * TroopJS browser/loom/plugin
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/plugin',[
+	"jquery",
+	"when",
+	"./config",
+	"./weave",
+	"./unweave",
+	"./woven",
+	"troopjs-utils/getargs",
+	"poly/array"
+], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
+	"use strict";
+
+	var UNDEFINED;
+	var $FN = $.fn;
+	var $EXPR = $.expr;
+	var $CREATEPSEUDO = $EXPR.createPseudo;
+	var WEAVE = "weave";
+	var UNWEAVE = "unweave";
+	var WOVEN = "woven";
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var RE_SEPARATOR = /[\s,]+/;
+
+	/**
+	 * Tests if element has a data-weave attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWeaveAttr(element) {
+		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
+	}
+
+	/**
+	 * Tests if element has a data-woven attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWovenAttr(element) {
+		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
+	}
+
+	/**
+	 * :weave expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WEAVE] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWeaveAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				// Get weave attribute
+				var weave = $(element).attr(ATTR_WEAVE);
+
+				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
+				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var weave = $(element).attr(ATTR_WEAVE);
+
+			return weave === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+							return "^" + widget;
+						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+
+	/**
+	 * :woven expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WOVEN] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWovenAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				var attr_woven = $(element).attr(ATTR_WOVEN);
+
+				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
+				return attr_woven !== UNDEFINED && widgets.test(attr_woven.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var attr_woven = $(element).attr(ATTR_WOVEN);
+
+			return attr_woven === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+						return "^" + widget;
+					}).join("|"), "m").test(attr_woven.replace(RE_SEPARATOR, "\n"));
+		};
+
+	/**
+	 * Weaves elements
+	 * @returns {Promise} of weaving
+	 */
+	$FN[WEAVE] = weave;
+
+	/**
+	 * Unweaves elements
+	 * @returns {Promise} of unweaving
+	 */
+	$FN[UNWEAVE] = unweave;
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	$FN[WOVEN] = woven;
+});
+
+/**
  * TroopJS jquery/destroy
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -2088,7 +2279,7 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * TroopJS browser/component/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
+define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "../loom/plugin", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
 	"use strict";
 
 	var UNDEFINED;
@@ -2419,443 +2610,6 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 
 		"sig/finalize" : function onFinalize() {
 			return forward.call(this, "finalize", arguments);
-		}
-	});
-});
-/**
- * TroopJS browser/route/uri
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
- */
-define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], function URIModule(Factory) {
-	"use strict";
-
-	var NULL = null;
-	var ARRAY_PROTO = Array.prototype;
-	var OBJECT_PROTO = Object.prototype;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var STRING_SPLIT = String.prototype.split;
-	var TOSTRING = OBJECT_PROTO.toString;
-	var TOSTRING_OBJECT = TOSTRING.call(OBJECT_PROTO);
-	var TOSTRING_ARRAY = TOSTRING.call(ARRAY_PROTO);
-	var TOSTRING_FUNCTION = TOSTRING.call(Function.prototype);
-	var RE_URI = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?(?:([^?#]*)(?:\?([^#]*))?(?:#(.*))?)/;
-
-	var PROTOCOL = "protocol";
-	var AUTHORITY = "authority";
-	var PATH = "path";
-	var QUERY = "query";
-	var ANCHOR = "anchor";
-
-	var KEYS = [ "source",
-		PROTOCOL,
-		AUTHORITY,
-		"userInfo",
-		"user",
-		"password",
-		"host",
-		"port",
-		PATH,
-		QUERY,
-		ANCHOR ];
-
-	function Query(arg) {
-		/*jshint forin:false*/
-		var result = {};
-		var matches;
-		var key = NULL;
-		var value;
-		var re = /(?:&|^)([^&=]*)=?([^&]*)/g;
-
-		result.toString = Query.toString;
-
-		if (TOSTRING.call(arg) === TOSTRING_OBJECT) {
-			for (key in arg) {
-				result[key] = arg[key];
-			}
-		} else {
-			while ((matches = re.exec(arg)) !== NULL) {
-				key = matches[1];
-
-				if (key in result) {
-					value = result[key];
-
-					if (TOSTRING.call(value) === TOSTRING_ARRAY) {
-						value[value.length] = matches[2];
-					}
-					else {
-						result[key] = [ value, matches[2] ];
-					}
-				}
-				else {
-					result[key] = matches[2];
-				}
-			}
-		}
-
-		return result;
-	}
-
-	Query.toString = function QueryToString() {
-		/*jshint forin:false*/
-		var me = this;
-		var key;
-		var value;
-		var values;
-		var query = [];
-		var i = 0;
-		var j;
-
-		for (key in me) {
-			if (TOSTRING.call(me[key]) === TOSTRING_FUNCTION) {
-				continue;
-			}
-
-			query[i++] = key;
-		}
-
-		query.sort();
-
-		while (i--) {
-			key = query[i];
-			value = me[key];
-
-			if (TOSTRING.call(value) === TOSTRING_ARRAY) {
-				values = value.slice(0);
-
-				values.sort();
-
-				j = values.length;
-
-				while (j--) {
-					value = values[j];
-
-					values[j] = value === ""
-						? key
-						: key + "=" + value;
-				}
-
-				query[i] = values.join("&");
-			}
-			else {
-				query[i] = value === ""
-					? key
-					: key + "=" + value;
-			}
-		}
-
-		return query.join("&");
-	};
-
-	// Extend on the instance of array rather than subclass it
-	function Path(arg) {
-		var result = [];
-		
-		result.toString = Path.toString;
-
-		ARRAY_PUSH.apply(result, TOSTRING.call(arg) === TOSTRING_ARRAY
-			? arg
-			: STRING_SPLIT.call(arg, "/"));
-
-		return result;
-	}
-
-	Path.toString = function PathToString() {
-		return this.join("/");
-	};
-
-	var URI = Factory(function URI(str) {
-		var me = this;
-		var value;
-		var matches;
-		var i;
-
-		if ((matches = RE_URI.exec(str)) !== NULL) {
-			i = matches.length;
-
-			while (i--) {
-				value = matches[i];
-
-				if (value) {
-					me[KEYS[i]] = value;
-				}
-			}
-		}
-
-		if (QUERY in me) {
-			me[QUERY] = Query(me[QUERY]);
-		}
-
-		if (PATH in me) {
-			me[PATH] = Path(me[PATH]);
-		}
-	}, {
-		"displayName" : "browser/route/uri",
-
-		"toString" : function URIToString() {
-			var me = this;
-			var uri = [ PROTOCOL , "://", AUTHORITY, PATH, "?", QUERY, "#", ANCHOR ];
-			var i;
-			var key;
-
-			if (!(PROTOCOL in me)) {
-				uri[0] = uri[1] = "";
-			}
-
-			if (!(AUTHORITY in me)) {
-				uri[2] = "";
-			}
-
-			if (!(PATH in me)) {
-				uri[3] = "";
-			}
-
-			if (!(QUERY in me)) {
-				uri[4] = uri[5] = "";
-			}
-
-			if (!(ANCHOR in me)) {
-				uri[6] = uri[7] = "";
-			}
-
-			i = uri.length;
-
-			while (i--) {
-				key = uri[i];
-
-				if (key in me) {
-					uri[i] = me[key];
-				}
-			}
-
-			return uri.join("");
-		}
-	});
-
-	URI.Path = Path;
-	URI.Query = Query;
-
-	return URI;
-});
-/**
- * TroopJS jquery/hashchange
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- *
- * Normalized hashchange event, ripped a _lot_ of code from
- * https://github.com/millermedeiros/Hasher
- */
-define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
-	"use strict";
-
-	var INTERVAL = "interval";
-	var HASHCHANGE = "hashchange";
-	var ONHASHCHANGE = "on" + HASHCHANGE;
-	var RE_HASH = /#(.*)$/;
-	var RE_LOCAL = /\?/;
-
-	// hack based on this: http://code.google.com/p/closure-compiler/issues/detail?id=47#c13
-	var _isIE = /**@preserve@cc_on !@*/0;
-
-	function getHash(window) {
-		// parsed full URL instead of getting location.hash because Firefox
-		// decode hash value (and all the other browsers don't)
-		// also because of IE8 bug with hash query in local file
-		var result = RE_HASH.exec(window.location.href);
-
-		return result && result[1]
-			? decodeURIComponent(result[1])
-			: "";
-	}
-
-	function Frame(document) {
-		var me = this;
-		var element;
-
-		me.element = element = document.createElement("iframe");
-		element.src = "about:blank";
-		element.style.display = "none";
-	}
-
-	Frame.prototype = {
-		"getElement" : function () {
-			return this.element;
-		},
-
-		"getHash" : function () {
-			return this.element.contentWindow.frameHash;
-		},
-
-		"update" : function (hash) {
-			/*jshint evil:true*/
-			var me = this;
-			var document = me.element.contentWindow.document;
-
-			// Quick return if hash has not changed
-			if (me.getHash() === hash) {
-				return;
-			}
-
-			// update iframe content to force new history record.
-			// based on Really Simple History, SWFAddress and YUI.history.
-			document.open();
-			document.write("<html><head><title>' + document.title + '</title><script type='text/javascript'>var frameHash='" + hash + "';</script></head><body>&nbsp;</body></html>");
-			document.close();
-		}
-	};
-
-	$.event.special[HASHCHANGE] = {
-		"setup" : function onHashChangeSetup() {
-			var window = this;
-
-			// Quick return if we support onHashChange natively
-			// FF3.6+, IE8+, Chrome 5+, Safari 5+
-			if (ONHASHCHANGE in window) {
-				return false;
-			}
-
-			// Make sure we're always a window
-			if (!$.isWindow(window)) {
-				throw new Error("Unable to bind 'hashchange' to a non-window object");
-			}
-
-			var $window = $(window);
-			var hash = getHash(window);
-			var location = window.location;
-
-			$window.data(INTERVAL, window.setInterval(_isIE
-				? (function () {
-					var document = window.document;
-					var _isLocal = location.protocol === "file:";
-
-					var frame = new Frame(document);
-					document.body.appendChild(frame.getElement());
-					frame.update(hash);
-
-					return function () {
-						var oldHash = hash;
-						var newHash;
-						var windowHash = getHash(window);
-						var frameHash = frame.getHash();
-
-						// Detect changes made pressing browser history buttons.
-						// Workaround since history.back() and history.forward() doesn't
-						// update hash value on IE6/7 but updates content of the iframe.
-						if (frameHash !== hash && frameHash !== windowHash) {
-							// Fix IE8 while offline
-							newHash = decodeURIComponent(frameHash);
-
-							if (hash !== newHash) {
-								hash = newHash;
-								frame.update(hash);
-								$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
-							}
-
-							// Sync location.hash with frameHash
-							location.hash = "#" + encodeURI(_isLocal
-								? frameHash.replace(RE_LOCAL, "%3F")
-								: frameHash);
-						}
-						// detect if hash changed (manually or using setHash)
-						else if (windowHash !== hash) {
-							// Fix IE8 while offline
-							newHash = decodeURIComponent(windowHash);
-
-							if (hash !== newHash) {
-								hash = newHash;
-								$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
-							}
-						}
-					};
-				})()
-				: function () {
-					var oldHash = hash;
-					var newHash;
-					var windowHash = getHash(window);
-
-					if (windowHash !== hash) {
-						// Fix IE8 while offline
-						newHash = decodeURIComponent(windowHash);
-
-						if (hash !== newHash) {
-							hash = newHash;
-							$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
-						}
-					}
-				}, 25));
-		},
-
-		"teardown" : function onHashChangeTeardown() {
-			var window = this;
-
-			// Quick return if we support onHashChange natively
-			if (ONHASHCHANGE in window) {
-				return false;
-			}
-
-			window.clearInterval($.data(window, INTERVAL));
-		}
-	};
-});
-
-/**
- * TroopJS browser/route/widget module
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs-jquery/hashchange" ], function RouteWidgetModule(Widget, URI) {
-	"use strict";
-	var $ELEMENT = "$element";
-	var HASHCHANGE = "hashchange";
-	var ROUTE = "route";
-	var SET = "/set";
-	var RE = /^#/;
-
-	function onHashChange($event) {
-		var me = $event.data;
-
-		// Create URI
-		var uri = URI($event.target.location.hash.replace(RE, ""));
-
-		// Convert to string
-		var route = uri.toString();
-
-		// Did anything change?
-		if (route !== me[ROUTE]) {
-			// Store new value
-			me[ROUTE] = route;
-
-			// Publish route
-			me.publish(me.displayName, uri, $event);
-		}
-	}
-
-	function setRoute(uri) {
-		this[$ELEMENT].get(0).location.hash = uri.toString();
-	}
-
-	return Widget.extend({
-		"displayName" : "browser/route/widget",
-
-		"sig/initialize" : function initialize() {
-			var me = this;
-
-			// Add DOM event handler
-			me[$ELEMENT].on(HASHCHANGE, me, onHashChange);
-
-			// Add HUB event handler
-			me.subscribe(me.displayName + SET, setRoute);
-		},
-
-		"sig/start" : function start() {
-			this[$ELEMENT].trigger(HASHCHANGE);
-		},
-
-		"sig/finalize" : function finalize() {
-			// Remove DOM event handler
-			this[$ELEMENT].off(HASHCHANGE, onHashChange);
-
-			// Remove HUB event handler
-			me.unsubscribe(me.displayName + SET, setRoute);
 		}
 	});
 });
@@ -4100,7 +3854,7 @@ define('troopjs-data/component/widget',[ "troopjs-browser/component/widget" ], f
 	});
 });
 
-/**
+/*
  * TroopJS requirejs/template
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  *
@@ -4233,7 +3987,7 @@ define('troopjs-requirejs/template',[],function TemplateModule() {
 		"\r" : "\\r"
 	};
 
-	/**
+	/*
 	 * Compiles template
 	 *
 	 * @param body Template body
@@ -4330,14 +4084,16 @@ define('troopjs-requirejs/template',[],function TemplateModule() {
 	};
 });
 
-/**
+/*
  * TroopJS requirejs/multiversion
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
+define('troopjs-requirejs/multiversion',[],function MultiVersionModule() {
 	"use strict";
-
+	
+	var UNDEFINED;
 	var RE = /(.+?)#(.+)$/;
+	var RE_EMPTY = /^empty:/;
 	var CONTEXTS = require.s.contexts;
 
 	return {
@@ -4358,13 +4114,18 @@ define('troopjs-requirejs/multiversion',[],function MultiversionModule() {
 				}
 			}
 
-			parentRequire([ name ], function (module) {
-				onload(module);
-			}, onload.error);
+			if (RE_EMPTY.test(parentRequire.toUrl(name + ".js"))) {
+				onload(UNDEFINED);
+			}
+			else {
+				parentRequire([ name ], function (module) {
+					onload(module);
+				}, onload.error);
+			}
 		}
 	};
 });
-/**
+/*
 * TroopJS requirejs/shadow
 * @license MIT http://troopjs.mit-license.org/ © Tristan Guo mailto:tristanguo@outlook.com
 */
@@ -4464,191 +4225,6 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 			}
 		}
 	};
-});
-
-/**
- * TroopJS browser/loom/woven
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
-	"use strict";
-	var ARRAY_MAP = Array.prototype.map;
-	var LENGTH = "length";
-	var WOVEN = "woven";
-	var $WARP = config["$warp"];
-
-	/**
-	 * Gets woven widgets
-	 * @returns {Promise} of woven widgets
-	 */
-	return function woven() {
-		var $woven = [];
-		var $wovenLength = 0;
-		var re;
-
-		// If we have arguments we have convert and filter
-		if (arguments[LENGTH] > 0) {
-			// Map arguments to a regexp
-			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Iterate
-			$(this).each(function (index, element) {
-				// Filter widget promises
-				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
-					return re.test($weft[WOVEN]);
-				});
-
-				// Add promise of widgets to $woven
-				$woven[$wovenLength++] = when.all($widgets);
-			});
-		}
-		// Otherwise we can use a faster approach
-		else {
-			// Iterate
-			$(this).each(function (index, element) {
-				// Add promise of widgets to $woven
-				$woven[$wovenLength++] = when.all($.data(element, $WARP));
-			});
-		}
-
-		// Return promise of $woven
-		return when.all($woven);
-	};
-});
-/**
- * TroopJS jquery/loom
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-jquery/loom',[ "jquery", "when", "troopjs-browser/loom/config", "troopjs-browser/loom/weave", "troopjs-browser/loom/unweave", "troopjs-browser/loom/woven", "troopjs-utils/getargs", "poly/array" ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
-	"use strict";
-
-	var UNDEFINED;
-	var $FN = $.fn;
-	var $EXPR = $.expr;
-	var $CREATEPSEUDO = $EXPR.createPseudo;
-	var WEAVE = "weave";
-	var UNWEAVE = "unweave";
-	var WOVEN = "woven";
-	var ATTR_WEAVE = config[WEAVE];
-	var ATTR_WOVEN = config[WOVEN];
-	var RE_SEPARATOR = /[\s,]+/;
-
-	/**
-	 * Tests if element has a data-weave attribute
-	 * @param element to test
-	 * @returns {boolean}
-	 * @private
-	 */
-	function hasDataWeaveAttr(element) {
-		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
-	}
-
-	/**
-	 * Tests if element has a data-woven attribute
-	 * @param element to test
-	 * @returns {boolean}
-	 * @private
-	 */
-	function hasDataWovenAttr(element) {
-		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
-	}
-
-	/**
-	 * :weave expression
-	 * @type {*}
-	 */
-	$EXPR[":"][WEAVE] = $CREATEPSEUDO
-		// If we have jQuery >= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don't have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWeaveAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Return expression
-			return function (element) {
-				// Get weave attribute
-				var weave = $(element).attr(ATTR_WEAVE);
-
-				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
-				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var weave = $(element).attr(ATTR_WEAVE);
-
-			return weave === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: new RegExp(getargs.call(match[3]).map(function (widget) {
-							return "^" + widget;
-						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
-			};
-
-	/**
-	 * :woven expression
-	 * @type {*}
-	 */
-	$EXPR[":"][WOVEN] = $CREATEPSEUDO
-		// If we have jQuery >= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don't have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWovenAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
-				return "^" + widget;
-			}).join("|"), "m");
-
-			// Return expression
-			return function (element) {
-				var attr_woven = $(element).attr(ATTR_WOVEN);
-
-				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
-				return attr_woven !== UNDEFINED && widgets.test(attr_woven.replace(RE_SEPARATOR, "\n"));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var attr_woven = $(element).attr(ATTR_WOVEN);
-
-			return attr_woven === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: new RegExp(getargs.call(match[3]).map(function (widget) {
-						return "^" + widget;
-					}).join("|"), "m").test(attr_woven.replace(RE_SEPARATOR, "\n"));
-		};
-
-	/**
-	 * Weaves elements
-	 * @returns {Promise} of weaving
-	 */
-	$FN[WEAVE] = weave;
-
-	/**
-	 * Unweaves elements
-	 * @returns {Promise} of unweaving
-	 */
-	$FN[UNWEAVE] = unweave;
-
-	/**
-	 * Gets woven widgets
-	 * @returns {Promise} of woven widgets
-	 */
-	$FN[WOVEN] = woven;
 });
 
 /**
