@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.2-8+c472868 © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.3+3d1492a © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -539,7 +539,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var INSTANCE_COUNT = "instanceCount";
 	var CONFIGURATION = "configuration";
 	var CONTEXT = "context";
-	var ID = "id";
 	var NAME = "name";
 	var VALUE = "value";
 	var PHASE = "phase";
@@ -549,7 +548,6 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 	var STOP = "stop";
 	var SIG = "sig";
 	var INSTANCE_COUNTER = 0;
-	var TASK_COUNTER = 0;
 
 	return Factory(
 	/**
@@ -681,14 +679,11 @@ define('troopjs-core/component/base',[ "./factory", "when", "troopjs-utils/merge
 					promise[FINISHED] = new Date();
 				});
 
-			promise[ID] = ++TASK_COUNTER;
 			promise[CONTEXT] = me;
 			promise[STARTED] = new Date();
 			promise[NAME] = name;
 
-			return me.signal("task", promise).then(function () {
-				return promise;
-			});
+			return me.signal("task", promise).yield(promise);
 		},
 
 		/**
@@ -715,24 +710,17 @@ define('troopjs-core/logger/console',[ "../component/base", "poly/function" ], f
 
 	function noop() {}
 
+	var spec = {};
+	["info","log","debug","warn","error"].reduce(function(memo, feature) {
+			memo[feature] =
+				typeof CONSOLE != 'undefined' && CONSOLE[feature] ? CONSOLE[feature] : noop;
+			return memo;
+	}, spec);
+
 	return Component.create({
 			"displayName" : "core/logger/console"
 		},
-		CONSOLE
-			? {
-			"log" : CONSOLE.log.bind(CONSOLE),
-			"warn" : CONSOLE.warn.bind(CONSOLE),
-			"debug" : CONSOLE.debug.bind(CONSOLE),
-			"info" : CONSOLE.info.bind(CONSOLE),
-			"error" : CONSOLE.error.bind(CONSOLE)
-		}
-			: {
-			"log" : noop,
-			"warn" : noop,
-			"debug" : noop,
-			"info" : noop,
-			"error" : noop
-		});
+		spec);
 });
 /**
  * TroopJS core/event/emitter
@@ -1629,33 +1617,41 @@ define('troopjs-core/logger/service',[ "../component/service", "troopjs-utils/me
 	});
 });
 
-/**
- * TroopJS browser/ajax/service
+/*
+ * TroopJS net/ajax/service
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/ajax/service',[ "troopjs-core/component/service", "jquery", "troopjs-utils/merge", "when" ], function AjaxModule(Service, $, merge, when) {
+define('troopjs-net/ajax/service',[
+	"troopjs-core/component/service",
+	"jquery",
+	"troopjs-utils/merge"
+], function (Service, $, merge) {
 	"use strict";
 
-	var ARRAY_SLICE = Array.prototype.slice;
-
+	/**
+	 * Provides ajax as a service
+	 * @class net.ajax.service
+	 * @extends core.component.service
+	 */
 	return Service.extend({
-		"displayName" : "browser/ajax/service",
+		"displayName" : "net/ajax/service",
 
+		/**
+		 * Make ajax request.
+		 * @event
+		 * @param settings
+		 */
 		"hub/ajax" : function ajax(settings) {
 			// Request
-			var request = $.ajax(merge.call({
+			return $.ajax(merge.call({
 				"headers": {
-					"x-request-id": new Date().getTime()
+					"x-troopjs-request-id": new Date().getTime()
 				}
 			}, settings));
-
-			// Wrap and return
-			return when(request, function () {
-				return ARRAY_SLICE.call(arguments);
-			});
 		}
 	});
 });
+
 /**
  * TroopJS browser/loom/config
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -1876,7 +1872,7 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 			}
 
 			// Return promise of mapped $weave
-			return when.map($weave, function (widget_args) {
+			return when.all($weave.map(function (widget_args) {
 				// Create deferred
 				var deferred = when.defer();
 				var resolver = deferred.resolver;
@@ -1915,10 +1911,11 @@ define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "
 
 				// Return promise
 				return promise;
-			});
+			}));
 		}));
 	};
 });
+
 /**
  * TroopJS browser/loom/unweave
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -2054,6 +2051,200 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 	};
 });
 /**
+ * TroopJS browser/loom/woven
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/woven',[ "./config", "when", "jquery", "poly/array" ], function WovenModule(config, when, $) {
+	"use strict";
+	var ARRAY_MAP = Array.prototype.map;
+	var LENGTH = "length";
+	var WOVEN = "woven";
+	var $WARP = config["$warp"];
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	return function woven() {
+		var $woven = [];
+		var $wovenLength = 0;
+		var re;
+
+		// If we have arguments we have convert and filter
+		if (arguments[LENGTH] > 0) {
+			// Map arguments to a regexp
+			re = RegExp(ARRAY_MAP.call(arguments, function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Iterate
+			$(this).each(function (index, element) {
+				// Filter widget promises
+				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
+					return re.test($weft[WOVEN]);
+				});
+
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($widgets);
+			});
+		}
+		// Otherwise we can use a faster approach
+		else {
+			// Iterate
+			$(this).each(function (index, element) {
+				// Add promise of widgets to $woven
+				$woven[$wovenLength++] = when.all($.data(element, $WARP));
+			});
+		}
+
+		// Return promise of $woven
+		return when.all($woven);
+	};
+});
+/**
+ * TroopJS browser/loom/plugin
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/plugin',[
+	"jquery",
+	"when",
+	"./config",
+	"./weave",
+	"./unweave",
+	"./woven",
+	"troopjs-utils/getargs",
+	"poly/array"
+], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
+	"use strict";
+
+	var UNDEFINED;
+	var $FN = $.fn;
+	var $EXPR = $.expr;
+	var $CREATEPSEUDO = $EXPR.createPseudo;
+	var WEAVE = "weave";
+	var UNWEAVE = "unweave";
+	var WOVEN = "woven";
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var RE_SEPARATOR = /[\s,]+/;
+
+	/**
+	 * Tests if element has a data-weave attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWeaveAttr(element) {
+		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
+	}
+
+	/**
+	 * Tests if element has a data-woven attribute
+	 * @param element to test
+	 * @returns {boolean}
+	 * @private
+	 */
+	function hasDataWovenAttr(element) {
+		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
+	}
+
+	/**
+	 * :weave expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WEAVE] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWeaveAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				// Get weave attribute
+				var weave = $(element).attr(ATTR_WEAVE);
+
+				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
+				return weave !== UNDEFINED && widgets.test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var weave = $(element).attr(ATTR_WEAVE);
+
+			return weave === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+							return "^" + widget;
+						}).join("|"), "m").test(weave.replace(RE_SEPARATOR, "\n"));
+			};
+
+	/**
+	 * :woven expression
+	 * @type {*}
+	 */
+	$EXPR[":"][WOVEN] = $CREATEPSEUDO
+		// If we have jQuery >= 1.8 we want to use .createPseudo
+		? $CREATEPSEUDO(function (widgets) {
+			// If we don't have widgets to test, quick return optimized expression
+			if (widgets === UNDEFINED) {
+				return hasDataWovenAttr;
+			}
+
+			// Convert widgets to RegExp
+			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
+				return "^" + widget;
+			}).join("|"), "m");
+
+			// Return expression
+			return function (element) {
+				var attr_woven = $(element).attr(ATTR_WOVEN);
+
+				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
+				return attr_woven !== UNDEFINED && widgets.test(attr_woven.replace(RE_SEPARATOR, "\n"));
+			};
+		})
+		// Otherwise fall back to legacy
+		: function (element, index, match) {
+			var attr_woven = $(element).attr(ATTR_WOVEN);
+
+			return attr_woven === UNDEFINED
+				? false
+				: match === UNDEFINED
+					? true
+					: new RegExp(getargs.call(match[3]).map(function (widget) {
+						return "^" + widget;
+					}).join("|"), "m").test(attr_woven.replace(RE_SEPARATOR, "\n"));
+		};
+
+	/**
+	 * Weaves elements
+	 * @returns {Promise} of weaving
+	 */
+	$FN[WEAVE] = weave;
+
+	/**
+	 * Unweaves elements
+	 * @returns {Promise} of unweaving
+	 */
+	$FN[UNWEAVE] = unweave;
+
+	/**
+	 * Gets woven widgets
+	 * @returns {Promise} of woven widgets
+	 */
+	$FN[WOVEN] = woven;
+});
+
+/**
  * TroopJS jquery/destroy
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -2088,7 +2279,7 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
  * TroopJS browser/component/widget
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
+define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jquery", "../loom/config", "../loom/weave", "../loom/unweave", "../loom/plugin", "troopjs-jquery/destroy" ], function WidgetModule(Gadget, $, config, weave, unweave) {
 	"use strict";
 
 	var UNDEFINED;
@@ -2423,12 +2614,12 @@ define('troopjs-browser/application/widget',[ "module", "../component/widget", "
 	});
 });
 /**
- * TroopJS browser/route/uri
+ * TroopJS core/net/uri
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  *
  * Parts of code from parseUri 1.2.2 Copyright Steven Levithan <stevenlevithan.com>
  */
-define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], function URIModule(Factory) {
+define('troopjs-core/net/uri',[ "../component/factory" ], function URIModule(Factory) {
 	"use strict";
 
 	var NULL = null;
@@ -2551,7 +2742,7 @@ define('troopjs-browser/route/uri',[ "troopjs-core/component/factory" ], functio
 	// Extend on the instance of array rather than subclass it
 	function Path(arg) {
 		var result = [];
-		
+
 		result.toString = Path.toString;
 
 		ARRAY_PUSH.apply(result, TOSTRING.call(arg) === TOSTRING_ARRAY
@@ -2799,65 +2990,221 @@ define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
 });
 
 /**
- * TroopJS browser/route/widget module
+ * TroopJS browser/hash/widget module
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
-define('troopjs-browser/route/widget',[ "../component/widget", "./uri", "troopjs-jquery/hashchange" ], function RouteWidgetModule(Widget, URI) {
+define('troopjs-browser/hash/widget',[
+	"../component/widget",
+	"troopjs-core/net/uri",
+	"troopjs-jquery/hashchange"
+], function (Widget, URI) {
 	"use strict";
+
 	var $ELEMENT = "$element";
-	var HASHCHANGE = "hashchange";
-	var ROUTE = "route";
-	var SET = "/set";
+	var HASH = "_hash";
 	var RE = /^#/;
 
-	function onHashChange($event) {
-		var me = $event.data;
-
-		// Create URI
-		var uri = URI($event.target.location.hash.replace(RE, ""));
-
-		// Convert to string
-		var route = uri.toString();
-
-		// Did anything change?
-		if (route !== me[ROUTE]) {
-			// Store new value
-			me[ROUTE] = route;
-
-			// Publish route
-			me.publish(me.displayName, uri, $event);
-		}
-	}
-
-	function setRoute(uri) {
-		this[$ELEMENT].get(0).location.hash = uri.toString();
-	}
-
 	return Widget.extend({
-		"displayName" : "browser/route/widget",
+		"displayName" : "browser/hash/widget",
 
-		"sig/initialize" : function initialize() {
+		"sig/start" : function () {
+			this[$ELEMENT].trigger("hashchange");
+		},
+
+		"dom/hashchange" : function ($event) {
 			var me = this;
+			var $element = me[$ELEMENT];
 
-			// Add DOM event handler
-			me[$ELEMENT].on(HASHCHANGE, me, onHashChange);
+			// Create URI
+			var uri = URI($element.get(0).location.hash.replace(RE, ""));
 
-			// Add HUB event handler
-			me.subscribe(me.displayName + SET, setRoute);
+			// Convert to string
+			var hash = uri.toString();
+
+			// Did anything change?
+			if (hash !== me[HASH]) {
+				// Store new value
+				me[HASH] = hash;
+
+				// Retrigger URICHANGE event
+				$element.trigger("urichange", [ uri ]);
+			}
+			else {
+				// Prevent further hashchange handlers from receiving this
+				$event.stopImmediatePropagation()
+			}
 		},
 
-		"sig/start" : function start() {
-			this[$ELEMENT].trigger(HASHCHANGE);
-		},
+		"dom/hashset" : function ($event, uri, silent) {
+			var me = this;
+			var hash = uri.toString();
 
-		"sig/finalize" : function finalize() {
-			// Remove DOM event handler
-			this[$ELEMENT].off(HASHCHANGE, onHashChange);
+			if (silent === true) {
+				me[HASH] = hash;
+			}
 
-			// Remove HUB event handler
-			me.unsubscribe(me.displayName + SET, setRoute);
+			me[$ELEMENT].get(0).location.hash = hash;
 		}
 	});
 });
-define('troopjs/version',[],function () { return "2.0.2-8"; });
+/**
+ * TroopJS browser/mvc/controller/widget module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/mvc/controller/widget',[
+	"../../component/widget",
+	"../../hash/widget",
+	"poly/object",
+	"poly/array"
+], function (Widget, Hash) {
+	"use strict";
+
+	var CACHE = "_cache";
+	var DISPLAYNAME = "displayName";
+	var ARRAY_SLICE = Array.prototype.slice;
+	var currTaskNo = 0;
+
+	function extend() {
+		var me = this;
+
+		ARRAY_SLICE.call(arguments).forEach(function (arg) {
+			Object.keys(arg).forEach(function (key) {
+				me[key] = arg[key];
+			});
+		});
+
+		return me;
+	}
+
+	var indexes = {};
+	// Check if the object has changed since the last retrieval.
+	function checkChanged(key, val) {
+		var curr = this[CACHE][key], hash = this.hash(val);
+		var ischanged = !(curr === val && indexes[key] === hash );
+		ischanged && (indexes[key] = hash);
+		return ischanged;
+	}
+
+	function handleRequests(requests) {
+		var me = this;
+		var displayName = me[DISPLAYNAME];
+
+		return me.task(function (resolve, reject) {
+			// Track this task.
+			var taskNo = ++currTaskNo;
+
+			me.request(extend.call({}, me[CACHE], requests))
+				.then(function (results) {
+					// Reject if this promise is not the current pending task.
+					if (taskNo == currTaskNo) {
+						// Get old cache
+						var cache = me[CACHE];
+
+						// Calculate updates
+						var updates = {};
+						var updated = Object.keys(results).reduce(function (update, key) {
+							if (checkChanged.apply(me, [key, results[key]])) {
+								updates[key] = results[key];
+								update = true;
+							}
+
+							return update;
+						}, false);
+
+						// Update cache
+						me[CACHE] = results;
+
+						resolve(me.publish(displayName + "/results", results)
+							.then(function () {
+								return updated && me.publish(displayName + "/updates", updates);
+							})
+							.then(function () {
+								// Trigger `hashset`
+								me.$element.trigger("hashset", me.data2uri(results), true);
+							})
+							.yield(results));
+					}
+				});
+		});
+	}
+
+	return Widget.extend(function () {
+		this[CACHE] = {};
+	}, {
+		"displayName": "browser/mvc/controller/widget",
+
+		"sig/initialize": function () {
+			var me = this;
+
+			me.subscribe(me[DISPLAYNAME] + "/requests", handleRequests);
+		},
+
+		"sig/finalize": function () {
+			var me = this;
+
+			me.unsubscribe(me[DISPLAYNAME]+ "/requests", handleRequests);
+		},
+
+		"dom/urichange": function ($event, uri) {
+			var me = this;
+
+			me.publish(me[DISPLAYNAME] + "/requests", me.uri2data(uri));
+		},
+
+		"request" : function (/* requests */) {
+			throw new Error("request is not implemented");
+		},
+
+		"uri2data" : function (/* uri */) {
+			throw new Error("uri2data is not implemented");
+		},
+
+		"data2uri" : function (/* data */) {
+			throw new Error("data2uri is not implemented");
+		},
+
+		// Override me to compute the data hash.
+		"hash" : function (data) { return ""; }
+	}, Hash);
+});
+
+/**
+ * TroopJS browser/mvc/route/widget module
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/mvc/route/widget',[ "../../component/widget" ], function (Widget) {
+	"use strict";
+
+	var $ELEMENT = "$element";
+	var DISPLAYNAME = "displayName";
+	var SET = "/set";
+
+	function setRoute(uri) {
+		/* jshint validthis:true */
+		this[$ELEMENT].trigger("hashset", [ uri ]);
+	}
+
+	return Widget.extend({
+		"displayName" : "browser/mvc/route/widget",
+
+		"sig/initialize" : function () {
+			var me = this;
+
+			me.subscribe(me[DISPLAYNAME] + SET, setRoute);
+		},
+
+		"sig/finalize" : function () {
+			var me = this;
+
+			me.unsubscribe(me[DISPLAYNAME] + SET, setRoute);
+		},
+
+		"dom/urichange" : function ($event, uri) {
+			var me = this;
+
+			me.publish(me[DISPLAYNAME], uri, $event);
+		}
+	});
+});
+define('troopjs/version',[],function () { return "2.0.3"; });
 define(['troopjs/version'], function (main) { return main; });
