@@ -129,8 +129,8 @@
  * 		return variadicOnFulfilled.apply(undefined, array);
  * 	});
  *
- * 	// Or using when/apply
- * 	promise.then(apply(variadicOnFulfilled));
+ * 	// Or using `when.apply`
+ * 	promise.then(when.apply(variadicOnFulfilled));
  *
  * @method spread
  * @param {(Promise|*)[]} variadicOnFulfilled

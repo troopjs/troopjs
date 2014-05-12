@@ -1,7 +1,7 @@
 {
 	"name": "troopjs",
 	"description": "TroopJS package",
-	"version": "3.0.0-6",
+	"version": "3.0.0-pr.1",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -45,6 +45,7 @@
 		}
 	],
 	"scripts": {
+		"pretest": "scripts/pretest.js",
 		"test": "grunt test"
 	},
 	"devDependencies": {
@@ -58,7 +59,8 @@
 		"grunt-git-dist": "~0.4",
 		"grunt-semver": "~0.1",
 		"load-grunt-tasks": "~0.4",
-		"semver": "~2.2",
-		"lodash": "~2.4"
+		"semver": "~2.3",
+		"lodash": "~2.4",
+		"shelljs": "~0.3"
 	}
 }

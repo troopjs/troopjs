@@ -1,6 +1,6 @@
 {
 	"name": "troopjs",
-	"version": "3.0.0-6",
+	"version": "3.0.0-pr.1",
 	"authors": [
 		{
 			"name": "Mikael Karon",
@@ -14,15 +14,15 @@
 		"node_modules"
 	],
 	"dependencies": {
-		"troopjs-browser": "*",
-		"troopjs-compose": "*",
-		"troopjs-core": "*",
-		"troopjs-data": "*",
-		"troopjs-jquery": "*",
-		"troopjs-log": "*",
-		"troopjs-net": "*",
-		"troopjs-requirejs": "*",
-		"troopjs-opt": "*"
+		"troopjs-compose": "3.0.1",
+		"troopjs-core": "3.3.1",
+		"troopjs-dom": "5.1.4",
+		"troopjs-log": "1.0.1",
+		"troopjs-net": "0.0.5",
+		"troopjs-data": "4.0.3",
+		"troopjs-opt": "1.0.3",
+		"troopjs-jquery": "3.0.3",
+		"troopjs-requirejs": "2.2.2"
 	},
 	"devDependencies": {
 		"requirejs-text": "~2"
