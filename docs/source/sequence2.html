@@ -18,70 +18,69 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;../navigator&quot;,
-	&quot;poly/array&quot;
-], function SequenceModule(Navigator) {
+define([ &quot;when&quot; ], function SequenceModule(when) {
 	&quot;use strict&quot;;
 
-<span id='browser-route-runner-sequence'>	/**
-</span>	 * @class browser.route.runner.sequence
+<span id='core-event-runner-sequence'>	/**
+</span>	 * @class core.event.runner.sequence
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
-	var CONTEXT = &quot;context&quot;;
-	var CALLBACK = &quot;callback&quot;;
-	var TYPE = &quot;type&quot;;
-	var DATA = &quot;data&quot;;
 	var HEAD = &quot;head&quot;;
 	var NEXT = &quot;next&quot;;
-	var NAVIGATOR = &quot;navigator&quot;;
-	var MODIFIED = &quot;modified&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var CONTEXT = &quot;context&quot;;
 
-<span id='browser-route-runner-sequence-method-constructor'>	/**
+<span id='core-event-runner-sequence-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Runner that executes ROUTE candidates in sequence without overlap
-	 * @returns {*} Result from last handler
+	 * @localdoc Run event handlers **asynchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
+	 * @return {Promise}
 	 */
 	return function sequence(event, handlers, args) {
-		var modified = handlers[MODIFIED];
-		var path = args[0];
-		var navigator;
-		var candidate;
+		var results = [];
+		var resultsCount = 0;
+		var candidates = [];
+		var candidatesCount = 0;
+		var handler;
 
-		// Try get NAVIGATOR from handlers and check if MODIFIED
-		if ((navigator = handlers[NAVIGATOR]) === UNDEFINED || navigator[MODIFIED] !== modified) {
-			// Create and cache NAVIGATOR
-			navigator = handlers[NAVIGATOR] = Navigator();
-
-			// Set MODIFIED on navigator
-			navigator[MODIFIED] = modified;
-
-			// Iterate handlers
-			for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-				// Add candidate to navigator
-				navigator.add(candidate[TYPE], candidate);
-			}
+		// Copy from handlers list to candidates array
+		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+			candidates[candidatesCount++] = handler;
 		}
 
-		return navigator
-			// Filter to only routes that match path
-			.matches(path)
-			// Reduce so we can catch the end value
-			.reduce(function (result, navigator) {
+		// Reset candidate count
+		candidatesCount = 0;
 
-				// Get candidate from navigator
-				var candidate = navigator[1];
+<span id='global-method-next'>		/**
+</span>		 * Internal function for sequential execution of candidates
+		 * @ignore
+		 * @param {Array} [result] result from previous handler callback
+		 * @param {Boolean} [skip] flag indicating if this result should be skipped
+		 * @return {Promise} promise of next handler callback execution
+		 */
+		var next = function (result, skip) {
+			/*jshint curly:false*/
+			var candidate;
 
-				// Run candidate, provide result to next run
-				return candidate[CALLBACK].apply(candidate[CONTEXT], args);
-			}, UNDEFINED);
+			// Store result if no skip
+			if (skip !== true) {
+				results[resultsCount++] = result;
+			}
+
+			// Return promise of next callback, or a promise resolved with result
+			return (candidate = candidates[candidatesCount++]) !== UNDEFINED
+				? when(candidate[CALLBACK].apply(candidate[CONTEXT], args), next)
+				: when.resolve(results);
+		};
+
+		return next(args, true);
 	}
-});</pre>
+});
+</pre>
 </body>
 </html>

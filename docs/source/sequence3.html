@@ -18,36 +18,42 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;poly/array&quot; ], function SequenceModule() {
+define([
+	&quot;./pattern&quot;,
+	&quot;when&quot;
+], function SequenceModule(RE_PHASE, when) {
 	&quot;use strict&quot;;
 
-<span id='core-component-runner-sequence'>	/**
-</span>	 * @class core.component.runner.sequence
+<span id='core-pubsub-runner-sequence'>	/**
+</span>	 * @class core.pubsub.runner.sequence
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
 	var HEAD = &quot;head&quot;;
 	var NEXT = &quot;next&quot;;
-	var CALLBACK = &quot;callback&quot;;
-	var CONTEXT = &quot;context&quot;;
+	var PHASE = &quot;phase&quot;;
+	var MEMORY = &quot;memory&quot;;
 
-<span id='core-component-runner-sequence-method-constructor'>	/**
+<span id='core-pubsub-runner-sequence-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Run event handlers **synchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
-	 * @returns {*[]} Result from each executed handler
+	 * @localdoc Run event handlers **asynchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
+	 * @return {Promise}
 	 */
 	return function sequence(event, handlers, args) {
 		var context = event[CONTEXT];
 		var callback = event[CALLBACK];
+		var results = [];
+		var resultsCount = 0;
 		var candidate;
 		var candidates = [];
 		var candidatesCount = 0;
-		var result;
 
 		// Iterate handlers
 		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
@@ -57,25 +63,47 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 			}
 
 			// Filter candidate[CALLBACK] if we have callback
-			if (callback &amp;&amp; candidate[CALLBACK] !== callback) {
+			if (callback !== UNDEFINED &amp;&amp; candidate[CALLBACK] !== callback) {
 				continue;
 			}
 
+			// Add to candidates
 			candidates[candidatesCount++] = candidate;
 		}
 
-		// Reduce and return
-		return candidates.reduce(function (current, candidate) {
-			// Store result if not UNDEFINED
-			if (current !== UNDEFINED) {
-				result = current;
+		// Reset candidatesCount
+		candidatesCount = 0;
+
+<span id='global-method-next'>		/**
+</span>		 * Internal function for sequential execution of candidates candidates
+		 * @ignore
+		 * @param {Array} [result] result from previous candidate callback
+		 * @param {Boolean} [skip] flag indicating if this result should be skipped
+		 * @return {Promise} promise of next candidate callback execution
+		 */
+		var next = function (result, skip) {
+			/*jshint curly:false*/
+			var candidate;
+			var context;
+
+			// Store result if no skip
+			if (skip !== true) {
+				results[resultsCount++] = result;
 			}
 
-			// If result is _not_ false, return result of candidate[CALLBACK], otherwise just false
-			return result !== false
-				? candidate[CALLBACK].apply(candidate[CONTEXT], args)
-				: result;
-		}, UNDEFINED);
+			// TODO Needs cleaner implementation
+			// Iterate candidates while candidate has a context and that context is in a blocked phase
+			while ((candidate = candidates[candidatesCount++]) // Has next candidate
+				&amp;&amp; (context = candidate[CONTEXT])                // Has context
+				&amp;&amp; RE_PHASE.test(context[PHASE]));               // In blocked phase
+
+			// Return promise of next callback, or a promise resolved with result
+			return candidate !== UNDEFINED
+				? when(candidate[CALLBACK].apply(context, args), next)
+				: (handlers[MEMORY] = args) === args &amp;&amp; when.resolve(results);
+		};
+
+		return next(args, true);
 	}
 });
 </pre>

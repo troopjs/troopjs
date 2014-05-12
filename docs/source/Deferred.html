@@ -27,7 +27,7 @@
  *
  * ## Producers
  *
- * Producers provide a result via the {@link Resolver} API: {@link #resolve} or {@link #resolver}`.resolve()`.
+ * Producers provide a result via the {@link Resolver} API: {@link #resolve} or {@link Resolver#resolve resolver.resolve}.
  * The two are functionally equivalent, but {@link #resolver} can safely be given out to an untrusted component
  * without giving away full access to the Deferred. The resolver is also *frozen* and thus cannot be corrupted.
  * That provides a clear *separation of concerns* by allowing a component to produce a result but not to know
@@ -51,7 +51,7 @@
  *
  * ## Resolving and rejecting
  *
- * When a producer provides the result by calling {@link #resolver}`.resolve()` (or {@link #resolve}), all consumers
+ * When a producer provides the result by calling {@link Resolver#resolve resolver.resolve} (or {@link #resolve}), all consumers
  * are notified by having their callbacks (which they registered via {@link when#constructor}) called with the result.
  *
  * A producer may also *reject* the Deferred, signalling that the Deferred's computation failed, or could not complete
@@ -61,7 +61,7 @@
  * ## Progress
  *
  * when.js's Deferreds also support progress notifications, to indicate to consumers that the computation is making
- * progress toward its result. A producer may call {@link #resolver}`.notify()` (or {@link #notify}) and pass
+ * progress toward its result. A producer may call {@link Resolver#notify resolver.notify} (or {@link #notify}) and pass
  * a single parameter (whatever it wants) to indicate progress. All consumers will be notified by having their
  * progress handler called (the 4th parameter to {@link when#constructor}, or the 3rd parameter to {@link Promise#then}).
  *

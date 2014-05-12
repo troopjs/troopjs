@@ -19,16 +19,15 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./config&quot;,
+	&quot;./pattern&quot;,
 	&quot;when&quot;
-], function PipelineModule(config, when) {
+], function PipelineModule(RE_PHASE, when) {
 	&quot;use strict&quot;;
 
 <span id='core-pubsub-runner-pipeline'>	/**
 </span>	 * @class core.pubsub.runner.pipeline
 	 * @implement core.event.emitter.runner
-	 * @mixin core.pubsub.runner.config
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -43,13 +42,12 @@ define([
 	var NEXT = &quot;next&quot;;
 	var PHASE = &quot;phase&quot;;
 	var MEMORY = &quot;memory&quot;;
-	var RE_PHASE = config[&quot;pattern&quot;];
 
 <span id='core-pubsub-runner-pipeline-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
 	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	return function pipeline(event, handlers, args) {
 		var context = event[CONTEXT];

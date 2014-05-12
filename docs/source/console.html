@@ -20,7 +20,8 @@
  */
 define([
 	&quot;./methods&quot;,
-	&quot;poly/array&quot;
+	&quot;poly/array&quot;,
+	&quot;poly/function&quot;
 ], function ConsoleModule(METHODS) {
 	&quot;use strict&quot;;
 
@@ -46,11 +47,11 @@ define([
 		var nop = function () {};
 
 		METHODS.forEach(function (method) {
-			me[method] = console[method] || nop;
-		});
+			me[method] = this.call(console[method] || nop, console);
+		}, Function.prototype.bind);
 
 		return me;
-	}).call({}, console || {});
+	}).call({}, ( this || window ).console || {});
 });</pre>
 </body>
 </html>

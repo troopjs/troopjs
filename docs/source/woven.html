@@ -26,9 +26,9 @@ define([
 ], function WovenModule(config, when, $) {
 	&quot;use strict&quot;;
 
-<span id='browser-loom-woven'>	/**
-</span>	 * @class browser.loom.woven
-	 * @mixin browser.loom.config
+<span id='dom-loom-woven'>	/**
+</span>	 * @class dom.loom.woven
+	 * @mixin dom.loom.config
 	 * @mixin Function
 	 * @static
 	 */
@@ -38,14 +38,14 @@ define([
 	var WOVEN = &quot;woven&quot;;
 	var $WARP = config[&quot;$warp&quot;];
 
-<span id='browser-loom-woven-method-constructor'>	/**
+<span id='dom-loom-woven-method-constructor'>	/**
 </span>	 * Retrieve all or specific widget instances living on this element, that are
-	 * created by {@link browser.loom.weave}.
+	 * created by {@link dom.loom.weave}.
 	 *
 	 * It also lives as a jquery plugin as {@link $#method-woven}.
 	 * @method constructor
 	 * @param {...String} [widget] One or more widget names to narrow down the returned ones.
-	 * @returns {Promise} Promise to the completion of retrieving the woven widgets array.
+	 * @return {Promise} Promise to the completion of retrieving the woven widgets array.
 	 */
 	return function woven() {
 		var $woven = [];

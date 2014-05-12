@@ -5,4 +5,5 @@ before_install:
   - bower install
 branches:
   except:
-    - /^build\/.*$/
+    - /^build\//
+    - /\+[a-f0-9]{7}$/

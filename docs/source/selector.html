@@ -18,18 +18,14 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;troopjs-compose/mixin/factory&quot;,
-	&quot;./config&quot;
-], function (Factory, config) {
+define([ &quot;troopjs-compose/mixin/factory&quot; ], function (Factory) {
 	&quot;use strict&quot;;
 
-<span id='browser-dom-selector'>	/**
-</span>	 * An optimized CSS selector matcher that {@link browser.component.runner.sequence} relies on for
-	 * delegating DOM event on {@link browser.component.widget}.
-	 * @class browser.dom.selector
+<span id='dom-css-selector'>	/**
+</span>	 * An optimized CSS selector matcher that {@link dom.component.runner.sequence} relies on for
+	 * delegating DOM event on {@link dom.component.widget}.
+	 * @class dom.css.selector
 	 * @implement compose.mixin
-	 * @mixin browser.dom.config
 	 * @private
 	 */
 
@@ -54,8 +50,6 @@ define([
 	var COUNT = &quot;count&quot;;
 	var BASEVAL = &quot;baseVal&quot;;
 	var RE_SPACE = /\s+/;
-	var querySelectorAll = config[&quot;querySelectorAll&quot;];
-	var matchesSelector = config[&quot;matchesSelector&quot;];
 
 <span id='global-method-getElementUniversal'>	/**
 </span>	 * Extracts key for universal indexer
@@ -113,7 +107,7 @@ define([
 		return (id = element.id) !== UNDEFINED &amp;&amp; [ id ];
 	}
 
-<span id='browser-dom-selector-static-method-tail'>	/**
+<span id='dom-css-selector-static-method-tail'>	/**
 </span>	 * Gets the last **SIGNIFICANT** of a CSS selector, the &quot;significant&quot; is defined as - any leading id, class name or
 	 * tag name component of the last selector.
 	 *
@@ -207,13 +201,13 @@ define([
 		return a[COUNT] - b[COUNT];
 	}
 
-<span id='browser-dom-selector-method-constructor'>	/**
+<span id='dom-css-selector-method-constructor'>	/**
 </span>	 * @method constructor
 	 */
 	var Selector = Factory(function Selector() {
 		var me = this;
 
-<span id='browser-dom-selector-property-indexes'>		/**
+<span id='dom-css-selector-property-indexes'>		/**
 </span>		 * Cached indexes
 		 * @protected
 		 * @readonly
@@ -221,7 +215,7 @@ define([
 		 */
 		me[INDEXES] = [];
 
-<span id='browser-dom-selector-property-count'>		/**
+<span id='dom-css-selector-property-count'>		/**
 </span>		 * Index counter
 		 * @private
 		 * @readonly
@@ -229,7 +223,7 @@ define([
 		 */
 		me[COUNT] = 0;
 	}, {
-<span id='browser-dom-selector-method-add'>		/**
+<span id='dom-css-selector-method-add'>		/**
 </span>		 * Adds candidate
 		 * @chainable
 		 * @param {String} selector CSS selector
@@ -299,12 +293,13 @@ define([
 			return me;
 		},
 
-<span id='browser-dom-selector-method-matches'>		/**
+<span id='dom-css-selector-method-matches'>		/**
 </span>		 * Matches candidates against element
+		 * @param {Function} matchesSelector `matchesSelector` function
 		 * @param {HTMLElement} element DOM Element
 		 * @return {Array} Matching array of candidates
 		 */
-		&quot;matches&quot;: function matches(element) {
+		&quot;matches&quot;: function matches(matchesSelector, element) {
 			var me = this;
 			var indexer;
 			var indexed;

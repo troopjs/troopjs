@@ -24,7 +24,7 @@ define([ &quot;when&quot; ], function PipelineModule(when) {
 <span id='core-component-runner-pipeline'>	/**
 </span>	 * @class core.component.runner.pipeline
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -42,7 +42,7 @@ define([ &quot;when&quot; ], function PipelineModule(when) {
 </span>	 * @method constructor
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in &quot;pipeline&quot;, passing the resolved return value (unless it's undefined) of the previous listen to the next handler as arguments.
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	return function pipeline(event, handlers, args) {
 		var context = event[CONTEXT];

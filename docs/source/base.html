@@ -21,13 +21,14 @@
 define([
 	&quot;../event/emitter&quot;,
 	&quot;./runner/sequence&quot;,
+	&quot;troopjs-compose/mixin/config&quot;,
 	&quot;./registry&quot;,
 	&quot;../task/registry&quot;,
 	&quot;troopjs-util/merge&quot;,
 	&quot;troopjs-compose/decorator/around&quot;,
 	&quot;when&quot;,
 	&quot;poly/array&quot;
-], function ComponentModule(Emitter, sequence, componentRegistry, taskRegistry, merge, around, when) {
+], function ComponentModule(Emitter, sequence, COMPOSE_CONF, componentRegistry, taskRegistry, merge, around, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-base'>	/**
@@ -67,12 +68,12 @@ define([
 	 * 		app.start();
 	 * 	});
 	 *
-	 * 	$(window).unload(function on_unload (argument) {\
+	 * 	$(window).unload(function on_unload (argument) {
 	 * 	  app.end();
 	 * 	});
 	 *
 	 * @class core.component.base
-	 * @extends core.event.emitter
+	 * @extend core.event.emitter
 	 */
 
 	var UNDEFINED;
@@ -243,6 +244,12 @@ define([
 	 * @return {*|Boolean}
 	 */
 
+	// Add pragma for signals and events.
+	COMPOSE_CONF.pragmas.push({
+		&quot;pattern&quot;: /^(?:sig|on)\/.+/,
+		&quot;replace&quot;: &quot;$&amp;()&quot;
+	});
+
 <span id='core-component-base-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
@@ -354,7 +361,7 @@ define([
 		 * 		print(dropdown.configuration.shadow);
 		 *
 		 * @param {...Object} [config] Config(s) to add.
-		 * @returns {Object} The new configuration.
+		 * @return {Object} The new configuration.
 		 */
 		&quot;configure&quot; : function configure(config) {
 			return merge.apply(this[CONFIGURATION], arguments);
@@ -576,7 +583,7 @@ define([
 		 *
 		 * @param {Resolver} resolver The task resolver.
 		 * @param {String} [name]
-		 * @returns {Promise}
+		 * @return {Promise}
 		 * @fires sig/task
 		 */
 		&quot;task&quot; : function task(resolver, name) {

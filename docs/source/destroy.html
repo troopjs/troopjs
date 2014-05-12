@@ -27,14 +27,18 @@ define([ &quot;jquery&quot; ], function DestroyModule($) {
 	 *  - {@link $#event-destroy} event
 	 *
 	 * @class jquery.destroy
+	 * @static
 	 * @alias plugin.jquery
 	 */
 
 	var DESTROY = &quot;destroy&quot;;
 
+<span id='$'>	/**
+</span>	 * @class $
+	 */
+
 <span id='$-event-destroy'>	/**
 </span>	 * A special jQuery event whose handler will be called, only when this handler it's removed from the element.
-	 * @member $
 	 * @event destroy
 	 */
 	$.event.special[DESTROY] = {

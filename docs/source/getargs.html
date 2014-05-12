@@ -27,8 +27,10 @@ define(function GetArgsModule() {
 	 * @static
 	 */
 
-	var PUSH = Array.prototype.push;
-	var SUBSTRING = String.prototype.substring;
+	var UNDEFINED;
+	var STR_SUBSTRING = String.prototype.substring;
+	var STR_SLICE = String.prototype.slice;
+	var RE_STRING = /^([&quot;']).*\1$/;
 	var RE_BOOLEAN = /^(?:false|true)$/i;
 	var RE_BOOLEAN_TRUE = /^true$/i;
 	var RE_DIGIT = /^\d+$/;
@@ -36,113 +38,160 @@ define(function GetArgsModule() {
 <span id='util-getargs-method-constructor'>	/**
 </span>	 * Function that calls on a String, to parses it as function parameters delimited by commas.
 	 *
-	 * 	&quot; 1  , '2' , 3  ,false,5 &quot; =&gt; [ 1, &quot;2&quot;, 3, false, 5]
-	 * 	'1, 2 ',  3,\&quot;4\&quot;, 5  =&gt; [ &quot;1, 2 &quot;, 3, &quot;4&quot;, 5 ]
+	 * 	&quot; 1  , '2' , 3  ,false,5 &quot;
+	 *
+	 * results in
+	 *
+	 * 	[ 1, &quot;2&quot;, 3, false, 5]
+	 *
+	 *
+	 * and
+	 *
+	 * 	&quot;'1, 2 ',  3,\&quot;4\&quot;, 5 &quot;
+	 *
+	 * results in
+	 *
+	 * 	[ &quot;1, 2 &quot;, 3, &quot;4&quot;, 5 ]
+	 *
+	 * Also handles named parameters.
+	 *
+	 * 	&quot;1, two=2, 3, 'key.four'=4, 5&quot;
+	 *
+	 * results in
+	 *
+	 * 	result = [1, 2, 3, 4, 5]
+	 * 	result[&quot;two&quot;] === result[1]
+	 * 	result[&quot;key.four&quot;] === result[3]
 	 *
 	 * @method constructor
 	 * @return {Array} the array of parsed params.
 	 */
 	return function getargs() {
 		var me = this;
-		var result = [];
-		var length;
+		var values = [];
 		var from;
 		var to;
-		var i;
+		var index;
+		var length;
+		var quote = false;
+		var key;
 		var c;
-		var a;
-		var q = false;
 
-		// Iterate over string
-		for (from = to = i = 0, length = me.length; i &lt; length; i++) {
+		// Try to extract value from the specified string range.
+		function extract(from, to) {
+			// Nothing captured.
+			if (from === to)
+				return;
+
+			var value = STR_SUBSTRING.call(me, from, to);
+			if (RE_STRING.test(value)) {
+				value = STR_SLICE.call(value, 1, -1);
+			}
+			else if (RE_BOOLEAN.test(value)) {
+				value = RE_BOOLEAN_TRUE.test(value);
+			}
+			else if (RE_DIGIT.test(value)) {
+				value = +value;
+			}
+
+			// Store value by index.
+			values.push(value);
+
+			// Store value with key or just index
+			if (key !== UNDEFINED) {
+				values[key] = value;
+				// Reset key
+				key = UNDEFINED;
+			}
+		}
+
+		// Iterate string
+		for (index = from = to = 0, length = me.length; index &lt; length; index++) {
+
 			// Get char
-			c = me.charAt(i);
+			c = me.charAt(index);
 
 			switch(c) {
 				case &quot;\&quot;&quot; :
 				/* falls through */
 				case &quot;'&quot; :
 					// If we are currently quoted...
-					if (q === c) {
+					if (quote === c) {
 						// Stop quote
-						q = false;
+						quote = false;
 
-						// Store result (no need to convert, we know this is a string)
-						PUSH.call(result, SUBSTRING.call(me, from, to));
+						// Update to
+						to = index + 1;
 					}
 					// Otherwise
-					else {
+					else if (quote === false) {
 						// Start quote
-						q = c;
+						quote = c;
+
+						// Update from/to
+						from = to = index;
 					}
-
-					// Update from/to
-					from = to = i + 1;
-					break;
-
-				case &quot;,&quot; :
-					// Continue if we're quoted
-					if (q) {
-						to = i + 1;
-						break;
-					}
-
-					// If we captured something...
-					if (from !== to) {
-						a = SUBSTRING.call(me, from, to);
-
-						if (RE_BOOLEAN.test(a)) {
-							a = RE_BOOLEAN_TRUE.test(a);
-						}
-						else if (RE_DIGIT.test(a)) {
-							a = +a;
-						}
-
-						// Store result
-						PUSH.call(result, a);
-					}
-
-					// Update from/to
-					from = to = i + 1;
 					break;
 
 				case &quot; &quot; :
 				/* falls through */
 				case &quot;\t&quot; :
 					// Continue if we're quoted
-					if (q) {
-						to = i + 1;
+					if (quote) {
+						to = index + 1;
 						break;
 					}
 
 					// Update from/to
 					if (from === to) {
-						from = to = i + 1;
+						from = to = index + 1;
 					}
+					break;
+
+				case &quot;=&quot;:
+					// Continue if we're quoted
+					if (quote) {
+						to = index + 1;
+						break;
+					}
+
+					// If we captured something...
+					if (from !== to) {
+						// Extract substring
+						key = STR_SUBSTRING.call(me, from, to);
+
+						if (RE_STRING.test(key)) {
+							key = STR_SLICE.call(key, 1, -1);
+						}
+					}
+
+					from = index + 1;
+					break;
+
+				case &quot;,&quot; :
+					// Continue if we're quoted
+					if (quote) {
+						to = index + 1;
+						break;
+					}
+
+					// If we captured something...
+					extract(from, to);
+
+					// Update from/to
+					from = to = index + 1;
 					break;
 
 				default :
 					// Update to
-					to = i + 1;
+					to = index + 1;
 			}
 		}
 
 		// If we captured something...
-		if (from !== to) {
-			a = SUBSTRING.call(me, from, to);
+		extract(from, to);
 
-			if (RE_BOOLEAN.test(a)) {
-				a = RE_BOOLEAN_TRUE.test(a);
-			}
-			else if (RE_DIGIT.test(a)) {
-				a = +a;
-			}
-
-			// Store result
-			PUSH.call(result, a);
-		}
-
-		return result;
+		return values;
 	};
 });
 </pre>

@@ -27,9 +27,9 @@ define([
 ], function UnweaveModule(config, when, $, Defer) {
 	&quot;use strict&quot;;
 
-<span id='browser-loom-unweave'>	/**
-</span>	 * @class browser.loom.unweave
-	 * @mixin browser.loom.config
+<span id='dom-loom-unweave'>	/**
+</span>	 * @class dom.loom.unweave
+	 * @mixin dom.loom.config
 	 * @mixin Function
 	 * @static
 	 */
@@ -50,9 +50,18 @@ define([
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
 
-<span id='browser-loom-unweave-method-constructor'>	/**
+	// collect the list of fulfilled promise values from a list of descriptors.
+	function fulfilled(descriptors) {
+		return descriptors.filter(function(d) {
+			return d.state === &quot;fulfilled&quot;;
+		}).map(function(d) {
+			return d.value;
+		});
+	}
+
+<span id='dom-loom-unweave-method-constructor'>	/**
 </span>	 * Destroy all widget instances living on this element, that are created
-	 * by {@link browser.loom.weave}, it is also to clean up the attributes
+	 * by {@link dom.loom.weave}, it is also to clean up the attributes
 	 * and data references to the previously instantiated widgets.
 	 *
 	 * @localdoc
@@ -60,8 +69,8 @@ define([
 	 * It also lives as a jquery plugin as {@link $#method-unweave}.
 	 *
 	 * @method constructor
-	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link browser.component.widget#stop stop} method
-	 * @returns {Promise} Promise to the completion of unweaving all woven widgets.
+	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link dom.component.widget#stop stop} method
+	 * @return {Promise} Promise to the completion of unweaving all woven widgets.
 	 */
 	return function unweave(stop_args) {
 		// Store stop_args for later
@@ -113,7 +122,8 @@ define([
 					})
 					// Added back those widget names to data-weave.
 					.attr(ATTR_WEAVE, function (index, attr) {
-							return (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(weave).join(&quot; &quot;);
+						var result = (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(weave);
+						return result[LENGTH] === 0 ? null : result.join(&quot; &quot;);
 					});
 			};
 
@@ -156,23 +166,24 @@ define([
 				$warp[LENGTH] = j;
 			}
 
-			// Return promise of mapped $unweave
-			return when.map($unweave, function (widget) {
-				var deferred;
-				var stopPromise;
+			// process with all successful  weaving.
+			return when.settle($unweave).then(fulfilled).then(function unweaveWidgets(widgets) {
+				return when.map(widgets, function(widget) {
+					var deferred;
+					var stopPromise;
 
-				// TODO: Detecting TroopJS 1.x widget from *version* property.
-				if (widget.trigger) {
-					deferred = Defer();
-					widget.stop(deferred);
-					stopPromise = deferred.promise;
-				}
-				else {
-					stopPromise = widget.stop.apply(widget, stop_args);
-				}
-
-				// Add deferred update of attr
-				return stopPromise.yield(widget);
+					// TODO: Detecting TroopJS 1.x widget from *version* property.
+					if (widget.trigger) {
+						deferred = Defer();
+						widget.stop(deferred);
+						stopPromise = deferred.promise;
+					}
+					else {
+						stopPromise = widget.stop.apply(widget, stop_args);
+					}
+					// Add deferred update of attr
+					return stopPromise.yield(widget);
+				});
 			})
 			// Updating the weave/woven attributes with stopped widgets.
 			.tap(update_attr);

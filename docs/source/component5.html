@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;troopjs-core/mixin/base&quot;,
+	&quot;when&quot;,
+	&quot;poly/array&quot;
+], function StoreModule(Base, when) {
+	&quot;use strict&quot;;
+
+<span id='opt-store-component'>	/**
+</span>	 * A simple key-value store that supports **dot separated key** format.
+	 * @class opt.store.component
+	 * @extend core.mixin.base
+	 */
+
+	var UNDEFINED;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
+	var TOSTRING_OBJECT = &quot;[object Object]&quot;;
+	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
+	var TOSTRING_STRING = &quot;[object String]&quot;;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var LENGTH = &quot;length&quot;;
+	var ADAPTERS = &quot;adapters&quot;;
+	var STORAGE = &quot;storage&quot;;
+	var BEFORE_GET = &quot;beforeGet&quot;;
+	var AFTER_PUT = &quot;afterPut&quot;;
+	var CLEAR = &quot;clear&quot;;
+	var LOCKS = &quot;locks&quot;;
+
+<span id='global-method-applyMethod'>	/**
+</span>	 * Applies method to this (if it exists)
+	 * @param {String} method Method name
+	 * @return {Boolean|*}
+	 * @ignore
+	 */
+	function applyMethod(method) {
+		/*jshint validthis:true*/
+		var me = this;
+
+		return method in me &amp;&amp; me[method].apply(me, ARRAY_SLICE.call(arguments, 1));
+	}
+
+<span id='global-method-put'>	/**
+</span>	 * Puts value
+	 * @param {String|null} key Key - can be dot separated for sub keys
+	 * @param {*} value Value
+	 * @return {Promise} Promise of put
+	 * @ignore
+	 */
+	function put(key, value) {
+		/*jshint validthis:true*/
+		var me = this;
+		var node = me[STORAGE];
+		var parts = key
+			? key.split(&quot;.&quot;)
+			: [];
+		var part;
+		var last = parts.pop();
+
+		while (node &amp;&amp; (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = node[part] = {};
+			}
+		}
+
+		// Evaluate value if needed
+		if (OBJECT_TOSTRING.call(value) === TOSTRING_FUNCTION) {
+			value = value.call(me, {
+				&quot;get&quot; : function () {
+					return get.apply(me, arguments);
+				},
+				&quot;has&quot; : function () {
+					return has.apply(me, arguments);
+				}
+			}, key);
+		}
+
+		return last !== UNDEFINED
+			// First store the promise, then override with the true value once resolved
+			? when(value, function (result) {
+				node[last] = result;
+
+				return result;
+			})
+			// No key provided, just return a promise of the value
+			: when(value);
+	}
+
+<span id='global-method-get'>	/**
+</span>	 * Gets value
+	 * @param {String} key Key - can be dot separated for sub keys
+	 * @return {*} Value
+	 * @ignore
+	 */
+	function get(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(&quot;.&quot;);
+		var part;
+
+		while (node &amp;&amp; (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node;
+	}
+
+<span id='global-method-has'>	/**
+</span>	 * Check is key exists
+	 * @param key {String} key Key - can be dot separated for sub keys
+	 * @return {Boolean}
+	 * @ignore
+	 */
+	function has(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(&quot;.&quot;);
+		var part;
+		var last = parts.pop();
+
+		while (node &amp;&amp; (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node !== UNDEFINED &amp;&amp; last in node;
+	}
+
+<span id='opt-store-component-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {...Object} adapter One or more adapters
+	 * @throws {Error} If no adapter was provided
+	 */
+	return Base.extend(function StoreComponent(adapter) {
+		if (arguments[LENGTH] === 0) {
+			throw new Error(&quot;No adapter(s) provided&quot;);
+		}
+
+		var me = this;
+
+<span id='opt-store-component-property-adapters'>		/**
+</span>		 * Current adapters
+		 * @private
+		 * @readonly
+		 * @property {Array} adapters
+		 */
+		me[ADAPTERS] = ARRAY_SLICE.call(arguments);
+
+<span id='opt-store-component-property-storage'>		/**
+</span>		 * Current storage
+		 * @private
+		 * @readonly
+		 * @property {Object} storage
+		 */
+		me[STORAGE] = {};
+
+<span id='opt-store-component-property-locks'>		/**
+</span>		 * Current locks
+		 * @private
+		 * @readonly
+		 * @property {Object} locks
+		 */
+		me[LOCKS] = {};
+	}, {
+		&quot;displayName&quot; : &quot;opt/store/component&quot;,
+
+<span id='opt-store-component-method-lock'>		/**
+</span>		 * Waits for store to be &quot;locked&quot;
+		 * @param {String} key Key
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of ready
+		 */
+		&quot;lock&quot; : function (key, onFulfilled, onRejected, onProgress) {
+			var locks = this[LOCKS];
+			var result;
+
+			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
+				throw new Error(&quot;key has to be of type string&quot;);
+			}
+
+			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
+
+			return result;
+		},
+
+<span id='opt-store-component-method-get'>		/**
+</span>		 * Gets state value
+		 * @param {...String} key Key - can be dot separated for sub keys
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		&quot;get&quot; : function (key, onFulfilled, onRejected, onProgress) {
+			/*jshint curly:false*/
+			var me = this;
+			var keys = ARRAY_SLICE.call(arguments);
+			var i;
+			var iMax;
+
+			// Step until we hit the end or keys[i] is not a string
+			for (i = 0, iMax = keys[LENGTH]; i &lt; iMax &amp;&amp; OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
+
+			// Update callbacks
+			onFulfilled = keys[i];
+			onRejected = keys[i+1];
+			onProgress = keys[i+2];
+
+			// Set the new length of keys
+			keys[LENGTH] = i;
+
+			return when
+				.map(keys, function (key) {
+					return when
+						// Map adapters and BEFORE_GET on each adapter
+						.map(me[ADAPTERS], function (adapter) {
+							return when(applyMethod.call(adapter, BEFORE_GET, me, key));
+						})
+						// Get value from STORAGE
+						.then(function () {
+							return get.call(me, key);
+						});
+				})
+				// Add callbacks
+				.then(onFulfilled &amp;&amp; when.apply(onFulfilled), onRejected, onProgress);
+		},
+
+<span id='opt-store-component-method-put'>		/**
+</span>		 * Puts state value
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		&quot;put&quot; : function (key, value, onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return when(put.call(me, key, value), function (result) {
+				return when
+					// Map adapters and AFTER_PUT on each adapter
+					.map(me[ADAPTERS], function (adapter) {
+						return when(applyMethod.call(adapter, AFTER_PUT, me, key, result));
+					})
+					.yield(result);
+			})
+				// Add callbacks
+				.then(onFulfilled, onRejected, onProgress);
+		},
+
+<span id='opt-store-component-method-putIfNotHas'>		/**
+</span>		 * Puts state value if key is UNDEFINED
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		&quot;putIfNotHas&quot; : function (key, value, onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return !me.has(key)
+				? me.put(key, value, onFulfilled, onRejected, onProgress)
+				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
+		},
+
+<span id='opt-store-component-method-has'>		/**
+</span>		 * Checks if key exists
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @return {Boolean} True if key exists, otherwise false
+		 */
+		&quot;has&quot; : function (key) {
+			return has.call(this, key);
+		},
+
+<span id='opt-store-component-method-clear'>		/**
+</span>		 * Clears all adapters
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of clear
+		 */
+		&quot;clear&quot; : function (onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return when
+				.map(me[ADAPTERS], function (adapter) {
+					return when(applyMethod.call(adapter, CLEAR, me));
+				})
+				// Add callbacks
+				.then(onFulfilled &amp;&amp; when.apply(onFulfilled), onRejected, onProgress);
+		}
+	});
+});</pre>
+</body>
+</html>

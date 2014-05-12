@@ -18,25 +18,8 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;module&quot;,
-	&quot;troopjs-util/merge&quot;
-], function ConfigModule(module, merge) {
-<span id='log-config'>	/**
-</span>	 * Provides configuration for the logging package
-	 * @class log.config
-	 * @protected
-	 * @static
-	 * @alias feature.config
-	 */
-
-	return merge.call({
-<span id='log-config-cfg-sinks'>		/**
-</span>		 * Sinks that the {@link log.sink.forward} logger will use
-		 * @cfg {log.console[]} sinks
-		 */
-		&quot;sinks&quot;: []
-	}, module.config());
+define([], function PatternModule() {
+return /^(?:initi|fin)alized?$/;
 });</pre>
 </body>
 </html>

@@ -35,7 +35,7 @@ define([ &quot;../mixin/decorator&quot; ], function BeforeDecoratorModule(Decora
 	 * @method constructor
 	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
 	 * value (if not undefined) will be send as the arguments of original function.
-	 * @returns {compose.mixin.decorator}
+	 * @return {compose.mixin.decorator}
 	 */
 	return function before(func) {
 		return new Decorator(function (descriptor) {

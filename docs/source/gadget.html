@@ -21,9 +21,10 @@
 define([
 	&quot;./base&quot;,
 	&quot;./runner/pipeline&quot;,
+	&quot;troopjs-compose/mixin/config&quot;,
 	&quot;when&quot;,
 	&quot;../pubsub/hub&quot;
-],function GadgetModule(Component, pipeline, when, hub) {
+],function GadgetModule(Component, pipeline, COMPOSE_CONF, when, hub) {
 	&quot;use strict&quot;;
 
 <span id='core-component-gadget'>	/**
@@ -59,7 +60,7 @@ define([
 	 * 	});
 	 *
 	 * @class core.component.gadget
-	 * @extends core.component.base
+	 * @extend core.component.base
 	 */
 
 	var UNDEFINED;
@@ -68,12 +69,20 @@ define([
 	var RUNNER = &quot;runner&quot;;
 	var CONTEXT = &quot;context&quot;;
 	var CALLBACK = &quot;callback&quot;;
-	var FEATURES = &quot;features&quot;;
+	var ARGS = &quot;args&quot;;
 	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
 	var HUB = &quot;hub&quot;;
 	var RE = new RegExp(&quot;^&quot; + HUB + &quot;/(.+)&quot;);
+
+	// Add pragma for HUB special
+	COMPOSE_CONF.pragmas.push({
+		&quot;pattern&quot;: /^hub(?:\:(memory))?\/(.+)/,
+		&quot;replace&quot;: function ($0, $1, $2) {
+			return HUB + &quot;(\&quot;&quot; + $2 + &quot;\&quot;, &quot; + !!$1 + &quot;)&quot;;
+		}
+	});
 
 <span id='core-component-gadget-method-constructor'>	/**
 </span>	 * @method constructor
@@ -91,7 +100,7 @@ define([
 			var me = this;
 
 			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
-				return me.subscribe(special[TYPE], special[VALUE], special[FEATURES]);
+				return me.subscribe(special[ARGS][0], special[VALUE]);
 			});
 		},
 
@@ -110,11 +119,12 @@ define([
 				.map(function (special) {
 					var memory;
 					var result;
+					var topic = special[ARGS][0];
 
-					if (special[FEATURES] === &quot;memory&quot; &amp;&amp; (memory = me.peek(special[TYPE], empty)) !== empty) {
+					if (special[ARGS][1] === true &amp;&amp; (memory = me.peek(topic, empty)) !== empty) {
 						// Redefine result
 						result = {};
-						result[TYPE] = special[NAME];
+						result[TYPE] = HUB + &quot;/&quot; + topic;
 						result[RUNNER] = pipeline;
 						result[CONTEXT] = me;
 						result[CALLBACK] = special[VALUE];
@@ -182,7 +192,7 @@ define([
 		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
 		 */
 		&quot;subscribe&quot; : function subscribe(event, callback, data) {
-			return this.on(&quot;hub/&quot; + event, callback, data);
+			return this.on(HUB + &quot;/&quot; + event, callback, data);
 		},
 
 <span id='core-component-gadget-method-unsubscribe'>		/**
@@ -191,7 +201,7 @@ define([
 		 * @localdoc Unsubscribe from public events in context of this component.
 		 */
 		&quot;unsubscribe&quot; : function unsubscribe(event, callback) {
-			return this.off(&quot;hub/&quot; + event, callback);
+			return this.off(HUB + &quot;/&quot; + event, callback);
 		},
 
 <span id='core-component-gadget-method-peek'>		/**

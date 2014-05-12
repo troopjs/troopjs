@@ -19,18 +19,17 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../../component/service&quot;,
+	&quot;troopjs-core/component/service&quot;,
 	&quot;when&quot;,
-	&quot;when/apply&quot;,
 	&quot;poly/array&quot;,
 	&quot;poly/object&quot;
-], function To1xModule(Service, when, apply) {
+], function To1xModule(Service, when) {
 	&quot;use strict&quot;;
 
-<span id='core-pubsub-proxy-to1x'>	/**
+<span id='opt-pubsub-proxy-to1x'>	/**
 </span>	 * Proxies to 1.x hub
-	 * @class core.pubsub.proxy.to1x
-	 * @extends core.component.service
+	 * @class opt.pubsub.proxy.to1x
+	 * @extend core.component.service
 	 */
 
 	var UNDEFINED;
@@ -50,7 +49,7 @@ define([
 	var DEFER = &quot;defer&quot;;
 	var MEMORY = &quot;memory&quot;;
 
-<span id='core-pubsub-proxy-to1x-method-constructor'>	/**
+<span id='opt-pubsub-proxy-to1x-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @param {...Object} routes Routes
 	 */
@@ -61,9 +60,9 @@ define([
 
 		this.configure(config);
 	}, {
-		&quot;displayName&quot; : &quot;core/pubsub/proxy/to1x&quot;,
+		&quot;displayName&quot; : &quot;opt/pubsub/proxy/to1x&quot;,
 
-<span id='core-pubsub-proxy-to1x-handler-sig-initialize'>		/**
+<span id='opt-pubsub-proxy-to1x-handler-sig-initialize'>		/**
 </span>		 * @inheritdoc
 		 * @localdoc Initializes proxy topics
 		 * @handler
@@ -195,7 +194,7 @@ define([
 
 						// If we have a deferred we should chain it to result
 						if (deferred) {
-							when(result, apply(deferred.resolve), deferred.reject, deferred.progress);
+							when(result, when.apply(deferred.resolve), deferred.reject, deferred.progress);
 						}
 
 						// Return result
@@ -213,7 +212,7 @@ define([
 			});
 		},
 
-<span id='core-pubsub-proxy-to1x-handler-sig-finalize'>		/**
+<span id='opt-pubsub-proxy-to1x-handler-sig-finalize'>		/**
 </span>		 * @inheritdoc
 		 * @localdoc Finalizes proxy topics
 		 * @handler

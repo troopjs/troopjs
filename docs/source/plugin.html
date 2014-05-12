@@ -30,13 +30,14 @@ define([
 ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
 	&quot;use strict&quot;;
 
-<span id='browser-loom-plugin'>	/**
+<span id='dom-loom-plugin'>	/**
 </span>	 * Extends {@link jQuery} with:
 	 *
 	 *  - {@link $#property-weave} and {@link $#property-woven} properties
 	 *  - {@link $#method-weave}, {@link $#method-unweave} and {@link $#method-woven} methods
 	 *
-	 * @class browser.loom.plugin
+	 * @class dom.loom.plugin
+	 * @static
 	 * @alias plugin.jquery
 	 */
 
@@ -54,7 +55,7 @@ define([
 <span id='global-method-hasDataWeaveAttr'>	/**
 </span>	 * Tests if element has a data-weave attribute
 	 * @param element to test
-	 * @returns {boolean}
+	 * @return {boolean}
 	 * @ignore
 	 */
 	function hasDataWeaveAttr(element) {
@@ -64,16 +65,19 @@ define([
 <span id='global-method-hasDataWovenAttr'>	/**
 </span>	 * Tests if element has a data-woven attribute
 	 * @param element to test
-	 * @returns {boolean}
+	 * @return {boolean}
 	 * @ignore
 	 */
 	function hasDataWovenAttr(element) {
 		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
 	}
 
+<span id='$'>	/**
+</span>	 * @class $
+	 */
+
 <span id='$-property-weave'>	/**
 </span>	 * jQuery `:weave` expression
-	 * @member $
 	 * @property weave
 	 */
 	$EXPR[&quot;:&quot;][WEAVE] = $CREATEPSEUDO
@@ -113,7 +117,6 @@ define([
 
 <span id='$-property-woven'>	/**
 </span>	 * jQuery `:woven` expression
-	 * @member $
 	 * @property woven
 	 */
 	$EXPR[&quot;:&quot;][WOVEN] = $CREATEPSEUDO
@@ -151,23 +154,20 @@ define([
 		};
 
 <span id='$-method-weave'>	/**
-</span>	 * @member $
-	 * @method weave
-	 * @inheritdoc browser.loom.weave#constructor
+</span>	 * @method weave
+	 * @inheritdoc dom.loom.weave#constructor
 	 */
 	$FN[WEAVE] = weave;
 
 <span id='$-method-unweave'>	/**
-</span>	 * @member $
-	 * @method unweave
-	 * @inheritdoc browser.loom.unweave#constructor
+</span>	 * @method unweave
+	 * @inheritdoc dom.loom.unweave#constructor
 	 */
 	$FN[UNWEAVE] = unweave;
 
 <span id='$-method-woven'>	/**
-</span>	 * @member $
-	 * @method woven
-	 * @inheritdoc browser.loom.woven#constructor
+</span>	 * @method woven
+	 * @inheritdoc dom.loom.woven#constructor
 	 */
 	$FN[WOVEN] = woven;
 });

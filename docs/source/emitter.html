@@ -38,7 +38,7 @@ define([
 	 *  - pipeline: where a handler receives the return value of the previous one.
 	 *
 	 * @class core.event.emitter
-	 * @extends core.mixin.base
+	 * @extend core.mixin.base
 	 */
 
 	var UNDEFINED;
@@ -207,7 +207,7 @@ define([
 		 * @param {Function} [event.runner] The runner function that determinate how the handlers are executed, overrides the
 		 * default behaviour of the event emitting.
 		 * @param {...*} [args] Data params that are passed to the listener function.
-		 * @returns {*} Result returned from runner.
+		 * @return {*} Result returned from runner.
 		 */
 		&quot;emit&quot; : function emit(event, args) {
 			var me = this;

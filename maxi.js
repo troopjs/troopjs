@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-5+af099d4 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.1+94c74c1 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-define('troopjs/version',[], "3.0.0-5+af099d4");
+define('troopjs/version',[], "3.0.0-pr.1+94c74c1");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -120,15 +120,9 @@ define('troopjs-compose/mixin/config',[
 
 	return merge.call({
 		/**
-		 * @cfg {RegExp} pattern RegExp used to determine if a method is a special
-		 * @private
-		 */
-		"pattern": /^(\w+)(?::(.+?))?\/(.+)/,
-
-		/**
 		 * @cfg {Object[]} pragmas Pragmas used to rewrite methods before processing
 		 * @cfg {RegExp} pragmas.pattern Matching pattern
-		 * @cfg {String} pragmas.replace Replacement string
+		 * @cfg {String|Function} pragmas.replace Replacement String or function
 		 * @protected
 		 */
 		"pragmas": []
@@ -193,7 +187,7 @@ define('troopjs-util/unique',[],function UniqueModule() {
 	 * @param {Function} [fn] The comparator function.
 	 * @param {Function} fn.one One element to compare.
 	 * @param {Function} fn.other The other element to compare with.
-	 * @returns {Number} New length of array
+	 * @return {Number} New length of array
 	 */
 	return function unique(comparator) {
 		var arg;
@@ -243,19 +237,200 @@ define('troopjs-util/unique',[],function UniqueModule() {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
+define('troopjs-util/getargs',[],function GetArgsModule() {
+	
+
+	/**
+	 * @class util.getargs
+	 * @mixin Function
+	 * @static
+	 */
+
+	var UNDEFINED;
+	var STR_SUBSTRING = String.prototype.substring;
+	var STR_SLICE = String.prototype.slice;
+	var RE_STRING = /^(["']).*\1$/;
+	var RE_BOOLEAN = /^(?:false|true)$/i;
+	var RE_BOOLEAN_TRUE = /^true$/i;
+	var RE_DIGIT = /^\d+$/;
+
+	/**
+	 * Function that calls on a String, to parses it as function parameters delimited by commas.
+	 *
+	 * 	" 1  , '2' , 3  ,false,5 "
+	 *
+	 * results in
+	 *
+	 * 	[ 1, "2", 3, false, 5]
+	 *
+	 *
+	 * and
+	 *
+	 * 	"'1, 2 ',  3,\"4\", 5 "
+	 *
+	 * results in
+	 *
+	 * 	[ "1, 2 ", 3, "4", 5 ]
+	 *
+	 * Also handles named parameters.
+	 *
+	 * 	"1, two=2, 3, 'key.four'=4, 5"
+	 *
+	 * results in
+	 *
+	 * 	result = [1, 2, 3, 4, 5]
+	 * 	result["two"] === result[1]
+	 * 	result["key.four"] === result[3]
+	 *
+	 * @method constructor
+	 * @return {Array} the array of parsed params.
+	 */
+	return function getargs() {
+		var me = this;
+		var values = [];
+		var from;
+		var to;
+		var index;
+		var length;
+		var quote = false;
+		var key;
+		var c;
+
+		// Try to extract value from the specified string range.
+		function extract(from, to) {
+			// Nothing captured.
+			if (from === to)
+				return;
+
+			var value = STR_SUBSTRING.call(me, from, to);
+			if (RE_STRING.test(value)) {
+				value = STR_SLICE.call(value, 1, -1);
+			}
+			else if (RE_BOOLEAN.test(value)) {
+				value = RE_BOOLEAN_TRUE.test(value);
+			}
+			else if (RE_DIGIT.test(value)) {
+				value = +value;
+			}
+
+			// Store value by index.
+			values.push(value);
+
+			// Store value with key or just index
+			if (key !== UNDEFINED) {
+				values[key] = value;
+				// Reset key
+				key = UNDEFINED;
+			}
+		}
+
+		// Iterate string
+		for (index = from = to = 0, length = me.length; index < length; index++) {
+
+			// Get char
+			c = me.charAt(index);
+
+			switch(c) {
+				case "\"" :
+				/* falls through */
+				case "'" :
+					// If we are currently quoted...
+					if (quote === c) {
+						// Stop quote
+						quote = false;
+
+						// Update to
+						to = index + 1;
+					}
+					// Otherwise
+					else if (quote === false) {
+						// Start quote
+						quote = c;
+
+						// Update from/to
+						from = to = index;
+					}
+					break;
+
+				case " " :
+				/* falls through */
+				case "\t" :
+					// Continue if we're quoted
+					if (quote) {
+						to = index + 1;
+						break;
+					}
+
+					// Update from/to
+					if (from === to) {
+						from = to = index + 1;
+					}
+					break;
+
+				case "=":
+					// Continue if we're quoted
+					if (quote) {
+						to = index + 1;
+						break;
+					}
+
+					// If we captured something...
+					if (from !== to) {
+						// Extract substring
+						key = STR_SUBSTRING.call(me, from, to);
+
+						if (RE_STRING.test(key)) {
+							key = STR_SLICE.call(key, 1, -1);
+						}
+					}
+
+					from = index + 1;
+					break;
+
+				case "," :
+					// Continue if we're quoted
+					if (quote) {
+						to = index + 1;
+						break;
+					}
+
+					// If we captured something...
+					extract(from, to);
+
+					// Update from/to
+					from = to = index + 1;
+					break;
+
+				default :
+					// Update to
+					to = index + 1;
+			}
+		}
+
+		// If we captured something...
+		extract(from, to);
+
+		return values;
+	};
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define('troopjs-compose/mixin/factory',[
 	"./config",
 	"./decorator",
 	"troopjs-util/unique",
+	"troopjs-util/getargs",
 	"poly/object"
-], function FactoryModule(config, Decorator, unique) {
+], function FactoryModule(config, Decorator, unique, getargs) {
 	
 
 	/**
 	 * The factory module establishes the fundamental object composition in TroopJS:
 	 *
 	 *  - **First-class mixin** based on prototype, that supports deterministic multiple inheritance that:
-	 *  	- Eliminating the frustrating issues from multi-tiered, single-rooted ancestry;
+	 *    - Eliminating the frustrating issues from multi-tiered, single-rooted ancestry;
 	 *    - Avoid occasionally unexpected modification from prototype chain, from the prototype-based inheritance;
 	 *    - Reduced the function creation overhead in classical inheritance pattern;
 	 *  - **Advice decorator** for method overriding without the need for super call;
@@ -342,19 +517,23 @@ define('troopjs-compose/mixin/factory',[
 	var SPECIALS = "specials";
 	var GROUP = "group";
 	var VALUE = "value";
-	var FEATURES = "features";
+	var ARGS = "args";
 	var TYPE = "type";
 	var TYPES = "types";
 	var NAME = "name";
-	var RE_SPECIAL = config["pattern"];
 	var PRAGMAS = config["pragmas"];
-	var PRAGMAS_LENGTH = PRAGMAS[LENGTH];
+
+	// A special must be in form of a function call (ended in parenthesis), and have an optional type following a slash,
+	// <special>[/<type>](<arguments>)
+	// e.g. sig/start(), hub(foo/bar/baz)
+	var RE = /^(.*?)(?:\/([^\(]+))?\((.*)\)$/;
 
 	/**
 	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
+	 * @method create
 	 * @static
 	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @returns {compose.mixin} Object instance created out of the mixin of constructors and objects.
+	 * @return {Object} Object instance created out of the mixin of constructors and objects.
 	 */
 	function create(mixin) {
 		/*jshint validthis:true*/
@@ -368,11 +547,6 @@ define('troopjs-compose/mixin/factory',[
 		return Factory.apply(null, args);
 	}
 
-	/**
-	 * Returns a string representation of this constructor
-	 * @ignore
-	 * @returns {String}
-	 */
 	function ConstructorToString() {
 		var me = this;
 		var prototype = me[PROTOTYPE];
@@ -385,8 +559,9 @@ define('troopjs-compose/mixin/factory',[
 	/**
 	 * Create a new constructor or to extend an existing one from multiple others constructors/objects.
 	 * @method constructor
+	 * @static
 	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @returns {compose.mixin} The constructor (class).
+	 * @return {compose.mixin} Object class created out of the mixin of constructors and objects.
 	 */
 	function Factory (mixin) {
 		var special;
@@ -455,7 +630,7 @@ define('troopjs-compose/mixin/factory',[
 				name = nameRaw = names[j];
 
 				// Iterate PRAGMAS
-				for (k = 0; k < PRAGMAS_LENGTH; k++) {
+				for (k = 0; k < PRAGMAS[LENGTH]; k++) {
 					// Get pragma
 					pragma = PRAGMAS[k];
 
@@ -466,15 +641,18 @@ define('troopjs-compose/mixin/factory',[
 				}
 
 				// Check if this matches a SPECIAL signature
-				if ((matches = RE_SPECIAL.exec(name))) {
+				if ((matches = RE.exec(name))) {
 					// Create special
 					special = {};
 
 					// Set special properties
 					special[GROUP] = group = matches[1];
-					special[FEATURES] = matches[2];
-					special[TYPE] = type = matches[3];
-					special[NAME] = group + "/" + type;
+					// An optional type.
+					if (type = matches[2]) {
+						special[TYPE] = type;
+					}
+					special[NAME] = group + (type ? "/" + type : "");
+					special[ARGS] = getargs.call(matches[3] || "");
 
 					// If the VALUE of the special does not duck-type Function, we should not store it
 					if (OBJECT_TOSTRING.call(special[VALUE] = arg[nameRaw]) !== "[object Function]") {
@@ -528,24 +706,26 @@ define('troopjs-compose/mixin/factory',[
 				? specials[group]
 				: specials[groups[groups[LENGTH]] = group] = [];
 
-			// Get or create types object
-			types = TYPES in group
-				? group[TYPES]
-				: group[TYPES] = [];
+			// Create an index for each type.
+			// TODO: In the future we might want to index each nested sub type.
+			if (type) {
+				// Get or create types object
+				types = TYPES in group
+									? group[TYPES]
+									: group[TYPES] = [];
 
-			// Get or create type object
-			type = type in group
-				? group[type]
-				: group[types[types[LENGTH]] = type] = specials[name] = [];
+				// Get or create type object
+				type = type in group
+								 ? group[type]
+								 : group[types[types[LENGTH]] = type] = specials[name] = [];
+
+				type[type[LENGTH]] = special;
+			}
 
 			// Store special in group/type
-			group[group[LENGTH]] = type[type[LENGTH]] = special;
+			group[group[LENGTH]] = special;
 		}
 
-		/*
-		 * Component constructor
-		 * @returns {Constructor} Constructor
-		 */
 		function Constructor () {
 			// Allow to be created either via 'new' or direct invocation
 			var instance = this instanceof Constructor
@@ -626,7 +806,8 @@ define('troopjs-log/sink/methods',[], function SinkMethodModule() {
  */
 define('troopjs-log/sink/console',[
 	"./methods",
-	"poly/array"
+	"poly/array",
+	"poly/function"
 ], function ConsoleModule(METHODS) {
 	
 
@@ -652,11 +833,11 @@ define('troopjs-log/sink/console',[
 		var nop = function () {};
 
 		METHODS.forEach(function (method) {
-			me[method] = console[method] || nop;
-		});
+			me[method] = this.call(console[method] || nop, console);
+		}, Function.prototype.bind);
 
 		return me;
-	}).call({}, console || {});
+	}).call({}, ( this || window ).console || {});
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -706,6 +887,22 @@ define('troopjs-core/mixin/base',[
 	 */
 
 	/**
+	 * @method create
+	 * @static
+	 * @inheritable
+	 * @inheritdoc
+	 * @return {core.mixin.base} Instance of this class
+	 */
+
+	/**
+	 * @method extend
+	 * @static
+	 * @inheritable
+	 * @inheritdoc
+	 * @return {core.mixin.base} The extended subclass
+	 */
+
+	/**
 	 * Creates a new component instance
 	 * @method constructor
 	 */
@@ -731,7 +928,7 @@ define('troopjs-core/mixin/base',[
 
 		/**
 		 * Gives string representation of this component instance.
-		 * @returns {String} {@link #displayName}`@`{@link #instanceCount}
+		 * @return {String} {@link #displayName}`@`{@link #instanceCount}
 		 * @protected
 		 */
 		"toString" : function _toString() {
@@ -751,7 +948,7 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function SequenceModule(
 	/**
 	 * @class core.event.runner.sequence
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -766,7 +963,7 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function SequenceModule(
 	 * @method constructor
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in "sequence", passing to each handler the same arguments from emitting.
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	return function sequence(event, handlers, args) {
 		var results = [];
@@ -832,7 +1029,7 @@ define('troopjs-core/event/emitter',[
 	 *  - pipeline: where a handler receives the return value of the previous one.
 	 *
 	 * @class core.event.emitter
-	 * @extends core.mixin.base
+	 * @extend core.mixin.base
 	 */
 
 	var UNDEFINED;
@@ -1001,7 +1198,7 @@ define('troopjs-core/event/emitter',[
 		 * @param {Function} [event.runner] The runner function that determinate how the handlers are executed, overrides the
 		 * default behaviour of the event emitting.
 		 * @param {...*} [args] Data params that are passed to the listener function.
-		 * @returns {*} Result returned from runner.
+		 * @return {*} Result returned from runner.
 		 */
 		"emit" : function emit(event, args) {
 			var me = this;
@@ -1053,7 +1250,7 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function Seque
 	/**
 	 * @class core.component.runner.sequence
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -1068,7 +1265,7 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function Seque
 	 * @method constructor
 	 * @inheritdoc
 	 * @localdoc Run event handlers **synchronously** in "sequence", passing to each handler the same arguments from emitting.
-	 * @returns {*[]} Result from each executed handler
+	 * @return {*[]} Result from each executed handler
 	 */
 	return function sequence(event, handlers, args) {
 		var context = event[CONTEXT];
@@ -1120,7 +1317,7 @@ define('troopjs-core/registry/component',[
 	/**
 	 * A light weight implementation to register key/value pairs by key and index
 	 * @class core.registry.component
-	 * @extends core.mixin.base
+	 * @extend core.mixin.base
 	 */
 
 	var UNDEFINED;
@@ -1250,41 +1447,22 @@ define('troopjs-core/registry/component',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/runner/config',[
-	"module",
-	"troopjs-util/merge"
-], function LoomConfigModule(module, merge) {
-	
-
-	/**
-	 * Provides configuration for the pubsub package
-	 * @class core.pubsub.runner.config
-	 * @protected
-	 * @static
-	 * @alias feature.config
-	 */
-	return merge.call({
-		/**
-		 * @cfg {RegExp} pattern RegExp used to determine if a {@link core.component.base#phase phase} should be protected
-		 * @private
-		 */
-		"pattern" : /^(?:initi|fin)alized?$/
-	}, module.config());
+define('troopjs-core/pubsub/runner/pattern',[], function PatternModule() {
+return /^(?:initi|fin)alized?$/;
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/pubsub/runner/pipeline',[
-	"./config",
+	"./pattern",
 	"when"
-], function PipelineModule(config, when) {
+], function PipelineModule(RE_PHASE, when) {
 	
 
 	/**
 	 * @class core.pubsub.runner.pipeline
 	 * @implement core.event.emitter.runner
-	 * @mixin core.pubsub.runner.config
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -1299,13 +1477,12 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	var NEXT = "next";
 	var PHASE = "phase";
 	var MEMORY = "memory";
-	var RE_PHASE = config["pattern"];
 
 	/**
 	 * @method constructor
 	 * @inheritdoc
 	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	return function pipeline(event, handlers, args) {
 		var context = event[CONTEXT];
@@ -1390,7 +1567,7 @@ define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function FromD
 	 * @method constructor
 	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
 	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
-	 * @returns {compose.mixin.decorator}
+	 * @return {compose.mixin.decorator}
 	 */
 	return function from(which, prop) {
 		// Shifting arguments.
@@ -1435,7 +1612,7 @@ define('troopjs-core/pubsub/hub',[
 	 * that are provided as shortcuts.
 	 *
 	 * @class core.pubsub.hub
-	 * @extends core.event.emitter
+	 * @extend core.event.emitter
 	 * @singleton
 	 */
 
@@ -1511,7 +1688,7 @@ define('troopjs-core/pubsub/hub',[
 		 *
 		 * @param {String} type The topic to publish.
 		 * @param {...*} [args] Additional params that are passed to the handler function.
-		 * @returns {Promise}
+		 * @return {Promise}
 		 */
 		"publish" : function publish(type, args) {
 			var me = this;
@@ -1532,7 +1709,7 @@ define('troopjs-core/pubsub/hub',[
 		 * Returns value in handlers MEMORY
 		 * @param {String} type event type to peek at
 		 * @param {*} [value] Value to use _only_ if no memory has been recorder
-		 * @returns {*} Value in MEMORY
+		 * @return {*} Value in MEMORY
 		 */
 		"peek": function peek(type, value) {
 			var handlers;
@@ -1642,18 +1819,18 @@ define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function Aro
 	 */
 
 	var VALUE = "value";
-	var NOOP = function () {};
+	var NOP = function () {};
 
 	/**
 	 * Create a decorator that is to override an existing method.
 	 * @method constructor
 	 * @param {Function} func The decorator function which receives the original function as parameter and is supposed to
 	 * return a function that is to replace the original.
-	 * @returns {compose.mixin.decorator}
+	 * @return {compose.mixin.decorator}
 	 */
 	return function around(func) {
 		return new Decorator(function (descriptor) {
-			descriptor[VALUE] = func(descriptor[VALUE] || NOOP);
+			descriptor[VALUE] = func(descriptor[VALUE] || NOP);
 			return descriptor;
 		});
 	}
@@ -1665,13 +1842,14 @@ define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function Aro
 define('troopjs-core/component/base',[
 	"../event/emitter",
 	"./runner/sequence",
+	"troopjs-compose/mixin/config",
 	"./registry",
 	"../task/registry",
 	"troopjs-util/merge",
 	"troopjs-compose/decorator/around",
 	"when",
 	"poly/array"
-], function ComponentModule(Emitter, sequence, componentRegistry, taskRegistry, merge, around, when) {
+], function ComponentModule(Emitter, sequence, COMPOSE_CONF, componentRegistry, taskRegistry, merge, around, when) {
 	
 
 	/**
@@ -1711,12 +1889,12 @@ define('troopjs-core/component/base',[
 	 * 		app.start();
 	 * 	});
 	 *
-	 * 	$(window).unload(function on_unload (argument) {\
+	 * 	$(window).unload(function on_unload (argument) {
 	 * 	  app.end();
 	 * 	});
 	 *
 	 * @class core.component.base
-	 * @extends core.event.emitter
+	 * @extend core.event.emitter
 	 */
 
 	var UNDEFINED;
@@ -1887,6 +2065,12 @@ define('troopjs-core/component/base',[
 	 * @return {*|Boolean}
 	 */
 
+	// Add pragma for signals and events.
+	COMPOSE_CONF.pragmas.push({
+		"pattern": /^(?:sig|on)\/.+/,
+		"replace": "$&()"
+	});
+
 	/**
 	 * @method constructor
 	 * @inheritdoc
@@ -1998,7 +2182,7 @@ define('troopjs-core/component/base',[
 		 * 		print(dropdown.configuration.shadow);
 		 *
 		 * @param {...Object} [config] Config(s) to add.
-		 * @returns {Object} The new configuration.
+		 * @return {Object} The new configuration.
 		 */
 		"configure" : function configure(config) {
 			return merge.apply(this[CONFIGURATION], arguments);
@@ -2220,7 +2404,7 @@ define('troopjs-core/component/base',[
 		 *
 		 * @param {Resolver} resolver The task resolver.
 		 * @param {String} [name]
-		 * @returns {Promise}
+		 * @return {Promise}
 		 * @fires sig/task
 		 */
 		"task" : function task(resolver, name) {
@@ -2250,7 +2434,7 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineMod
 	/**
 	 * @class core.component.runner.pipeline
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -2268,7 +2452,7 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineMod
 	 * @method constructor
 	 * @inheritdoc
 	 * @localdoc Run event handlers **asynchronously** in "pipeline", passing the resolved return value (unless it's undefined) of the previous listen to the next handler as arguments.
-	 * @returns {Promise}
+	 * @return {Promise}
 	 */
 	return function pipeline(event, handlers, args) {
 		var context = event[CONTEXT];
@@ -2332,9 +2516,10 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineMod
 define('troopjs-core/component/gadget',[
 	"./base",
 	"./runner/pipeline",
+	"troopjs-compose/mixin/config",
 	"when",
 	"../pubsub/hub"
-],function GadgetModule(Component, pipeline, when, hub) {
+],function GadgetModule(Component, pipeline, COMPOSE_CONF, when, hub) {
 	
 
 	/**
@@ -2370,7 +2555,7 @@ define('troopjs-core/component/gadget',[
 	 * 	});
 	 *
 	 * @class core.component.gadget
-	 * @extends core.component.base
+	 * @extend core.component.base
 	 */
 
 	var UNDEFINED;
@@ -2379,12 +2564,20 @@ define('troopjs-core/component/gadget',[
 	var RUNNER = "runner";
 	var CONTEXT = "context";
 	var CALLBACK = "callback";
-	var FEATURES = "features";
+	var ARGS = "args";
 	var NAME = "name";
 	var TYPE = "type";
 	var VALUE = "value";
 	var HUB = "hub";
 	var RE = new RegExp("^" + HUB + "/(.+)");
+
+	// Add pragma for HUB special
+	COMPOSE_CONF.pragmas.push({
+		"pattern": /^hub(?:\:(memory))?\/(.+)/,
+		"replace": function ($0, $1, $2) {
+			return HUB + "(\"" + $2 + "\", " + !!$1 + ")";
+		}
+	});
 
 	/**
 	 * @method constructor
@@ -2402,7 +2595,7 @@ define('troopjs-core/component/gadget',[
 			var me = this;
 
 			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
-				return me.subscribe(special[TYPE], special[VALUE], special[FEATURES]);
+				return me.subscribe(special[ARGS][0], special[VALUE]);
 			});
 		},
 
@@ -2421,11 +2614,12 @@ define('troopjs-core/component/gadget',[
 				.map(function (special) {
 					var memory;
 					var result;
+					var topic = special[ARGS][0];
 
-					if (special[FEATURES] === "memory" && (memory = me.peek(special[TYPE], empty)) !== empty) {
+					if (special[ARGS][1] === true && (memory = me.peek(topic, empty)) !== empty) {
 						// Redefine result
 						result = {};
-						result[TYPE] = special[NAME];
+						result[TYPE] = HUB + "/" + topic;
 						result[RUNNER] = pipeline;
 						result[CONTEXT] = me;
 						result[CALLBACK] = special[VALUE];
@@ -2493,7 +2687,7 @@ define('troopjs-core/component/gadget',[
 		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
 		 */
 		"subscribe" : function subscribe(event, callback, data) {
-			return this.on("hub/" + event, callback, data);
+			return this.on(HUB + "/" + event, callback, data);
 		},
 
 		/**
@@ -2502,7 +2696,7 @@ define('troopjs-core/component/gadget',[
 		 * @localdoc Unsubscribe from public events in context of this component.
 		 */
 		"unsubscribe" : function unsubscribe(event, callback) {
-			return this.off("hub/" + event, callback);
+			return this.off(HUB + "/" + event, callback);
 		},
 
 		/**
@@ -2517,47 +2711,14 @@ define('troopjs-core/component/gadget',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/dom/config',[
-	"module",
-	"troopjs-util/merge",
-	"jquery"
-], function (module, merge, $) {
+define('troopjs-dom/css/selector',[ "troopjs-compose/mixin/factory" ], function (Factory) {
 	
 
 	/**
-	 * Provides configuration for the dom package
-	 * @class browser.dom.config
-	 * @protected
-	 * @alias feature.config
-	 */
-	return merge.call({
-		/**
-		 * @cfg {Function} querySelectorAll Function that provides `querySelectorAll`
-		 */
-		"querySelectorAll": $.find,
-
-		/**
-		 * @cfg {Function} matchesSelector Function that provides `matchesSelector`
-		 */
-		"matchesSelector": $.find.matchesSelector
-	}, module.config());
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-browser/dom/selector',[
-	"troopjs-compose/mixin/factory",
-	"./config"
-], function (Factory, config) {
-	
-
-	/**
-	 * An optimized CSS selector matcher that {@link browser.component.runner.sequence} relies on for
-	 * delegating DOM event on {@link browser.component.widget}.
-	 * @class browser.dom.selector
+	 * An optimized CSS selector matcher that {@link dom.component.runner.sequence} relies on for
+	 * delegating DOM event on {@link dom.component.widget}.
+	 * @class dom.css.selector
 	 * @implement compose.mixin
-	 * @mixin browser.dom.config
 	 * @private
 	 */
 
@@ -2582,8 +2743,6 @@ define('troopjs-browser/dom/selector',[
 	var COUNT = "count";
 	var BASEVAL = "baseVal";
 	var RE_SPACE = /\s+/;
-	var querySelectorAll = config["querySelectorAll"];
-	var matchesSelector = config["matchesSelector"];
 
 	/**
 	 * Extracts key for universal indexer
@@ -2829,10 +2988,11 @@ define('troopjs-browser/dom/selector',[
 
 		/**
 		 * Matches candidates against element
+		 * @param {Function} matchesSelector `matchesSelector` function
 		 * @param {HTMLElement} element DOM Element
 		 * @return {Array} Matching array of candidates
 		 */
-		"matches": function matches(element) {
+		"matches": function matches(matchesSelector, element) {
 			var me = this;
 			var indexer;
 			var indexed;
@@ -2887,16 +3047,17 @@ define('troopjs-browser/dom/selector',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/component/runner/sequence',[
-	"../../dom/selector",
+define('troopjs-dom/component/runner/sequence',[
+	"../../css/selector",
+	"jquery",
 	"poly/array"
-], function SequenceModule(Selector) {
+], function SequenceModule(Selector, $) {
 	
 
 	/**
-	 * @class browser.component.runner.sequence
+	 * @class dom.component.runner.sequence
 	 * @implement core.event.emitter.runner
-	 * @protected
+	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
@@ -2909,7 +3070,14 @@ define('troopjs-browser/component/runner/sequence',[
 	var NEXT = "next";
 	var SELECTOR = "selector";
 	var MODIFIED = "modified";
+	var MATCHES_SELECTOR = $.find.matchesSelector;
 
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that executes DOM candidates in sequence without overlap
+	 * @return {*} Result from last handler
+	 */
 	return function sequence(event, handlers, args) {
 		var modified = handlers[MODIFIED];
 		var $event = args[0];
@@ -2933,7 +3101,7 @@ define('troopjs-browser/component/runner/sequence',[
 
 		return selector
 			// Filter to only selectors that match target
-			.matches($event.target)
+			.matches(MATCHES_SELECTOR, $event.target)
 			// Reduce so we can catch the end value
 			.reduce(function (result, selector) {
 				// If immediate propagation is stopped we should just return last result
@@ -2954,17 +3122,11 @@ define('troopjs-browser/component/runner/sequence',[
 				return candidate[CALLBACK].apply(candidate[CONTEXT], args);
 			}, UNDEFINED);
 	}
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Runner that executes DOM candidates in sequence without overlap
-	 * @returns {*} Result from last handler
-	 */
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/loom/config',[
+define('troopjs-dom/loom/config',[
 	"module",
 	"troopjs-util/merge"
 ], function LoomConfigModule(module, merge) {
@@ -2972,7 +3134,7 @@ define('troopjs-browser/loom/config',[
 
 	/**
 	 * Provides configuration for the loom package
-	 * @class browser.loom.config
+	 * @class dom.loom.config
 	 * @protected
 	 * @alias feature.config
 	 */
@@ -3003,137 +3165,6 @@ define('troopjs-browser/loom/config',[
 		"woven" : "data-woven"
 	}, module.config());
 });
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-util/getargs',[],function GetArgsModule() {
-	
-
-	/**
-	 * @class util.getargs
-	 * @mixin Function
-	 * @static
-	 */
-
-	var PUSH = Array.prototype.push;
-	var SUBSTRING = String.prototype.substring;
-	var RE_BOOLEAN = /^(?:false|true)$/i;
-	var RE_BOOLEAN_TRUE = /^true$/i;
-	var RE_DIGIT = /^\d+$/;
-
-	/**
-	 * Function that calls on a String, to parses it as function parameters delimited by commas.
-	 *
-	 * 	" 1  , '2' , 3  ,false,5 " => [ 1, "2", 3, false, 5]
-	 * 	'1, 2 ',  3,\"4\", 5  => [ "1, 2 ", 3, "4", 5 ]
-	 *
-	 * @method constructor
-	 * @return {Array} the array of parsed params.
-	 */
-	return function getargs() {
-		var me = this;
-		var result = [];
-		var length;
-		var from;
-		var to;
-		var i;
-		var c;
-		var a;
-		var q = false;
-
-		// Iterate over string
-		for (from = to = i = 0, length = me.length; i < length; i++) {
-			// Get char
-			c = me.charAt(i);
-
-			switch(c) {
-				case "\"" :
-				/* falls through */
-				case "'" :
-					// If we are currently quoted...
-					if (q === c) {
-						// Stop quote
-						q = false;
-
-						// Store result (no need to convert, we know this is a string)
-						PUSH.call(result, SUBSTRING.call(me, from, to));
-					}
-					// Otherwise
-					else {
-						// Start quote
-						q = c;
-					}
-
-					// Update from/to
-					from = to = i + 1;
-					break;
-
-				case "," :
-					// Continue if we're quoted
-					if (q) {
-						to = i + 1;
-						break;
-					}
-
-					// If we captured something...
-					if (from !== to) {
-						a = SUBSTRING.call(me, from, to);
-
-						if (RE_BOOLEAN.test(a)) {
-							a = RE_BOOLEAN_TRUE.test(a);
-						}
-						else if (RE_DIGIT.test(a)) {
-							a = +a;
-						}
-
-						// Store result
-						PUSH.call(result, a);
-					}
-
-					// Update from/to
-					from = to = i + 1;
-					break;
-
-				case " " :
-				/* falls through */
-				case "\t" :
-					// Continue if we're quoted
-					if (q) {
-						to = i + 1;
-						break;
-					}
-
-					// Update from/to
-					if (from === to) {
-						from = to = i + 1;
-					}
-					break;
-
-				default :
-					// Update to
-					to = i + 1;
-			}
-		}
-
-		// If we captured something...
-		if (from !== to) {
-			a = SUBSTRING.call(me, from, to);
-
-			if (RE_BOOLEAN.test(a)) {
-				a = RE_BOOLEAN_TRUE.test(a);
-			}
-			else if (RE_DIGIT.test(a)) {
-				a = +a;
-			}
-
-			// Store result
-			PUSH.call(result, a);
-		}
-
-		return result;
-	};
-});
-
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
@@ -3189,7 +3220,7 @@ define('troopjs-util/defer',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/loom/weave',[
+define('troopjs-dom/loom/weave',[
 	"./config",
 	"require",
 	"when",
@@ -3201,8 +3232,8 @@ define('troopjs-browser/loom/weave',[
 	
 
 	/**
-	 * @class browser.loom.weave
-	 * @mixin browser.loom.config
+	 * @class dom.loom.weave
+	 * @mixin dom.loom.config
 	 * @mixin Function
 	 * @static
 	 */
@@ -3215,20 +3246,30 @@ define('troopjs-browser/loom/weave',[
 	var ARRAY_SHIFT = ARRAY_PROTO.shift;
 	var WEAVE = "weave";
 	var WOVEN = "woven";
+	var LENGTH = "length";
 	var $WARP = config["$warp"];
 	var $WEFT = config["$weft"];
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
 
+	// collect the list of fulfilled promise values from a list of descriptors.
+	function fulfilled(descriptors) {
+		return descriptors.filter(function(d) {
+			return d.state === "fulfilled";
+		}).map(function(d) {
+			return d.value;
+		});
+	}
+
 	/**
-	 * Instantiate all {@link browser.component.widget widgets}  specified in the {@link browser.loom.config#weave weave attribute}
+	 * Instantiate all {@link dom.component.widget widgets}  specified in the {@link dom.loom.config#weave weave attribute}
 	 * of this element, and to signal the widget for start with the arguments.
 	 *
 	 * The weaving will result in:
 	 *
-	 *  - Updates the {@link browser.loom.config#weave woven attribute} with the created widget instances names.
-	 *  - The {@link browser.loom.config#$warp $warp data property} will reference the widget instances.
+	 *  - Updates the {@link dom.loom.config#weave woven attribute} with the created widget instances names.
+	 *  - The {@link dom.loom.config#$warp $warp data property} will reference the widget instances.
 	 *
 	 * @localdoc
 	 *
@@ -3242,8 +3283,8 @@ define('troopjs-browser/loom/weave',[
 	 * 	$el.weave();
 	 *
 	 * @method constructor
-	 * @param {...*} [start_args] Arguments that will be passed to each widget's {@link browser.component.widget#start start} method
-	 * @returns {Promise} Promise for the completion of weaving all widgets.
+	 * @param {...*} [start_args] Arguments that will be passed to each widget's {@link dom.component.widget#start start} method
+	 * @return {Promise} Promise for the completion of weaving all widgets.
 	 */
 	return function weave(start_args) {
 		// Store start_args for later
@@ -3254,7 +3295,7 @@ define('troopjs-browser/loom/weave',[
 			var $element = $(element);
 			var $data = $element.data();
 			var $warp = $data[$WARP] || ($data[$WARP] = []);
-			var $weave = [];
+			var to_weave = [];
 			var weave_attr = $element.attr(ATTR_WEAVE) || "";
 			var weave_args;
 			var re = /[\s,]*(((?:\w+!)?([\w\d_\/\.\-]+)(?:#[^(\s]+)?)(?:\(([^\)]+)\))?)/g;
@@ -3267,17 +3308,30 @@ define('troopjs-browser/loom/weave',[
 			 */
 			var update_attr = function (widgets) {
 				var woven = [];
+				var weaved = [];
+
 				widgets.forEach(function (widget) {
+					weaved.push(widget[$WEFT][WEAVE]);
 					woven.push(widget[$WEFT][WOVEN]);
 				});
 
-				$element.attr(ATTR_WOVEN, function (index, attr) {
-					return (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(woven).join(" ");
-				});
+				$element
+					// Add those widgets to data-woven.
+					.attr(ATTR_WOVEN, function (index, attr) {
+						attr = (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(woven).join(" ");
+						return attr || null;
+					})
+					// Remove only those actually woven widgets from "data-weave".
+					.attr(ATTR_WEAVE, function(index, attr) {
+						var result = [];
+						if (attr !== UNDEFINED) {
+							result = to_weave.filter(function(args) {
+								return weaved.indexOf(args[WEAVE]) < 0;
+							}).map(function(args) { return args[WEAVE]; });
+						}
+						return result[LENGTH] === 0 ? null : result.join(" ");
+					});
 			};
-
-			// Make sure to remove ATTR_WEAVE (so we don't try processing this again)
-			$element.removeAttr(ATTR_WEAVE);
 
 			var args;
 
@@ -3311,11 +3365,11 @@ define('troopjs-browser/loom/weave',[
 				}
 
 				// Push on $weave
-				ARRAY_PUSH.call($weave, weave_args);
+				ARRAY_PUSH.call(to_weave, weave_args);
 			}
 
-			// Return promise of mapped $weave
-			return when.map($weave, function (widget_args) {
+			// process with all successful weaving.
+			return when.settle(to_weave.map(function (widget_args) {
 				// Create deferred
 				var deferred = when.defer();
 				var resolver = deferred.resolver;
@@ -3325,12 +3379,17 @@ define('troopjs-browser/loom/weave',[
 				// Copy WEAVE
 				promise[WEAVE] = widget_args[WEAVE];
 
-				// Add promise to $warp
+				// Add promise to $warp, make sure this is called synchronously.
 				ARRAY_PUSH.call($warp, promise);
 
 				parentRequire([ module ], function (Widget) {
 					var widget;
 					var startPromise;
+
+					// detect if weaving has been canceled somehow.
+					if ($warp.indexOf(promise) === -1) {
+						resolver.reject("cancel");
+					}
 
 					try {
 						// Create widget instance
@@ -3361,7 +3420,7 @@ define('troopjs-browser/loom/weave',[
 
 				// Return promise
 				return promise;
-			})
+			})).then(fulfilled)
 			// Updating the element attributes with started widgets.
 			.tap(update_attr);
 		}));
@@ -3371,7 +3430,7 @@ define('troopjs-browser/loom/weave',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/loom/unweave',[
+define('troopjs-dom/loom/unweave',[
 	"./config",
 	"when",
 	"jquery",
@@ -3381,8 +3440,8 @@ define('troopjs-browser/loom/unweave',[
 	
 
 	/**
-	 * @class browser.loom.unweave
-	 * @mixin browser.loom.config
+	 * @class dom.loom.unweave
+	 * @mixin dom.loom.config
 	 * @mixin Function
 	 * @static
 	 */
@@ -3403,9 +3462,18 @@ define('troopjs-browser/loom/unweave',[
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
 
+	// collect the list of fulfilled promise values from a list of descriptors.
+	function fulfilled(descriptors) {
+		return descriptors.filter(function(d) {
+			return d.state === "fulfilled";
+		}).map(function(d) {
+			return d.value;
+		});
+	}
+
 	/**
 	 * Destroy all widget instances living on this element, that are created
-	 * by {@link browser.loom.weave}, it is also to clean up the attributes
+	 * by {@link dom.loom.weave}, it is also to clean up the attributes
 	 * and data references to the previously instantiated widgets.
 	 *
 	 * @localdoc
@@ -3413,8 +3481,8 @@ define('troopjs-browser/loom/unweave',[
 	 * It also lives as a jquery plugin as {@link $#method-unweave}.
 	 *
 	 * @method constructor
-	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link browser.component.widget#stop stop} method
-	 * @returns {Promise} Promise to the completion of unweaving all woven widgets.
+	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link dom.component.widget#stop stop} method
+	 * @return {Promise} Promise to the completion of unweaving all woven widgets.
 	 */
 	return function unweave(stop_args) {
 		// Store stop_args for later
@@ -3466,7 +3534,8 @@ define('troopjs-browser/loom/unweave',[
 					})
 					// Added back those widget names to data-weave.
 					.attr(ATTR_WEAVE, function (index, attr) {
-							return (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(weave).join(" ");
+						var result = (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(weave);
+						return result[LENGTH] === 0 ? null : result.join(" ");
 					});
 			};
 
@@ -3509,23 +3578,24 @@ define('troopjs-browser/loom/unweave',[
 				$warp[LENGTH] = j;
 			}
 
-			// Return promise of mapped $unweave
-			return when.map($unweave, function (widget) {
-				var deferred;
-				var stopPromise;
+			// process with all successful  weaving.
+			return when.settle($unweave).then(fulfilled).then(function unweaveWidgets(widgets) {
+				return when.map(widgets, function(widget) {
+					var deferred;
+					var stopPromise;
 
-				// TODO: Detecting TroopJS 1.x widget from *version* property.
-				if (widget.trigger) {
-					deferred = Defer();
-					widget.stop(deferred);
-					stopPromise = deferred.promise;
-				}
-				else {
-					stopPromise = widget.stop.apply(widget, stop_args);
-				}
-
-				// Add deferred update of attr
-				return stopPromise.yield(widget);
+					// TODO: Detecting TroopJS 1.x widget from *version* property.
+					if (widget.trigger) {
+						deferred = Defer();
+						widget.stop(deferred);
+						stopPromise = deferred.promise;
+					}
+					else {
+						stopPromise = widget.stop.apply(widget, stop_args);
+					}
+					// Add deferred update of attr
+					return stopPromise.yield(widget);
+				});
 			})
 			// Updating the weave/woven attributes with stopped widgets.
 			.tap(update_attr);
@@ -3545,14 +3615,18 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 	 *  - {@link $#event-destroy} event
 	 *
 	 * @class jquery.destroy
+	 * @static
 	 * @alias plugin.jquery
 	 */
 
 	var DESTROY = "destroy";
 
 	/**
+	 * @class $
+	 */
+
+	/**
 	 * A special jQuery event whose handler will be called, only when this handler it's removed from the element.
-	 * @member $
 	 * @event destroy
 	 */
 	$.event.special[DESTROY] = {
@@ -3579,9 +3653,10 @@ define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/component/widget',[
+define('troopjs-dom/component/widget',[
 	"troopjs-core/component/gadget",
 	"./runner/sequence",
+	"troopjs-compose/mixin/config",
 	"jquery",
 	"when",
 	"troopjs-util/merge",
@@ -3589,13 +3664,13 @@ define('troopjs-browser/component/widget',[
 	"../loom/weave",
 	"../loom/unweave",
 	"troopjs-jquery/destroy"
-], function WidgetModule(Gadget, sequence, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
+], function WidgetModule(Gadget, sequence, COMPOSE_CONF, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
 	
 
 	/**
 	 * Component that attaches to an DOM element, considerably delegates all DOM manipulations.
-	 * @class browser.component.widget
-	 * @extends core.component.gadget
+	 * @class dom.component.widget
+	 * @extend core.component.gadget
 	 * @alias widget.component
 	 */
 
@@ -3610,7 +3685,7 @@ define('troopjs-browser/component/widget',[
 	var MODIFIED = "modified";
 	var PROXY = "proxy";
 	var DOM = "dom";
-	var FEATURES = "features";
+	var ARGS = "args";
 	var NAME = "name";
 	var VALUE = "value";
 	var TYPE = "type";
@@ -3624,23 +3699,39 @@ define('troopjs-browser/component/widget',[
 	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
 	 * @ignore
 	 * @param {Function} $fn jQuery method
-	 * @returns {Function} proxied render
+	 * @return {Function} proxied render
 	 */
 	function $render($fn) {
 		/**
 		 * @ignore
-		 * @param {Function|String} contents Template/String to render
+		 * @param {Function|String|Promise} [contents] Contents to render or a Promise for contents
 		 * @param {...*} [args] Template arguments
-		 * @returns {Promise} Promise of  render
+		 * @return {String|Promise} The returned content string or promise of rendering.
 		 */
 		function render(contents, args) {
 			/*jshint validthis:true*/
 			var me = this;
 
-			// Call render with contents (or result of contents if it's a function)
-			return loom_weave.call($fn.call(me[$ELEMENT],
-				typeof contents === TYPEOF_FUNCTION ? contents.apply(me, ARRAY_SLICE.call(arguments, 1)) : contents
-			).find(SELECTOR_WEAVE));
+			// Retrieve HTML/Text.
+			if (!arguments.length) {
+				return $fn.call(me[$ELEMENT]);
+			}
+
+			return when
+				// Wait for contents and args to resolve...
+				.all(ARRAY_SLICE.call(arguments))
+				.then(function (_args) {
+					// First argument is the resolved value of contents
+					var _contents = _args.shift();
+
+					// If _contents is a function, apply it with _args, otherwise just pass it along to the callback
+					return when(typeof _contents === TYPEOF_FUNCTION ? _contents.apply(me, _args) : contents, function (result) {
+						// Call $fn in the context of me[$ELEMENT] with result as the only argument
+						// Find something to weave
+						// Pass it to loom_weave and return the result
+						return loom_weave.call($fn.call(me[$ELEMENT], result).find(SELECTOR_WEAVE));
+					});
+				});
 		}
 
 		return render;
@@ -3658,6 +3749,12 @@ define('troopjs-browser/component/widget',[
 			handlers[MODIFIED] = new Date().getTime();
 		}
 	}
+
+	// Add pragmas for DOM specials
+	COMPOSE_CONF.pragmas.push({
+		"pattern": /^dom(?:\:([^\/]+))?\/(.+)/,
+		"replace": DOM + "/$2(\"$1\")"
+	});
 
 	/**
 	 * Creates a new widget that attaches to a specified (jQuery) DOM element.
@@ -3703,7 +3800,7 @@ define('troopjs-browser/component/widget',[
 		}
 
 	}, {
-		"displayName" : "browser/component/widget",
+		"displayName" : "dom/component/widget",
 
 		/**
 		 * @handler
@@ -3714,7 +3811,7 @@ define('troopjs-browser/component/widget',[
 			var me = this;
 
 			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
-				return me.on(special[NAME], special[VALUE], special[FEATURES]);
+				return me.on(special[NAME], special[VALUE], special[ARGS][0]);
 			});
 		},
 
@@ -3735,7 +3832,7 @@ define('troopjs-browser/component/widget',[
 					args = {};
 					args[TYPE] = type;
 					args[RUNNER] = sequence;
-					args = [ args];
+					args = [ args ];
 
 					// Push original arguments on args
 					ARRAY_PUSH.apply(args, arguments);
@@ -3806,14 +3903,14 @@ define('troopjs-browser/component/widget',[
 		},
 
 		/**
-		 * @inheritdoc browser.loom.weave#constructor
+		 * @inheritdoc dom.loom.weave#constructor
 		 */
 		"weave" : function weave() {
 			return loom_weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
 		},
 
 		/**
-		 * @inheritdoc browser.loom.unweave#constructor
+		 * @inheritdoc dom.loom.unweave#constructor
 		 */
 		"unweave" : function unweave() {
 			return loom_unweave.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
@@ -3838,7 +3935,7 @@ define('troopjs-browser/component/widget',[
 		 * @method
 		 * @param {Function|String} contents Template/String to render
 		 * @param {...*} [args] Template arguments
-		 * @returns {Promise} Promise of  render
+		 * @return {Promise} Promise of  render
 		 */
 		"html" : $render($.fn.html),
 
@@ -3868,7 +3965,7 @@ define('troopjs-browser/component/widget',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/application/widget',[
+define('troopjs-dom/application/widget',[
 	"../component/widget",
 	"when"
 ], function ApplicationWidgetModule(Widget, when) {
@@ -3876,8 +3973,8 @@ define('troopjs-browser/application/widget',[
 
 	/**
 	 * The application widget serves as a container for all troop components that bootstrap the page.
-	 * @class browser.application.widget
-	 * @extends browser.component.widget
+	 * @class dom.application.widget
+	 * @extend dom.component.widget
 	 * @alias widget.application
 	 */
 
@@ -3900,7 +3997,7 @@ define('troopjs-browser/application/widget',[
 		 */
 		this[COMPONENTS] = ARRAY_SLICE.call(arguments, 2);
 	}, {
-		"displayName" : "browser/application/widget",
+		"displayName" : "dom/application/widget",
 
 		/**
 		 * @handler
@@ -3966,6 +4063,244 @@ define('troopjs-browser/application/widget',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
+define('troopjs-compose/decorator/after',[ "../mixin/decorator" ], function AfterDecoratorModule(Decorator) {
+	
+
+	/**
+	 * @class compose.decorator.after
+	 * @static
+	 * @alias feature.decorator
+	 */
+
+	var UNDEFINED;
+	var VALUE = "value";
+
+	/**
+	 * Create a decorator method that is to add code that will be executed after the original method.
+	 * @method constructor
+	 * @param {Function} func The decorator function which receives the arguments of the original, it's return value (if
+	 * not undefined) will be the used as the new return value.
+	 * @return {compose.mixin.decorator}
+	 */
+	return function after(func) {
+		return new Decorator(function (descriptor) {
+			var previous = descriptor[VALUE];
+
+			descriptor[VALUE] = previous
+				? function decorated_after() {
+					var me = this;
+					var retval = previous.apply(me, arguments);
+					var newRet = func.apply(me, arguments);
+					return newRet !== UNDEFINED ? newRet : retval;
+				}
+				: func;
+
+			return descriptor;
+		});
+	}
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-compose/decorator/before',[ "../mixin/decorator" ], function BeforeDecoratorModule(Decorator) {
+	
+
+	/**
+	 * @class compose.decorator.before
+	 * @static
+	 * @alias feature.decorator
+	 */
+
+	var UNDEFINED;
+	var VALUE = "value";
+
+	/**
+	 * Create a decorator method that is to add code that will be executed before the original method.
+	 * @method constructor
+	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
+	 * value (if not undefined) will be send as the arguments of original function.
+	 * @return {compose.mixin.decorator}
+	 */
+	return function before(func) {
+		return new Decorator(function (descriptor) {
+			var next = descriptor[VALUE];
+
+			descriptor[VALUE] = next
+				? function decorated_before() {
+					var me = this;
+					var retval = func.apply(me, arguments);
+
+					return next.apply(me, retval !== UNDEFINED ? retval : arguments);
+				}
+				: func;
+
+			return descriptor;
+		});
+	}
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-compose/decorator/extend',[
+	"../mixin/decorator",
+	"troopjs-util/merge"
+], function ExtendDecoratorModule(Decorator, merge) {
+	
+
+	/**
+	 * @class compose.decorator.extend
+	 * @static
+	 * @alias feature.decorator
+	 */
+
+	var UNDEFINED;
+	var VALUE = "value";
+	var ARRAY_CONCAT = Array.prototype.concat;
+
+	/**
+	 * Create a decorator that is to augment an existing Object property.
+	 * @method constructor
+	 * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
+	 * @return {compose.mixin.decorator}
+	 */
+	return function extend(ext) {
+		var args = arguments;
+
+		return new Decorator(function (descriptor, name, descriptors) {
+			var previous = descriptors[name][VALUE];
+			var val;
+
+			if (typeof ext === "function") {
+				val = ext(previous);
+			}
+			else if (previous !== UNDEFINED) {
+				val = merge.apply({}, ARRAY_CONCAT.apply([ previous ], args));
+			}
+
+			descriptor[VALUE] = val;
+
+			return descriptor;
+		});
+	}
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-log/config',[
+	"module",
+	"troopjs-util/merge"
+], function ConfigModule(module, merge) {
+	/**
+	 * Provides configuration for the logging package
+	 * @class log.config
+	 * @protected
+	 * @static
+	 * @alias feature.config
+	 */
+
+	return merge.call({
+		/**
+		 * Sinks that the {@link log.sink.forward} logger will use
+		 * @cfg {log.console[]} sinks
+		 */
+		"sinks": []
+	}, module.config());
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-log/sink/forward',[
+	"./methods",
+	"../config",
+	"poly/array"
+], function ForwardModule(METHODS, CONF) {
+	
+
+	/**
+	 * The forward log sink acts as a forwarder to other log sinks.
+	 *
+	 * It's mainly configured via the {@link log.config#sinks} configuration.
+	 * To configure the forwarder for both the {@link log.sink.console} and the {@link log.sink.null} sink, one could
+	 * do this:
+	 *
+	 *     require.config({
+	 *       "map": {
+	 *         "*": {
+	 *           "troopjs-log/logger": "troopjs-log/sink/forward" // Changes the framework logger
+	 *         }
+	 *       },
+	 *       "deps": [ "troopjs-log/config", "troopjs-log/sink/console", "troopjs-log/sink/null" ],
+	 *       "callback": function (loggingConfig, consoleSink, nullSink) {
+	 *         loggingConfig.sinks.push(consoleSink, nullSink); // Add sinks
+	 *       }
+	 *     });
+	 *
+	 * @class log.sink.forward
+	 * @implement log.console
+	 * @mixin log.config
+	 * @singleton
+	 * @inheritdoc log.sink.console
+	 * @alias feature.logger
+	 */
+
+	var FUNCTION_APPLY = Function.apply;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var SINKS = CONF["sinks"];
+
+	return (function () {
+		var me = this;
+		var forward = function (method) {
+			var args = ARRAY_SLICE.call(arguments, 1);
+
+			SINKS.forEach(function (sink) {
+				FUNCTION_APPLY.call(sink[method], me, args);
+			});
+		};
+
+		METHODS.forEach(function (method) {
+			me[method] = forward.bind(me, method);
+		});
+
+		return me;
+	}).call({});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-log/sink/null',[
+	"./methods",
+	"poly/array"
+], function NullModule(METHODS) {
+	
+
+	/**
+	 * @class log.sink.null
+	 * @implement log.console
+	 * @singleton
+	 * @inheritdoc log.sink.console
+	 * @localdoc
+	 * This class maps every log method to a [nop](https://en.wikipedia.org/wiki/NOP) function,
+	 * effectively suppressing all logging.
+	 * @alias feature.logger
+	 */
+
+	return (function () {
+		var me = this;
+		var nop = function () {};
+
+		METHODS.forEach(function (method) {
+			me[method] = nop;
+		});
+
+		return me;
+	}).call({});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
 	
 
@@ -3973,7 +4308,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 	 * Base class for all service alike components.
 	 *
 	 * @class core.component.service
-	 * @extends core.component.gadget
+	 * @extend core.component.gadget
 	 */
 
 	/**
@@ -3987,19 +4322,18 @@ define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(G
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/proxy/to1x',[
-	"../../component/service",
+define('troopjs-opt/pubsub/proxy/to1x',[
+	"troopjs-core/component/service",
 	"when",
-	"when/apply",
 	"poly/array",
 	"poly/object"
-], function To1xModule(Service, when, apply) {
+], function To1xModule(Service, when) {
 	
 
 	/**
 	 * Proxies to 1.x hub
-	 * @class core.pubsub.proxy.to1x
-	 * @extends core.component.service
+	 * @class opt.pubsub.proxy.to1x
+	 * @extend core.component.service
 	 */
 
 	var UNDEFINED;
@@ -4030,7 +4364,7 @@ define('troopjs-core/pubsub/proxy/to1x',[
 
 		this.configure(config);
 	}, {
-		"displayName" : "core/pubsub/proxy/to1x",
+		"displayName" : "opt/pubsub/proxy/to1x",
 
 		/**
 		 * @inheritdoc
@@ -4164,7 +4498,7 @@ define('troopjs-core/pubsub/proxy/to1x',[
 
 						// If we have a deferred we should chain it to result
 						if (deferred) {
-							when(result, apply(deferred.resolve), deferred.reject, deferred.progress);
+							when(result, when.apply(deferred.resolve), deferred.reject, deferred.progress);
 						}
 
 						// Return result
@@ -4216,8 +4550,8 @@ define('troopjs-core/pubsub/proxy/to1x',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/proxy/to2x',[
-	"../../component/service",
+define('troopjs-opt/pubsub/proxy/to2x',[
+	"troopjs-core/component/service",
 	"when",
 	"poly/array",
 	"poly/object"
@@ -4226,8 +4560,8 @@ define('troopjs-core/pubsub/proxy/to2x',[
 
 	/**
 	 * Proxies to 2.x hub
-	 * @class core.pubsub.proxy.to2x
-	 * @extends core.component.service
+	 * @class opt.pubsub.proxy.to2x
+	 * @extend core.component.service
 	 */
 
 	var ARRAY_PROTO = Array.prototype;
@@ -4254,7 +4588,7 @@ define('troopjs-core/pubsub/proxy/to2x',[
 
 		this.configure(config);
 	}, {
-		"displayName" : "core/pubsub/proxy/to2x",
+		"displayName" : "opt/pubsub/proxy/to2x",
 
 		/**
 		 * @inheritdoc
@@ -4426,6 +4760,674 @@ define('troopjs-core/pubsub/proxy/to2x',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
+define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceModule() {
+	
+
+	/**
+	 * @class opt.route.runner.sequence
+	 * @implement core.event.emitter.runner
+	 * @private
+	 * @static
+	 * @alias feature.runner
+	 */
+
+	var UNDEFINED;
+	var NULL = null;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var DATA = "data";
+	var HEAD = "head";
+	var NEXT = "next";
+	var TYPE = "type";
+	var TOKENS = "tokens";
+
+	var RE_GROUP_START = /\(/g;
+	var RE_TOKEN = /\:(\w+)(\?)?\/?/g;
+	var RE_TOKEN_ESCAPED = /@(\w+)(\?)?\/?/g;
+	var RE_COLON = /\:/g;
+	var MARKER = "@";
+	var RE_GROUPED_TOKEN = /\(([^)]+)\)\??\/?/g;
+	var RE_ANY = /^.*$/;
+	var RE_ESCAPE_REGEXP = /([\/.])/g;
+	var RE_DUP_SLASH = /\/{2,}/;
+
+	var RE_BOOLEAN = /^(?:false|true)$/i;
+	var RE_BOOLEAN_TRUE = /^true$/i;
+	var RE_DIGIT = /^\d+$/;
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that executes ROUTE candidates in sequence without overlap
+	 * @return {*} Result from last handler
+	 * @throws {Error} If `event.type` is an unknown type
+	 */
+	return function sequence(event, handlers, args) {
+		var type = event[TYPE];
+		var path = args.shift(); // Shift path and route of args
+		var data;
+		var matched;
+		var candidate;
+		var candidates = [];
+		var fallbacks = [];
+		var first_missed;
+
+		// If this is a route/set we need to pre-process the path
+		if (type === "route/set") {
+			// route data is provided as the second arg, but we're already shifted above.
+			data = args.shift() || {};
+
+			// Populate path with data
+			path = path
+				// Replace grouped tokens.
+				.replace(RE_GROUPED_TOKEN, function ($0, $1) {
+					var group = $1.replace(RE_TOKEN, function($0, $1) {
+						return data[$1] ? data[$1] + "/" : $0;
+					});
+					// mark the group as missed unless all params within have fulfilled.
+					return !group.match(RE_COLON)? group + "/" : MARKER;
+				})
+				// Replace the rest of tokens.
+				.replace(RE_TOKEN, function($0, $1) {
+					// mark the parameters as missed.
+					return data[$1] ? data[$1] + "/" : MARKER;
+				})
+				// Remove any duplicate slashes previously produced.
+				.replace(RE_DUP_SLASH, "/");
+
+			// Dump from before the first missed parameter.
+			if ((first_missed = path.indexOf(MARKER)) > -1) {
+				path = path.substring(0, first_missed);
+			}
+		}
+		// If this is _not_ a route/change we should throw an error
+		else if (type !== "route/change") {
+			throw new Error("Unable to run type '" + type + "'");
+		}
+
+		// Copy handlers -> candidates
+		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
+			candidate[DATA] === "/404" ? fallbacks.push(candidate) : candidates.push(candidate);
+		}
+
+		// Run candidates and return
+		var result = candidates.reduce(function(result, candidate) {
+			var tokens;
+			var matches;
+			var re;
+
+			// Only run if the reduced result is not `false`
+			if (result !== false) {
+				switch (OBJECT_TOSTRING.call(candidate[DATA])) {
+					case "[object RegExp]":
+						// Use cached regexp
+						re = candidate[DATA];
+
+						// Use cached tokens
+						tokens = candidate[TOKENS];
+						break;
+
+					case "[object Undefined]":
+					// phantom reported weird [object DOMWindow] for undefined property.
+					case "[object DOMWindow]":
+						// Match anything
+						re = RE_ANY;
+
+						// Empty tokens
+						tokens = [];
+						break;
+
+					default:
+						// Reset tokens
+						tokens = candidate[TOKENS] = [];
+
+						// Translate and cache pattern to regexp
+						re = candidate[DATA] = new RegExp("^" + candidate[DATA]
+							// Preserved colon to be used by regexp.
+							.replace(RE_COLON, MARKER)
+							// Translate grouping to non capturing regexp groups
+							.replace(RE_GROUP_START, "(?:")
+							// Capture tokens
+							.replace(RE_TOKEN_ESCAPED, function($0, token, optional) {
+								// Add token
+								tokens.push(token);
+								// Return replacement.
+								return "(?:(\\w+)\/)" + (optional ? "?" : "");
+							})
+							.replace(RE_ESCAPE_REGEXP, "\\$1") + "$", "i");
+				}
+
+				// Match path
+				if ((matches = re.exec(path)) !== NULL) {
+					// Capture tokens in data
+					tokens.forEach(function(token, index) {
+
+						// Auto type convertion.
+						var val = matches[index + 1];
+						if (RE_BOOLEAN.test(val)) {
+							val = RE_BOOLEAN_TRUE.test(val);
+						}
+						else if (RE_DIGIT.test(val)) {
+							val = +val;
+						}
+
+						matches[index + 1] = matches[token] = val;
+					});
+
+					if (!matched) {
+						matched = 1;
+					}
+
+					// Apply CALLBACK and store in result
+					result = candidate[CALLBACK].apply(candidate[CONTEXT],
+						[matches].concat(type === "route/change" ? args : [data].concat(args)));
+				}
+			}
+
+			return result;
+		}, UNDEFINED);
+
+		// Run 404s if none of the candidate matches the route.
+		if (!matched && type === "route/change") {
+			return fallbacks.reduce(function(result, candidate) {
+				result !== false ? candidate[CALLBACK].apply(candidate[CONTEXT], [path].concat(args)) : result;
+			}, result);
+		}
+
+		return result;
+	};
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-opt/route/gadget',[
+	"troopjs-compose/mixin/config",
+	"troopjs-core/component/gadget",
+	"./runner/sequence",
+	"when"
+], function (COMPOSE_CONF, Gadget, sequence, when) {
+	
+
+	/**
+	 * @class opt.route.gadget
+	 * @extend core.component.gadget
+	 */
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ROUTE = "route";
+	var NAME = "name";
+	var TYPE = "type";
+	var VALUE = "value";
+	var ARGS = "args";
+	var RUNNER = "runner";
+
+	/**
+	 * Route set event
+	 * @localdoc Triggered when a route set is requested
+	 * @event route/set
+	 * @param {String} route Route
+	 * @param {Object} data Data
+	 * @param {...*} [args] Additional arguments
+	 * @preventable
+	 */
+
+	/**
+	 * Route change event
+	 * @localdoc Triggered when a route change is requested
+	 * @event route/change
+	 * @param {String} route Route
+	 * @param {String[]} data Data
+	 * @param {...*} [args] Additional arguments
+	 * @preventable
+	 */
+
+	/**
+	 * Route change handler
+	 * @handler route/change
+	 * @inheritdoc #event-route/change
+	 * @localdoc Matches and executes route stored in data
+	 * @template
+	 * @return {*}
+	 */
+
+	/**
+	 * To change the current route
+	 * @event hub/route/set
+	 * @param {String} The new uri
+	 */
+
+	/**
+	 * Runs routes
+	 * @ignore
+	 * @param {String} op Operation
+	 * @param {...*} [args] Additional arguments
+	 * @return {*} Result from last handler
+	 */
+	function runRoute(op) {
+		var me = this;
+
+		// Prepare event object
+		var event = {};
+		event[TYPE] = ROUTE + "/" + op;
+		event[RUNNER] = sequence;
+
+		// Modify first argument
+		arguments[0] = event;
+
+		// Delegate the actual emitting to emit
+		return me.emit.apply(me, arguments);
+	}
+
+	// Add pragma for ROUTE special
+	COMPOSE_CONF.pragmas.push({
+		"pattern": /^route\/(change|set)(\/.*)?$/,
+		"replace": ROUTE + "/$1(\"$2\")"
+	});
+
+	return Gadget.extend({
+		"displayName" : "opt/route/gadget",
+
+		/**
+		 * @handler
+		 * @inheritdoc
+		 * @localdoc Registers event handlers declared ROUTE specials
+		 */
+		"sig/initialize": function onInitialize() {
+			var me = this;
+
+			return when.map(me.constructor.specials[ROUTE] || ARRAY_PROTO, function (special) {
+				return me.on(special[NAME], special[VALUE], special[ARGS][0] || undefined);
+			});
+		},
+
+		/**
+		 * @handler hub/route/change
+		 * @param {String} uri The new URI.
+		 * Handles URI change to dispatch it to individual handlers by emitting a {@link #event-route/change} event
+		 * synchronously, call each handler when the pattern matches the new URI.
+		 */
+		"hub:memory/route/change": function onHashChange(uri) {
+			var me = this;
+			var args = [ "change" ];
+			ARRAY_PUSH.apply(args, arguments);
+			return me.task(function(resolve) {
+				resolve(runRoute.apply(me, args));
+			}, ROUTE + "/change");
+		},
+
+		/**
+		 * Handles route set
+		 * @handler
+		 * @inheritdoc #event-route/set
+		 * @localdoc Translates {@link #event-route/set} to {@link dom.hash.widget#event-hub/hash/set}
+		 * @fires hub/route/set
+		 */
+		"route/set": function onRouteSet(route) {
+			return this.publish("route/set", route["input"]);
+		},
+
+		/**
+		 * Navigate to a new URI by fulfill the route parameters with the specified list of values, after emitting
+		 * a {@link #event-route/set} event synchronously, call each handler whose route pattern where the pattern matches it.
+		 *
+		 * @param {String} pattern The route pattern to construct the new route.
+		 * @param {Object} params The data object contains the parameter values for routing.
+		 * @return {Promise}
+		 * @fires route/set
+		 */
+		"go": function go(pattern, params) {
+			var me = this;
+			var args = [ "set" ];
+			ARRAY_PUSH.apply(args, arguments);
+			return me.task(function (resolve) {
+				resolve(runRoute.apply(me, args));
+			}, ROUTE + "/set");
+		}
+	});
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-opt/store/component',[
+	"troopjs-core/mixin/base",
+	"when",
+	"poly/array"
+], function StoreModule(Base, when) {
+	
+
+	/**
+	 * A simple key-value store that supports **dot separated key** format.
+	 * @class opt.store.component
+	 * @extend core.mixin.base
+	 */
+
+	var UNDEFINED;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARRAY = "[object Array]";
+	var TOSTRING_OBJECT = "[object Object]";
+	var TOSTRING_FUNCTION = "[object Function]";
+	var TOSTRING_STRING = "[object String]";
+	var ARRAY_SLICE = Array.prototype.slice;
+	var LENGTH = "length";
+	var ADAPTERS = "adapters";
+	var STORAGE = "storage";
+	var BEFORE_GET = "beforeGet";
+	var AFTER_PUT = "afterPut";
+	var CLEAR = "clear";
+	var LOCKS = "locks";
+
+	/**
+	 * Applies method to this (if it exists)
+	 * @param {String} method Method name
+	 * @return {Boolean|*}
+	 * @ignore
+	 */
+	function applyMethod(method) {
+		/*jshint validthis:true*/
+		var me = this;
+
+		return method in me && me[method].apply(me, ARRAY_SLICE.call(arguments, 1));
+	}
+
+	/**
+	 * Puts value
+	 * @param {String|null} key Key - can be dot separated for sub keys
+	 * @param {*} value Value
+	 * @return {Promise} Promise of put
+	 * @ignore
+	 */
+	function put(key, value) {
+		/*jshint validthis:true*/
+		var me = this;
+		var node = me[STORAGE];
+		var parts = key
+			? key.split(".")
+			: [];
+		var part;
+		var last = parts.pop();
+
+		while (node && (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = node[part] = {};
+			}
+		}
+
+		// Evaluate value if needed
+		if (OBJECT_TOSTRING.call(value) === TOSTRING_FUNCTION) {
+			value = value.call(me, {
+				"get" : function () {
+					return get.apply(me, arguments);
+				},
+				"has" : function () {
+					return has.apply(me, arguments);
+				}
+			}, key);
+		}
+
+		return last !== UNDEFINED
+			// First store the promise, then override with the true value once resolved
+			? when(value, function (result) {
+				node[last] = result;
+
+				return result;
+			})
+			// No key provided, just return a promise of the value
+			: when(value);
+	}
+
+	/**
+	 * Gets value
+	 * @param {String} key Key - can be dot separated for sub keys
+	 * @return {*} Value
+	 * @ignore
+	 */
+	function get(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(".");
+		var part;
+
+		while (node && (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node;
+	}
+
+	/**
+	 * Check is key exists
+	 * @param key {String} key Key - can be dot separated for sub keys
+	 * @return {Boolean}
+	 * @ignore
+	 */
+	function has(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(".");
+		var part;
+		var last = parts.pop();
+
+		while (node && (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node !== UNDEFINED && last in node;
+	}
+
+	/**
+	 * @method constructor
+	 * @param {...Object} adapter One or more adapters
+	 * @throws {Error} If no adapter was provided
+	 */
+	return Base.extend(function StoreComponent(adapter) {
+		if (arguments[LENGTH] === 0) {
+			throw new Error("No adapter(s) provided");
+		}
+
+		var me = this;
+
+		/**
+		 * Current adapters
+		 * @private
+		 * @readonly
+		 * @property {Array} adapters
+		 */
+		me[ADAPTERS] = ARRAY_SLICE.call(arguments);
+
+		/**
+		 * Current storage
+		 * @private
+		 * @readonly
+		 * @property {Object} storage
+		 */
+		me[STORAGE] = {};
+
+		/**
+		 * Current locks
+		 * @private
+		 * @readonly
+		 * @property {Object} locks
+		 */
+		me[LOCKS] = {};
+	}, {
+		"displayName" : "opt/store/component",
+
+		/**
+		 * Waits for store to be "locked"
+		 * @param {String} key Key
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of ready
+		 */
+		"lock" : function (key, onFulfilled, onRejected, onProgress) {
+			var locks = this[LOCKS];
+			var result;
+
+			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
+				throw new Error("key has to be of type string");
+			}
+
+			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
+
+			return result;
+		},
+
+		/**
+		 * Gets state value
+		 * @param {...String} key Key - can be dot separated for sub keys
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		"get" : function (key, onFulfilled, onRejected, onProgress) {
+			/*jshint curly:false*/
+			var me = this;
+			var keys = ARRAY_SLICE.call(arguments);
+			var i;
+			var iMax;
+
+			// Step until we hit the end or keys[i] is not a string
+			for (i = 0, iMax = keys[LENGTH]; i < iMax && OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
+
+			// Update callbacks
+			onFulfilled = keys[i];
+			onRejected = keys[i+1];
+			onProgress = keys[i+2];
+
+			// Set the new length of keys
+			keys[LENGTH] = i;
+
+			return when
+				.map(keys, function (key) {
+					return when
+						// Map adapters and BEFORE_GET on each adapter
+						.map(me[ADAPTERS], function (adapter) {
+							return when(applyMethod.call(adapter, BEFORE_GET, me, key));
+						})
+						// Get value from STORAGE
+						.then(function () {
+							return get.call(me, key);
+						});
+				})
+				// Add callbacks
+				.then(onFulfilled && when.apply(onFulfilled), onRejected, onProgress);
+		},
+
+		/**
+		 * Puts state value
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		"put" : function (key, value, onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return when(put.call(me, key, value), function (result) {
+				return when
+					// Map adapters and AFTER_PUT on each adapter
+					.map(me[ADAPTERS], function (adapter) {
+						return when(applyMethod.call(adapter, AFTER_PUT, me, key, result));
+					})
+					.yield(result);
+			})
+				// Add callbacks
+				.then(onFulfilled, onRejected, onProgress);
+		},
+
+		/**
+		 * Puts state value if key is UNDEFINED
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		"putIfNotHas" : function (key, value, onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return !me.has(key)
+				? me.put(key, value, onFulfilled, onRejected, onProgress)
+				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
+		},
+
+		/**
+		 * Checks if key exists
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @return {Boolean} True if key exists, otherwise false
+		 */
+		"has" : function (key) {
+			return has.call(this, key);
+		},
+
+		/**
+		 * Clears all adapters
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of clear
+		 */
+		"clear" : function (onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return when
+				.map(me[ADAPTERS], function (adapter) {
+					return when(applyMethod.call(adapter, CLEAR, me));
+				})
+				// Add callbacks
+				.then(onFulfilled && when.apply(onFulfilled), onRejected, onProgress);
+		}
+	});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define('troopjs-net/ajax/service',[
 	"troopjs-core/component/service",
 	"jquery",
@@ -4436,7 +5438,7 @@ define('troopjs-net/ajax/service',[
 	/**
 	 * Provides ajax as a service
 	 * @class net.ajax.service
-	 * @extends core.component.service
+	 * @extend core.component.service
 	 */
 
 	/**
@@ -5541,7 +6543,316 @@ define('troopjs-data/query/service',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/loom/woven',[
+define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
+	
+
+	/**
+	 * Normalized hashchange event. Extends {@link jQuery} with:
+	 *
+	 * - {@link $#event-hashchange} event
+	 *
+	 *
+	 * <div class="notice">
+	 * Heavily influenced by <a href="https://github.com/millermedeiros/Hasher">Hasher</a>
+	 * which is available under <a href="ttp://www.opensource.org/licenses/mit-license.php">MIT license</a>.
+	 * </div>
+	 *
+	 * @class jquery.hashchange
+	 * @static
+	 * @alias plugin.jquery
+	 */
+
+	var INTERVAL = "interval";
+	var HASHCHANGE = "hashchange";
+	var ONHASHCHANGE = "on" + HASHCHANGE;
+	var RE_HASH = /#(.*)$/;
+	var RE_LOCAL = /\?/;
+
+	// hack based on this: http://webreflection.blogspot.com/2009/01/32-bytes-to-know-if-your-browser-is-ie.html
+	var _isIE = '\v' == 'v';
+
+	function getHash(window) {
+		// parsed full URL instead of getting location.hash because Firefox
+		// decode hash value (and all the other browsers don't)
+		// also because of IE8 bug with hash query in local file
+		var result = RE_HASH.exec(window.location.href);
+
+		return result && result[1]
+			? decodeURIComponent(result[1])
+			: "";
+	}
+
+	function Frame(document) {
+		var me = this;
+		var element;
+
+		me.element = element = document.createElement("iframe");
+		element.src = "about:blank";
+		element.style.display = "none";
+	}
+
+	Frame.prototype = {
+		"getElement" : function () {
+			return this.element;
+		},
+
+		"getHash" : function () {
+			return this.element.contentWindow.frameHash;
+		},
+
+		"update" : function (hash) {
+			/*jshint evil:true*/
+			var me = this;
+			var document = me.element.contentWindow.document;
+
+			// Quick return if hash has not changed
+			if (me.getHash() === hash) {
+				return;
+			}
+
+			// update iframe content to force new history record.
+			// based on Really Simple History, SWFAddress and YUI.history.
+			document.open();
+			document.write("<html><head><title>' + document.title + '</title><script type='text/javascript'>var frameHash='" + hash + "';</script></head><body>&nbsp;</body></html>");
+			document.close();
+		}
+	};
+
+	/**
+	 * @class $
+	 */
+
+	/**
+	 * A special jQuery event fired ever when the URL hash has changed.
+	 * @event hashchange
+	 */
+	$.event.special[HASHCHANGE] = {
+		"setup" : function onHashChangeSetup() {
+			var window = this;
+
+			// Quick return if we support onHashChange natively
+			// FF3.6+, IE8+, Chrome 5+, Safari 5+
+			if (ONHASHCHANGE in window) {
+				return false;
+			}
+
+			// Make sure we're always a window
+			if (!$.isWindow(window)) {
+				throw new Error("Unable to bind 'hashchange' to a non-window object");
+			}
+
+			var $window = $(window);
+			var hash = getHash(window);
+			var location = window.location;
+
+			$window.data(INTERVAL, window.setInterval(_isIE
+				? (function () {
+					var document = window.document;
+					var _isLocal = location.protocol === "file:";
+
+					var frame = new Frame(document);
+					document.body.appendChild(frame.getElement());
+					frame.update(hash);
+
+					return function () {
+						var oldHash = hash;
+						var newHash;
+						var windowHash = getHash(window);
+						var frameHash = frame.getHash();
+
+						// Detect changes made pressing browser history buttons.
+						// Workaround since history.back() and history.forward() doesn't
+						// update hash value on IE6/7 but updates content of the iframe.
+						if (frameHash !== hash && frameHash !== windowHash) {
+							// Fix IE8 while offline
+							newHash = decodeURIComponent(frameHash);
+
+							if (hash !== newHash) {
+								hash = newHash;
+								frame.update(hash);
+								$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
+							}
+
+							// Sync location.hash with frameHash
+							location.hash = "#" + encodeURI(_isLocal
+								? frameHash.replace(RE_LOCAL, "%3F")
+								: frameHash);
+						}
+						// detect if hash changed (manually or using setHash)
+						else if (windowHash !== hash) {
+							// Fix IE8 while offline
+							newHash = decodeURIComponent(windowHash);
+
+							if (hash !== newHash) {
+								hash = newHash;
+								$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
+							}
+						}
+					};
+				})()
+				: function () {
+					var oldHash = hash;
+					var newHash;
+					var windowHash = getHash(window);
+
+					if (windowHash !== hash) {
+						// Fix IE8 while offline
+						newHash = decodeURIComponent(windowHash);
+
+						if (hash !== newHash) {
+							hash = newHash;
+							$window.trigger(HASHCHANGE, [ newHash, oldHash ]);
+						}
+					}
+				}, 25));
+		},
+
+		"teardown" : function onHashChangeTeardown() {
+			var window = this;
+
+			// Quick return if we support onHashChange natively
+			if (ONHASHCHANGE in window) {
+				return false;
+			}
+
+			window.clearInterval($.data(window, INTERVAL));
+		}
+	};
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-dom/hash/widget',[
+	"../component/widget",
+	"troopjs-jquery/hashchange"
+], function (Widget) {
+	
+
+	/**
+	 * Widget that attaches to the window object in order to handle `window.location.hash` changes.
+	 * @class dom.hash.widget
+	 * @extend dom.component.widget
+	 * @alias widget.hash
+	 */
+
+	var $ELEMENT = "$element";
+	var HASH = "_hash";
+	var RE = /^#/;
+
+	/**
+	 * Hash change event (global)
+	 * @localdoc Triggered when a {@link #$element} with {@link dom.hash.widget} attached to it changes its hash
+	 * @event hub/hash/change
+	 * @param {String} hash The new hash
+	 */
+
+	/**
+	 * Hash change event (local)
+	 * @localdoc Triggered when the attached {@link #$element} hash is changed
+	 * @event dom/hashchange
+	 * @preventable
+	 * @param {Object} $event {@link jQuery} event
+	 * @param {String} hash The new hash
+	 */
+
+	/**
+	 * Hash set event (global)
+	 * @localdoc Triggered when a component wants to change the hash of an {@link #$element}'s with {@link dom.hash.widget} attached to it
+	 * @event hub/hash/set
+	 * @param {String} hash The new hash
+	 * @param {Boolean} [silent=false] Change the hash silently without triggering {@link dom.hash.widget#event-hub/hash/change} event.
+	 */
+
+	/**
+	 * Hash set event (local)
+	 * @localdoc Triggered when a component wants to change the attached {@link #$element} hash
+	 * @event dom/hashset
+	 * @preventable
+	 * @param {Object} $event {@link jQuery} event
+	 * @param {String} hash The new hash
+	 * @param {Boolean} [silent=false] Change the hash silently without triggering {@link dom.hash.widget#event-dom/hashchange} event.
+	 */
+
+	/**
+	 * Fires whenever the browser route has changed
+	 * @event hub/route/change
+	 * @preventable
+	 * @param {String} hash The new hash
+	 */
+
+	/**
+	 * Hash change handler (global)
+	 * @inheritdoc #event-hub/hash/change
+	 * @handler hub/hash/change
+	 * @template
+	 * @return {Promise}
+	 */
+
+	return Widget.extend({
+		"displayName" : "dom/hash/widget",
+
+		/**
+		 * @inheritdoc
+		 * @handler
+		 */
+		"sig/start" : function () {
+			this[$ELEMENT].trigger("hashchange");
+		},
+
+		/**
+		 * Hash change handler (local)
+		 * @handler
+		 * @inheritdoc #event-dom/hashchange
+		 * @localdoc Handles changing hash of the attached {@link #$element}
+		 * @param {Object} $event {@link jQuery} event
+		 * @fires hub/route/change
+		 */
+		"dom/hashchange": function ($event) {
+			var me = this;
+			var hash = me[$ELEMENT].get(0).location.hash.replace(RE, "");
+
+			// Did anything change?
+			if (hash !== me[HASH]) {
+				// Store and publish new hash
+				me.publish("route/change", me[HASH] = hash);
+			}
+			else {
+				// Prevent further hashchange handlers from receiving this
+				$event.stopImmediatePropagation();
+			}
+		},
+
+		/**
+		 * Hash set handler (local)
+		 * @inheritdoc #event-dom/hashset
+		 * @localdoc Handles setting hash of the attached {@link #$element}
+		 * @handler
+		 */
+		"dom/hashset": function ($event, hash, silent) {
+			this.publish("route/set", hash, silent);
+		},
+
+		/**
+		 * Route set handler (global), implicitly translates to {@link #event-dom/hashset} by setting the {@link #$element} hash
+		 * @handler hub/route/set
+		 * @return {Promise}
+		 */
+		"hub/route/set": function (uri, silent) {
+			var me = this;
+			// If we are silent we update the local me[HASH] to prevent change detection
+			if (silent === true) {
+				me[HASH] = uri;
+			}
+			me[$ELEMENT].get(0).location.hash = uri;
+		}
+	});
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-dom/loom/woven',[
 	"./config",
 	"when",
 	"jquery",
@@ -5550,8 +6861,8 @@ define('troopjs-browser/loom/woven',[
 	
 
 	/**
-	 * @class browser.loom.woven
-	 * @mixin browser.loom.config
+	 * @class dom.loom.woven
+	 * @mixin dom.loom.config
 	 * @mixin Function
 	 * @static
 	 */
@@ -5563,12 +6874,12 @@ define('troopjs-browser/loom/woven',[
 
 	/**
 	 * Retrieve all or specific widget instances living on this element, that are
-	 * created by {@link browser.loom.weave}.
+	 * created by {@link dom.loom.weave}.
 	 *
 	 * It also lives as a jquery plugin as {@link $#method-woven}.
 	 * @method constructor
 	 * @param {...String} [widget] One or more widget names to narrow down the returned ones.
-	 * @returns {Promise} Promise to the completion of retrieving the woven widgets array.
+	 * @return {Promise} Promise to the completion of retrieving the woven widgets array.
 	 */
 	return function woven() {
 		var $woven = [];
@@ -5610,7 +6921,7 @@ define('troopjs-browser/loom/woven',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-browser/loom/plugin',[
+define('troopjs-dom/loom/plugin',[
 	"jquery",
 	"when",
 	"./config",
@@ -5628,7 +6939,8 @@ define('troopjs-browser/loom/plugin',[
 	 *  - {@link $#property-weave} and {@link $#property-woven} properties
 	 *  - {@link $#method-weave}, {@link $#method-unweave} and {@link $#method-woven} methods
 	 *
-	 * @class browser.loom.plugin
+	 * @class dom.loom.plugin
+	 * @static
 	 * @alias plugin.jquery
 	 */
 
@@ -5646,7 +6958,7 @@ define('troopjs-browser/loom/plugin',[
 	/**
 	 * Tests if element has a data-weave attribute
 	 * @param element to test
-	 * @returns {boolean}
+	 * @return {boolean}
 	 * @ignore
 	 */
 	function hasDataWeaveAttr(element) {
@@ -5656,7 +6968,7 @@ define('troopjs-browser/loom/plugin',[
 	/**
 	 * Tests if element has a data-woven attribute
 	 * @param element to test
-	 * @returns {boolean}
+	 * @return {boolean}
 	 * @ignore
 	 */
 	function hasDataWovenAttr(element) {
@@ -5664,8 +6976,11 @@ define('troopjs-browser/loom/plugin',[
 	}
 
 	/**
+	 * @class $
+	 */
+
+	/**
 	 * jQuery `:weave` expression
-	 * @member $
 	 * @property weave
 	 */
 	$EXPR[":"][WEAVE] = $CREATEPSEUDO
@@ -5705,7 +7020,6 @@ define('troopjs-browser/loom/plugin',[
 
 	/**
 	 * jQuery `:woven` expression
-	 * @member $
 	 * @property woven
 	 */
 	$EXPR[":"][WOVEN] = $CREATEPSEUDO
@@ -5743,23 +7057,20 @@ define('troopjs-browser/loom/plugin',[
 		};
 
 	/**
-	 * @member $
 	 * @method weave
-	 * @inheritdoc browser.loom.weave#constructor
+	 * @inheritdoc dom.loom.weave#constructor
 	 */
 	$FN[WEAVE] = weave;
 
 	/**
-	 * @member $
 	 * @method unweave
-	 * @inheritdoc browser.loom.unweave#constructor
+	 * @inheritdoc dom.loom.unweave#constructor
 	 */
 	$FN[UNWEAVE] = unweave;
 
 	/**
-	 * @member $
 	 * @method woven
-	 * @inheritdoc browser.loom.woven#constructor
+	 * @inheritdoc dom.loom.woven#constructor
 	 */
 	$FN[WOVEN] = woven;
 });
@@ -5963,7 +7274,7 @@ define('troopjs-util/select',[],function SelectModule() {
 	 * Function that traverses a JSON object
 	 * @method constructor
 	 * @param {String} query simple JSON query
-	 * @returns {*} Value from traversed query
+	 * @return {*} Value from traversed query
 	 */
 	return function select(query) {
 		var node = this;

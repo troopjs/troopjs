@@ -37,7 +37,7 @@ define([
 	 * that are provided as shortcuts.
 	 *
 	 * @class core.pubsub.hub
-	 * @extends core.event.emitter
+	 * @extend core.event.emitter
 	 * @singleton
 	 */
 
@@ -113,7 +113,7 @@ define([
 		 *
 		 * @param {String} type The topic to publish.
 		 * @param {...*} [args] Additional params that are passed to the handler function.
-		 * @returns {Promise}
+		 * @return {Promise}
 		 */
 		&quot;publish&quot; : function publish(type, args) {
 			var me = this;
@@ -134,7 +134,7 @@ define([
 </span>		 * Returns value in handlers MEMORY
 		 * @param {String} type event type to peek at
 		 * @param {*} [value] Value to use _only_ if no memory has been recorder
-		 * @returns {*} Value in MEMORY
+		 * @return {*} Value in MEMORY
 		 */
 		&quot;peek&quot;: function peek(type, value) {
 			var handlers;

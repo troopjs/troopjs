@@ -21,32 +21,22 @@
 define([
 	&quot;module&quot;,
 	&quot;troopjs-util/merge&quot;
-], function (module, merge) {
-	&quot;use strict&quot;;
-
-<span id='compose-mixin-config'>	/**
-</span>	 * Provides configuration for the {@link compose.mixin.factory}
-	 * @class compose.mixin.config
+], function ConfigModule(module, merge) {
+<span id='log-config'>	/**
+</span>	 * Provides configuration for the logging package
+	 * @class log.config
 	 * @protected
+	 * @static
 	 * @alias feature.config
 	 */
 
 	return merge.call({
-<span id='compose-mixin-config-cfg-pattern'>		/**
-</span>		 * @cfg {RegExp} pattern RegExp used to determine if a method is a special
-		 * @private
+<span id='log-config-cfg-sinks'>		/**
+</span>		 * Sinks that the {@link log.sink.forward} logger will use
+		 * @cfg {log.console[]} sinks
 		 */
-		&quot;pattern&quot;: /^(\w+)(?::(.+?))?\/(.+)/,
-
-<span id='compose-mixin-config-cfg-pragmas'>		/**
-</span>		 * @cfg {Object[]} pragmas Pragmas used to rewrite methods before processing
-		 * @cfg {RegExp} pragmas.pattern Matching pattern
-		 * @cfg {String} pragmas.replace Replacement string
-		 * @protected
-		 */
-		&quot;pragmas&quot;: []
+		&quot;sinks&quot;: []
 	}, module.config());
-});
-</pre>
+});</pre>
 </body>
 </html>

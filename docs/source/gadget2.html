@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;troopjs-compose/mixin/config&quot;,
+	&quot;troopjs-core/component/gadget&quot;,
+	&quot;./runner/sequence&quot;,
+	&quot;when&quot;
+], function (COMPOSE_CONF, Gadget, sequence, when) {
+	&quot;use strict&quot;;
+
+<span id='opt-route-gadget'>	/**
+</span>	 * @class opt.route.gadget
+	 * @extend core.component.gadget
+	 */
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ROUTE = &quot;route&quot;;
+	var NAME = &quot;name&quot;;
+	var TYPE = &quot;type&quot;;
+	var VALUE = &quot;value&quot;;
+	var ARGS = &quot;args&quot;;
+	var RUNNER = &quot;runner&quot;;
+
+<span id='opt-route-gadget-event-route-set'>	/**
+</span>	 * Route set event
+	 * @localdoc Triggered when a route set is requested
+	 * @event route/set
+	 * @param {String} route Route
+	 * @param {Object} data Data
+	 * @param {...*} [args] Additional arguments
+	 * @preventable
+	 */
+
+<span id='opt-route-gadget-event-route-change'>	/**
+</span>	 * Route change event
+	 * @localdoc Triggered when a route change is requested
+	 * @event route/change
+	 * @param {String} route Route
+	 * @param {String[]} data Data
+	 * @param {...*} [args] Additional arguments
+	 * @preventable
+	 */
+
+<span id='opt-route-gadget-handler-route-change'>	/**
+</span>	 * Route change handler
+	 * @handler route/change
+	 * @inheritdoc #event-route/change
+	 * @localdoc Matches and executes route stored in data
+	 * @template
+	 * @return {*}
+	 */
+
+<span id='opt-route-gadget-event-hub-route-set'>	/**
+</span>	 * To change the current route
+	 * @event hub/route/set
+	 * @param {String} The new uri
+	 */
+
+<span id='global-method-runRoute'>	/**
+</span>	 * Runs routes
+	 * @ignore
+	 * @param {String} op Operation
+	 * @param {...*} [args] Additional arguments
+	 * @return {*} Result from last handler
+	 */
+	function runRoute(op) {
+		var me = this;
+
+		// Prepare event object
+		var event = {};
+		event[TYPE] = ROUTE + &quot;/&quot; + op;
+		event[RUNNER] = sequence;
+
+		// Modify first argument
+		arguments[0] = event;
+
+		// Delegate the actual emitting to emit
+		return me.emit.apply(me, arguments);
+	}
+
+	// Add pragma for ROUTE special
+	COMPOSE_CONF.pragmas.push({
+		&quot;pattern&quot;: /^route\/(change|set)(\/.*)?$/,
+		&quot;replace&quot;: ROUTE + &quot;/$1(\&quot;$2\&quot;)&quot;
+	});
+
+	return Gadget.extend({
+		&quot;displayName&quot; : &quot;opt/route/gadget&quot;,
+
+<span id='opt-route-gadget-handler-sig-initialize'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc Registers event handlers declared ROUTE specials
+		 */
+		&quot;sig/initialize&quot;: function onInitialize() {
+			var me = this;
+
+			return when.map(me.constructor.specials[ROUTE] || ARRAY_PROTO, function (special) {
+				return me.on(special[NAME], special[VALUE], special[ARGS][0] || undefined);
+			});
+		},
+
+<span id='opt-route-gadget-handler-hub-route-change'>		/**
+</span>		 * @handler hub/route/change
+		 * @param {String} uri The new URI.
+		 * Handles URI change to dispatch it to individual handlers by emitting a {@link #event-route/change} event
+		 * synchronously, call each handler when the pattern matches the new URI.
+		 */
+		&quot;hub:memory/route/change&quot;: function onHashChange(uri) {
+			var me = this;
+			var args = [ &quot;change&quot; ];
+			ARRAY_PUSH.apply(args, arguments);
+			return me.task(function(resolve) {
+				resolve(runRoute.apply(me, args));
+			}, ROUTE + &quot;/change&quot;);
+		},
+
+<span id='opt-route-gadget-handler-route-set'>		/**
+</span>		 * Handles route set
+		 * @handler
+		 * @inheritdoc #event-route/set
+		 * @localdoc Translates {@link #event-route/set} to {@link dom.hash.widget#event-hub/hash/set}
+		 * @fires hub/route/set
+		 */
+		&quot;route/set&quot;: function onRouteSet(route) {
+			return this.publish(&quot;route/set&quot;, route[&quot;input&quot;]);
+		},
+
+<span id='opt-route-gadget-method-go'>		/**
+</span>		 * Navigate to a new URI by fulfill the route parameters with the specified list of values, after emitting
+		 * a {@link #event-route/set} event synchronously, call each handler whose route pattern where the pattern matches it.
+		 *
+		 * @param {String} pattern The route pattern to construct the new route.
+		 * @param {Object} params The data object contains the parameter values for routing.
+		 * @return {Promise}
+		 * @fires route/set
+		 */
+		&quot;go&quot;: function go(pattern, params) {
+			var me = this;
+			var args = [ &quot;set&quot; ];
+			ARRAY_PUSH.apply(args, arguments);
+			return me.task(function (resolve) {
+				resolve(runRoute.apply(me, args));
+			}, ROUTE + &quot;/set&quot;);
+		}
+	});
+});
+</pre>
+</body>
+</html>
