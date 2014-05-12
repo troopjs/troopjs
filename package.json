@@ -45,7 +45,8 @@
 		}
 	],
 	"scripts": {
-		"test": "grunt test"
+    "pretest": "scripts/pretest.js",
+    "test": "grunt test"
 	},
 	"devDependencies": {
 		"grunt": "~0.4",
@@ -59,6 +60,7 @@
 		"grunt-semver": "~0.1",
 		"load-grunt-tasks": "~0.4",
 		"semver": "~2.3",
-		"lodash": "~2.4"
+		"lodash": "~2.4",
+		"shelljs": "~0.3"
 	}
 }
