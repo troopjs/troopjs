@@ -1,7 +1,7 @@
 {
 	"name": "troopjs",
 	"description": "TroopJS package",
-	"version": "3.0.0-6",
+	"version": "3.0.0-pr.1",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -45,8 +45,8 @@
 		}
 	],
 	"scripts": {
-    "pretest": "scripts/pretest.js",
-    "test": "grunt test"
+		"pretest": "scripts/pretest.js",
+		"test": "grunt test"
 	},
 	"devDependencies": {
 		"grunt": "~0.4",
