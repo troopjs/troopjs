@@ -15,8 +15,8 @@ bower_components/troopjs-core/logger/service.js
 bower_components/troopjs-net/ajax/service.js
 bower_components/troopjs-browser/loom/config.js
 bower_components/troopjs-utils/getargs.js
-bower_components/troopjs-browser/loom/weave.js
 bower_components/troopjs-browser/loom/unweave.js
+bower_components/troopjs-browser/loom/weave.js
 bower_components/troopjs-browser/loom/woven.js
 bower_components/troopjs-browser/loom/plugin.js
 bower_components/troopjs-jquery/destroy.js
@@ -63,8 +63,8 @@ bower_components/troopjs-core/logger/service.js
 bower_components/troopjs-net/ajax/service.js
 bower_components/troopjs-browser/loom/config.js
 bower_components/troopjs-utils/getargs.js
-bower_components/troopjs-browser/loom/weave.js
 bower_components/troopjs-browser/loom/unweave.js
+bower_components/troopjs-browser/loom/weave.js
 bower_components/troopjs-browser/loom/woven.js
 bower_components/troopjs-browser/loom/plugin.js
 bower_components/troopjs-jquery/destroy.js
@@ -103,8 +103,8 @@ bower_components/troopjs-core/logger/service.js
 bower_components/troopjs-net/ajax/service.js
 bower_components/troopjs-browser/loom/config.js
 bower_components/troopjs-utils/getargs.js
-bower_components/troopjs-browser/loom/weave.js
 bower_components/troopjs-browser/loom/unweave.js
+bower_components/troopjs-browser/loom/weave.js
 bower_components/troopjs-browser/loom/woven.js
 bower_components/troopjs-browser/loom/plugin.js
 bower_components/troopjs-jquery/destroy.js
