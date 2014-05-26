@@ -18,7 +18,6 @@ define([
 	"troopjs-data/query/service",
 	"troopjs-dom/hash/widget",
 	"troopjs-dom/loom/plugin",
-	"troopjs-jquery/noconflict",
 	"troopjs-requirejs/multiversion",
 	"troopjs-requirejs/shadow",
 	"troopjs-requirejs/json"
