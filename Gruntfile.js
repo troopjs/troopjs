@@ -146,6 +146,19 @@ module.exports = function(grunt) {
 			}
 		},
 
+		eslint: {
+			options: {
+				// custom eslint rules configuration.
+				config: '.eslintrc',
+				rulesdir: ['eslint']
+			},
+			// including all source files.
+			target: grunt.file.expand([
+				'bower_components/troopjs-*/**/*.js',
+				'!bower_components/troopjs-*/{test,bower_components}/**'
+			])
+		},
+
 		"clean" : {
 			"dist" : [ "<%= build.dist %>" ]
 		},

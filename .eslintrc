@@ -1,0 +1,30 @@
+{
+	"env": {
+		"browser": true,
+		"amd": true
+	},
+
+	"globals": {
+	},
+
+	/*
+		Tuning lint rules:
+		https://github.com/eslint/eslint/tree/master/docs/rules
+		https://github.com/eslint/eslint/blob/master/conf/eslint.json
+	*/
+	"rules": {
+		"eqeqeq": 2,
+		"block-scoped-var": 2,
+		"guard-for-in": 2,
+		"no-else-return": 2,
+		"default-case": 2,
+		"wrap-iife": 2,
+		"camelcase": 0,
+		"strict": 0,
+		"dot-notation": 0,
+		"no-cond-assign": 0,
+		"no-empty-label": 0,
+		"no-fallthrough": 0,
+		"no-labels": 0
+	}
+}

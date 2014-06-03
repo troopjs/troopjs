@@ -58,6 +58,7 @@
 		"grunt-git-describe": "~2.3",
 		"grunt-git-dist": "~0.4",
 		"grunt-semver": "~0.1",
+		"grunt-eslint": "~0",
 		"load-grunt-tasks": "~0.4",
 		"semver": "~2.3",
 		"lodash": "~2.4",
