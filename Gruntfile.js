@@ -24,30 +24,6 @@ module.exports = function(grunt) {
 		return result;
 	}
 
-	/**
-	 * Value replacer
-	 * @private
-	 * @param key {String}
-	 * @param value {*}
-	 * @return {*}
-	 */
-	function replacer(key, value) {
-		return _.isEmpty(value) ? UNDEFINED : value;
-	}
-
-	/**
-	 * Reads from and writes to passing callback
-	 * @private
-	 * @param from {String} From path
-	 * @param to {String} To path
-	 * @param callback {Function} Callback
-	 */
-	function transform(from, to, callback) {
-		grunt.log.write("Transforming from " + from.cyan + " to " + to.cyan + "...");
-		grunt.file.write(to, JSON.stringify(_.transform(grunt.file.readJSON(from), callback), replacer, "\t"));
-		grunt.log.ok();
-	}
-
 	// Configure grunt
 	grunt.initConfig({
 		"pkg": grunt.file.readJSON("bower.json"),
@@ -244,40 +220,6 @@ module.exports = function(grunt) {
 
 	//Load all local grunt tasks
 	grunt.loadTasks("tasks");
-
-	grunt.registerTask("transform", "Transform package files", function () {
-		var src = grunt.config("build.src");
-		var dist = grunt.config("build.dist");
-		var version = grunt.config("pkg.version");
-
-		transform(path.join(src, "bower.json"), path.join(dist, "bower.json"), function (result, value, key) {
-			switch (key) {
-				case "version":
-					result[key] = version;
-					break;
-
-				case "dependencies":
-					result[key] = _.omit(value, function (version, name) {
-						return /^troopjs-\w+$/.test(name);
-					});
-					break;
-
-				default:
-					result[key] = value;
-			}
-		});
-
-		transform(path.join(src, "package.json"), path.join(dist, "package.json"), function (result, value, key) {
-			switch (key) {
-				case "version":
-					result[key] = version;
-					break;
-
-				default:
-					result[key] = value;
-			}
-		});
-	});
 
 	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
 		var args = [ "semver", "bundles" ];
