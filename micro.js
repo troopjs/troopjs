@@ -1,5 +1,5 @@
 /**
- * troopjs - 2.0.3+3d1492a © Mikael Karon mailto:mikael@karon.se
+ * troopjs - 2.0.5+01ab95d © Mikael Karon mailto:mikael@karon.se
  * @license MIT http://troopjs.mit-license.org/
  */
 
@@ -1784,139 +1784,6 @@ define('troopjs-utils/getargs',[],function GetArgsModule() {
 	};
 });
 /**
- * TroopJS browser/loom/weave
- * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
- */
-define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "troopjs-utils/getargs", "poly/array" ], function WeaveModule(config, parentRequire, when, $, getargs) {
-	"use strict";
-
-	var UNDEFINED;
-	var NULL = null;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_MAP = ARRAY_PROTO.map;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var WEAVE = "weave";
-	var WOVEN = "woven";
-	var $WARP = config["$warp"];
-	var $WEFT = config["$weft"];
-	var ATTR_WEAVE = config[WEAVE];
-	var ATTR_WOVEN = config[WOVEN];
-	var RE_SEPARATOR = /[\s,]+/;
-
-	/**
-	 * Weaves elements
-	 * @returns {Promise} of weaving
-	 */
-	return function weave() {
-		// Store start_args for later
-		var start_args = arguments;
-
-		// Map elements
-		return when.all(ARRAY_MAP.call(this, function (element) {
-			var $element = $(element);
-			var $data = $element.data();
-			var $warp = $data[$WARP] || ($data[$WARP] = []);
-			var $weave = [];
-			var weave_attr = $element.attr(ATTR_WEAVE) || "";
-			var weave_args;
-			var re = /[\s,]*(([\w_\-\/\.]+)(?:\(([^\)]+)\))?)/g;
-			var matches;
-
-			/**
-			 * Updated attributes
-			 * @param {object} widget Widget
-			 * @private
-			 */
-			var update_attr = function (widget) {
-				var woven = widget[$WEFT][WOVEN];
-
-				$element.attr(ATTR_WOVEN, function (index, attr) {
-					var result = [ woven ];
-
-					if (attr !== UNDEFINED) {
-						ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
-					}
-
-					return result.join(" ");
-				});
-			};
-
-			// Make sure to remove ATTR_WEAVE (so we don't try processing this again)
-			$element.removeAttr(ATTR_WEAVE);
-
-			// Iterate weave_attr (while re matches)
-			// matches[1] : widget name and arguments - "widget/name(1, 'string', false)"
-			// matches[2] : widget name - "widget/name"
-			// matches[3] : widget arguments - "1, 'string', false"
-			while ((matches = re.exec(weave_attr)) !== NULL) {
-				/*jshint loopfunc:true*/
-				// Create weave_args
-				weave_args = [ $element, matches[2] ];
-
-				// Store matches[1] as WEAVE on weave_args
-				weave_args[WEAVE] = matches[1];
-
-				// If there were additional arguments
-				if (matches[3] !== UNDEFINED) {
-					// Parse matches[2] using getargs, map the values and append to weave_args
-					ARRAY_PUSH.apply(weave_args, getargs.call(matches[3]).map(function (value) {
-						// If value from $data if key exist
-						return value in $data
-							? $data[value]
-							: value;
-					}));
-				}
-
-				// Push on $weave
-				ARRAY_PUSH.call($weave, weave_args);
-			}
-
-			// Return promise of mapped $weave
-			return when.all($weave.map(function (widget_args) {
-				// Create deferred
-				var deferred = when.defer();
-				var resolver = deferred.resolver;
-				var promise = deferred.promise;
-
-				// Copy WEAVE
-				promise[WEAVE] = widget_args[WEAVE];
-
-				// Add promise to $warp
-				ARRAY_PUSH.call($warp, promise);
-
-				// Add deferred update of attr
-				when(promise, update_attr);
-
-				// Require module, add error handler
-				parentRequire([ widget_args[1] ], function (Widget) {
-					var widget;
-
-					try {
-						// Create widget instance
-						widget = Widget.apply(Widget, widget_args);
-
-						// Add $WEFT to widget
-						widget[$WEFT] = promise;
-
-						// Add WOVEN to promise
-						promise[WOVEN] = widget.toString();
-
-						// Resolve with start yielding widget
-						resolver.resolve(widget.start.apply(widget, start_args).yield(widget));
-					}
-					catch (e) {
-						resolver.reject(e);
-					}
-				}, resolver.reject);
-
-				// Return promise
-				return promise;
-			}));
-		}));
-	};
-});
-
-/**
  * TroopJS browser/loom/unweave
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
  */
@@ -1938,6 +1805,15 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 	var ATTR_WOVEN = config[WOVEN];
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
+
+	// collect the list of fulfilled promise values from a list of descriptors.
+	function fulfilled(descriptors) {
+		return descriptors.filter(function (d) {
+			return d.state === "fulfilled";
+		}).map(function (d) {
+			return d.value;
+		});
+	}
 
 	/**
 	 * Unweaves elements
@@ -1967,18 +1843,24 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 			 * @param {object} widget Widget
 			 * @private
 			 */
-			var update_attr = function (widget) {
-				var $promise = widget[$WEFT];
-				var woven = $promise[WOVEN];
-				var weave = $promise[WEAVE];
+			var update_attr = function (widgets) {
+				var woven = {};
+				var weave = [];
+
+				widgets.forEach(function (widget) {
+					var $promise = widget[$WEFT];
+					woven[$promise[WOVEN]] = 1;
+					weave.push($promise[WEAVE]);
+				});
 
 				$element
+					// Remove those widgets from data-woven.
 					.attr(ATTR_WOVEN, function (index, attr) {
 						var result = [];
 
 						if (attr !== UNDEFINED) {
 							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR).filter(function (part) {
-								return part !== woven;
+								return !( part in woven );
 							}));
 						}
 
@@ -1987,13 +1869,8 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 							: result.join(" ");
 					})
 					.attr(ATTR_WEAVE, function (index, attr) {
-						var result = [ weave ];
-
-						if (attr !== UNDEFINED) {
-							ARRAY_PUSH.apply(result, attr.split(RE_SEPARATOR));
-						}
-
-						return result.join(" ");
+						var result = (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(weave);
+						return result[LENGTH] === 0 ? null : result.join(" ");
 					});
 			};
 
@@ -2036,20 +1913,258 @@ define('troopjs-browser/loom/unweave',[ "./config", "when", "jquery", "poly/arra
 				$warp[LENGTH] = j;
 			}
 
-			// Return promise of mapped $unweave
-			return when.map($unweave, function (widget) {
-				// Store promise of stop yielding widget
-				var promise = widget.stop.apply(widget, stop_args).yield(widget);
-
-				// Add deferred update of attr
-				when(promise, update_attr);
-
-				// Return promise
-				return promise;
-			});
+			// process with all successful  weaving.
+			return when.settle($unweave).then(fulfilled).then(function unweaveWidgets(widgets) {
+				return when.map(widgets, function(widget) {
+					// Store promise of stop yielding widget
+					return widget.stop.apply(widget, stop_args).yield(widget);
+				});
+			})
+			// Updating the weave/woven attributes with stopped widgets.
+			.tap(update_attr);
 		}));
 	};
 });
+
+/**
+ * TroopJS utils/getargs
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-utils/defer',[
+	"when",
+	"poly/array"
+], function DeferModule(when) {
+	"use strict";
+
+	/**
+	 * `when.defer` patched with jQuery/deferred compatibility.
+	 * @class util.defer
+	 * @mixin Function
+	 * @static
+	 */
+
+	var ARRAY_SLICE = Array.prototype.slice;
+
+	/**
+	 * Creates a wrapped when.defer object, which can be send to anything that expects a jQuery/deferred.
+	 * @method constructor
+	 * @return {Deferred}
+	 */
+	return function Defer() {
+		// Create defer
+		var defer = when.defer();
+
+		[ "resolve", "reject", "progress" ].forEach(function (value) {
+			var me = this;
+
+			// Since the deferred implementation in jQuery (that we use in 1.x) allows
+			// to resolve with optional context and multiple arguments, we monkey-patch resolve here
+			var func = me.resolver[value];
+
+			// Resolve/Reject/Progress with parameters:
+			// http://api.jquery.com/deferred.resolve
+			me[value] = function () {
+				func.apply(me, arguments);
+			};
+
+			// Resolve/Reject/Progress with context and parameters:
+			// http://api.jquery.com/deferred.resolveWith
+			me[value + "With"] = function (context) {
+				func.apply(context, ARRAY_SLICE.call(arguments, 1));
+			};
+
+		}, defer);
+
+		return defer;
+	};
+});
+
+/**
+ * TroopJS browser/loom/weave
+ * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
+ */
+define('troopjs-browser/loom/weave',[ "./config", "require", "when", "jquery", "troopjs-utils/getargs", "./unweave", "troopjs-utils/defer", "poly/array" ], function WeaveModule(config, parentRequire, when, $, getargs, unweave, Defer) {
+	"use strict";
+
+	var UNDEFINED;
+	var NULL = null;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_MAP = ARRAY_PROTO.map;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SHIFT = ARRAY_PROTO.shift;
+	var WEAVE = "weave";
+	var WOVEN = "woven";
+	var LENGTH = "length";
+	var $WARP = config["$warp"];
+	var $WEFT = config["$weft"];
+	var ATTR_WEAVE = config[WEAVE];
+	var ATTR_WOVEN = config[WOVEN];
+	var RE_SEPARATOR = /[\s,]+/;
+
+	// collect the list of fulfilled promise values from a list of descriptors.
+	function fulfilled(descriptors) {
+		return descriptors.filter(function(d) {
+			return d.state === "fulfilled";
+		}).map(function(d) {
+			return d.value;
+		});
+	}
+
+	/**
+	 * Weaves elements
+	 * @returns {Promise} of weaving
+	 */
+	return function weave() {
+		// Store start_args for later
+		var start_args = arguments;
+
+		// Map elements
+		return when.all(ARRAY_MAP.call(this, function (element) {
+			var $element = $(element);
+			var $data = $element.data();
+
+			// First time weaving.
+			if(!$data[$WARP]){
+				$element.one("destroy", function() { unweave.call($element); });
+				$data[$WARP] = [];
+			}
+
+			var $warp = $data[$WARP];
+			var to_weave = [];
+			var weave_attr = $element.attr(ATTR_WEAVE) || "";
+			var weave_args;
+			var re = /[\s,]*(((?:\w+!)?([\w\d_\-\/\.]+)(?:#[^(\s]+)?)(?:\(([^\)]+)\))?)/g;
+			var matches;
+
+			/**
+			 * Updated attributes
+			 * @param {object} widget Widget
+			 * @private
+			 */
+			var update_attr = function (widgets) {
+				var woven = [];
+				var weaved = [];
+
+				widgets.forEach(function (widget) {
+					weaved.push(widget[$WEFT][WEAVE]);
+					woven.push(widget[$WEFT][WOVEN]);
+				});
+
+				$element
+					// Add those widgets to data-woven.
+					.attr(ATTR_WOVEN, function (index, attr) {
+						attr = (attr !== UNDEFINED ? attr.split(RE_SEPARATOR) : []).concat(woven).join(" ");
+						return attr || null;
+					})
+					// Remove only those actually woven widgets from "data-weave".
+					.attr(ATTR_WEAVE, function(index, attr) {
+						var result = [];
+						if (attr !== UNDEFINED) {
+							result = to_weave.filter(function(args) {
+								return weaved.indexOf(args[WEAVE]) < 0;
+							}).map(function(args) { return args[WEAVE]; });
+						}
+						return result[LENGTH] === 0 ? null : result.join(" ");
+					});
+			};
+
+			var args;
+
+			// Iterate weave_attr (while re matches)
+			// matches[1] : full widget module name (could be loaded from plugin) - "mv!widget/name#1.x(1, 'string', false)"
+			// matches[2] : widget name and arguments - "widget/name(1, 'string', false)"
+			// matches[3] : widget name - "widget/name"
+			// matches[4] : widget arguments - "1, 'string', false"
+			while ((matches = re.exec(weave_attr)) !== NULL) {
+				/*jshint loopfunc:true*/
+				// Create weave_args
+				// Require module, add error handler
+				// Arguments to pass to the widget constructor.
+				args = matches[4];
+
+				// module name, DOM element, widget display name.
+				weave_args = [ matches[2], $element.get(0), matches[3] ];
+
+				// Store matches[1] as WEAVE on weave_args
+				weave_args[WEAVE] = matches[1];
+
+				// If there were additional arguments
+				if (args !== UNDEFINED) {
+					// Parse matches[2] using getargs, map the values and append to weave_args
+					ARRAY_PUSH.apply(weave_args, getargs.call(args).map(function (value) {
+						// If value from $data if key exist
+						return value in $data
+							? $data[value]
+							: value;
+					}));
+				}
+
+				// Push on $weave
+				ARRAY_PUSH.call(to_weave, weave_args);
+			}
+
+			// process with all successful weaving.
+			return when.settle(to_weave.map(function (widget_args) {
+				// Create deferred
+				var deferred = when.defer();
+				var resolver = deferred.resolver;
+				var promise = deferred.promise;
+				var module = ARRAY_SHIFT.call(widget_args);
+
+				// Copy WEAVE
+				promise[WEAVE] = widget_args[WEAVE];
+
+				// Add promise to $warp
+				ARRAY_PUSH.call($warp, promise);
+
+				setTimeout(function() {
+					parentRequire([ module ], function(Widget) {
+						var widget;
+						var startPromise;
+
+						// detect if weaving has been canceled somehow.
+						if ($warp.indexOf(promise) === -1) {
+							resolver.reject("cancel");
+							return;
+						}
+
+						try {
+							// Create widget instance
+							widget = Widget.apply(Widget, widget_args);
+
+							// Add $WEFT to widget
+							widget[$WEFT] = promise;
+
+							// Add WOVEN to promise
+							promise[WOVEN] = widget.toString();
+
+							// Feature detecting 1.x widget.
+							if(widget.trigger){
+								deferred = Defer();
+								widget.start(deferred);
+								startPromise = deferred.promise;
+							}
+							else
+								startPromise = widget.start.apply(widget, start_args);
+
+							resolver.resolve(startPromise.yield(widget));
+						}
+						catch (e) {
+							resolver.reject(e);
+						}
+					}, resolver.reject);
+				});
+
+				// Return promise
+				return promise;
+			}))
+			.then(fulfilled)
+			// Updating the element attributes with started widgets.
+			.tap(update_attr);
+		}));
+	};
+});
+
 /**
  * TroopJS browser/loom/woven
  * @license MIT http://troopjs.mit-license.org/ © Mikael Karon mailto:mikael@karon.se
@@ -2346,6 +2461,17 @@ define('troopjs-browser/component/widget',[ "troopjs-core/component/gadget", "jq
 
 		if ($element === UNDEFINED) {
 			throw new Error("No $element provided");
+		}
+		else if (!($element.jquery)) {
+			// From a plain dom node.
+			if ($element.nodeType)
+				$element = $($element);
+			else
+				throw new Error('Unsupported widget element');
+		}
+		// Element from another jquery instance.
+		else if ($element.get !== $.fn.get) {
+			$element = $($element.get(0));
 		}
 
 		me[$ELEMENT] = $element;
@@ -3206,5 +3332,5 @@ define('troopjs-browser/mvc/route/widget',[ "../../component/widget" ], function
 		}
 	});
 });
-define('troopjs/version',[],function () { return "2.0.3"; });
+define('troopjs/version',[],function () { return "2.0.5"; });
 define(['troopjs/version'], function (main) { return main; });
