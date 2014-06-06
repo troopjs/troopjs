@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+"use strict";
+
+/*global which echo exit exec*/
+
+require('shelljs/global');
+
+var args = process.argv.slice(2);
+
+if(args.length < 2){
+	console.log([
+		"Generate module map for renames between two version of TroopJS bundles from ./build.txt file",
+		"",
+		"usage: ./changelog [old release version] [new release version]",
+		"       ./changelog origin/build/2.x origin/build/3.x"
+	].join('\n'));
+	exit(1);
+}
+
+var repo = exec('git remote show -n origin', {silent: true}).output.match(/Fetch\s*URL:.*:(.+?)(?=\.git)/);
+if(repo[1] !== 'troopjs/troopjs'){
+	echo("this script has to be running from a troopjs bundle git repository.");
+	exit(1);
+}
+
+function bundle_modules(ref) {
+	// retrieve full list of troopjs modules from rjs manifest ./build.txt file.
+	var manifest = exec('git show ' + ref + ':build.txt', {silent: true}).output;
+	var profile = './maxi.js';
+	var RE = new RegExp(profile.replace(/\./, '\\.') + '(?:\\n-+\\n)([\\s\\S]*?)^$', 'm');
+	return manifest.match(RE)[1].match(/troopjs-.*$/mg);
+}
+
+var older = bundle_modules(args[0]);
+var newer = bundle_modules(args[1]);
+
+function diff(older, newer) {
+	var map = {};
+
+	function map_module(original, current) {
+		map[original] = current;
+	}
+
+	older.forEach(function(module) {
+		var found;
+		var level = 1;
+		var base;
+
+		function basename(module, level) {
+			var components = module.split('/');
+			return components.slice(components.length - level).join('/');
+		}
+
+		function fuzzy_match(found, newModule) {
+			if (basename(newModule, level) === base){
+				found.push(newModule);
+			}
+			return found;
+		}
+
+		// module name is updated.
+		if (newer.indexOf(module) === -1) {
+			do
+			{
+				// each pass in loop check one more level of module name fuzzy match.
+				base = basename(module, level);
+				found = newer.reduce(fuzzy_match, []);
+				level++;
+			}
+			while ( found.length > 1 );
+
+			if(found.length === 1){
+				map_module(module, found[0]);
+			}
+		}
+	});
+	return map;
+}
+
+console.log(JSON.stringify(diff(older, newer), null, 2));
+
+
+
+
