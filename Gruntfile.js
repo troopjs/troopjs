@@ -45,13 +45,14 @@ module.exports = function(grunt) {
 
 		"requirejs" : {
 			"options" : {
-				"baseUrl" : "<%= build.src %>",
+				"baseUrl" : "bower_components",
+				"appDir" : "<%= build.src %>",
 				"dir" : "<%= build.dist %>",
 				"optimize" : "none",
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|test|tasks|guides|jsduck|(?:version|Gruntfile)\.js|(?:package|bower)\.json)/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|scripts|test|tasks|guides|jsduck|(?:version|Gruntfile)\.js|(?:package|bower)\.json)/,
 				"packages" : [{
 					"name": "text",
 					"location": "empty:"
@@ -66,38 +67,8 @@ module.exports = function(grunt) {
 					"location" : "empty:"
 				}, {
 					"name" : "troopjs",
-					"location" : ".",
+					"location" : "..",
 					"main" : "maxi"
-				}, {
-					"name" : "troopjs-log",
-					"location" : "bower_components/troopjs-log"
-				}, {
-					"name" : "troopjs-compose",
-					"location" : "bower_components/troopjs-compose"
-				}, {
-					"name" : "troopjs-core",
-					"location" : "bower_components/troopjs-core"
-				}, {
-					"name" : "troopjs-dom",
-					"location" : "bower_components/troopjs-dom"
-				}, {
-					"name" : "troopjs-net",
-					"location" : "bower_components/troopjs-net"
-				}, {
-					"name" : "troopjs-data",
-					"location" : "bower_components/troopjs-data"
-				}, {
-					"name" : "troopjs-util",
-					"location" : "bower_components/troopjs-util"
-				}, {
-					"name" : "troopjs-jquery",
-					"location" : "bower_components/troopjs-jquery"
-				}, {
-					"name" : "troopjs-requirejs",
-					"location" : "bower_components/troopjs-requirejs"
-				}, {
-					"name" : "troopjs-opt",
-					"location" : "bower_components/troopjs-opt"
 				}],
 				"rawText" : {
 					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
