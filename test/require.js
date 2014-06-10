@@ -1,4 +1,5 @@
 var require = {
+	waitSeconds: 0,
 	// Test against all bower-installed troop modules.
 	"baseUrl": "bower_components",
 	"packages" : [{
