@@ -44,11 +44,11 @@ define([ &quot;jquery&quot; ], function HashchangeModule($) {
 	var RE_LOCAL = /\?/;
 
 	// hack based on this: http://webreflection.blogspot.com/2009/01/32-bytes-to-know-if-your-browser-is-ie.html
-	var _isIE = '\v' == 'v';
+	var _isIE = &#39;\v&#39; == &#39;v&#39;;
 
 	function getHash(window) {
 		// parsed full URL instead of getting location.hash because Firefox
-		// decode hash value (and all the other browsers don't)
+		// decode hash value (and all the other browsers don&#39;t)
 		// also because of IE8 bug with hash query in local file
 		var result = RE_HASH.exec(window.location.href);
 
@@ -88,7 +88,7 @@ define([ &quot;jquery&quot; ], function HashchangeModule($) {
 			// update iframe content to force new history record.
 			// based on Really Simple History, SWFAddress and YUI.history.
 			document.open();
-			document.write(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;' + document.title + '&lt;/title&gt;&lt;script type='text/javascript'&gt;var frameHash='&quot; + hash + &quot;';&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&amp;nbsp;&lt;/body&gt;&lt;/html&gt;&quot;);
+			document.write(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;&#39; + document.title + &#39;&lt;/title&gt;&lt;script type=&#39;text/javascript&#39;&gt;var frameHash=&#39;&quot; + hash + &quot;&#39;;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&amp;nbsp;&lt;/body&gt;&lt;/html&gt;&quot;);
 			document.close();
 		}
 	};
@@ -111,9 +111,9 @@ define([ &quot;jquery&quot; ], function HashchangeModule($) {
 				return false;
 			}
 
-			// Make sure we're always a window
+			// Make sure we&#39;re always a window
 			if (!$.isWindow(window)) {
-				throw new Error(&quot;Unable to bind 'hashchange' to a non-window object&quot;);
+				throw new Error(&quot;Unable to bind &#39;hashchange&#39; to a non-window object&quot;);
 			}
 
 			var $window = $(window);
@@ -136,7 +136,7 @@ define([ &quot;jquery&quot; ], function HashchangeModule($) {
 						var frameHash = frame.getHash();
 
 						// Detect changes made pressing browser history buttons.
-						// Workaround since history.back() and history.forward() doesn't
+						// Workaround since history.back() and history.forward() doesn&#39;t
 						// update hash value on IE6/7 but updates content of the iframe.
 						if (frameHash !== hash &amp;&amp; frameHash !== windowHash) {
 							// Fix IE8 while offline

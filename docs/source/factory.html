@@ -197,7 +197,7 @@ define([
 			// Get arg
 			arg = args[i];
 
-			// If this is a function we're going to add it as a constructor candidate
+			// If this is a function we&#39;re going to add it as a constructor candidate
 			if(typeof arg === TYPEOF_FUNCTION) {
 				// If this is a synthetic constructor then add (child) constructors
 				if (CONSTRUCTORS in arg) {
@@ -328,7 +328,7 @@ define([
 		}
 
 		function Constructor () {
-			// Allow to be created either via 'new' or direct invocation
+			// Allow to be created either via &#39;new&#39; or direct invocation
 			var instance = this instanceof Constructor
 				? this
 				: Object.create(prototype);

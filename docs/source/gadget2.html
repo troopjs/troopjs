@@ -141,8 +141,11 @@ define([
 		 * @localdoc Translates {@link #event-route/set} to {@link dom.hash.widget#event-hub/hash/set}
 		 * @fires hub/route/set
 		 */
-		&quot;route/set&quot;: function onRouteSet(route) {
-			return this.publish(&quot;route/set&quot;, route[&quot;input&quot;]);
+		&quot;route/set&quot;: function onRouteSet(route, data) {
+			var me = this;
+			var args = [ &quot;route/set&quot; ];
+			ARRAY_PUSH.apply(args, arguments);
+			return this.publish.apply(me, args);
 		},
 
 <span id='opt-route-gadget-method-go'>		/**

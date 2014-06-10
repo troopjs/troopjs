@@ -1,6 +1,6 @@
 {
 	"name": "troopjs",
-	"version": "3.0.0-pr.1+94c74c1",
+	"version": "3.0.0-pr.2+fa7fcdb",
 	"authors": [
 		{
 			"name": "Mikael Karon",
@@ -13,6 +13,13 @@
 		"**/.*",
 		"node_modules"
 	],
+	"dependencies": {
+		"jquery": "2.1.1",
+		"poly": "0.6.0",
+		"requirejs-text": "2.0.10",
+		"requirejs": "2.1.9",
+		"when": "3.1.0"
+	},
 	"devDependencies": {
 		"requirejs-text": "~2"
 	}

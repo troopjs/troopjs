@@ -118,8 +118,8 @@ define([ &quot;troopjs-compose/mixin/factory&quot; ], function (Factory) {
 	 * 	tail(&quot;p &gt; div.bar&quot;);              // &quot;div&quot;
 	 * 	tail(&quot;p &gt; a:active&quot;);             // &quot;a&quot;
 	 * 	tail(&quot;.bar&quot;);                     // &quot;.bar&quot;
-	 * 	tail(&quot;input.foo[type='button']&quot;); // &quot;input&quot;
-	 * 	tail(&quot;[type='button']&quot;);          // &quot;*&quot;
+	 * 	tail(&quot;input.foo[type=&#39;button&#39;]&quot;); // &quot;input&quot;
+	 * 	tail(&quot;[type=&#39;button&#39;]&quot;);          // &quot;*&quot;
 	 *
 	 * For more examples see [CSS3 selector spec](http://www.w3.org/TR/selectors/#w3cselgrammar)
 	 * @private
@@ -141,7 +141,7 @@ define([ &quot;troopjs-compose/mixin/factory&quot; ], function (Factory) {
 					 * * Not in skip mode
 					 */
 					if ((c = selector.charAt(--start)) !== SLASH &amp;&amp; !skip) {
-						// We're 2 steps passed the end of the selector so we should adjust for that
+						// We&#39;re 2 steps passed the end of the selector so we should adjust for that
 						start += 2;
 
 						// Break the outer while

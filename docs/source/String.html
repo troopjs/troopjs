@@ -21,7 +21,7 @@
  * `String` is a global object that may be used to construct String instances.
  *
  * String objects may be created by calling the constructor `new String()`. The `String` object wraps
- * JavaScript's string primitive data type with the methods described below. The global function
+ * JavaScript&#39;s string primitive data type with the methods described below. The global function
  * `String()` can also be called without new in front to create a primitive string. String literals in
  * JavaScript are primitive strings.
  *
@@ -36,7 +36,7 @@
  *     s_obj.length;       // 3
  *     s_prim.length;      // 3
  *     s_also_prim.length; // 3
- *     'foo'.length;       // 3
+ *     &#39;foo&#39;.length;       // 3
  *     &quot;foo&quot;.length;       // 3
  *
  * (A string literal is denoted with single or double quotation marks.)
@@ -56,17 +56,17 @@
  *
  * There are two ways to access an individual character in a string. The first is the `charAt` method:
  *
- *     return 'cat'.charAt(1); // returns &quot;a&quot;
+ *     return &#39;cat&#39;.charAt(1); // returns &quot;a&quot;
  *
  * The other way is to treat the string as an array, where each index corresponds to an individual
  * character:
  *
- *     return 'cat'[1]; // returns &quot;a&quot;
+ *     return &#39;cat&#39;[1]; // returns &quot;a&quot;
  *
  * The second way (treating the string as an array) is not part of ECMAScript 3. It is a JavaScript and
  * ECMAScript 5 feature.
  *
- * In both cases, attempting to set an individual character won't work. Trying to set a character
+ * In both cases, attempting to set an individual character won&#39;t work. Trying to set a character
  * through `charAt` results in an error, while trying to set a character via indexing does not throw an
  * error, but the string itself is unchanged.
  *
@@ -153,7 +153,7 @@
  * Reflects the length of the string.
  *
  * This property returns the number of code units in the string. UTF-16, the string format used by JavaScript, uses a single 16-bit
- * code unit to represent the most common characters, but needs to use two code units for less commonly-used characters, so it's
+ * code unit to represent the most common characters, but needs to use two code units for less commonly-used characters, so it&#39;s
  * possible for the value returned by `length` to not match the actual number of characters in the string.
  *
  * For an empty string, `length` is 0.
@@ -179,26 +179,26 @@
  *
  *     var anyString=&quot;Brave new world&quot;;
  *
- *     document.writeln(&quot;The character at index 0 is '&quot; + anyString.charAt(0) + &quot;'&quot;);
- *     document.writeln(&quot;The character at index 1 is '&quot; + anyString.charAt(1) + &quot;'&quot;);
- *     document.writeln(&quot;The character at index 2 is '&quot; + anyString.charAt(2) + &quot;'&quot;);
- *     document.writeln(&quot;The character at index 3 is '&quot; + anyString.charAt(3) + &quot;'&quot;);
- *     document.writeln(&quot;The character at index 4 is '&quot; + anyString.charAt(4) + &quot;'&quot;);
- *     document.writeln(&quot;The character at index 999 is '&quot; + anyString.charAt(999) + &quot;'&quot;);
+ *     document.writeln(&quot;The character at index 0 is &#39;&quot; + anyString.charAt(0) + &quot;&#39;&quot;);
+ *     document.writeln(&quot;The character at index 1 is &#39;&quot; + anyString.charAt(1) + &quot;&#39;&quot;);
+ *     document.writeln(&quot;The character at index 2 is &#39;&quot; + anyString.charAt(2) + &quot;&#39;&quot;);
+ *     document.writeln(&quot;The character at index 3 is &#39;&quot; + anyString.charAt(3) + &quot;&#39;&quot;);
+ *     document.writeln(&quot;The character at index 4 is &#39;&quot; + anyString.charAt(4) + &quot;&#39;&quot;);
+ *     document.writeln(&quot;The character at index 999 is &#39;&quot; + anyString.charAt(999) + &quot;&#39;&quot;);
  *
  * These lines display the following:
  *
- *     The character at index 0 is 'B'
- *     The character at index 1 is 'r'
- *     The character at index 2 is 'a'
- *     The character at index 3 is 'v'
- *     The character at index 4 is 'e'
- *     The character at index 999 is ''
+ *     The character at index 0 is &#39;B&#39;
+ *     The character at index 1 is &#39;r&#39;
+ *     The character at index 2 is &#39;a&#39;
+ *     The character at index 3 is &#39;v&#39;
+ *     The character at index 4 is &#39;e&#39;
+ *     The character at index 999 is &#39;&#39;
  *
  * The following provides a means of ensuring that going through a string loop always provides a whole
  * character, even if the string contains characters that are not in the Basic Multi-lingual Plane.
  *
- *     var str = 'A\uD87E\uDC04Z'; // We could also use a non-BMP character directly
+ *     var str = &#39;A\uD87E\uDC04Z&#39;; // We could also use a non-BMP character directly
  *     for (var i=0, chr; i &lt; str.length; i++) {
  *         if ((chr = getWholeChar(str, i)) === false) {continue;} // Adapt this line at the top of
  * each loop, passing in the whole string and the current iteration and returning a variable to
@@ -210,7 +210,7 @@
  *         var code = str.charCodeAt(i);
  *
  *         if (isNaN(code)) {
- *         return ''; // Position not found
+ *         return &#39;&#39;; // Position not found
  *         }
  *         if (code &lt; 0xD800 || code &gt; 0xDFFF) {
  *             return str.charAt(i);
@@ -218,22 +218,22 @@
  *         if (0xD800 &lt;= code &amp;&amp; code &lt;= 0xDBFF) { // High surrogate (could change last hex to 0xDB7F
  * to treat high private surrogates as single characters)
  *         if (str.length &lt;= (i+1))  {
- *             throw 'High surrogate without following low surrogate';
+ *             throw &#39;High surrogate without following low surrogate&#39;;
  *         }
  *         var next = str.charCodeAt(i+1);
  *         if (0xDC00 &gt; next || next &gt; 0xDFFF) {
- *             throw 'High surrogate without following low surrogate';
+ *             throw &#39;High surrogate without following low surrogate&#39;;
  *         }
  *         return str.charAt(i)+str.charAt(i+1);
  *     }
  *     // Low surrogate (0xDC00 &lt;= code &amp;&amp; code &lt;= 0xDFFF)
  *     if (i === 0) {
- *         throw 'Low surrogate without preceding high surrogate';
+ *         throw &#39;Low surrogate without preceding high surrogate&#39;;
  *     }
  *     var prev = str.charCodeAt(i-1);
  *     if (0xD800 &gt; prev || prev &gt; 0xDBFF) { // (could change last hex to 0xDB7F to treat high private
  * surrogates as single characters)
- *       throw 'Low surrogate without preceding high surrogate';
+ *       throw &#39;Low surrogate without preceding high surrogate&#39;;
  *     }
  *     return false; // We can pass over low surrogates now as the second component in a pair which we
  * have already processed
@@ -245,8 +245,8 @@
  * pairs within a string as the single characters they represent, one can use the following:
  *
  *     function fixedCharAt (str, idx) {
- *         var ret = '';
- *         str += '';
+ *         var ret = &#39;&#39;;
+ *         str += &#39;&#39;;
  *         var end = str.length;
  *
  *         var surrogatePairs = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
@@ -261,7 +261,7 @@
  *     }
  *
  *     if (idx &gt;= end || idx &lt; 0) {
- *         return '';
+ *         return &#39;&#39;;
  *     }
  *
  *     ret += str.charAt(idx);
@@ -313,8 +313,8 @@
  * exist before the specified index position.
  *
  *     function fixedCharCodeAt (str, idx) {
- *         // ex. fixedCharCodeAt ('\uD800\uDC00', 0); // 65536
- *         // ex. fixedCharCodeAt ('\uD800\uDC00', 1); // 65536
+ *         // ex. fixedCharCodeAt (&#39;\uD800\uDC00&#39;, 0); // 65536
+ *         // ex. fixedCharCodeAt (&#39;\uD800\uDC00&#39;, 1); // 65536
  *         idx = idx || 0;
  *         var code = str.charCodeAt(idx);
  *         var hi, low;
@@ -322,7 +322,7 @@
  *             hi = code;
  *             low = str.charCodeAt(idx+1);
  *             if (isNaN(low)) {
- *                 throw 'High surrogate not followed by low surrogate in fixedCharCodeAt()';
+ *                 throw &#39;High surrogate not followed by low surrogate in fixedCharCodeAt()&#39;;
  *             }
  *             return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;
  *         }
@@ -338,7 +338,7 @@
  * earlier in the string is known
  *
  *     function knownCharCodeAt (str, idx) {
- *         str += '';
+ *         str += &#39;&#39;;
  *         var code,
  *         end = str.length;
  *
@@ -408,7 +408,7 @@
  *
  *     &quot;Blue Whale&quot;.indexOf(&quot;blue&quot;)
  *
- * Note that '0' doesn't evaluate to true and '-1' doesn't evaluate to false. Therefore, when checking if a specific string exists
+ * Note that &#39;0&#39; doesn&#39;t evaluate to true and &#39;-1&#39; doesn&#39;t evaluate to false. Therefore, when checking if a specific string exists
  * within another string the correct way to check would be:
  *
  *     &quot;Blue Whale&quot;.indexOf(&quot;Blue&quot;) != -1 // true
@@ -420,8 +420,8 @@
  *
  *     document.write(&quot;&lt;P&gt;The index of the first w from the beginning is &quot; + anyString.indexOf(&quot;w&quot;))          // Displays 8
  *     document.write(&quot;&lt;P&gt;The index of the first w from the end is &quot; + anyString.lastIndexOf(&quot;w&quot;))      // Displays 10
- *     document.write(&quot;&lt;P&gt;The index of 'new' from the beginning is &quot; + anyString.indexOf(&quot;new&quot;))        // Displays 6
- *     document.write(&quot;&lt;P&gt;The index of 'new' from the end is &quot; + anyString.lastIndexOf(&quot;new&quot;))    // Displays 6
+ *     document.write(&quot;&lt;P&gt;The index of &#39;new&#39; from the beginning is &quot; + anyString.indexOf(&quot;new&quot;))        // Displays 6
+ *     document.write(&quot;&lt;P&gt;The index of &#39;new&#39; from the end is &quot; + anyString.lastIndexOf(&quot;new&quot;))    // Displays 6
  *
  * The following example defines two string variables. The variables contain the same string except that the second string contains
  * uppercase letters. The first `writeln` method displays 19. But because the `indexOf` method is case sensitive, the string
@@ -429,8 +429,8 @@
  *
  *     myString=&quot;brie, pepper jack, cheddar&quot;
  *     myCapString=&quot;Brie, Pepper Jack, Cheddar&quot;
- *     document.writeln('myString.indexOf(&quot;cheddar&quot;) is ' + myString.indexOf(&quot;cheddar&quot;))
- *     document.writeln('&lt;P&gt;myCapString.indexOf(&quot;cheddar&quot;) is ' + myCapString.indexOf(&quot;cheddar&quot;))
+ *     document.writeln(&#39;myString.indexOf(&quot;cheddar&quot;) is &#39; + myString.indexOf(&quot;cheddar&quot;))
+ *     document.writeln(&#39;&lt;P&gt;myCapString.indexOf(&quot;cheddar&quot;) is &#39; + myCapString.indexOf(&quot;cheddar&quot;))
  *
  * The following example sets count to the number of occurrences of the letter x in the string str:
  *
@@ -476,10 +476,10 @@
  *     document.write(&quot;&lt;P&gt;The index of the first w from the end is &quot; +
  *     anyString.lastIndexOf(&quot;w&quot;))
  *     // Displays 6
- *     document.write(&quot;&lt;P&gt;The index of 'new' from the beginning is &quot; +
+ *     document.write(&quot;&lt;P&gt;The index of &#39;new&#39; from the beginning is &quot; +
  *     anyString.indexOf(&quot;new&quot;))
  *     // Displays 6
- *     document.write(&quot;&lt;P&gt;The index of 'new' from the end is &quot; +
+ *     document.write(&quot;&lt;P&gt;The index of &#39;new&#39; from the end is &quot; +
  *     anyString.lastIndexOf(&quot;new&quot;))
  *
  * @param {String} searchValue A string representing the value to search for.
@@ -501,9 +501,9 @@
  * The following example demonstrates the different potential results for a string occurring before,
  * after, or at the same level as another:
  *
- *     alert('a'.localeCompare('b')); // -1
- *     alert('b'.localeCompare('a')); // 1
- *     alert('b'.localeCompare('b')); // 0
+ *     alert(&#39;a&#39;.localeCompare(&#39;b&#39;)); // -1
+ *     alert(&#39;b&#39;.localeCompare(&#39;a&#39;)); // 1
+ *     alert(&#39;b&#39;.localeCompare(&#39;b&#39;)); // 0
  *
  * @param {String} compareString The string against which the referring string is comparing.
  * @return {Number} Returns -1 if the string occurs earlier in a sort than
@@ -545,7 +545,7 @@
  *     var matches_array = str.match(regexp);
  *     document.write(matches_array);
  *
- * `matches_array` now equals `['A', 'B', 'C', 'D', 'E', 'a', 'b', 'c', 'd', 'e']`.
+ * `matches_array` now equals `[&#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39;, &#39;a&#39;, &#39;b&#39;, &#39;c&#39;, &#39;d&#39;, &#39;e&#39;]`.
  *
  * @param {RegExp} regexp A {@link RegExp} object. If a non-RegExp object `obj` is passed, it is
  * implicitly converted to a RegExp by using `new RegExp(obj)`.
@@ -569,12 +569,12 @@
  * | `$$`          | Inserts a `$`.
  * | `$&amp;`          | Inserts the matched substring.
  * | `$``          | Inserts the portion of the string that precedes the matched substring.
- * | `$'`          | Inserts the portion of the string that follows the matched substring.
+ * | `$&#39;`          | Inserts the portion of the string that follows the matched substring.
  * | `$n` or `$nn` | Where `n` or `nn` are decimal digits, inserts the _n_th parenthesized submatch string, provided the first
  * |               | argument was a `RegExp` object.
  *
  * You can specify a function as the second parameter. In this case, the function will be invoked after the match has been
- * performed. The function's result (return value) will be used as the replacement string. (Note: the above-mentioned special
+ * performed. The function&#39;s result (return value) will be used as the replacement string. (Note: the above-mentioned special
  * replacement patterns do not apply in this case.) Note that the function will be invoked multiple times for each full match to be
  * replaced if the regular expression in the first parameter is global.
  *
@@ -601,7 +601,7 @@
  *     var newString = &quot;XXzzzz&quot;.replace(/(X*)(z*)/, replacer);
  *
  * In the following example, the regular expression includes the global and ignore case flags which permits replace to replace each
- * occurrence of 'apples' in the string with 'oranges'.
+ * occurrence of &#39;apples&#39; in the string with &#39;oranges&#39;.
  *
  *     var re = /apples/gi;
  *     var str = &quot;Apples are round, and apples are juicy.&quot;;
@@ -646,20 +646,20 @@
  *     {
  *         function upperToHyphenLower(match)
  *         {
- *             return '-' + match.toLowerCase();
+ *             return &#39;-&#39; + match.toLowerCase();
  *         }
  *         return propertyName.replace(/[A-Z]/, upperToHyphenLower);
  *     }
  *
- * Given `styleHyphenFormat('borderTop')`, this returns 'border-top'.
+ * Given `styleHyphenFormat(&#39;borderTop&#39;)`, this returns &#39;border-top&#39;.
  *
  * Because we want to further transform the _result_ of the match before the final substitution is made, we must use a function.
  * This forces the evaluation of the match prior to the `toLowerCase()` method. If we had tried to do this using the match without a
  *  function, the `toLowerCase()` would have no effect.
  *
- *     var newString = propertyName.replace(/[A-Z]/, '-' + '$&amp;'.toLowerCase());  // won't work
+ *     var newString = propertyName.replace(/[A-Z]/, &#39;-&#39; + &#39;$&amp;&#39;.toLowerCase());  // won&#39;t work
  *
- * This is because `'$&amp;'.toLowerCase()` would be evaluated first as a string literal (resulting in the same `'$&amp;'`) before using the
+ * This is because `&#39;$&amp;&#39;.toLowerCase()` would be evaluated first as a string literal (resulting in the same `&#39;$&amp;&#39;`) before using the
  * characters as a pattern.
  *
  * The following example replaces a Fahrenheit degree with its equivalent Celsius degree. The Fahrenheit degree should be a number
@@ -668,7 +668,7 @@
  *
  * The regular expression `test` checks for any number that ends with F. The number of Fahrenheit degree is accessible to the
  * function through its second parameter, `p1`. The function sets the Celsius number based on the Fahrenheit degree passed in a
- * string to the `f2c` function. `f2c` then returns the Celsius number. This function approximates Perl's `s///e` flag.
+ * string to the `f2c` function. `f2c` then returns the Celsius number. This function approximates Perl&#39;s `s///e` flag.
  *
  *     function f2c(x)
  *     {
@@ -776,8 +776,8 @@
  *     function splitString(stringToSplit,separator)
  *     {
  *         var arrayOfStrings = stringToSplit.split(separator);
- *         print('The original string is: &quot;' + stringToSplit + '&quot;');
- *         print('The separator is: &quot;' + separator + '&quot;');
+ *         print(&#39;The original string is: &quot;&#39; + stringToSplit + &#39;&quot;&#39;);
+ *         print(&#39;The separator is: &quot;&#39; + separator + &#39;&quot;&#39;);
  *         print(&quot;The array has &quot; + arrayOfStrings.length + &quot; elements: &quot;);
  *
  *         for (var i=0; i &lt; arrayOfStrings.length; i++)

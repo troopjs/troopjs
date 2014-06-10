@@ -34,19 +34,19 @@
  * any details about consumers.
  *
  *     var deferred = when.defer();
- *     // The deferred's resolver, which can safely be given to other components
+ *     // The deferred&#39;s resolver, which can safely be given to other components
  *     var resolver = deferred.resolver;
  *
  * ## Consumers
  *
  * Consumers can observe the result via {@link #promise}. The promise can be given to any number of components,
  * who can observe the result using {@link when#constructor}.
- * Like {@link #resolver}, even though when.js's Deferred implements the {@link Promise} API, it is better to
- * give only the {@link #promise} to consumers so that they can't modify the Deferred (such as calling
+ * Like {@link #resolver}, even though when.js&#39;s Deferred implements the {@link Promise} API, it is better to
+ * give only the {@link #promise} to consumers so that they can&#39;t modify the Deferred (such as calling
  * {@link #resolve} or {@link #reject} on it!).
  *
  *     var deferred = when.defer();
- *     // The deferred's promise, which can safely be given to other components
+ *     // The deferred&#39;s promise, which can safely be given to other components
  *     var promise = deferred.promise;
  *
  * ## Resolving and rejecting
@@ -54,13 +54,13 @@
  * When a producer provides the result by calling {@link Resolver#resolve resolver.resolve} (or {@link #resolve}), all consumers
  * are notified by having their callbacks (which they registered via {@link when#constructor}) called with the result.
  *
- * A producer may also *reject* the Deferred, signalling that the Deferred's computation failed, or could not complete
+ * A producer may also *reject* the Deferred, signalling that the Deferred&#39;s computation failed, or could not complete
  * given some set of constraints. In this case, all consumers will be notified by having their `errorback` called
  * (the 3rd parameter passed to {@link when#constructor}, or the 2nd parameter passed to `{@link Promise#then}).
  *
  * ## Progress
  *
- * when.js's Deferreds also support progress notifications, to indicate to consumers that the computation is making
+ * when.js&#39;s Deferreds also support progress notifications, to indicate to consumers that the computation is making
  * progress toward its result. A producer may call {@link Resolver#notify resolver.notify} (or {@link #notify}) and pass
  * a single parameter (whatever it wants) to indicate progress. All consumers will be notified by having their
  * progress handler called (the 4th parameter to {@link when#constructor}, or the 3rd parameter to {@link Promise#then}).

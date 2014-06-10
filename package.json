@@ -1,7 +1,7 @@
 {
 	"name": "troopjs",
 	"description": "TroopJS package",
-	"version": "3.0.0-pr.1+94c74c1",
+	"version": "3.0.0-pr.2+fa7fcdb",
 	"author": {
 		"name": "Mikael Karon",
 		"email": "mikael@karon.se"
@@ -58,9 +58,13 @@
 		"grunt-git-describe": "~2.3",
 		"grunt-git-dist": "~0.4",
 		"grunt-semver": "~0.1",
+		"grunt-eslint": "~0",
 		"load-grunt-tasks": "~0.4",
 		"semver": "~2.3",
 		"lodash": "~2.4",
-		"shelljs": "~0.3"
+		"shelljs": "~0.3",
+		"bower": "~1.3",
+		"bower-logger": "~0",
+		"bower-config": "~0"
 	}
 }

@@ -32,7 +32,7 @@
 </span> * Get a trusted promise for `x`. If `x`. If `onFulfilled` is provided then get a trusted promise by transforming `x` with `onFulfilled`.
  *
  * `when()` accepts any promise that provides a thenable promise--any object that provides a `.then()` method,
- * even promises that aren't fully Promises/A+ compliant, such as jQuery's Deferred.
+ * even promises that aren&#39;t fully Promises/A+ compliant, such as jQuery&#39;s Deferred.
  * It will assimilate such promises and make them behave like Promises/A+.
  *
  * @method constructor
@@ -58,7 +58,7 @@
  *
  *  - a value, returns a promise fulfilled with `onFulfilled(x)`
  *  - a promise or thenable, returns a promise that
- *    - if `x` fulfills, will fulfill with the result of calling `onFulfilled` with `x`'s fulfillment value.
+ *    - if `x` fulfills, will fulfill with the result of calling `onFulfilled` with `x`&#39;s fulfillment value.
  *    - if `x` rejects, will reject with the same reason as `x`
  */
 
@@ -86,8 +86,8 @@
 <span id='when-method-lift'>/**
 </span> * Creates a &quot;promisified&quot; version of `f`, which always returns promises (`result` will never throw) and accepts
  * promises or values as arguments. In other words, calling `result(x, y z)` is like calling `when.try(f, x, y, z) `
- * with the added convenience that once you've created `result` you can call it repeatedly or pass it around like
- * any other function. In addition, `result`'s thisArg will behave in a predictable way, like any other
+ * with the added convenience that once you&#39;ve created `result` you can call it repeatedly or pass it around like
+ * any other function. In addition, `result`&#39;s thisArg will behave in a predictable way, like any other
  * function (you can {@link Function#bind} it, or use {@link Function#call} or {@link Function#apply}, etc.).
  *
  * Like {@link #try}, lifting functions provides a convenient way start promise chains without having to explicitly
@@ -154,7 +154,7 @@
  * @param {Function} resolver The resolver function to determinate this promise.
  * @param {Function} resolver.resolve(valueOrPromise) Primary function that seals the fate of the returned promise.
  * Accepts either a non-promise value, or another promise. When called with a non-promise value, fulfills
- * promise with that value, When called with another promise, promise's fate will be equivalent to
+ * promise with that value, When called with another promise, promise&#39;s fate will be equivalent to
  * that that of otherPromise.
  * @param {Function} resolver.reject(reason) function that rejects promise
  * @param {Function} resolver.notify(update) function that issues progress events for promise with update.
@@ -163,7 +163,7 @@
 
 <span id='when-method-resolve'>/**
 </span> * Create a resolved promise for the supplied promiseOrValue. If promiseOrValue is a value, it will
- * be the resolution value of the returned promise. Returns promiseOrValue if it's a trusted promise.
+ * be the resolution value of the returned promise. Returns promiseOrValue if it&#39;s a trusted promise.
  * If promiseOrValue is a foreign promise, returns a promise in the same state (resolved or rejected)
  * and with the same value as promiseOrValue.
  *
@@ -195,7 +195,7 @@
  * &gt; provides better separation of concerns.
  *
  * Create a `{{@link Deferred#promise promise}, {@link Deferred#resolve resolve}, {@link Deferred#reject reject}, {@link Deferred#notify notify}}` tuple.
- * In certain (rare) scenarios it can be convenient to have access to both the promise and it's associated resolving
+ * In certain (rare) scenarios it can be convenient to have access to both the promise and it&#39;s associated resolving
  * functions.
  *
  *     var promise = deferred.promise;
@@ -290,7 +290,7 @@
  * 	// Logs 1 &amp; 4 and processes 2 &amp; 3
  * 	settled.then(function(descriptors) {
  * 	    descriptors.forEach(function(d) {
- * 	        if(d.state === 'rejected') {
+ * 	        if(d.state === &#39;rejected&#39;) {
  * 	            logError(d.reason);
  * 	        } else {
  * 	            processSuccessfulResult(d.value);
@@ -300,8 +300,8 @@
  *
  * Depending how the promise state is, the descriptor will be correspondingly:
  *
- *  - fulfilled: `{ state: 'fulfilled', value: &lt;fulfillmentValue&gt; }`
- *  - rejected: `{ state: 'rejected', reason: &lt;rejectionReason&gt; }`
+ *  - fulfilled: `{ state: &#39;fulfilled&#39;, value: &lt;fulfillmentValue&gt; }`
+ *  - rejected: `{ state: &#39;rejected&#39;, reason: &lt;rejectionReason&gt; }`
  *
  * @method settle
  * @param {Array|Promise} array array or promise for array of promises to settle
@@ -330,8 +330,8 @@
  *
  * 	var promise = when.some(array, howMany)
  *
- * 	// try all of the p2p servers and fail if at least one doesn't respond
- * 	var remotes = [connect('p2p.cdn.com'), connect('p2p2.cdn.com'), connect('p2p3.cdn.com')];
+ * 	// try all of the p2p servers and fail if at least one doesn&#39;t respond
+ * 	var remotes = [connect(&#39;p2p.cdn.com&#39;), connect(&#39;p2p2.cdn.com&#39;), connect(&#39;p2p3.cdn.com&#39;)];
  * 	when.some(remotes, 1).then(initP2PServer, failGracefully);
  *
  * @method some

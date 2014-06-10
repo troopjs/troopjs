@@ -88,8 +88,8 @@
  *
  * `apply` is very similar to call, except for the type of arguments it supports. You can use an
  * arguments array instead of a named set of parameters. With apply, you can use an array literal, for
- * example, `fun.apply(this, ['eat', 'bananas'])`, or an Array object, for example, `fun.apply(this,
- * new Array('eat', 'bananas'))`.
+ * example, `fun.apply(this, [&#39;eat&#39;, &#39;bananas&#39;])`, or an Array object, for example, `fun.apply(this,
+ * new Array(&#39;eat&#39;, &#39;bananas&#39;))`.
  *
  * You can also use arguments for the `argsArray` parameter. `arguments` is a local variable of a
  * function. It can be used for all unspecified arguments of the called object. Thus, you do not have
@@ -98,9 +98,9 @@
  * the arguments.
  *
  * Since ECMAScript 5th Edition you can also use any kind of object which is array like, so in
- * practice this means it's going to have a property length and integer properties in the range
- * `[0...length)`. As an example you can now use a NodeList or a own custom object like `{'length': 2,
- * '0': 'eat', '1': 'bananas'}`.
+ * practice this means it&#39;s going to have a property length and integer properties in the range
+ * `[0...length)`. As an example you can now use a NodeList or a own custom object like `{&#39;length&#39;: 2,
+ * &#39;0&#39;: &#39;eat&#39;, &#39;1&#39;: &#39;bananas&#39;}`.
  *
  * You can use `apply` to chain constructors for an object, similar to Java. In the following example,
  * the constructor for the `Product` object is defined with two parameters, `name` and `value`. Two
@@ -114,24 +114,24 @@
  *         this.price = price;
  *
  *         if (price &lt; 0)
- *             throw RangeError('Cannot create product &quot;' + name + '&quot; with a negative price');
+ *             throw RangeError(&#39;Cannot create product &quot;&#39; + name + &#39;&quot; with a negative price&#39;);
  *         return this;
  *     }
  *
  *     function Food(name, price) {
  *         Product.apply(this, arguments);
- *         this.category = 'food';
+ *         this.category = &#39;food&#39;;
  *     }
  *     Food.prototype = new Product();
  *
  *     function Toy(name, price) {
  *         Product.apply(this, arguments);
- *         this.category = 'toy';
+ *         this.category = &#39;toy&#39;;
  *     }
  *     Toy.prototype = new Product();
  *
- *     var cheese = new Food('feta', 5);
- *     var fun = new Toy('robot', 40);
+ *     var cheese = new Food(&#39;feta&#39;, 5);
+ *     var fun = new Toy(&#39;robot&#39;, 40);
  *
  * Clever usage of `apply` allows you to use built-ins functions for some tasks that otherwise
  * probably would have been written by looping over the array values. As an example here we are going
@@ -155,7 +155,7 @@
  *         min = numbers[i];
  *     }
  *
- * But beware: in using `apply` this way, you run the risk of exceeding the JavaScript engine's
+ * But beware: in using `apply` this way, you run the risk of exceeding the JavaScript engine&#39;s
  * argument length limit. The consequences of applying a function with too many arguments (think more
  * than tens of thousands of arguments) vary across engines, because the limit (indeed even the nature
  * of any excessively-large-stack behavior) is unspecified. Some engines will throw an exception. More
@@ -209,24 +209,24 @@
  *         this.price = price;
  *
  *         if (price &lt; 0)
- *             throw RangeError('Cannot create product &quot;' + name + '&quot; with a negative price');
+ *             throw RangeError(&#39;Cannot create product &quot;&#39; + name + &#39;&quot; with a negative price&#39;);
  *         return this;
  *     }
  *
  *     function Food(name, price) {
  *         Product.call(this, name, price);
- *         this.category = 'food';
+ *         this.category = &#39;food&#39;;
  *     }
  *     Food.prototype = new Product();
  *
  *     function Toy(name, price) {
  *         Product.call(this, name, price);
- *         this.category = 'toy';
+ *         this.category = &#39;toy&#39;;
  *     }
  *     Toy.prototype = new Product();
  *
- *     var cheese = new Food('feta', 5);
- *     var fun = new Toy('robot', 40);
+ *     var cheese = new Food(&#39;feta&#39;, 5);
+ *     var fun = new Toy(&#39;robot&#39;, 40);
  *
  * In this purely constructed example, we create anonymous function and use `call` to invoke it on
  * every object in an array. The main purpose of the anonymous function here is to add a print
@@ -234,14 +234,14 @@
  * Passing the object as `this` value was not strictly necessary, but is done for explanatory purpose.
  *
  *     var animals = [
- *     {species: 'Lion', name: 'King'},
- *     {species: 'Whale', name: 'Fail'}
+ *     {species: &#39;Lion&#39;, name: &#39;King&#39;},
+ *     {species: &#39;Whale&#39;, name: &#39;Fail&#39;}
  *     ];
  *
  *     for (var i = 0; i &lt; animals.length; i++) {
  *         (function (i) {
  *         this.print = function () {
- *             console.log('#' + i  + ' ' + this.species + ': ' + this.name);
+ *             console.log(&#39;#&#39; + i  + &#39; &#39; + this.species + &#39;: &#39; + this.name);
  *         }
  *     }).call(animals[i], i);
  *     }
@@ -283,7 +283,7 @@
  *
  * The `bind()` function creates a new function (a bound function) with
  * the same function body (internal Call attribute in ECMAScript 5
- * terms) as the function it is being called on (the bound function's
+ * terms) as the function it is being called on (the bound function&#39;s
  * target function) with the `this` value bound to the first argument of
  * `bind()`, which cannot be overridden. `bind()` also accepts leading
  * default arguments to provide to the target function when the bound
@@ -314,7 +314,7 @@
  *     var getX = module.getX;
  *     getX(); // 9, because in this case, &quot;this&quot; refers to the global object
  *
- *     // create a new function with 'this' bound to module
+ *     // create a new function with &#39;this&#39; bound to module
  *     var boundGetX = getX.bind(module);
  *     boundGetX(); // 81
  *

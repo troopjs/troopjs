@@ -24,7 +24,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 <span id='data-query-component'>	/**
 </span>	 * Component who understands the ubiquitous data query string format.
 	 * @class data.query.component
-	 * @extends core.mixin.base
+	 * @extend core.mixin.base
 	 */
 
 	var UNDEFINED;
@@ -49,10 +49,10 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 	var _AST = &quot;_ast&quot;;
 	var _QUERY = &quot;_query&quot;;
 
-	var RE_TEXT = /(&quot;|')(.*?)\1/;
+	var RE_TEXT = /(&quot;|&#39;)(.*?)\1/;
 	var TO_RAW = &quot;$2&quot;;
 	var RE_RAW = /!(.*[!,|.\s]+.*)/;
-	var TO_TEXT = &quot;!'$1'&quot;;
+	var TO_TEXT = &quot;!&#39;$1&#39;&quot;;
 
 <span id='data-query-component-method-constructor'>	/**
 </span>	 * @method constructor
@@ -96,7 +96,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 				switch (c) {
 					case &quot;\&quot;&quot; : // Double quote
 					/* falls through */
-					case &quot;'&quot; :  // Single quote
+					case &quot;&#39;&quot; :  // Single quote
 						// Set / unset quote char
 						q = q === c
 							? UNDEFINED
@@ -104,7 +104,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 						break;
 
 					case OP_ID :
-						// Break fast if we're quoted
+						// Break fast if we&#39;re quoted
 						if (q !== UNDEFINED) {
 							break;
 						}
@@ -117,12 +117,12 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 					case OP_PROPERTY :
 					/* falls through */
 					case OP_PATH :
-						// Break fast if we're quoted
+						// Break fast if we&#39;re quoted
 						if (q !== UNDEFINED) {
 							break;
 						}
 
-						// If there's an active op, store TEXT and push on _AST
+						// If there&#39;s an active op, store TEXT and push on _AST
 						if (o !== UNDEFINED) {
 							o[RAW] = (o[TEXT] = query.substring(m, i)).replace(RE_TEXT, TO_RAW);
 							ast.push(o);
@@ -145,12 +145,12 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 					case &quot;\r&quot; : // Carriage return
 					/* falls through */
 					case &quot;\n&quot; : // Newline
-						// Break fast if we're quoted
+						// Break fast if we&#39;re quoted
 						if (q !== UNDEFINED) {
 							break;
 						}
 
-						// If there's an active op, store TEXT and push on _AST
+						// If there&#39;s an active op, store TEXT and push on _AST
 						if (o !== UNDEFINED) {
 							o[RAW] = (o[TEXT] = query.substring(m, i)).replace(RE_TEXT, TO_RAW);
 							ast.push(o);
@@ -165,7 +165,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 				}
 			}
 
-			// If there's an active op, store TEXT and push on _AST
+			// If there&#39;s an active op, store TEXT and push on _AST
 			if (o !== UNDEFINED) {
 				o[RAW] = (o[TEXT] = query.substring(m, l)).replace(RE_TEXT, TO_RAW);
 				ast.push(o);
@@ -187,7 +187,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 			var me = this;
 			var now = 0 | new Date().getTime() / 1000;
 
-			// If we're not parsed - parse
+			// If we&#39;re not parsed - parse
 			if (!(_AST in me)) {
 				me.parse();
 			}
@@ -221,7 +221,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 						if (x in cache) {
 							// Set current node
 							n = cache[x];
-							// Set dead and RESOLVED if we're not collapsed or expired
+							// Set dead and RESOLVED if we&#39;re not collapsed or expired
 							d = o[RESOLVED] = n[_COLLAPSED] !== TRUE &amp;&amp; !(_EXPIRES in n &amp;&amp; n[_EXPIRES] &lt; now);
 						}
 						else {
@@ -285,7 +285,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 								o[OP] = OP_ID;
 								// Update RAW to _ID and TEXT to escaped version of RAW
 								o[TEXT] = (o[RAW] = n[_ID]).replace(RE_RAW, TO_TEXT);
-								// Set RESOLVED if we're not collapsed or expired
+								// Set RESOLVED if we&#39;re not collapsed or expired
 								o[RESOLVED] = n[_COLLAPSED] !== TRUE &amp;&amp; !(_EXPIRES in n &amp;&amp; n[_EXPIRES] &lt; now);
 							}
 						}
@@ -314,7 +314,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 				}
 			}
 
-			// After that we want to reduce 'dead' operations from the _AST
+			// After that we want to reduce &#39;dead&#39; operations from the _AST
 			while (l-- &gt; 0) {
 				o = ast[l];
 
@@ -346,12 +346,12 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 
 <span id='data-query-component-method-ast'>		/**
 </span>		 * Retrieve the AST as the parsed result.
-		 * @returns {Array} the result AST.
+		 * @return {Array} the result AST.
 		 */
 		&quot;ast&quot; : function ast() {
 			var me = this;
 
-			// If we're not parsed - parse
+			// If we&#39;re not parsed - parse
 			if (!(_AST in me)) {
 				me.parse();
 			}
@@ -361,12 +361,12 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 
 <span id='data-query-component-method-rewrite'>		/**
 </span>		 * Rebuild the (reduced) query string.
-		 * @returns {String} new query string
+		 * @return {String} new query string
 		 */
 		&quot;rewrite&quot; : function rewrite() {
 			var me = this;
 
-			// If we're not parsed - parse
+			// If we&#39;re not parsed - parse
 			if (!(_AST in me)) {
 				me.parse();
 			}
@@ -383,7 +383,7 @@ define([ &quot;troopjs-core/mixin/base&quot; ], function QueryModule(Base) {
 
 				switch(o[OP]) {
 					case OP_ID :
-						// If this is the first OP_ID, there's no need to add OP_QUERY
+						// If this is the first OP_ID, there&#39;s no need to add OP_QUERY
 						result += i === 0
 							? o[TEXT]
 							: OP_QUERY + o[TEXT];

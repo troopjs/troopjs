@@ -49,12 +49,12 @@ define([ &quot;text&quot; ], function (text) {
 				scriptText += &quot;;\nreturn &quot; + m[2] + &quot;;\n&quot;;
 			}
 			else {
-				deps.push(&quot;'&quot; + m[2] + &quot;'&quot;);
+				deps.push(&quot;&#39;&quot; + m[2] + &quot;&#39;&quot;);
 				args.push(m[1]);
 			}
 		}
 
-		return &quot;define([ &quot; + deps.join(&quot;, &quot;) + &quot; ], function (&quot; + args.join(&quot;, &quot;) + &quot;) {\n&quot;
+		return &quot;define([&quot; + deps.join(&quot;, &quot;) + &quot;], function (&quot; + args.join(&quot;, &quot;) + &quot;) {\n&quot;
 			+ scriptText
 			+ &quot;});&quot;;
 	}
@@ -85,8 +85,8 @@ define([ &quot;text&quot; ], function (text) {
 			var url;
 			var realName = name;
 
-			// The name is like 'jquery.form#$=jquery&amp;exports=$',
-			// So, if macthed, m[1] is 'jquery.form', m[2] is '$=jquery&amp;exports=$'
+			// The name is like &#39;jquery.form#$=jquery&amp;exports=$&#39;,
+			// So, if macthed, m[1] is &#39;jquery.form&#39;, m[2] is &#39;$=jquery&amp;exports=$&#39;
 			if ((m = PATTERN.exec(name))) {
 				realName = m[1];
 				hashVal = m[2];
@@ -104,8 +104,8 @@ define([ &quot;text&quot; ], function (text) {
 						buildMap[name] = content;
 					}
 
-					onLoad.fromText(name, content);  
-					// On requirejs version below '2.1.0', 
+					onLoad.fromText(name, content);
+					// On requirejs version below &#39;2.1.0&#39;, 
 					// need to manually require the module after the call to onLoad.fromText()
 					if (cmpVersion(REQUIRE_VERSION, &quot;2.1.0&quot;) &lt; 0) {
 						req([ name ], onLoad);
@@ -119,7 +119,10 @@ define([ &quot;text&quot; ], function (text) {
 
 			if (moduleName in buildMap) {
 				content = buildMap[moduleName];
-				write.asModule(pluginName + &quot;!&quot; + moduleName, content);
+				content = content.replace(/define\(/, function (match) {
+					return match + &#39;&quot;&#39; + [pluginName, moduleName].join(&#39;!&#39;) + &#39;&quot;,&#39;;
+				});
+				write(content);
 			}
 		}
 	};

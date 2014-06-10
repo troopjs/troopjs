@@ -1,7 +1,7 @@
 
-./maxi.js
+bower_components/../maxi.js
 ----------------
-./version.js
+bower_components/../version.js
 bower_components/troopjs-util/merge.js
 bower_components/troopjs-compose/mixin/config.js
 bower_components/troopjs-compose/mixin/decorator.js
@@ -56,15 +56,14 @@ bower_components/troopjs-jquery/hashchange.js
 bower_components/troopjs-dom/hash/widget.js
 bower_components/troopjs-dom/loom/woven.js
 bower_components/troopjs-dom/loom/plugin.js
-bower_components/troopjs-jquery/noconflict.js
 bower_components/troopjs-requirejs/multiversion.js
 bower_components/troopjs-requirejs/shadow.js
 bower_components/troopjs-util/select.js
 bower_components/troopjs-requirejs/json.js
 
-./mini.js
+bower_components/../mini.js
 ----------------
-./version.js
+bower_components/../version.js
 bower_components/troopjs-util/merge.js
 bower_components/troopjs-compose/mixin/config.js
 bower_components/troopjs-compose/mixin/decorator.js

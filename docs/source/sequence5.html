@@ -73,7 +73,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 
 		// If this is a route/set we need to pre-process the path
 		if (type === &quot;route/set&quot;) {
-			// route data is provided as the second arg, but we're already shifted above.
+			// route data is provided as the second arg, but we&#39;re already shifted above.
 			data = args.shift() || {};
 
 			// Populate path with data
@@ -81,7 +81,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 				// Replace grouped tokens.
 				.replace(RE_GROUPED_TOKEN, function ($0, $1) {
 					var group = $1.replace(RE_TOKEN, function($0, $1) {
-						return data[$1] ? data[$1] + &quot;/&quot; : $0;
+						return $1 in data ? data[$1] + &quot;/&quot; : $0;
 					});
 					// mark the group as missed unless all params within have fulfilled.
 					return !group.match(RE_COLON)? group + &quot;/&quot; : MARKER;
@@ -89,7 +89,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 				// Replace the rest of tokens.
 				.replace(RE_TOKEN, function($0, $1) {
 					// mark the parameters as missed.
-					return data[$1] ? data[$1] + &quot;/&quot; : MARKER;
+					return $1 in data ? data[$1] + &quot;/&quot; : MARKER;
 				})
 				// Remove any duplicate slashes previously produced.
 				.replace(RE_DUP_SLASH, &quot;/&quot;);
@@ -101,7 +101,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 		}
 		// If this is _not_ a route/change we should throw an error
 		else if (type !== &quot;route/change&quot;) {
-			throw new Error(&quot;Unable to run type '&quot; + type + &quot;'&quot;);
+			throw new Error(&quot;Unable to run type &#39;&quot; + type + &quot;&#39;&quot;);
 		}
 
 		// Copy handlers -&gt; candidates
@@ -178,8 +178,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 					}
 
 					// Apply CALLBACK and store in result
-					result = candidate[CALLBACK].apply(candidate[CONTEXT],
-						[matches].concat(type === &quot;route/change&quot; ? args : [data].concat(args)));
+					result = candidate[CALLBACK].apply(candidate[CONTEXT], [ path, matches ].concat(args));
 				}
 			}
 
@@ -189,7 +188,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 		// Run 404s if none of the candidate matches the route.
 		if (!matched &amp;&amp; type === &quot;route/change&quot;) {
 			return fallbacks.reduce(function(result, candidate) {
-				result !== false ? candidate[CALLBACK].apply(candidate[CONTEXT], [path].concat(args)) : result;
+				result !== false ? candidate[CALLBACK].apply(candidate[CONTEXT], [ path ].concat(args)) : result;
 			}, result);
 		}
 

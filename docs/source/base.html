@@ -50,13 +50,13 @@ define([
 	 * 		// Signal handler for &quot;start&quot; phase
 	 * 		&quot;sig/start&quot;: function start() {
 	 * 			// bind resize handler.
-	 * 			$(window).on('resize.app', $.proxy(this.onResize, this));
+	 * 			$(window).on(&#39;resize.app&#39;, $.proxy(this.onResize, this));
 	 * 		},
 	 *
 	 * 		// Signal handler for &quot;finalize&quot; phase
 	 * 		&quot;sig/finalize&quot;: function finalize() {
 	 * 			// cleanup the handler.
-	 * 			$(window).off('resize.app');
+	 * 			$(window).off(&#39;resize.app&#39;);
 	 * 		},
 	 *
 	 * 		&quot;onResize&quot;: function onResize(argument) {
@@ -385,9 +385,9 @@ define([
 				var handlers;
 				var result;
 
-				// If this type is NOT a signal we don't have to event try
+				// If this type is NOT a signal we don&#39;t have to event try
 				if (!EVENT_TYPE_SIG.test(type)) {
-					// Initialize the handlers for this type if they don't exist.
+					// Initialize the handlers for this type if they don&#39;t exist.
 					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
 						handlers = {};
 						handlers[TYPE] = type;
@@ -441,7 +441,7 @@ define([
 				var result;
 
 				if (!EVENT_TYPE_SIG.test(type)) {
-					// Initialize the handlers for this type if they don't exist.
+					// Initialize the handlers for this type if they don&#39;t exist.
 					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
 						handlers = {};
 						handlers[TYPE] = type;
@@ -504,7 +504,7 @@ define([
 
 			// Check PHASE
 			if ((phase = me[PHASE]) !== UNDEFINED &amp;&amp; phase !== FINALIZED) {
-				throw new Error(&quot;Can't transition phase from '&quot; + phase + &quot;' to '&quot; + INITIALIZE + &quot;'&quot;);
+				return when.resolve(UNDEFINED);
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -537,11 +537,10 @@ define([
 		&quot;stop&quot; : function stop(args) {
 			var me = this;
 			var signal = me.signal;
-			var phase;
 
 			// Check PHASE
-			if ((phase = me[PHASE]) !== STARTED) {
-				throw new Error(&quot;Can't transition phase from '&quot; + phase + &quot;' to '&quot; + STOP + &quot;'&quot;);
+			if (me[PHASE] !== STARTED) {
+				return when.resolve(UNDEFINED);
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -567,19 +566,19 @@ define([
 <span id='core-component-base-method-task'>		/**
 </span>		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
 		 *
-		 * **Note:** It's recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
+		 * **Note:** It&#39;s recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
 		 * since in additional to an ordinary promise, it also helps to track the context of any running promise,
-		 * including it's name, completion time and a given ID.
+		 * including it&#39;s name, completion time and a given ID.
 		 *
 		 * 	var widget = Widget.create({
 		 * 		&quot;sig/task&quot; : function(promise) {
-		 * 			print('task %s started at: %s, finished at: %s', promise.name, promise.started);
+		 * 			print(&#39;task %s started at: %s, finished at: %s&#39;, promise.name, promise.started);
 		 * 		}
 		 * 	});
 		 *
 		 * 	widget.task(function(resolve) {
 		 * 		$(this.$element).fadeOut(resolve);
-		 * 	}, 'animate');
+		 * 	}, &#39;animate&#39;);
 		 *
 		 * @param {Resolver} resolver The task resolver.
 		 * @param {String} [name]

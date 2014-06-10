@@ -20,7 +20,7 @@
  *
  * Creates `Date` instances which let you work with dates and times.
  *
- * If you supply no arguments, the constructor creates a `Date` object for today's
+ * If you supply no arguments, the constructor creates a `Date` object for today&#39;s
  * date and time according to local time. If you supply some arguments but not
  * others, the missing arguments are set to 0. If you supply any arguments, you
  * must supply at least the year, month, and day. You can omit the hours, minutes,
@@ -59,14 +59,14 @@
  *
  *     // using static methods
  *     var start = Date.now();
- *     // the event you'd like to time goes here:
+ *     // the event you&#39;d like to time goes here:
  *     doSomethingForALongTime();
  *     var end = Date.now();
  *     var elapsed = end - start; // time in milliseconds
  *
  *     // if you have Date objects
  *     var start = new Date();
- *     // the event you'd like to time goes here:
+ *     // the event you&#39;d like to time goes here:
  *     doSomethingForALongTime();
  *     var end = new Date();
  *     var elapsed = end.getTime() - start.getTime(); // time in milliseconds
@@ -88,13 +88,13 @@
  *
  *     // use a function for the exact format desired...
  *     function ISODateString(d){
- *     function pad(n){return n&lt;10 ? '0'+n : n}
- *     return d.getUTCFullYear()+'-'
- *         + pad(d.getUTCMonth()+1)+'-'
- *         + pad(d.getUTCDate())+'T'
- *         + pad(d.getUTCHours())+':'
- *         + pad(d.getUTCMinutes())+':'
- *         + pad(d.getUTCSeconds())+'Z'}
+ *     function pad(n){return n&lt;10 ? &#39;0&#39;+n : n}
+ *     return d.getUTCFullYear()+&#39;-&#39;
+ *         + pad(d.getUTCMonth()+1)+&#39;-&#39;
+ *         + pad(d.getUTCDate())+&#39;T&#39;
+ *         + pad(d.getUTCHours())+&#39;:&#39;
+ *         + pad(d.getUTCMinutes())+&#39;:&#39;
+ *         + pad(d.getUTCSeconds())+&#39;Z&#39;}
  *
  *     var d = new Date();
  *     print(ISODateString(d)); // prints something like 2009-09-28T19:03:12Z
@@ -832,7 +832,7 @@
 
 <span id='Date-method-toLocaleDateString'>/**
 </span> * @method toLocaleDateString
- * Returns the &quot;date&quot; portion of the Date as a string, using the current locale's
+ * Returns the &quot;date&quot; portion of the Date as a string, using the current locale&#39;s
  * conventions.
  *
  * The `toLocaleDateString` method relies on the underlying operating system in formatting dates. It
@@ -846,7 +846,7 @@
  * Methods such as `getDate`, `getMonth`, and `getFullYear` give more portable results than
  * `toLocaleDateString`. Use `toLocaleDateString` when the intent is to display to the user a string
  * formatted using the regional format chosen by the user. Be aware that this method, due to its
- * nature, behaves differently depending on the operating system and on the user's settings.
+ * nature, behaves differently depending on the operating system and on the user&#39;s settings.
  *
  * In the following example, `today` is a `Date` object:
  *
@@ -854,11 +854,11 @@
  *     today.toLocaleDateString()
  *
  * In this example, `toLocaleDateString` returns a string value that is similar to the following form.
- * The exact format depends on the platform, locale and user's settings.
+ * The exact format depends on the platform, locale and user&#39;s settings.
  *
  *     12/18/95
  *
- * You shouldn't use this method in contexts where you rely on a particular format or locale.
+ * You shouldn&#39;t use this method in contexts where you rely on a particular format or locale.
  *
  *     &quot;Last visit: &quot; + someDate.toLocaleDateString(); // Good example
  *     &quot;Last visit was at &quot; + someDate.toLocaleDateString(); // Bad example
@@ -869,7 +869,7 @@
 
 <span id='Date-method-toLocaleString'>/**
 </span> * @method toLocaleString
- * Converts a date to a string, using the current locale's conventions. Overrides
+ * Converts a date to a string, using the current locale&#39;s conventions. Overrides
  * the `Object.toLocaleString` method.
  *
  * The `toLocaleString` method relies on the underlying operating system in formatting dates. It
@@ -884,7 +884,7 @@
  * give more portable results than `toLocaleString`. Use `toLocaleString` when the intent is to
  * display to the user a string formatted using the regional format chosen by the user. Be aware that
  * this method, due to its nature, behaves differently depending on the operating system and on the
- * user's settings.
+ * user&#39;s settings.
  *
  * In the following example, `today` is a `Date` object:
  *
@@ -892,11 +892,11 @@
  *     today.toLocaleString();
  *
  * In this example, `toLocaleString` returns a string value that is similar to the following form. The
- * exact format depends on the platform, locale and user's settings.
+ * exact format depends on the platform, locale and user&#39;s settings.
  *
  *     12/18/95 17:28:35
  *
- * You shouldn't use this method in contexts where you rely on a particular format or locale.
+ * You shouldn&#39;t use this method in contexts where you rely on a particular format or locale.
  *
  *     &quot;Last visit: &quot; + someDate.toLocaleString(); // Good example
  *     &quot;Last visit was at &quot; + someDate.toLocaleString(); // Bad example
@@ -907,7 +907,7 @@
 
 <span id='Date-method-toLocaleTimeString'>/**
 </span> * @method toLocaleTimeString
- * Returns the &quot;time&quot; portion of the Date as a string, using the current locale's
+ * Returns the &quot;time&quot; portion of the Date as a string, using the current locale&#39;s
  * conventions.
  *
  * The `toLocaleTimeString` method relies on the underlying operating system in formatting dates. It
@@ -918,7 +918,7 @@
  * Methods such as `getHours`, `getMinutes`, and `getSeconds` give more consistent results than
  * `toLocaleTimeString`. Use `toLocaleTimeString` when the intent is to display to the user a string
  * formatted using the regional format chosen by the user. Be aware that this method, due to its
- * nature, behaves differently depending on the operating system and on the user's settings.
+ * nature, behaves differently depending on the operating system and on the user&#39;s settings.
  *
  * In the following example, `today` is a `Date` object:
  *
@@ -930,7 +930,7 @@
  *
  *     17:28:35
  *
- * You shouldn't use this method in contexts where you rely on a particular format or locale.
+ * You shouldn&#39;t use this method in contexts where you rely on a particular format or locale.
  *
  *     &quot;Last visit: &quot; + someDate.toLocaleTimeString(); // Good example
  *     &quot;Last visit was at &quot; + someDate.toLocaleTimeString(); // Bad example
@@ -1023,7 +1023,7 @@
  * Returns a JSON representation of the Date object.
  *
  * Date instances refer to a specific point in time. Calling `toJSON()`
- * returns a JSON formatted string representing the Date object's
+ * returns a JSON formatted string representing the Date object&#39;s
  * value.  This method is generally intended to, by default, usefully
  * serialize Date objects during JSON serialization.
  *

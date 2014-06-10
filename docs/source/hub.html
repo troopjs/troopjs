@@ -29,10 +29,10 @@ define([
 </span>	 * The centric &quot;bus&quot; that handlers publishing and subscription.
 	 *
 	 * ## Memorized emitting
-	 * A fired event will memorize the &quot;current&quot; value of each event. Each executor may have it's own interpretation
+	 * A fired event will memorize the &quot;current&quot; value of each event. Each executor may have it&#39;s own interpretation
 	 * of what &quot;current&quot; means.
 	 *
-	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
+	 * **Note:** It&#39;s NOT necessarily to pub/sub on this module, prefer to
 	 * use methods like {@link core.component.gadget#publish publish} and {@link core.component.gadget#subscribe subscribe}
 	 * that are provided as shortcuts.
 	 *
@@ -107,7 +107,7 @@ define([
 		 * Handlers are run in a pipeline, in which each handler will receive muted
 		 * data params depending on the return value of the previous handler:
 		 *
-		 *   - The original data params from {@link #publish} if this's the first handler, or the previous handler returns `undefined`.
+		 *   - The original data params from {@link #publish} if this&#39;s the first handler, or the previous handler returns `undefined`.
 		 *   - One value as the single argument if the previous handler return a non-array.
 		 *   - Each argument value deconstructed from the returning array of the previous handler.
 		 *

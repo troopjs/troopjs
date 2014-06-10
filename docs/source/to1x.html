@@ -73,7 +73,7 @@ define([
 			// Iterate ROUTES
 			me.configure()[ROUTES].forEach(function (routes) {
 				if (!(HUB in routes)) {
-					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+					throw new Error(&quot;&#39;&quot; + HUB + &quot;&#39; is missing from routes&quot;);
 				}
 
 				var publish = routes[PUBLISH] || {};
@@ -96,7 +96,7 @@ define([
 					else {
 						// Make sure we have a topic
 						if (!(TOPIC in target)) {
-							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+							throw new Error(&quot;&#39;&quot; + TOPIC + &quot;&#39; is missing from target &#39;&quot; + source + &quot;&#39;&quot;);
 						}
 
 						// Get topic
@@ -165,7 +165,7 @@ define([
 					else {
 						// Make sure we have a topic
 						if (!(TOPIC in target)) {
-							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+							throw new Error(&quot;&#39;&quot; + TOPIC + &quot;&#39; is missing from target &#39;&quot; + source + &quot;&#39;&quot;);
 						}
 
 						// Get topic
@@ -205,8 +205,8 @@ define([
 					callback[TOPIC] = topic;
 					callback[MEMORY] = memory;
 
-					// Subscribe from hub,notice that since we're pushing memory there _is_ a chance that
-					// we'll get a callback before sig/start
+					// Subscribe from hub,notice that since we&#39;re pushing memory there _is_ a chance that
+					// we&#39;ll get a callback before sig/start
 					hub.subscribe(source, me, memory, callback);
 				});
 			});
@@ -223,7 +223,7 @@ define([
 			// Iterate ROUTES
 			me.configure()[ROUTES].forEach(function (routes) {
 				if (!(HUB in routes)) {
-					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+					throw new Error(&quot;&#39;&quot; + HUB + &quot;&#39; is missing from routes&quot;);
 				}
 
 				var publish = routes[PUBLISH] || {};

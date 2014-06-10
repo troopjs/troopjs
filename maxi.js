@@ -4,18 +4,19 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.1+94c74c1 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.2+fa7fcdb ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-define('troopjs/version',[], "3.0.0-pr.1+94c74c1");
+
+define('troopjs/version',[], "3.0.0-pr.2+fa7fcdb");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/merge',[ "poly/object" ], function MergeModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.merge
@@ -109,7 +110,7 @@ define('troopjs-compose/mixin/config',[
 	"module",
 	"troopjs-util/merge"
 ], function (module, merge) {
-	
+	"use strict";
 
 	/**
 	 * Provides configuration for the {@link compose.mixin.factory}
@@ -133,7 +134,7 @@ define('troopjs-compose/mixin/config',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
-	
+	"use strict";
 
 	/**
 	 * Decorator provides customized way to add properties/methods to object created by {@link compose.mixin.factory}.
@@ -170,7 +171,7 @@ define('troopjs-compose/mixin/decorator',[ "poly/object" ], function DecoratorMo
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/unique',[],function UniqueModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.unique
@@ -238,7 +239,7 @@ define('troopjs-util/unique',[],function UniqueModule() {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/getargs',[],function GetArgsModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.getargs
@@ -424,7 +425,7 @@ define('troopjs-compose/mixin/factory',[
 	"troopjs-util/getargs",
 	"poly/object"
 ], function FactoryModule(config, Decorator, unique, getargs) {
-	
+	"use strict";
 
 	/**
 	 * The factory module establishes the fundamental object composition in TroopJS:
@@ -809,7 +810,7 @@ define('troopjs-log/sink/console',[
 	"poly/array",
 	"poly/function"
 ], function ConsoleModule(METHODS) {
-	
+	"use strict";
 
 	/**
 	 * This class implements the {@link log.console} API and can acts like a sink for {@link log.sink.forward}.
@@ -843,7 +844,7 @@ define('troopjs-log/sink/console',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-log/logger',[ "./sink/console" ], function LoggerModule(logger) {
-	
+	"use strict";
 
 	/**
 	 * This is a _virtual_ class that under normal circumstances is an alias for the {@link log.sink.console} sink.
@@ -943,7 +944,7 @@ define('troopjs-core/mixin/base',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/event/runner/sequence',[ "when" ], function SequenceModule(when) {
-	
+	"use strict";
 
 	/**
 	 * @class core.event.runner.sequence
@@ -1013,7 +1014,7 @@ define('troopjs-core/event/emitter',[
 	"../mixin/base",
 	"./runner/sequence"
 ], function EventEmitterModule(Base, sequence) {
-	
+	"use strict";
 
 	/**
 	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
@@ -1245,7 +1246,7 @@ define('troopjs-core/event/emitter',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/runner/sequence',[ "poly/array" ], function SequenceModule() {
-	
+	"use strict";
 
 	/**
 	 * @class core.component.runner.sequence
@@ -1312,7 +1313,7 @@ define('troopjs-core/registry/component',[
 	"../mixin/base",
 	"poly/array"
 ], function RegistryModule(Base) {
-	
+	"use strict";
 
 	/**
 	 * A light weight implementation to register key/value pairs by key and index
@@ -1457,7 +1458,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	"./pattern",
 	"when"
 ], function PipelineModule(RE_PHASE, when) {
-	
+	"use strict";
 
 	/**
 	 * @class core.pubsub.runner.pipeline
@@ -1550,7 +1551,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function FromDecoratorModule(Decorator) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.from
@@ -1598,7 +1599,7 @@ define('troopjs-core/pubsub/hub',[
 	"./runner/pipeline",
 	"troopjs-compose/decorator/from"
 ], function HubModule(Emitter, pipeline, from) {
-	
+	"use strict";
 
 	/**
 	 * The centric "bus" that handlers publishing and subscription.
@@ -1728,7 +1729,7 @@ define('troopjs-core/component/registry',[
 	"../registry/component",
 	"../pubsub/hub"
 ], function ComponentRegistryModule(Registry, hub) {
-	
+	"use strict";
 
 	/**
 	 * @class core.component.registry
@@ -1772,7 +1773,7 @@ define('troopjs-core/task/registry',[
 	"../registry/component",
 	"../component/registry"
 ], function TaskRegistryModule(Registry, componentRegistry) {
-	
+	"use strict";
 
 	/**
 	 * @class core.task.registry
@@ -1810,7 +1811,7 @@ define('troopjs-core/task/registry',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function AroundDecoratorModule(Decorator) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.around
@@ -1850,7 +1851,7 @@ define('troopjs-core/component/base',[
 	"when",
 	"poly/array"
 ], function ComponentModule(Emitter, sequence, COMPOSE_CONF, componentRegistry, taskRegistry, merge, around, when) {
-	
+	"use strict";
 
 	/**
 	 * Imagine component as an object that has predefined life-cycle, with the following phases:
@@ -2325,7 +2326,7 @@ define('troopjs-core/component/base',[
 
 			// Check PHASE
 			if ((phase = me[PHASE]) !== UNDEFINED && phase !== FINALIZED) {
-				throw new Error("Can't transition phase from '" + phase + "' to '" + INITIALIZE + "'");
+				return when.resolve(UNDEFINED);
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -2358,11 +2359,10 @@ define('troopjs-core/component/base',[
 		"stop" : function stop(args) {
 			var me = this;
 			var signal = me.signal;
-			var phase;
 
 			// Check PHASE
-			if ((phase = me[PHASE]) !== STARTED) {
-				throw new Error("Can't transition phase from '" + phase + "' to '" + STOP + "'");
+			if (me[PHASE] !== STARTED) {
+				return when.resolve(UNDEFINED);
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -2429,7 +2429,7 @@ define('troopjs-core/component/base',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineModule(when) {
-	
+	"use strict";
 
 	/**
 	 * @class core.component.runner.pipeline
@@ -2520,7 +2520,7 @@ define('troopjs-core/component/gadget',[
 	"when",
 	"../pubsub/hub"
 ],function GadgetModule(Component, pipeline, COMPOSE_CONF, when, hub) {
-	
+	"use strict";
 
 	/**
 	 * Component that provides signal and hub features.
@@ -2712,7 +2712,7 @@ define('troopjs-core/component/gadget',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-dom/css/selector',[ "troopjs-compose/mixin/factory" ], function (Factory) {
-	
+	"use strict";
 
 	/**
 	 * An optimized CSS selector matcher that {@link dom.component.runner.sequence} relies on for
@@ -3052,7 +3052,7 @@ define('troopjs-dom/component/runner/sequence',[
 	"jquery",
 	"poly/array"
 ], function SequenceModule(Selector, $) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.component.runner.sequence
@@ -3130,7 +3130,7 @@ define('troopjs-dom/loom/config',[
 	"module",
 	"troopjs-util/merge"
 ], function LoomConfigModule(module, merge) {
-	
+	"use strict";
 
 	/**
 	 * Provides configuration for the loom package
@@ -3172,7 +3172,7 @@ define('troopjs-util/defer',[
 	"when",
 	"poly/array"
 ], function DeferModule(when) {
-	
+	"use strict";
 
 	/**
 	 * `when.defer` patched with jQuery/deferred compatibility.
@@ -3229,7 +3229,7 @@ define('troopjs-dom/loom/weave',[
 	"troopjs-util/defer",
 	"poly/array"
 ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.loom.weave
@@ -3252,10 +3252,15 @@ define('troopjs-dom/loom/weave',[
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
+	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
+			// Re-throw the rejection if it's not canceled.
+			if (d.state === "rejected" && d.reason !== CANCELED) {
+				throw d.reason;
+			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3382,41 +3387,43 @@ define('troopjs-dom/loom/weave',[
 				// Add promise to $warp, make sure this is called synchronously.
 				ARRAY_PUSH.call($warp, promise);
 
-				parentRequire([ module ], function (Widget) {
-					var widget;
-					var startPromise;
+				setTimeout(function() {
+					parentRequire([ module ], function(Widget) {
+						var widget;
+						var startPromise;
 
-					// detect if weaving has been canceled somehow.
-					if ($warp.indexOf(promise) === -1) {
-						resolver.reject("cancel");
-					}
-
-					try {
-						// Create widget instance
-						widget = Widget.apply(Widget, widget_args);
-
-						// Add $WEFT to widget
-						widget[$WEFT] = promise;
-
-						// Add WOVEN to promise
-						promise[WOVEN] = widget.toString();
-
-						// TODO: Detecting TroopJS 1.x widget from *version* property.
-						if (widget.trigger) {
-							deferred = Defer();
-							widget.start(deferred);
-							startPromise = deferred.promise;
-						}
-						else {
-							startPromise = widget.start.apply(widget, start_args);
+						// detect if weaving has been canceled somehow.
+						if ($warp.indexOf(promise) === -1) {
+							resolver.reject(CANCELED);
 						}
 
-						resolver.resolve(startPromise.yield(widget));
-					}
-					catch (e) {
-						resolver.reject(e);
-					}
-				}, resolver.reject);
+						try {
+							// Create widget instance
+							widget = Widget.apply(Widget, widget_args);
+
+							// Add $WEFT to widget
+							widget[$WEFT] = promise;
+
+							// Add WOVEN to promise
+							promise[WOVEN] = widget.toString();
+
+							// TODO: Detecting TroopJS 1.x widget from *version* property.
+							if (widget.trigger) {
+								deferred = Defer();
+								widget.start(deferred);
+								startPromise = deferred.promise;
+							}
+							else {
+								startPromise = widget.start.apply(widget, start_args);
+							}
+
+							resolver.resolve(startPromise.yield(widget));
+						}
+						catch (e) {
+							resolver.reject(e);
+						}
+					}, resolver.reject);
+				}, 0);
 
 				// Return promise
 				return promise;
@@ -3437,7 +3444,7 @@ define('troopjs-dom/loom/unweave',[
 	"poly/array",
 	"troopjs-util/defer"
 ], function UnweaveModule(config, when, $, Defer) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.loom.unweave
@@ -3461,10 +3468,15 @@ define('troopjs-dom/loom/unweave',[
 	var ATTR_WOVEN = config[WOVEN];
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
+	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
+			// Re-throw the rejection if it's not canceled.
+			if (d.state === "rejected" && d.reason !== CANCELED) {
+				throw d.reason;
+			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3607,7 +3619,7 @@ define('troopjs-dom/loom/unweave',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	
+	"use strict";
 
 	/**
 	 * Extends {@link jQuery} with:
@@ -3665,7 +3677,7 @@ define('troopjs-dom/component/widget',[
 	"../loom/unweave",
 	"troopjs-jquery/destroy"
 ], function WidgetModule(Gadget, sequence, COMPOSE_CONF, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
-	
+	"use strict";
 
 	/**
 	 * Component that attaches to an DOM element, considerably delegates all DOM manipulations.
@@ -3827,9 +3839,8 @@ define('troopjs-dom/component/widget',[
 
 			if ((matches = RE.exec(type)) !== NULL) {
 				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
-					// Redefine args
-					args = {};
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event) {
+					var args = {};
 					args[TYPE] = type;
 					args[RUNNER] = sequence;
 					args = [ args ];
@@ -3969,7 +3980,7 @@ define('troopjs-dom/application/widget',[
 	"../component/widget",
 	"when"
 ], function ApplicationWidgetModule(Widget, when) {
-	
+	"use strict";
 
 	/**
 	 * The application widget serves as a container for all troop components that bootstrap the page.
@@ -4064,7 +4075,7 @@ define('troopjs-dom/application/widget',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/after',[ "../mixin/decorator" ], function AfterDecoratorModule(Decorator) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.after
@@ -4104,7 +4115,7 @@ define('troopjs-compose/decorator/after',[ "../mixin/decorator" ], function Afte
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/before',[ "../mixin/decorator" ], function BeforeDecoratorModule(Decorator) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.before
@@ -4147,7 +4158,7 @@ define('troopjs-compose/decorator/extend',[
 	"../mixin/decorator",
 	"troopjs-util/merge"
 ], function ExtendDecoratorModule(Decorator, merge) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.extend
@@ -4197,7 +4208,6 @@ define('troopjs-log/config',[
 	 * Provides configuration for the logging package
 	 * @class log.config
 	 * @protected
-	 * @static
 	 * @alias feature.config
 	 */
 
@@ -4217,7 +4227,7 @@ define('troopjs-log/sink/forward',[
 	"../config",
 	"poly/array"
 ], function ForwardModule(METHODS, CONF) {
-	
+	"use strict";
 
 	/**
 	 * The forward log sink acts as a forwarder to other log sinks.
@@ -4274,7 +4284,7 @@ define('troopjs-log/sink/null',[
 	"./methods",
 	"poly/array"
 ], function NullModule(METHODS) {
-	
+	"use strict";
 
 	/**
 	 * @class log.sink.null
@@ -4302,7 +4312,7 @@ define('troopjs-log/sink/null',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/service',[ "./gadget" ], function ServiceModule(Gadget) {
-	
+	"use strict";
 
 	/**
 	 * Base class for all service alike components.
@@ -4328,7 +4338,7 @@ define('troopjs-opt/pubsub/proxy/to1x',[
 	"poly/array",
 	"poly/object"
 ], function To1xModule(Service, when) {
-	
+	"use strict";
 
 	/**
 	 * Proxies to 1.x hub
@@ -4556,7 +4566,7 @@ define('troopjs-opt/pubsub/proxy/to2x',[
 	"poly/array",
 	"poly/object"
 ], function To2xModule(Service, when) {
-	
+	"use strict";
 
 	/**
 	 * Proxies to 2.x hub
@@ -4761,7 +4771,7 @@ define('troopjs-opt/pubsub/proxy/to2x',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceModule() {
-	
+	"use strict";
 
 	/**
 	 * @class opt.route.runner.sequence
@@ -4823,7 +4833,7 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 				// Replace grouped tokens.
 				.replace(RE_GROUPED_TOKEN, function ($0, $1) {
 					var group = $1.replace(RE_TOKEN, function($0, $1) {
-						return data[$1] ? data[$1] + "/" : $0;
+						return $1 in data ? data[$1] + "/" : $0;
 					});
 					// mark the group as missed unless all params within have fulfilled.
 					return !group.match(RE_COLON)? group + "/" : MARKER;
@@ -4831,7 +4841,7 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 				// Replace the rest of tokens.
 				.replace(RE_TOKEN, function($0, $1) {
 					// mark the parameters as missed.
-					return data[$1] ? data[$1] + "/" : MARKER;
+					return $1 in data ? data[$1] + "/" : MARKER;
 				})
 				// Remove any duplicate slashes previously produced.
 				.replace(RE_DUP_SLASH, "/");
@@ -4920,8 +4930,7 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 					}
 
 					// Apply CALLBACK and store in result
-					result = candidate[CALLBACK].apply(candidate[CONTEXT],
-						[matches].concat(type === "route/change" ? args : [data].concat(args)));
+					result = candidate[CALLBACK].apply(candidate[CONTEXT], [ path, matches ].concat(args));
 				}
 			}
 
@@ -4931,7 +4940,7 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 		// Run 404s if none of the candidate matches the route.
 		if (!matched && type === "route/change") {
 			return fallbacks.reduce(function(result, candidate) {
-				result !== false ? candidate[CALLBACK].apply(candidate[CONTEXT], [path].concat(args)) : result;
+				result !== false ? candidate[CALLBACK].apply(candidate[CONTEXT], [ path ].concat(args)) : result;
 			}, result);
 		}
 
@@ -4948,7 +4957,7 @@ define('troopjs-opt/route/gadget',[
 	"./runner/sequence",
 	"when"
 ], function (COMPOSE_CONF, Gadget, sequence, when) {
-	
+	"use strict";
 
 	/**
 	 * @class opt.route.gadget
@@ -5065,8 +5074,11 @@ define('troopjs-opt/route/gadget',[
 		 * @localdoc Translates {@link #event-route/set} to {@link dom.hash.widget#event-hub/hash/set}
 		 * @fires hub/route/set
 		 */
-		"route/set": function onRouteSet(route) {
-			return this.publish("route/set", route["input"]);
+		"route/set": function onRouteSet(route, data) {
+			var me = this;
+			var args = [ "route/set" ];
+			ARRAY_PUSH.apply(args, arguments);
+			return this.publish.apply(me, args);
 		},
 
 		/**
@@ -5097,7 +5109,7 @@ define('troopjs-opt/store/component',[
 	"when",
 	"poly/array"
 ], function StoreModule(Base, when) {
-	
+	"use strict";
 
 	/**
 	 * A simple key-value store that supports **dot separated key** format.
@@ -5433,7 +5445,7 @@ define('troopjs-net/ajax/service',[
 	"jquery",
 	"troopjs-util/merge"
 ], function (Service, $, merge) {
-	
+	"use strict";
 
 	/**
 	 * Provides ajax as a service
@@ -5477,12 +5489,12 @@ define('troopjs-data/cache/component',[
 	"poly/object",
 	"poly/array"
 ], function CacheModule(Component) {
-	
+	"use strict";
 
 	/**
 	 * Component for handling effective object caching with cycle references concerned.
 	 * @class data.cache.component
-	 * @extends core.component.base
+	 * @extend core.component.base
 	 */
 
 	var UNDEFINED;
@@ -5512,7 +5524,7 @@ define('troopjs-data/cache/component',[
 	 * @param node Node
 	 * @param _constructor Constructor of value
 	 * @param now Current time (seconds)
-	 * @returns Cached node
+	 * @return Cached node
 	 */
 	function _put(node, _constructor, now) {
 		/*jshint validthis:true, forin:false, curly:false, -W086*/
@@ -5746,7 +5758,7 @@ define('troopjs-data/cache/component',[
 		/**
 		 * Puts a node into the cache
 		 * @param node Node to add (object || array)
-		 * @returns Cached node (if it existed in the cache before), otherwise the node sent in
+		 * @return Cached node (if it existed in the cache before), otherwise the node sent in
 		 */
 		"put" : function put(node) {
 			var me = this;
@@ -5768,12 +5780,12 @@ define('troopjs-data/cache/component',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-data/cache/service',[ "troopjs-core/component/service" ], function CacheServiceModule(Service) {
-	
+	"use strict";
 
 	/**
 	 * Service for evicting values from one or more {@link data.cache.component caches}
 	 * @class data.cache.service
-	 * @extends core.component.service
+	 * @extend core.component.service
 	 */
 
 	var UNDEFINED;
@@ -5894,12 +5906,12 @@ define('troopjs-data/cache/service',[ "troopjs-core/component/service" ], functi
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function QueryModule(Base) {
-	
+	"use strict";
 
 	/**
 	 * Component who understands the ubiquitous data query string format.
 	 * @class data.query.component
-	 * @extends core.mixin.base
+	 * @extend core.mixin.base
 	 */
 
 	var UNDEFINED;
@@ -6221,7 +6233,7 @@ define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function Qu
 
 		/**
 		 * Retrieve the AST as the parsed result.
-		 * @returns {Array} the result AST.
+		 * @return {Array} the result AST.
 		 */
 		"ast" : function ast() {
 			var me = this;
@@ -6236,7 +6248,7 @@ define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function Qu
 
 		/**
 		 * Rebuild the (reduced) query string.
-		 * @returns {String} new query string
+		 * @return {String} new query string
 		 */
 		"rewrite" : function rewrite() {
 			var me = this;
@@ -6284,12 +6296,12 @@ define('troopjs-data/query/service',[
 	"troopjs-util/merge",
 	"when"
 ], function QueryServiceModule(module, Service, Query, merge, when) {
-	
+	"use strict";
 
 	/**
 	 * Service that batch processes the query requests send to server and cache the results.
 	 * @class data.query.service
-	 * @extends core.component.service
+	 * @extend core.component.service
 	 * @uses net.ajax.service
 	 */
 
@@ -6457,7 +6469,7 @@ define('troopjs-data/query/service',[
 		 * Handle query request on hub event.
 		 * @handler
 		 * @param {...String} query TroopJS data query
-		 * @returns {Promise}
+		 * @return {Promise}
 		 */
 		"hub/query" : function hubQuery(query) {
 			var me = this;
@@ -6544,7 +6556,7 @@ define('troopjs-data/query/service',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-jquery/hashchange',[ "jquery" ], function HashchangeModule($) {
-	
+	"use strict";
 
 	/**
 	 * Normalized hashchange event. Extends {@link jQuery} with:
@@ -6727,7 +6739,7 @@ define('troopjs-dom/hash/widget',[
 	"../component/widget",
 	"troopjs-jquery/hashchange"
 ], function (Widget) {
-	
+	"use strict";
 
 	/**
 	 * Widget that attaches to the window object in order to handle `window.location.hash` changes.
@@ -6830,7 +6842,7 @@ define('troopjs-dom/hash/widget',[
 		 * @handler
 		 */
 		"dom/hashset": function ($event, hash, silent) {
-			this.publish("route/set", hash, silent);
+			this.publish("route/set", hash, null, silent);
 		},
 
 		/**
@@ -6838,13 +6850,15 @@ define('troopjs-dom/hash/widget',[
 		 * @handler hub/route/set
 		 * @return {Promise}
 		 */
-		"hub/route/set": function (uri, silent) {
+		"hub/route/set": function (path, data, silent) {
 			var me = this;
+
 			// If we are silent we update the local me[HASH] to prevent change detection
 			if (silent === true) {
-				me[HASH] = uri;
+				me[HASH] = path;
 			}
-			me[$ELEMENT].get(0).location.hash = uri;
+
+			me[$ELEMENT].get(0).location.hash = path;
 		}
 	});
 });
@@ -6858,7 +6872,7 @@ define('troopjs-dom/loom/woven',[
 	"jquery",
 	"poly/array"
 ], function WovenModule(config, when, $) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.loom.woven
@@ -6931,7 +6945,7 @@ define('troopjs-dom/loom/plugin',[
 	"troopjs-util/getargs",
 	"poly/array"
 ], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
-	
+	"use strict";
 
 	/**
 	 * Extends {@link jQuery} with:
@@ -7078,23 +7092,8 @@ define('troopjs-dom/loom/plugin',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-jquery/noconflict',[ "jquery" ], function ($) {
-	
-
-	/**
-	 * Module that simply return a `noConflict` version of jQuery
-	 * @class jquery.noconflict
-	 * @static
-	 */
-
-	return $.noConflict(true);
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
 define('troopjs-requirejs/multiversion',[],function MultiVersionModule() {
-	
+	"use strict";
 
 	/**
 	 * RequireJS multiversion plugin
@@ -7144,7 +7143,7 @@ define('troopjs-requirejs/multiversion',[],function MultiVersionModule() {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-requirejs/shadow',[ "text" ], function (text) {
-	
+	"use strict";
 
 	/**
 	 * RequireJS shadow plugin
@@ -7179,7 +7178,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 			}
 		}
 
-		return "define([ " + deps.join(", ") + " ], function (" + args.join(", ") + ") {\n"
+		return "define([" + deps.join(", ") + "], function (" + args.join(", ") + ") {\n"
 			+ scriptText
 			+ "});";
 	}
@@ -7229,7 +7228,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 						buildMap[name] = content;
 					}
 
-					onLoad.fromText(name, content);  
+					onLoad.fromText(name, content);
 					// On requirejs version below '2.1.0', 
 					// need to manually require the module after the call to onLoad.fromText()
 					if (cmpVersion(REQUIRE_VERSION, "2.1.0") < 0) {
@@ -7244,7 +7243,10 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 
 			if (moduleName in buildMap) {
 				content = buildMap[moduleName];
-				write.asModule(pluginName + "!" + moduleName, content);
+				content = content.replace(/define\(/, function (match) {
+					return match + '"' + [pluginName, moduleName].join('!') + '",';
+				});
+				write(content);
 			}
 		}
 	};
@@ -7254,7 +7256,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/select',[],function SelectModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.select
@@ -7338,7 +7340,7 @@ define('troopjs-requirejs/json',[
 	"troopjs-util/select",
 	"poly/json"
 ], function (text, select) {
-	
+	"use strict";
 
 	/**
 	 * RequireJS json plugin
@@ -7378,9 +7380,8 @@ define('troopjs-requirejs/json',[
 
 		write : function (pluginName, moduleName, write) {
 			if (moduleName in buildMap) {
-				write.asModule(pluginName + "!" + moduleName, JSON.stringify(buildMap[moduleName]));
+				write("define('" + pluginName + "!" + moduleName + "', function(){ return " + JSON.stringify(buildMap[moduleName]) + "});");
 			}
 		}
 	};
 });
-

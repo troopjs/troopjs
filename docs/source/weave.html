@@ -50,10 +50,15 @@ define([
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
+	var CANCELED = &quot;cancel&quot;;
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
+			// Re-throw the rejection if it&#39;s not canceled.
+			if (d.state === &quot;rejected&quot; &amp;&amp; d.reason !== CANCELED) {
+				throw d.reason;
+			}
 			return d.state === &quot;fulfilled&quot;;
 		}).map(function(d) {
 			return d.value;
@@ -73,15 +78,15 @@ define([
 	 *
 	 * It also lives as a jquery plugin as {@link $#method-weave}.
 	 *
-	 * **Note:** It's not commonly to use this method directly, use instead {@link $#method-weave jQuery.fn.weave}.
+	 * **Note:** It&#39;s not commonly to use this method directly, use instead {@link $#method-weave jQuery.fn.weave}.
 	 *
 	 * 	// Create element for weaving.
-	 * 	var $el = $('&lt;div data-weave=&quot;my/widget(option)&quot;&gt;&lt;/div&gt;').data(&quot;option&quot;,{&quot;foo&quot;:&quot;bar&quot;});
-	 * 	// Instantiate the widget defined in &quot;my/widget&quot; module, with one param read from the element's custom data.
+	 * 	var $el = $(&#39;&lt;div data-weave=&quot;my/widget(option)&quot;&gt;&lt;/div&gt;&#39;).data(&quot;option&quot;,{&quot;foo&quot;:&quot;bar&quot;});
+	 * 	// Instantiate the widget defined in &quot;my/widget&quot; module, with one param read from the element&#39;s custom data.
 	 * 	$el.weave();
 	 *
 	 * @method constructor
-	 * @param {...*} [start_args] Arguments that will be passed to each widget's {@link dom.component.widget#start start} method
+	 * @param {...*} [start_args] Arguments that will be passed to each widget&#39;s {@link dom.component.widget#start start} method
 	 * @return {Promise} Promise for the completion of weaving all widgets.
 	 */
 	return function weave(start_args) {
@@ -134,10 +139,10 @@ define([
 			var args;
 
 			// Iterate weave_attr (while re matches)
-			// matches[1] : full widget module name (could be loaded from plugin) - &quot;mv!widget/name#1.x(1, 'string', false)&quot;
-			// matches[2] : widget name and arguments - &quot;widget/name(1, 'string', false)&quot;
+			// matches[1] : full widget module name (could be loaded from plugin) - &quot;mv!widget/name#1.x(1, &#39;string&#39;, false)&quot;
+			// matches[2] : widget name and arguments - &quot;widget/name(1, &#39;string&#39;, false)&quot;
 			// matches[3] : widget name - &quot;widget/name&quot;
-			// matches[4] : widget arguments - &quot;1, 'string', false&quot;
+			// matches[4] : widget arguments - &quot;1, &#39;string&#39;, false&quot;
 			while ((matches = re.exec(weave_attr)) !== NULL) {
 				/*jshint loopfunc:true*/
 				// Create weave_args
@@ -180,41 +185,43 @@ define([
 				// Add promise to $warp, make sure this is called synchronously.
 				ARRAY_PUSH.call($warp, promise);
 
-				parentRequire([ module ], function (Widget) {
-					var widget;
-					var startPromise;
+				setTimeout(function() {
+					parentRequire([ module ], function(Widget) {
+						var widget;
+						var startPromise;
 
-					// detect if weaving has been canceled somehow.
-					if ($warp.indexOf(promise) === -1) {
-						resolver.reject(&quot;cancel&quot;);
-					}
-
-					try {
-						// Create widget instance
-						widget = Widget.apply(Widget, widget_args);
-
-						// Add $WEFT to widget
-						widget[$WEFT] = promise;
-
-						// Add WOVEN to promise
-						promise[WOVEN] = widget.toString();
-
-						// TODO: Detecting TroopJS 1.x widget from *version* property.
-						if (widget.trigger) {
-							deferred = Defer();
-							widget.start(deferred);
-							startPromise = deferred.promise;
-						}
-						else {
-							startPromise = widget.start.apply(widget, start_args);
+						// detect if weaving has been canceled somehow.
+						if ($warp.indexOf(promise) === -1) {
+							resolver.reject(CANCELED);
 						}
 
-						resolver.resolve(startPromise.yield(widget));
-					}
-					catch (e) {
-						resolver.reject(e);
-					}
-				}, resolver.reject);
+						try {
+							// Create widget instance
+							widget = Widget.apply(Widget, widget_args);
+
+							// Add $WEFT to widget
+							widget[$WEFT] = promise;
+
+							// Add WOVEN to promise
+							promise[WOVEN] = widget.toString();
+
+							// TODO: Detecting TroopJS 1.x widget from *version* property.
+							if (widget.trigger) {
+								deferred = Defer();
+								widget.start(deferred);
+								startPromise = deferred.promise;
+							}
+							else {
+								startPromise = widget.start.apply(widget, start_args);
+							}
+
+							resolver.resolve(startPromise.yield(widget));
+						}
+						catch (e) {
+							resolver.reject(e);
+						}
+					}, resolver.reject);
+				}, 0);
 
 				// Return promise
 				return promise;

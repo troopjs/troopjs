@@ -19,311 +19,97 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/gadget&quot;,
-	&quot;./runner/sequence&quot;,
-	&quot;troopjs-compose/mixin/config&quot;,
-	&quot;jquery&quot;,
-	&quot;when&quot;,
-	&quot;troopjs-util/merge&quot;,
-	&quot;../loom/config&quot;,
-	&quot;../loom/weave&quot;,
-	&quot;../loom/unweave&quot;,
-	&quot;troopjs-jquery/destroy&quot;
-], function WidgetModule(Gadget, sequence, COMPOSE_CONF, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
+	&quot;../component/widget&quot;,
+	&quot;when&quot;
+], function ApplicationWidgetModule(Widget, when) {
 	&quot;use strict&quot;;
 
-<span id='dom-component-widget'>	/**
-</span>	 * Component that attaches to an DOM element, considerably delegates all DOM manipulations.
-	 * @class dom.component.widget
-	 * @extend core.component.gadget
-	 * @alias widget.component
+<span id='dom-application-widget'>	/**
+</span>	 * The application widget serves as a container for all troop components that bootstrap the page.
+	 * @class dom.application.widget
+	 * @extend dom.component.widget
+	 * @alias widget.application
 	 */
 
-	var UNDEFINED;
-	var NULL = null;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var $GET = $.fn.get;
-	var TYPEOF_FUNCTION = &quot;function&quot;;
-	var $ELEMENT = &quot;$element&quot;;
-	var MODIFIED = &quot;modified&quot;;
-	var PROXY = &quot;proxy&quot;;
-	var DOM = &quot;dom&quot;;
-	var ARGS = &quot;args&quot;;
-	var NAME = &quot;name&quot;;
-	var VALUE = &quot;value&quot;;
-	var TYPE = &quot;type&quot;;
-	var RUNNER = &quot;runner&quot;;
-	var FINALIZE = &quot;finalize&quot;;
-	var SELECTOR_WEAVE = &quot;[&quot; + LOOM_CONF[&quot;weave&quot;] + &quot;]&quot;;
-	var SELECTOR_WOVEN = &quot;[&quot; + LOOM_CONF[&quot;woven&quot;] + &quot;]&quot;;
-	var RE = new RegExp(&quot;^&quot; + DOM + &quot;/(.+)&quot;);
+	var ARRAY_SLICE = Array.prototype.slice;
+	var COMPONENTS = &quot;components&quot;;
 
-<span id='global-method-S-render'>	/**
-</span>	 * Creates a proxy of the inner method 'render' with the '$fn' parameter set
-	 * @ignore
-	 * @param {Function} $fn jQuery method
-	 * @return {Function} proxied render
-	 */
-	function $render($fn) {
-<span id='global-method-render'>		/**
-</span>		 * @ignore
-		 * @param {Function|String|Promise} [contents] Contents to render or a Promise for contents
-		 * @param {...*} [args] Template arguments
-		 * @return {String|Promise} The returned content string or promise of rendering.
-		 */
-		function render(contents, args) {
-			/*jshint validthis:true*/
-			var me = this;
-
-			// Retrieve HTML/Text.
-			if (!arguments.length) {
-				return $fn.call(me[$ELEMENT]);
-			}
-
-			return when
-				// Wait for contents and args to resolve...
-				.all(ARRAY_SLICE.call(arguments))
-				.then(function (_args) {
-					// First argument is the resolved value of contents
-					var _contents = _args.shift();
-
-					// If _contents is a function, apply it with _args, otherwise just pass it along to the callback
-					return when(typeof _contents === TYPEOF_FUNCTION ? _contents.apply(me, _args) : contents, function (result) {
-						// Call $fn in the context of me[$ELEMENT] with result as the only argument
-						// Find something to weave
-						// Pass it to loom_weave and return the result
-						return loom_weave.call($fn.call(me[$ELEMENT], result).find(SELECTOR_WEAVE));
-					});
-				});
-		}
-
-		return render;
-	}
-
-<span id='global-method-set_modified'>	/**
-</span>	 * Sets MODIFIED on handlers
-	 * @ignore
-	 * @param {Object} handlers
-	 * @param {String} type
-	 */
-	function set_modified(handlers, type) {
-		if (RE.test(type)) {
-			// Set modified
-			handlers[MODIFIED] = new Date().getTime();
-		}
-	}
-
-	// Add pragmas for DOM specials
-	COMPOSE_CONF.pragmas.push({
-		&quot;pattern&quot;: /^dom(?:\:([^\/]+))?\/(.+)/,
-		&quot;replace&quot;: DOM + &quot;/$2(\&quot;$1\&quot;)&quot;
-	});
-
-<span id='dom-component-widget-method-constructor'>	/**
-</span>	 * Creates a new widget that attaches to a specified (jQuery) DOM element.
-	 * @method constructor
+<span id='dom-application-widget-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
 	 * @param {jQuery|HTMLElement} $element The element that this widget should be attached to
-	 * @param {String} [displayName] A friendly name for this widget
-	 * @throws {Error} If no $element is provided
-	 * @throws {Error} If $element is not of supported type
+	 * @param {String} displayName A friendly name for this widget
+	 * @param {...core.component.base} component List of components to start before starting the application.
 	 */
-	return Gadget.extend(function Widget($element, displayName) {
-		var me = this;
-		var $get;
-
-		// No $element
-		if ($element === UNDEFINED) {
-			throw new Error(&quot;No $element provided&quot;);
-		}
-		// Is _not_ a jQuery element
-		else if (!$element.jquery) {
-			// From a plain dom node
-			if ($element.nodeType) {
-				$element = $($element);
-			}
-			else {
-				throw new Error(&quot;Unsupported widget element&quot;);
-			}
-		}
-		// From a different jQuery instance
-		else if (($get = $element.get) !== $GET) {
-			$element = $($get.call($element, 0));
-		}
-
-<span id='dom-component-widget-property-S-element'>		/**
-</span>		 * jQuery element this widget is attached to
-		 * @property {jQuery} $element
+	return Widget.extend(function ApplicationWidget($element, displayName, component) {
+<span id='dom-application-widget-property-components'>		/**
+</span>		 * Application components
+		 * @private
 		 * @readonly
-		 * @protected
+		 * @property {core.component.base[]} components
 		 */
-		me[$ELEMENT] = $element;
-
-		if (displayName !== UNDEFINED) {
-			me.displayName = displayName;
-		}
-
+		this[COMPONENTS] = ARRAY_SLICE.call(arguments, 2);
 	}, {
-		&quot;displayName&quot; : &quot;dom/component/widget&quot;,
+		&quot;displayName&quot; : &quot;dom/application/widget&quot;,
 
-<span id='dom-component-widget-handler-sig-initialize'>		/**
+<span id='dom-application-widget-handler-sig-initialize'>		/**
 </span>		 * @handler
-		 * @localdoc Registers event handlers that are declared as DOM specials.
+		 * @localdoc Initialize all registered components (widgets and services) that are passed in from the {@link #method-constructor}.
 		 * @inheritdoc
 		 */
 		&quot;sig/initialize&quot; : function onInitialize() {
-			var me = this;
+			var args = arguments;
 
-			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
-				return me.on(special[NAME], special[VALUE], special[ARGS][0]);
+			return when.map(this[COMPONENTS], function (component) {
+				return component.signal(&quot;initialize&quot;, args);
 			});
 		},
 
-<span id='dom-component-widget-handler-sig-setup'>		/**
+<span id='dom-application-widget-handler-sig-start'>		/**
 </span>		 * @handler
-		 * @localdoc Registers for each type of DOM event a proxy function on the DOM element that
-		 * re-dispatches those events.
+		 * @localdoc weave all widgets that are within this element.
 		 * @inheritdoc
 		 */
-		&quot;sig/setup&quot;: function onSetup(handlers, type) {
+		&quot;sig/start&quot; : function onStart() {
 			var me = this;
-			var matches;
+			var args = arguments;
 
-			if ((matches = RE.exec(type)) !== NULL) {
-				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
-					// Redefine args
-					args = {};
-					args[TYPE] = type;
-					args[RUNNER] = sequence;
-					args = [ args ];
-
-					// Push original arguments on args
-					ARRAY_PUSH.apply(args, arguments);
-
-					// Return result of emit
-					return me.emit.apply(me, args);
+			return when
+				.map(me[COMPONENTS], function (component) {
+					return component.signal(&quot;start&quot;, args);
+				}).then(function started() {
+					return me.weave.apply(me, args);
 				});
-			}
 		},
 
-<span id='dom-component-widget-handler-sig-add'>		/**
+<span id='dom-application-widget-handler-sig-stop'>		/**
 </span>		 * @handler
-		 * @localdoc Sets MODIFIED on handlers for matching types
+		 * @localdoc stop all woven widgets that are within this element.
 		 * @inheritdoc
 		 */
-		&quot;sig/add&quot;: set_modified,
-
-<span id='dom-component-widget-handler-sig-remove'>		/**
-</span>		 * @handler
-		 * @localdoc Sets MODIFIED on handlers for matching types
-		 * @inheritdoc
-		 */
-		&quot;sig/remove&quot;: set_modified,
-
-<span id='dom-component-widget-handler-sig-teardown'>		/**
-</span>		 * @handler
-		 * @localdoc Remove for the DOM event handler proxies that are registered on the DOM element.
-		 * @inheritdoc
-		 */
-		&quot;sig/teardown&quot;: function onTeardown(handlers, type) {
+		&quot;sig/stop&quot;: function onStop() {
 			var me = this;
-			var matches;
+			var args = arguments;
 
-			if ((matches = RE.exec(type)) !== NULL) {
-				// $element.off handlers[PROXY]
-				me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
-			}
+			return me.unweave.apply(me, args).then(function stopped() {
+				return when.map(me[COMPONENTS], function (child) {
+					return child.signal(&quot;stop&quot;, args);
+				});
+			});
 		},
 
-<span id='dom-component-widget-handler-sig-task'>		/**
+<span id='dom-application-widget-handler-sig-finalize'>		/**
 </span>		 * @handler
-		 * @localdoc Trigger a custom DOM event &quot;task&quot; whenever this widget performs a task.
+		 * @localdoc finalize all registered components (widgets and services) that are registered from the {@link #method-constructor}.
 		 * @inheritdoc
 		 */
-		&quot;sig/task&quot; : function onTask(task) {
-			this[$ELEMENT].trigger(&quot;task&quot;, [ task ]);
-		},
+		&quot;sig/finalize&quot; : function onFinalize() {
+			var args = arguments;
 
-<span id='dom-component-widget-event-dom-destroy'>		/**
-</span>		 * Destroy DOM event
-		 * @localdoc Triggered when {@link #$element} of this widget is removed from the DOM tree.
-		 * @event dom/destroy
-		 * @param {jQuery} $event jQuery event object
-		 * @param {...*} [args] Event arguments
-		 * @preventable
-		 */
-
-<span id='dom-component-widget-handler-dom-destroy'>		/**
-</span>		 * Handles widget destruction from a DOM perspective
-		 * @handler
-		 * @inheritdoc #event-dom/destroy
-		 * @localdoc Triggered when this widget is removed from the DOM
-		 */
-		&quot;dom/destroy&quot; : function onDestroy() {
-			if (this.phase !== FINALIZE) {
-				loom_unweave.call(this[$ELEMENT]);
-			}
-		},
-
-<span id='dom-component-widget-method-weave'>		/**
-</span>		 * @inheritdoc dom.loom.weave#constructor
-		 */
-		&quot;weave&quot; : function weave() {
-			return loom_weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
-		},
-
-<span id='dom-component-widget-method-unweave'>		/**
-</span>		 * @inheritdoc dom.loom.unweave#constructor
-		 */
-		&quot;unweave&quot; : function unweave() {
-			return loom_unweave.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
-		},
-
-<span id='dom-component-widget-method-before'>		/**
-</span>		 * Renders content and inserts it before {@link #$element}
-		 * @method
-		 * @inheritdoc #html
-		 */
-		&quot;before&quot; : $render($.fn.before),
-
-<span id='dom-component-widget-method-after'>		/**
-</span>		 * Renders content and inserts it after {@link #$element}
-		 * @method
-		 * @inheritdoc #html
-		 */
-		&quot;after&quot; : $render($.fn.after),
-
-<span id='dom-component-widget-method-html'>		/**
-</span>		 * Renders content and replaces {@link #$element} html contents
-		 * @method
-		 * @param {Function|String} contents Template/String to render
-		 * @param {...*} [args] Template arguments
-		 * @return {Promise} Promise of  render
-		 */
-		&quot;html&quot; : $render($.fn.html),
-
-<span id='dom-component-widget-method-text'>		/**
-</span>		 * Renders content and replaces {@link #$element} text contents
-		 * @method
-		 * @inheritdoc #html
-		 */
-		&quot;text&quot; : $render($.fn.text),
-
-<span id='dom-component-widget-method-append'>		/**
-</span>		 * Renders content and appends it to {@link #$element}
-		 * @method
-		 * @inheritdoc #html
-		 */
-		&quot;append&quot; : $render($.fn.append),
-
-<span id='dom-component-widget-method-prepend'>		/**
-</span>		 * Renders content and prepends it to {@link #$element}
-		 * @method
-		 * @inheritdoc #html
-		 */
-		&quot;prepend&quot; : $render($.fn.prepend)
+			return when.map(this[COMPONENTS], function (component) {
+				return component.signal(&quot;finalize&quot;, args);
+			});
+		}
 	});
 });
 </pre>

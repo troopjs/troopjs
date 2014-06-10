@@ -73,36 +73,36 @@
  *
  * Every object descended from `Object` inherits the `hasOwnProperty` method. This method can be used
  * to determine whether an object has the specified property as a direct property of that object;
- * unlike the `in` operator, this method does not check down the object's prototype chain.
+ * unlike the `in` operator, this method does not check down the object&#39;s prototype chain.
  *
  * The following example determines whether the o object contains a property named prop:
  *
  *     o = new Object();
- *     o.prop = 'exists';
+ *     o.prop = &#39;exists&#39;;
  *
  *     function changeO() {
  *         o.newprop = o.prop;
  *         delete o.prop;
  *     }
  *
- *     o.hasOwnProperty('prop');   //returns true
+ *     o.hasOwnProperty(&#39;prop&#39;);   //returns true
  *     changeO();
- *     o.hasOwnProperty('prop');   //returns false
+ *     o.hasOwnProperty(&#39;prop&#39;);   //returns false
  *
  * The following example differentiates between direct properties and properties inherited through the
  * prototype chain:
  *
  *     o = new Object();
- *     o.prop = 'exists';
- *     o.hasOwnProperty('prop');             // returns true
- *     o.hasOwnProperty('toString');         // returns false
- *     o.hasOwnProperty('hasOwnProperty');   // returns false
+ *     o.prop = &#39;exists&#39;;
+ *     o.hasOwnProperty(&#39;prop&#39;);             // returns true
+ *     o.hasOwnProperty(&#39;toString&#39;);         // returns false
+ *     o.hasOwnProperty(&#39;hasOwnProperty&#39;);   // returns false
  *
  * The following example shows how to iterate over the properties of an object without executing on
  * inherit properties.
  *
  *     var buz = {
- *         fog: 'stack'
+ *         fog: &#39;stack&#39;
  *     };
  *
  *     for (var name in buz) {
@@ -124,7 +124,7 @@
  * Returns a boolean indication whether the specified object is in the prototype chain of the object
  * this method is called upon.
  *
- * `isPrototypeOf` allows you to check whether or not an object exists within another object's
+ * `isPrototypeOf` allows you to check whether or not an object exists within another object&#39;s
  * prototype chain.
  *
  * For example, consider the following prototype chain:
@@ -148,7 +148,7 @@
  *     }
  *     Fum.prototype = new Fo();
  *
- * Later on down the road, if you instantiate `Fum` and need to check if `Fi`'s prototype exists
+ * Later on down the road, if you instantiate `Fum` and need to check if `Fi`&#39;s prototype exists
  * within the `Fum` prototype chain, you could do this:
  *
  *     var fum = new Fum();
@@ -181,58 +181,58 @@
  *
  *     var o = {};
  *     var a = [];
- *     o.prop = 'is enumerable';
- *     a[0] = 'is enumerable';
+ *     o.prop = &#39;is enumerable&#39;;
+ *     a[0] = &#39;is enumerable&#39;;
  *
- *     o.propertyIsEnumerable('prop');   // returns true
+ *     o.propertyIsEnumerable(&#39;prop&#39;);   // returns true
  *     a.propertyIsEnumerable(0);        // returns true
  *
  * The following example demonstrates the enumerability of user-defined versus built-in properties:
  *
- *     var a = ['is enumerable'];
+ *     var a = [&#39;is enumerable&#39;];
  *
  *     a.propertyIsEnumerable(0);          // returns true
- *     a.propertyIsEnumerable('length');   // returns false
+ *     a.propertyIsEnumerable(&#39;length&#39;);   // returns false
  *
- *     Math.propertyIsEnumerable('random');   // returns false
- *     this.propertyIsEnumerable('Math');     // returns false
+ *     Math.propertyIsEnumerable(&#39;random&#39;);   // returns false
+ *     this.propertyIsEnumerable(&#39;Math&#39;);     // returns false
  *
  * Direct versus inherited properties
  *
  *     var a = [];
- *     a.propertyIsEnumerable('constructor');         // returns false
+ *     a.propertyIsEnumerable(&#39;constructor&#39;);         // returns false
  *
  *     function firstConstructor()
  *     {
- *         this.property = 'is not enumerable';
+ *         this.property = &#39;is not enumerable&#39;;
  *     }
  *     firstConstructor.prototype.firstMethod = function () {};
  *
  *     function secondConstructor()
  *     {
- *         this.method = function method() { return 'is enumerable'; };
+ *         this.method = function method() { return &#39;is enumerable&#39;; };
  *     }
  *
  *     secondConstructor.prototype = new firstConstructor;
  *     secondConstructor.prototype.constructor = secondConstructor;
  *
  *     var o = new secondConstructor();
- *     o.arbitraryProperty = 'is enumerable';
+ *     o.arbitraryProperty = &#39;is enumerable&#39;;
  *
- *     o.propertyIsEnumerable('arbitraryProperty');   // returns true
- *     o.propertyIsEnumerable('method');              // returns true
- *     o.propertyIsEnumerable('property');            // returns false
+ *     o.propertyIsEnumerable(&#39;arbitraryProperty&#39;);   // returns true
+ *     o.propertyIsEnumerable(&#39;method&#39;);              // returns true
+ *     o.propertyIsEnumerable(&#39;property&#39;);            // returns false
  *
- *     o.property = 'is enumerable';
+ *     o.property = &#39;is enumerable&#39;;
  *
- *     o.propertyIsEnumerable('property');            // returns true
+ *     o.propertyIsEnumerable(&#39;property&#39;);            // returns true
  *
  *     // These return false as they are on the prototype which
  *     // propertyIsEnumerable does not consider (even though the last two
  *     // are iteratable with for-in)
- *     o.propertyIsEnumerable('prototype'); // returns false (as of JS 1.8.1/FF3.6)
- *     o.propertyIsEnumerable('constructor'); // returns false
- *     o.propertyIsEnumerable('firstMethod'); // returns false
+ *     o.propertyIsEnumerable(&#39;prototype&#39;); // returns false (as of JS 1.8.1/FF3.6)
+ *     o.propertyIsEnumerable(&#39;constructor&#39;); // returns false
+ *     o.propertyIsEnumerable(&#39;firstMethod&#39;); // returns false
  *
  * @param {String} prop The name of the property to test.
  * @return {Boolean} If the object does not have the specified property, this
@@ -244,7 +244,7 @@
  * Returns a string representing the object. This method is meant to be overridden by derived objects
  * for locale-specific purposes.
  *
- * `Object`'s `toLocaleString` returns the result of calling `toString`.
+ * `Object`&#39;s `toLocaleString` returns the result of calling `toString`.
  *
  * This function is provided to give objects a generic `toLocaleString` method, even though not all
  * may use it. Currently, only `Array`, `Number`, and `Date` override `toLocaleString`.
@@ -336,7 +336,7 @@
  * take no arguments.
  *
  * Suppose you have an object type `myNumberType` and you want to create a `valueOf` method for it.
- * The following code assigns a user-defined function to the object's valueOf method:
+ * The following code assigns a user-defined function to the object&#39;s valueOf method:
  *
  *     myNumberType.prototype.valueOf = new Function(functionText)
  *
@@ -344,7 +344,7 @@
  * where it is to be represented as a primitive value, JavaScript automatically calls the function
  * defined in the preceding code.
  *
- * An object's `valueOf` method is usually invoked by JavaScript, but you can invoke it yourself as
+ * An object&#39;s `valueOf` method is usually invoked by JavaScript, but you can invoke it yourself as
  * follows:
  *
  *     myNumber.valueOf()
@@ -361,11 +361,11 @@
 
 <span id='Object-property-constructor'>/**
 </span> * @property constructor
- * Specifies the function that creates an object's prototype.
+ * Specifies the function that creates an object&#39;s prototype.
  *
- * Returns a reference to the Object function that created the instance's prototype. Note that the
+ * Returns a reference to the Object function that created the instance&#39;s prototype. Note that the
  * value of this property is a reference to the function itself, not a string containing the
- * function's name, but it isn't read only (except for primitive Boolean, Number or String values: 1,
+ * function&#39;s name, but it isn&#39;t read only (except for primitive Boolean, Number or String values: 1,
  * true, &quot;read-only&quot;).
  *
  * All objects inherit a `constructor` property from their `prototype`:
@@ -511,7 +511,7 @@
  *
  *
  *     // create a new object whose prototype is a new, empty object
- *     // and a adding single property 'p', with value 42
+ *     // and a adding single property &#39;p&#39;, with value 42
  *     o = Object.create({}, { p: { value: 42 } })
  *
  *     // by default properties ARE NOT writable, enumerable or configurable:
@@ -536,7 +536,7 @@
  * @param {Object} proto The object which should be the prototype of
  * the newly-created object.
  *
- * Throws a `TypeError` exception if the `proto` parameter isn't null or
+ * Throws a `TypeError` exception if the `proto` parameter isn&#39;t null or
  * an object.
  *
  * @param {Object} [propertiesObject] If specified and not undefined,
@@ -652,7 +652,7 @@
  *
  * Returns a property descriptor for an own property (that is, one
  * directly present on an object, not present by dint of being along
- * an object's prototype chain) of a given object.
+ * an object&#39;s prototype chain) of a given object.
  *
  * This method permits examination of the precise description of a
  * property. A property in JavaScript consists of a string-valued name
@@ -695,7 +695,7 @@
 </span> * @method keys
  * @static
  *
- * Returns an array of a given object's own enumerable properties, in
+ * Returns an array of a given object&#39;s own enumerable properties, in
  * the same order as that provided by a for-in loop (the difference
  * being that a for-in loop enumerates properties in the prototype
  * chain as well).
@@ -712,7 +712,7 @@
  *     var obj = { 0 : &quot;a&quot;, 1 : &quot;b&quot;, 2 : &quot;c&quot;};
  *     alert(Object.keys(obj)); // will alert &quot;0,1,2&quot;
  *
- *     // getFoo is property which isn't enumerable
+ *     // getFoo is property which isn&#39;t enumerable
  *     var my_obj = Object.create({}, { getFoo : { value : function () { return this.foo } } });
  *     my_obj.foo = 1;
  *
@@ -809,7 +809,7 @@
  * **NOTE:** This method is part of the ECMAScript 5 standard.
  *
  * @param {Object} object The object whose prototype is to be returned.
- * Throws a TypeError exception if this parameter isn't an Object.
+ * Throws a TypeError exception if this parameter isn&#39;t an Object.
  *
  * @return {Object} the prototype
  */
@@ -914,7 +914,7 @@
  * properties are non-configurable and therefore not removable (but
  * not necessarily non-writable).
  *
- *     // Objects aren't sealed by default.
+ *     // Objects aren&#39;t sealed by default.
  *     var empty = {};
  *     assert(Object.isSealed(empty) === false);
  *
@@ -939,7 +939,7 @@
  *     // A sealed object is, by definition, non-extensible.
  *     assert(Object.isExtensible(sealed) === false);
  *
- *     // A sealed object might be frozen, but it doesn't have to be.
+ *     // A sealed object might be frozen, but it doesn&#39;t have to be.
  *     assert(Object.isFrozen(sealed) === true); // all properties also non-writable
  *
  *     var s2 = Object.seal({ p: 3 });
@@ -1002,7 +1002,7 @@
  *     var oneProp = { p: 42 };
  *     assert(Object.isFrozen(oneProp) === false);
  *
- *     // Preventing extensions to the object still doesn't make it frozen,
+ *     // Preventing extensions to the object still doesn&#39;t make it frozen,
  *     // because the property is still configurable (and writable).
  *     Object.preventExtensions(oneProp);
  *     assert(Object.isFrozen(oneProp) === false);
@@ -1021,7 +1021,7 @@
  *     Object.defineProperty(nonWritable, &quot;e&quot;, { configurable: false }); // make non-configurable
  *     assert(Object.isFrozen(nonWritable) === true);
  *
- *     // A non-extensible object with a non-configurable but still writable property also isn't frozen.
+ *     // A non-extensible object with a non-configurable but still writable property also isn&#39;t frozen.
  *     var nonConfigurable = { release: &quot;the kraken!&quot; };
  *     Object.preventExtensions(nonConfigurable);
  *     Object.defineProperty(nonConfigurable, &quot;release&quot;, { configurable: false });
@@ -1031,7 +1031,7 @@
  *     Object.defineProperty(nonConfigurable, &quot;release&quot;, { writable: false });
  *     assert(Object.isFrozen(nonConfigurable) === true);
  *
- *     // A non-extensible object with a configurable accessor property isn't frozen.
+ *     // A non-extensible object with a configurable accessor property isn&#39;t frozen.
  *     var accessor = { get food() { return &quot;yum&quot;; } };
  *     Object.preventExtensions(accessor);
  *     assert(Object.isFrozen(accessor) === false);

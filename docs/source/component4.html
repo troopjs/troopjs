@@ -19,296 +19,337 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/base&quot;,
-	&quot;poly/object&quot;,
+	&quot;troopjs-core/mixin/base&quot;,
+	&quot;when&quot;,
 	&quot;poly/array&quot;
-], function CacheModule(Component) {
+], function StoreModule(Base, when) {
 	&quot;use strict&quot;;
 
-<span id='data-cache-component'>	/**
-</span>	 * Component for handling effective object caching with cycle references concerned.
-	 * @class data.cache.component
-	 * @extends core.component.base
+<span id='opt-store-component'>	/**
+</span>	 * A simple key-value store that supports **dot separated key** format.
+	 * @class opt.store.component
+	 * @extend core.mixin.base
 	 */
 
 	var UNDEFINED;
-	var TRUE = true;
-	var FALSE = false;
-	var NULL = null;
-	var OBJECT = Object;
-	var ARRAY = Array;
-
-	var SECOND = 1000;
-	var GENERATIONS = &quot;generations&quot;;
-	var HEAD = &quot;head&quot;;
-	var NEXT = &quot;next&quot;;
-	var EXPIRES = &quot;expires&quot;;
-	var CONSTRUCTOR = &quot;constructor&quot;;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
+	var TOSTRING_OBJECT = &quot;[object Object]&quot;;
+	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
+	var TOSTRING_STRING = &quot;[object String]&quot;;
+	var ARRAY_SLICE = Array.prototype.slice;
 	var LENGTH = &quot;length&quot;;
+	var ADAPTERS = &quot;adapters&quot;;
+	var STORAGE = &quot;storage&quot;;
+	var BEFORE_GET = &quot;beforeGet&quot;;
+	var AFTER_PUT = &quot;afterPut&quot;;
+	var CLEAR = &quot;clear&quot;;
+	var LOCKS = &quot;locks&quot;;
 
-	var _ID = &quot;id&quot;;
-	var _MAXAGE = &quot;maxAge&quot;;
-	var _EXPIRES = &quot;expires&quot;;
-	var _INDEXED = &quot;indexed&quot;;
-	var _COLLAPSED = &quot;collapsed&quot;;
-
-<span id='global-method-_put'>	/**
-</span>	 * Internal method to put a node in the cache
+<span id='global-method-applyMethod'>	/**
+</span>	 * Applies method to this (if it exists)
+	 * @param {String} method Method name
+	 * @return {Boolean|*}
 	 * @ignore
-	 * @param node Node
-	 * @param _constructor Constructor of value
-	 * @param now Current time (seconds)
-	 * @returns Cached node
 	 */
-	function _put(node, _constructor, now) {
-		/*jshint validthis:true, forin:false, curly:false, -W086*/
+	function applyMethod(method) {
+		/*jshint validthis:true*/
 		var me = this;
-		var result;
-		var id;
-		var i;
-		var iMax;
-		var expires;
-		var expired;
-		var head;
-		var current;
-		var next;
-		var generation;
-		var generations = me[GENERATIONS];
-		var property;
-		var value;
 
-		// First add node to cache (or get the already cached instance)
-		cache : {
-			// Can't cache if there is no _ID
-			if (!(_ID in node)) {
-				result = node;          // Reuse ref to node (avoids object creation)
-				break cache;
-			}
-
-			// Update _INDEXED
-			node[_INDEXED] = now;
-
-			// Get _ID
-			id = node[_ID];
-
-			// In cache, get it!
-			if (id in me) {
-				result = me[id];
-
-				// Bypass collapsed object that already exists in cache.
-				if(node[_COLLAPSED] === TRUE) {
-					return result;
-				}
-
-				break cache;
-			}
-
-			// Not in cache, add it!
-			result = me[id] = node;   // Reuse ref to node (avoids object creation)
-		}
-
-		// We have to deep traverse the graph before we do any expiration (as more data for this object can be available)
-
-		// Check that this is an ARRAY
-		if (_constructor === ARRAY) {
-			// Index all values
-			for (i = 0, iMax = node[LENGTH]; i &lt; iMax; i++) {
-
-				// Keep value
-				value = node[i];
-
-				// Get _constructor of value (safely, falling back to UNDEFINED)
-				_constructor = value === NULL || value === UNDEFINED
-					? UNDEFINED
-					: value[CONSTRUCTOR];
-
-				// Do magic comparison to see if we recursively put this in the cache, or plain put
-				result[i] = (_constructor === OBJECT || _constructor === ARRAY &amp;&amp; value[LENGTH] !== 0)
-					? _put.call(me, value, _constructor, now)
-					: value;
-			}
-		}
-
-		// Check that this is an OBJECT
-		else if (_constructor === OBJECT) {
-			// Check if _not_ _COLLAPSED
-			if (node[_COLLAPSED] === FALSE) {
-				// Prune properties from result
-				for (property in result) {
-					// Except the _ID property
-					// or the _COLLAPSED property
-					// or the _EXPIRES property
-					// if property is _not_ present in node
-					if (property !== _ID
-						&amp;&amp; property !== _COLLAPSED
-						&amp;&amp; property !== _EXPIRES
-						&amp;&amp; !(property in node)) {
-						delete result[property];
-					}
-				}
-			}
-
-			// Index all properties
-			for (property in node) {
-				// Except the _ID property
-				// or the _COLLAPSED property, if it's false
-				if (property === _ID
-					|| (property === _COLLAPSED &amp;&amp; result[_COLLAPSED] === FALSE)) {
-					continue;
-				}
-
-				// Keep value
-				value = node[property];
-
-				// Get _constructor of value (safely, falling back to UNDEFINED)
-				_constructor = value === NULL || value === UNDEFINED
-					? UNDEFINED
-					: value[CONSTRUCTOR];
-
-				// Do magic comparison to see if we recursively put this in the cache, or plain put
-				result[property] = (_constructor === OBJECT || _constructor === ARRAY &amp;&amp; value[LENGTH] !== 0)
-					? _put.call(me, value, _constructor, now)
-					: value;
-			}
-		}
-
-		// Check if we need to move result between generations
-		move : {
-			// Break fast if id is UNDEFINED
-			if (id === UNDEFINED) {
-				break move;
-			}
-
-			// Calculate expiration and floor
-			// '&gt;&gt;&gt;' means convert anything other than posiitive integer into 0
-			expires = 0 | now + (result[_MAXAGE] &gt;&gt;&gt; 0);
-
-			remove : {
-				// Fail fast if there is no old expiration
-				if (!(_EXPIRES in result)) {
-					break remove;
-				}
-
-				// Get current expiration
-				expired = result[_EXPIRES];
-
-				// If expiration has not changed, we can continue
-				if (expired === expires) {
-					break move;
-				}
-
-				// Remove ref from generation (if that generation exists)
-				if (expired in generations) {
-					delete generations[expired][id];
-				}
-			}
-
-			add : {
-				// Collapsed object should not be collected by GC.
-				if(result[_COLLAPSED] === TRUE) {
-					break add;
-				}
-
-				// Update expiration time
-				result[_EXPIRES] = expires;
-
-				// Existing generation
-				if (expires in generations) {
-					// Add result to generation
-					generations[expires][id] = result;
-					break add;
-				}
-
-				// Create generation with expiration set
-				(generation = generations[expires] = {})[EXPIRES] = expires;
-
-				// Add result to generation
-				generation[id] = result;
-
-				// Short circuit if there is no head
-				if (generations[HEAD] === UNDEFINED) {
-					generations[HEAD] = generation;
-					break add;
-				}
-
-				// Step through list as long as there is a next, and expiration is &quot;older&quot; than the next expiration
-				for (current = head = generations[HEAD]; (next = current[NEXT]) !== UNDEFINED &amp;&amp; next[EXPIRES] &lt; expires; current = next);
-
-				// Check if we're still on the head and if we're younger
-				if (current === head &amp;&amp; current[EXPIRES] &gt; expires) {
-					// Next generation is the current one (head)
-					generation[NEXT] = current;
-
-					// Reset head to new generation
-					generations[HEAD] = generation;
-					break add;
-				}
-
-				// Insert new generation between current and current.next
-				generation[NEXT] = current[NEXT];
-				current[NEXT] = generation;
-			}
-		}
-
-		return result;
+		return method in me &amp;&amp; me[method].apply(me, ARRAY_SLICE.call(arguments, 1));
 	}
 
-<span id='data-cache-component-method-constructor'>	/**
-</span>	 * @method constructor
+<span id='global-method-put'>	/**
+</span>	 * Puts value
+	 * @param {String|null} key Key - can be dot separated for sub keys
+	 * @param {*} value Value
+	 * @return {Promise} Promise of put
+	 * @ignore
 	 */
-	return Component.extend(function CacheComponent() {
-<span id='data-cache-component-property-generations'>		/**
-</span>		 * Cache generations
+	function put(key, value) {
+		/*jshint validthis:true*/
+		var me = this;
+		var node = me[STORAGE];
+		var parts = key
+			? key.split(&quot;.&quot;)
+			: [];
+		var part;
+		var last = parts.pop();
+
+		while (node &amp;&amp; (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = node[part] = {};
+			}
+		}
+
+		// Evaluate value if needed
+		if (OBJECT_TOSTRING.call(value) === TOSTRING_FUNCTION) {
+			value = value.call(me, {
+				&quot;get&quot; : function () {
+					return get.apply(me, arguments);
+				},
+				&quot;has&quot; : function () {
+					return has.apply(me, arguments);
+				}
+			}, key);
+		}
+
+		return last !== UNDEFINED
+			// First store the promise, then override with the true value once resolved
+			? when(value, function (result) {
+				node[last] = result;
+
+				return result;
+			})
+			// No key provided, just return a promise of the value
+			: when(value);
+	}
+
+<span id='global-method-get'>	/**
+</span>	 * Gets value
+	 * @param {String} key Key - can be dot separated for sub keys
+	 * @return {*} Value
+	 * @ignore
+	 */
+	function get(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(&quot;.&quot;);
+		var part;
+
+		while (node &amp;&amp; (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node;
+	}
+
+<span id='global-method-has'>	/**
+</span>	 * Check is key exists
+	 * @param key {String} key Key - can be dot separated for sub keys
+	 * @return {Boolean}
+	 * @ignore
+	 */
+	function has(key) {
+		/*jshint validthis:true*/
+		var node = this[STORAGE];
+		var parts = key.split(&quot;.&quot;);
+		var part;
+		var last = parts.pop();
+
+		while (node &amp;&amp; (part = parts.shift())) {
+			switch (OBJECT_TOSTRING.call(node)) {
+				case TOSTRING_ARRAY :
+				/* falls through */
+
+				case TOSTRING_OBJECT :
+					if (part in node) {
+						node = node[part];
+						break;
+					}
+				/* falls through */
+
+				default :
+					node = UNDEFINED;
+			}
+		}
+
+		return node !== UNDEFINED &amp;&amp; last in node;
+	}
+
+<span id='opt-store-component-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {...Object} adapter One or more adapters
+	 * @throws {Error} If no adapter was provided
+	 */
+	return Base.extend(function StoreComponent(adapter) {
+		if (arguments[LENGTH] === 0) {
+			throw new Error(&quot;No adapter(s) provided&quot;);
+		}
+
+		var me = this;
+
+<span id='opt-store-component-property-adapters'>		/**
+</span>		 * Current adapters
 		 * @private
 		 * @readonly
-		 * @property {Object} generations
+		 * @property {Array} adapters
 		 */
-		this[GENERATIONS] = {};
+		me[ADAPTERS] = ARRAY_SLICE.call(arguments);
+
+<span id='opt-store-component-property-storage'>		/**
+</span>		 * Current storage
+		 * @private
+		 * @readonly
+		 * @property {Object} storage
+		 */
+		me[STORAGE] = {};
+
+<span id='opt-store-component-property-locks'>		/**
+</span>		 * Current locks
+		 * @private
+		 * @readonly
+		 * @property {Object} locks
+		 */
+		me[LOCKS] = {};
 	}, {
-		&quot;displayName&quot; : &quot;data/cache/component&quot;,
+		&quot;displayName&quot; : &quot;opt/store/component&quot;,
 
-<span id='data-cache-component-handler-sig-finalize'>		/**
-</span>		 * @handler
-		 * @inheritdoc
-		 * @localdoc Purges all objects that duck-type cache-able
+<span id='opt-store-component-method-lock'>		/**
+</span>		 * Waits for store to be &quot;locked&quot;
+		 * @param {String} key Key
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of ready
 		 */
-		&quot;sig/finalize&quot; : function finalize() {
-			var me = this;
+		&quot;lock&quot; : function (key, onFulfilled, onRejected, onProgress) {
+			var locks = this[LOCKS];
+			var result;
 
-			// Iterate all properties on me
-			Object.keys(me).forEach(function (property) {
-				var value;
+			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
+				throw new Error(&quot;key has to be of type string&quot;);
+			}
 
-				// Check if we should delete this property
-				if ((value = me[property]) !== UNDEFINED // value is not UNDEFINED
-					&amp;&amp; [CONSTRUCTOR] === OBJECT            // and value[CONSTRUCTOR] is OBJECT
-					&amp;&amp; value.hasOwnProperty(_ID)) {        // and value ducktypes cachable
-					// Delete from me (cache)
-					delete me[property];
-				}
-			});
+			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
+
+			return result;
 		},
 
-<span id='data-cache-component-method-put'>		/**
-</span>		 * Puts a node into the cache
-		 * @param node Node to add (object || array)
-		 * @returns Cached node (if it existed in the cache before), otherwise the node sent in
+<span id='opt-store-component-method-get'>		/**
+</span>		 * Gets state value
+		 * @param {...String} key Key - can be dot separated for sub keys
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
 		 */
-		&quot;put&quot; : function put(node) {
+		&quot;get&quot; : function (key, onFulfilled, onRejected, onProgress) {
+			/*jshint curly:false*/
+			var me = this;
+			var keys = ARRAY_SLICE.call(arguments);
+			var i;
+			var iMax;
+
+			// Step until we hit the end or keys[i] is not a string
+			for (i = 0, iMax = keys[LENGTH]; i &lt; iMax &amp;&amp; OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
+
+			// Update callbacks
+			onFulfilled = keys[i];
+			onRejected = keys[i+1];
+			onProgress = keys[i+2];
+
+			// Set the new length of keys
+			keys[LENGTH] = i;
+
+			return when
+				.map(keys, function (key) {
+					return when
+						// Map adapters and BEFORE_GET on each adapter
+						.map(me[ADAPTERS], function (adapter) {
+							return when(applyMethod.call(adapter, BEFORE_GET, me, key));
+						})
+						// Get value from STORAGE
+						.then(function () {
+							return get.call(me, key);
+						});
+				})
+				// Add callbacks
+				.then(onFulfilled &amp;&amp; when.apply(onFulfilled), onRejected, onProgress);
+		},
+
+<span id='opt-store-component-method-put'>		/**
+</span>		 * Puts state value
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		&quot;put&quot; : function (key, value, onFulfilled, onRejected, onProgress) {
 			var me = this;
 
-			// Get _constructor of node (safely, falling back to UNDEFINED)
-			var _constructor = node === NULL || node === UNDEFINED
-				? UNDEFINED
-				: node[CONSTRUCTOR];
+			return when(put.call(me, key, value), function (result) {
+				return when
+					// Map adapters and AFTER_PUT on each adapter
+					.map(me[ADAPTERS], function (adapter) {
+						return when(applyMethod.call(adapter, AFTER_PUT, me, key, result));
+					})
+					.yield(result);
+			})
+				// Add callbacks
+				.then(onFulfilled, onRejected, onProgress);
+		},
 
-			// Do magic comparison to see if we should cache this object
-			return _constructor === OBJECT || _constructor === ARRAY &amp;&amp; node[LENGTH] !== 0
-				? _put.call(me, node, _constructor, 0 | new Date().getTime() / SECOND)
-				: node;
+<span id='opt-store-component-method-putIfNotHas'>		/**
+</span>		 * Puts state value if key is UNDEFINED
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @param {*} value Value
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of value
+		 */
+		&quot;putIfNotHas&quot; : function (key, value, onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return !me.has(key)
+				? me.put(key, value, onFulfilled, onRejected, onProgress)
+				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
+		},
+
+<span id='opt-store-component-method-has'>		/**
+</span>		 * Checks if key exists
+		 * @param {String} key Key - can be dot separated for sub keys
+		 * @return {Boolean} True if key exists, otherwise false
+		 */
+		&quot;has&quot; : function (key) {
+			return has.call(this, key);
+		},
+
+<span id='opt-store-component-method-clear'>		/**
+</span>		 * Clears all adapters
+		 * @param {Function} [onFulfilled] onFulfilled callback
+		 * @param {Function} [onRejected] onRejected callback
+		 * @param {Function} [onProgress] onProgress callback
+		 * @return {Promise} Promise of clear
+		 */
+		&quot;clear&quot; : function (onFulfilled, onRejected, onProgress) {
+			var me = this;
+
+			return when
+				.map(me[ADAPTERS], function (adapter) {
+					return when(applyMethod.call(adapter, CLEAR, me));
+				})
+				// Add callbacks
+				.then(onFulfilled &amp;&amp; when.apply(onFulfilled), onRejected, onProgress);
 		}
 	});
-});
-</pre>
+});</pre>
 </body>
 </html>

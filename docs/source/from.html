@@ -49,7 +49,7 @@ define([ &quot;../mixin/decorator&quot; ], function FromDecoratorModule(Decorato
 			// To override a specified property, otherwise simply this property.
 			name = prop || name;
 
-			// Property is from the the other's prototype, otherwise from own descriptor.
+			// Property is from the the other&#39;s prototype, otherwise from own descriptor.
 			descriptor[VALUE] = which
 				? which[PROTOTYPE][name]
 				: descriptors[name][VALUE];

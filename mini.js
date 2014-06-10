@@ -4,18 +4,19 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.1+94c74c1 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.2+fa7fcdb ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-define('troopjs/version',[], "3.0.0-pr.1+94c74c1");
+
+define('troopjs/version',[], "3.0.0-pr.2+fa7fcdb");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/merge',[ "poly/object" ], function MergeModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.merge
@@ -109,7 +110,7 @@ define('troopjs-compose/mixin/config',[
 	"module",
 	"troopjs-util/merge"
 ], function (module, merge) {
-	
+	"use strict";
 
 	/**
 	 * Provides configuration for the {@link compose.mixin.factory}
@@ -133,7 +134,7 @@ define('troopjs-compose/mixin/config',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/mixin/decorator',[ "poly/object" ], function DecoratorModule() {
-	
+	"use strict";
 
 	/**
 	 * Decorator provides customized way to add properties/methods to object created by {@link compose.mixin.factory}.
@@ -170,7 +171,7 @@ define('troopjs-compose/mixin/decorator',[ "poly/object" ], function DecoratorMo
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/unique',[],function UniqueModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.unique
@@ -238,7 +239,7 @@ define('troopjs-util/unique',[],function UniqueModule() {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-util/getargs',[],function GetArgsModule() {
-	
+	"use strict";
 
 	/**
 	 * @class util.getargs
@@ -424,7 +425,7 @@ define('troopjs-compose/mixin/factory',[
 	"troopjs-util/getargs",
 	"poly/object"
 ], function FactoryModule(config, Decorator, unique, getargs) {
-	
+	"use strict";
 
 	/**
 	 * The factory module establishes the fundamental object composition in TroopJS:
@@ -809,7 +810,7 @@ define('troopjs-log/sink/console',[
 	"poly/array",
 	"poly/function"
 ], function ConsoleModule(METHODS) {
-	
+	"use strict";
 
 	/**
 	 * This class implements the {@link log.console} API and can acts like a sink for {@link log.sink.forward}.
@@ -843,7 +844,7 @@ define('troopjs-log/sink/console',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-log/logger',[ "./sink/console" ], function LoggerModule(logger) {
-	
+	"use strict";
 
 	/**
 	 * This is a _virtual_ class that under normal circumstances is an alias for the {@link log.sink.console} sink.
@@ -943,7 +944,7 @@ define('troopjs-core/mixin/base',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/event/runner/sequence',[ "when" ], function SequenceModule(when) {
-	
+	"use strict";
 
 	/**
 	 * @class core.event.runner.sequence
@@ -1013,7 +1014,7 @@ define('troopjs-core/event/emitter',[
 	"../mixin/base",
 	"./runner/sequence"
 ], function EventEmitterModule(Base, sequence) {
-	
+	"use strict";
 
 	/**
 	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
@@ -1245,7 +1246,7 @@ define('troopjs-core/event/emitter',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/runner/sequence',[ "poly/array" ], function SequenceModule() {
-	
+	"use strict";
 
 	/**
 	 * @class core.component.runner.sequence
@@ -1312,7 +1313,7 @@ define('troopjs-core/registry/component',[
 	"../mixin/base",
 	"poly/array"
 ], function RegistryModule(Base) {
-	
+	"use strict";
 
 	/**
 	 * A light weight implementation to register key/value pairs by key and index
@@ -1457,7 +1458,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	"./pattern",
 	"when"
 ], function PipelineModule(RE_PHASE, when) {
-	
+	"use strict";
 
 	/**
 	 * @class core.pubsub.runner.pipeline
@@ -1550,7 +1551,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function FromDecoratorModule(Decorator) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.from
@@ -1598,7 +1599,7 @@ define('troopjs-core/pubsub/hub',[
 	"./runner/pipeline",
 	"troopjs-compose/decorator/from"
 ], function HubModule(Emitter, pipeline, from) {
-	
+	"use strict";
 
 	/**
 	 * The centric "bus" that handlers publishing and subscription.
@@ -1728,7 +1729,7 @@ define('troopjs-core/component/registry',[
 	"../registry/component",
 	"../pubsub/hub"
 ], function ComponentRegistryModule(Registry, hub) {
-	
+	"use strict";
 
 	/**
 	 * @class core.component.registry
@@ -1772,7 +1773,7 @@ define('troopjs-core/task/registry',[
 	"../registry/component",
 	"../component/registry"
 ], function TaskRegistryModule(Registry, componentRegistry) {
-	
+	"use strict";
 
 	/**
 	 * @class core.task.registry
@@ -1810,7 +1811,7 @@ define('troopjs-core/task/registry',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function AroundDecoratorModule(Decorator) {
-	
+	"use strict";
 
 	/**
 	 * @class compose.decorator.around
@@ -1850,7 +1851,7 @@ define('troopjs-core/component/base',[
 	"when",
 	"poly/array"
 ], function ComponentModule(Emitter, sequence, COMPOSE_CONF, componentRegistry, taskRegistry, merge, around, when) {
-	
+	"use strict";
 
 	/**
 	 * Imagine component as an object that has predefined life-cycle, with the following phases:
@@ -2325,7 +2326,7 @@ define('troopjs-core/component/base',[
 
 			// Check PHASE
 			if ((phase = me[PHASE]) !== UNDEFINED && phase !== FINALIZED) {
-				throw new Error("Can't transition phase from '" + phase + "' to '" + INITIALIZE + "'");
+				return when.resolve(UNDEFINED);
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -2358,11 +2359,10 @@ define('troopjs-core/component/base',[
 		"stop" : function stop(args) {
 			var me = this;
 			var signal = me.signal;
-			var phase;
 
 			// Check PHASE
-			if ((phase = me[PHASE]) !== STARTED) {
-				throw new Error("Can't transition phase from '" + phase + "' to '" + STOP + "'");
+			if (me[PHASE] !== STARTED) {
+				return when.resolve(UNDEFINED);
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -2429,7 +2429,7 @@ define('troopjs-core/component/base',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/runner/pipeline',[ "when" ], function PipelineModule(when) {
-	
+	"use strict";
 
 	/**
 	 * @class core.component.runner.pipeline
@@ -2520,7 +2520,7 @@ define('troopjs-core/component/gadget',[
 	"when",
 	"../pubsub/hub"
 ],function GadgetModule(Component, pipeline, COMPOSE_CONF, when, hub) {
-	
+	"use strict";
 
 	/**
 	 * Component that provides signal and hub features.
@@ -2712,7 +2712,7 @@ define('troopjs-core/component/gadget',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-dom/css/selector',[ "troopjs-compose/mixin/factory" ], function (Factory) {
-	
+	"use strict";
 
 	/**
 	 * An optimized CSS selector matcher that {@link dom.component.runner.sequence} relies on for
@@ -3052,7 +3052,7 @@ define('troopjs-dom/component/runner/sequence',[
 	"jquery",
 	"poly/array"
 ], function SequenceModule(Selector, $) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.component.runner.sequence
@@ -3130,7 +3130,7 @@ define('troopjs-dom/loom/config',[
 	"module",
 	"troopjs-util/merge"
 ], function LoomConfigModule(module, merge) {
-	
+	"use strict";
 
 	/**
 	 * Provides configuration for the loom package
@@ -3172,7 +3172,7 @@ define('troopjs-util/defer',[
 	"when",
 	"poly/array"
 ], function DeferModule(when) {
-	
+	"use strict";
 
 	/**
 	 * `when.defer` patched with jQuery/deferred compatibility.
@@ -3229,7 +3229,7 @@ define('troopjs-dom/loom/weave',[
 	"troopjs-util/defer",
 	"poly/array"
 ], function WeaveModule(config, parentRequire, when, $, getargs, Defer) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.loom.weave
@@ -3252,10 +3252,15 @@ define('troopjs-dom/loom/weave',[
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
+	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
+			// Re-throw the rejection if it's not canceled.
+			if (d.state === "rejected" && d.reason !== CANCELED) {
+				throw d.reason;
+			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3382,41 +3387,43 @@ define('troopjs-dom/loom/weave',[
 				// Add promise to $warp, make sure this is called synchronously.
 				ARRAY_PUSH.call($warp, promise);
 
-				parentRequire([ module ], function (Widget) {
-					var widget;
-					var startPromise;
+				setTimeout(function() {
+					parentRequire([ module ], function(Widget) {
+						var widget;
+						var startPromise;
 
-					// detect if weaving has been canceled somehow.
-					if ($warp.indexOf(promise) === -1) {
-						resolver.reject("cancel");
-					}
-
-					try {
-						// Create widget instance
-						widget = Widget.apply(Widget, widget_args);
-
-						// Add $WEFT to widget
-						widget[$WEFT] = promise;
-
-						// Add WOVEN to promise
-						promise[WOVEN] = widget.toString();
-
-						// TODO: Detecting TroopJS 1.x widget from *version* property.
-						if (widget.trigger) {
-							deferred = Defer();
-							widget.start(deferred);
-							startPromise = deferred.promise;
-						}
-						else {
-							startPromise = widget.start.apply(widget, start_args);
+						// detect if weaving has been canceled somehow.
+						if ($warp.indexOf(promise) === -1) {
+							resolver.reject(CANCELED);
 						}
 
-						resolver.resolve(startPromise.yield(widget));
-					}
-					catch (e) {
-						resolver.reject(e);
-					}
-				}, resolver.reject);
+						try {
+							// Create widget instance
+							widget = Widget.apply(Widget, widget_args);
+
+							// Add $WEFT to widget
+							widget[$WEFT] = promise;
+
+							// Add WOVEN to promise
+							promise[WOVEN] = widget.toString();
+
+							// TODO: Detecting TroopJS 1.x widget from *version* property.
+							if (widget.trigger) {
+								deferred = Defer();
+								widget.start(deferred);
+								startPromise = deferred.promise;
+							}
+							else {
+								startPromise = widget.start.apply(widget, start_args);
+							}
+
+							resolver.resolve(startPromise.yield(widget));
+						}
+						catch (e) {
+							resolver.reject(e);
+						}
+					}, resolver.reject);
+				}, 0);
 
 				// Return promise
 				return promise;
@@ -3437,7 +3444,7 @@ define('troopjs-dom/loom/unweave',[
 	"poly/array",
 	"troopjs-util/defer"
 ], function UnweaveModule(config, when, $, Defer) {
-	
+	"use strict";
 
 	/**
 	 * @class dom.loom.unweave
@@ -3461,10 +3468,15 @@ define('troopjs-dom/loom/unweave',[
 	var ATTR_WOVEN = config[WOVEN];
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
+	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
+			// Re-throw the rejection if it's not canceled.
+			if (d.state === "rejected" && d.reason !== CANCELED) {
+				throw d.reason;
+			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3607,7 +3619,7 @@ define('troopjs-dom/loom/unweave',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-jquery/destroy',[ "jquery" ], function DestroyModule($) {
-	
+	"use strict";
 
 	/**
 	 * Extends {@link jQuery} with:
@@ -3665,7 +3677,7 @@ define('troopjs-dom/component/widget',[
 	"../loom/unweave",
 	"troopjs-jquery/destroy"
 ], function WidgetModule(Gadget, sequence, COMPOSE_CONF, $, when, merge, LOOM_CONF, loom_weave, loom_unweave) {
-	
+	"use strict";
 
 	/**
 	 * Component that attaches to an DOM element, considerably delegates all DOM manipulations.
@@ -3827,9 +3839,8 @@ define('troopjs-dom/component/widget',[
 
 			if ((matches = RE.exec(type)) !== NULL) {
 				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
-					// Redefine args
-					args = {};
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event) {
+					var args = {};
 					args[TYPE] = type;
 					args[RUNNER] = sequence;
 					args = [ args ];
@@ -3969,7 +3980,7 @@ define('troopjs-dom/application/widget',[
 	"../component/widget",
 	"when"
 ], function ApplicationWidgetModule(Widget, when) {
-	
+	"use strict";
 
 	/**
 	 * The application widget serves as a container for all troop components that bootstrap the page.
@@ -4059,4 +4070,3 @@ define('troopjs-dom/application/widget',[
 		}
 	});
 });
-

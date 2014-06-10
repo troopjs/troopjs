@@ -30,7 +30,7 @@ define(function GetArgsModule() {
 	var UNDEFINED;
 	var STR_SUBSTRING = String.prototype.substring;
 	var STR_SLICE = String.prototype.slice;
-	var RE_STRING = /^([&quot;']).*\1$/;
+	var RE_STRING = /^([&quot;&#39;]).*\1$/;
 	var RE_BOOLEAN = /^(?:false|true)$/i;
 	var RE_BOOLEAN_TRUE = /^true$/i;
 	var RE_DIGIT = /^\d+$/;
@@ -38,7 +38,7 @@ define(function GetArgsModule() {
 <span id='util-getargs-method-constructor'>	/**
 </span>	 * Function that calls on a String, to parses it as function parameters delimited by commas.
 	 *
-	 * 	&quot; 1  , '2' , 3  ,false,5 &quot;
+	 * 	&quot; 1  , &#39;2&#39; , 3  ,false,5 &quot;
 	 *
 	 * results in
 	 *
@@ -47,7 +47,7 @@ define(function GetArgsModule() {
 	 *
 	 * and
 	 *
-	 * 	&quot;'1, 2 ',  3,\&quot;4\&quot;, 5 &quot;
+	 * 	&quot;&#39;1, 2 &#39;,  3,\&quot;4\&quot;, 5 &quot;
 	 *
 	 * results in
 	 *
@@ -55,7 +55,7 @@ define(function GetArgsModule() {
 	 *
 	 * Also handles named parameters.
 	 *
-	 * 	&quot;1, two=2, 3, 'key.four'=4, 5&quot;
+	 * 	&quot;1, two=2, 3, &#39;key.four&#39;=4, 5&quot;
 	 *
 	 * results in
 	 *
@@ -114,7 +114,7 @@ define(function GetArgsModule() {
 			switch(c) {
 				case &quot;\&quot;&quot; :
 				/* falls through */
-				case &quot;'&quot; :
+				case &quot;&#39;&quot; :
 					// If we are currently quoted...
 					if (quote === c) {
 						// Stop quote
@@ -136,7 +136,7 @@ define(function GetArgsModule() {
 				case &quot; &quot; :
 				/* falls through */
 				case &quot;\t&quot; :
-					// Continue if we're quoted
+					// Continue if we&#39;re quoted
 					if (quote) {
 						to = index + 1;
 						break;
@@ -149,7 +149,7 @@ define(function GetArgsModule() {
 					break;
 
 				case &quot;=&quot;:
-					// Continue if we're quoted
+					// Continue if we&#39;re quoted
 					if (quote) {
 						to = index + 1;
 						break;
@@ -169,7 +169,7 @@ define(function GetArgsModule() {
 					break;
 
 				case &quot;,&quot; :
-					// Continue if we're quoted
+					// Continue if we&#39;re quoted
 					if (quote) {
 						to = index + 1;
 						break;

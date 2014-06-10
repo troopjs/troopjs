@@ -21,7 +21,7 @@
  * In JavaScript, the `Array` property of the global object is a constructor for
  * array instances.
  *
- * An array is a JavaScript object. Note that you shouldn't use it as an
+ * An array is a JavaScript object. Note that you shouldn&#39;t use it as an
  * associative array, use {@link Object} instead.
  *
  * # Creating an Array
@@ -39,23 +39,23 @@
  * # Creating a Two-dimensional Array
  *
  * The following creates chess board as a two dimensional array of strings. The first move is made by
- * copying the 'P' in 6,4 to 4,4. The position 4,4 is left blank.
+ * copying the &#39;P&#39; in 6,4 to 4,4. The position 4,4 is left blank.
  *
  *     var board =
- *     [ ['R','N','B','Q','K','B','N','R'],
- *     ['P','P','P','P','P','P','P','P'],
- *     [' ',' ',' ',' ',' ',' ',' ',' '],
- *     [' ',' ',' ',' ',' ',' ',' ',' '],
- *     [' ',' ',' ',' ',' ',' ',' ',' '],
- *     [' ',' ',' ',' ',' ',' ',' ',' '],
- *     ['p','p','p','p','p','p','p','p'],
- *     ['r','n','b','q','k','b','n','r']];
- *     print(board.join('\n') + '\n\n');
+ *     [ [&#39;R&#39;,&#39;N&#39;,&#39;B&#39;,&#39;Q&#39;,&#39;K&#39;,&#39;B&#39;,&#39;N&#39;,&#39;R&#39;],
+ *     [&#39;P&#39;,&#39;P&#39;,&#39;P&#39;,&#39;P&#39;,&#39;P&#39;,&#39;P&#39;,&#39;P&#39;,&#39;P&#39;],
+ *     [&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;],
+ *     [&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;],
+ *     [&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;],
+ *     [&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;,&#39; &#39;],
+ *     [&#39;p&#39;,&#39;p&#39;,&#39;p&#39;,&#39;p&#39;,&#39;p&#39;,&#39;p&#39;,&#39;p&#39;,&#39;p&#39;],
+ *     [&#39;r&#39;,&#39;n&#39;,&#39;b&#39;,&#39;q&#39;,&#39;k&#39;,&#39;b&#39;,&#39;n&#39;,&#39;r&#39;]];
+ *     print(board.join(&#39;\n&#39;) + &#39;\n\n&#39;);
  *
- *     // Move King's Pawn forward 2
+ *     // Move King&#39;s Pawn forward 2
  *     board[4][4] = board[6][4];
- *     board[6][4] = ' ';
- *     print(board.join('\n'));
+ *     board[6][4] = &#39; &#39;;
+ *     print(board.join(&#39;\n&#39;));
  *
  * Here is the output:
  *
@@ -101,13 +101,13 @@
  *
  * # Relationship between length and numerical properties
  *
- * An array's length property and numerical properties are connected. Here is some
+ * An array&#39;s length property and numerical properties are connected. Here is some
  * code explaining how this relationship works.
  *
  *     var a = [];
  *
- *     a[0] = 'a';
- *     console.log(a[0]); // 'a'
+ *     a[0] = &#39;a&#39;;
+ *     console.log(a[0]); // &#39;a&#39;
  *     console.log(a.length); // 1
  *
  *     a[1] = 32;
@@ -130,8 +130,8 @@
  * explain these properties and elements, look at the following example and then refer
  * to the table below:
  *
- *     // Match one d followed by one or more b's followed by one d
- *     // Remember matched b's and the following d
+ *     // Match one d followed by one or more b&#39;s followed by one d
+ *     // Remember matched b&#39;s and the following d
  *     // Ignore case
  *
  *     var myRe = /d(b+)(d)/i;
@@ -206,7 +206,7 @@
  *
  *     var myFish = [&quot;angel&quot;, &quot;clown&quot;, &quot;mandarin&quot;, &quot;surgeon&quot;];
  *     var popped = myFish.pop();
- *     alert(popped); // Alerts 'surgeon'
+ *     alert(popped); // Alerts &#39;surgeon&#39;
  *
  * @return {Object} The last element in the array
  */
@@ -344,7 +344,7 @@
 </span> * @method splice
  * Adds and/or removes elements from an array.
  *
- * If you specify a different number of elements to insert than the number you're removing, the array
+ * If you specify a different number of elements to insert than the number you&#39;re removing, the array
  * will have a different length at the end of the call.
  *
  *     // assumes a print function is defined
@@ -384,7 +384,7 @@
  * @param {Number} howMany An integer indicating the number of old array elements to remove. If
  * `howMany` is 0, no elements are removed. In this case, you should specify at least one new element.
  * If no `howMany` parameter is specified all elements after index are removed.
- * @param {Object...} elements The elements to add to the array. If you don't specify any
+ * @param {Object...} elements The elements to add to the array. If you don&#39;t specify any
  * elements, `splice` simply removes elements from the array.
  * @return {Array} An array containing the removed elements. If only one element is removed, an array
  * of one element is returned..
@@ -416,7 +416,7 @@
  *     New length: 4
  *
  * @param {Object...} elements The elements to add to the front of the array.
- * @return {Number} The array's new length.
+ * @return {Number} The array&#39;s new length.
  */
 
 // Accessor methods. These methods do not modify the array and return some representation of the array.
@@ -465,7 +465,7 @@
  *
  * The following code concatenates three values to an array:
  *
- *     var alpha = ['a', 'b', 'c'];
+ *     var alpha = [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;];
  *
  *     // creates array [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, 1, 2, 3], leaving alpha unchanged
  *     var alphaNumeric = alpha.concat(1, [2, 3]);
@@ -656,7 +656,7 @@
  * **NOTE:** This method is part of the ECMAScript 5 standard.
  *
  * @param {Mixed} searchElement Element to locate in the array.
- * @param {Number} [fromIndex] The index at which to start searching backwards. Defaults to the array's
+ * @param {Number} [fromIndex] The index at which to start searching backwards. Defaults to the array&#39;s
  * length, i.e. the whole array will be searched. If the index is greater than or equal to the length of
  * the array, the whole array will be searched. If negative, it is taken as the offset from the end of the
  * array. Note that even when the index is negative, the array is still searched from back to front. If
@@ -782,7 +782,7 @@
  * after the call to some begins will not be visited by `callback`. If
  * an existing, unvisited element of the array is changed by `callback`,
  * its value passed to the visiting callback will be the value at the
- * time that `some` visits that element's index; elements that are
+ * time that `some` visits that element&#39;s index; elements that are
  * deleted are not visited.
  *
  * The following example tests whether some element in the array is
@@ -883,9 +883,9 @@
  * an array of their singular forms.
  *
  *     function fuzzyPlural(single) {
- *       var result = single.replace(/o/g, 'e');
- *       if( single === 'kangaroo'){
- *         result += 'se';
+ *       var result = single.replace(/o/g, &#39;e&#39;);
+ *       if( single === &#39;kangaroo&#39;){
+ *         result += &#39;se&#39;;
  *       }
  *       return result;
  *     }

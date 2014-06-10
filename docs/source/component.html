@@ -93,7 +93,7 @@ define([
 				});
 			}
 			else {
-				result = (typeof key === 'number' ? index_pos : index_key)[key];
+				result = (typeof key === &#39;number&#39; ? index_pos : index_key)[key];
 
 				// Reading
 				if (argc === 1) {
@@ -105,7 +105,7 @@ define([
 					if (result !== UNDEFINED) {
 						result = result[VALUE] = value;
 					}
-					// Check type of key (as now we're creating a new one)
+					// Check type of key (as now we&#39;re creating a new one)
 					else if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
 						throw Error(&quot;key has to be of type String&quot;);
 					}

@@ -49,10 +49,15 @@ define([
 	var ATTR_WOVEN = config[WOVEN];
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
+	var CANCELED = &quot;cancel&quot;;
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
+			// Re-throw the rejection if it&#39;s not canceled.
+			if (d.state === &quot;rejected&quot; &amp;&amp; d.reason !== CANCELED) {
+				throw d.reason;
+			}
 			return d.state === &quot;fulfilled&quot;;
 		}).map(function(d) {
 			return d.value;
@@ -69,7 +74,7 @@ define([
 	 * It also lives as a jquery plugin as {@link $#method-unweave}.
 	 *
 	 * @method constructor
-	 * @param {...*} [stop_args] Arguments that will be passed to each widget's {@link dom.component.widget#stop stop} method
+	 * @param {...*} [stop_args] Arguments that will be passed to each widget&#39;s {@link dom.component.widget#stop stop} method
 	 * @return {Promise} Promise to the completion of unweaving all woven widgets.
 	 */
 	return function unweave(stop_args) {
@@ -127,7 +132,7 @@ define([
 					});
 			};
 
-			// Make sure to remove ATTR_UNWEAVE (so we don't try processing this again)
+			// Make sure to remove ATTR_UNWEAVE (so we don&#39;t try processing this again)
 			$element.removeAttr(ATTR_UNWEAVE);
 
 			// Check if we should remove all widgets

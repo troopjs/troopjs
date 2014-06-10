@@ -41,7 +41,7 @@
  * |:-----------------|:--------------------------------------------------------------------------------------
  * | `\`              | For characters that are usually treated literally, indicates that the next character
  * |                  | is special and not to be interpreted literally.
- * |                  | For example, `/b/` matches the character 'b'. By placing a backslash in front of b, that
+ * |                  | For example, `/b/` matches the character &#39;b&#39;. By placing a backslash in front of b, that
  * |                  | is by using `/\b/`, the character becomes special to mean match a word boundary.
  * |                  |
  * |                  | _or_
@@ -51,31 +51,31 @@
  * |                  |
  * |                  | For example, `*` is a special character that means 0 or more occurrences of the preceding
  * |                  | character should be matched; for example, `/a*\/` means match 0 or more &quot;a&quot;s. To match *
- * |                  | literally, precede it with a backslash; for example, `/a\*\/` matches 'a*'.
+ * |                  | literally, precede it with a backslash; for example, `/a\*\/` matches &#39;a*&#39;.
  * |                  |
  * | `^`              | Matches beginning of input. If the multiline flag is set to true, also matches
  * |                  | immediately after a line break character.
  * |                  |
- * |                  | For example, `/^A/` does not match the 'A' in &quot;an A&quot;, but does match the first 'A' in
+ * |                  | For example, `/^A/` does not match the &#39;A&#39; in &quot;an A&quot;, but does match the first &#39;A&#39; in
  * |                  | &quot;An A&quot;.
  * |                  |
  * | `$`              | Matches end of input. If the multiline flag is set to true, also matches immediately
  * |                  | before a line break character.
  * |                  |
- * |                  | For example, `/t$/` does not match the 't' in &quot;eater&quot;, but does match it in &quot;eat&quot;.
+ * |                  | For example, `/t$/` does not match the &#39;t&#39; in &quot;eater&quot;, but does match it in &quot;eat&quot;.
  * |                  |
  * | `*`              | Matches the preceding item 0 or more times.
  * |                  |
- * |                  | For example, `/bo*\/` matches 'boooo' in &quot;A ghost booooed&quot; and 'b' in &quot;A bird warbled&quot;,
+ * |                  | For example, `/bo*\/` matches &#39;boooo&#39; in &quot;A ghost booooed&quot; and &#39;b&#39; in &quot;A bird warbled&quot;,
  * |                  | but nothing in &quot;A goat grunted&quot;.
  * |                  |
  * | `+`              | Matches the preceding item 1 or more times. Equivalent to `{1,}`.
  * |                  |
- * |                  | For example, `/a+/` matches the 'a' in &quot;candy&quot; and all the a's in &quot;caaaaaaandy&quot;.
+ * |                  | For example, `/a+/` matches the &#39;a&#39; in &quot;candy&quot; and all the a&#39;s in &quot;caaaaaaandy&quot;.
  * |                  |
  * | `?`              | Matches the preceding item 0 or 1 time.
  * |                  |
- * |                  | For example, `/e?le?/` matches the 'el' in &quot;angel&quot; and the 'le' in &quot;angle.&quot;
+ * |                  | For example, `/e?le?/` matches the &#39;el&#39; in &quot;angel&quot; and the &#39;le&#39; in &quot;angle.&quot;
  * |                  |
  * |                  | If used immediately after any of the quantifiers `*`, `+`, `?`, or `{}`, makes the quantifier
  * |                  | non-greedy (matching the minimum number of times), as opposed to the default, which is
@@ -86,21 +86,21 @@
  * | `.`              | (The decimal point) matches any single character except the newline characters: \n \r
  * |                  | \u2028 or \u2029. (`[\s\S]` can be used to match any character including new lines.)
  * |                  |
- * |                  | For example, `/.n/` matches 'an' and 'on' in &quot;nay, an apple is on the tree&quot;, but not 'nay'.
+ * |                  | For example, `/.n/` matches &#39;an&#39; and &#39;on&#39; in &quot;nay, an apple is on the tree&quot;, but not &#39;nay&#39;.
  * |                  |
  * | `(x)`            | Matches `x` and remembers the match. These are called capturing parentheses.
  * |                  |
- * |                  | For example, `/(foo)/` matches and remembers 'foo' in &quot;foo bar.&quot; The matched substring can
- * |                  | be recalled from the resulting array's elements `[1], ..., [n]` or from the predefined RegExp
- * |                  | object's properties `$1, ..., $9`.
+ * |                  | For example, `/(foo)/` matches and remembers &#39;foo&#39; in &quot;foo bar.&quot; The matched substring can
+ * |                  | be recalled from the resulting array&#39;s elements `[1], ..., [n]` or from the predefined RegExp
+ * |                  | object&#39;s properties `$1, ..., $9`.
  * |                  |
  * | `(?:x)`          | Matches `x` but does not remember the match. These are called non-capturing parentheses.
- * |                  | The matched substring can not be recalled from the resulting array's elements `[1], ..., [n]`
- * |                  | or from the predefined RegExp object's properties `$1, ..., $9`.
+ * |                  | The matched substring can not be recalled from the resulting array&#39;s elements `[1], ..., [n]`
+ * |                  | or from the predefined RegExp object&#39;s properties `$1, ..., $9`.
  * |                  |
- * | `x(?=y)`         | Matches `x` only if `x` is followed by `y`. For example, `/Jack(?=Sprat)/` matches 'Jack' only if
- * |                  | it is followed by 'Sprat'. `/Jack(?=Sprat|Frost)/` matches 'Jack' only if it is followed by
- * |                  | 'Sprat' or 'Frost'. However, neither 'Sprat' nor 'Frost' is part of the match results.
+ * | `x(?=y)`         | Matches `x` only if `x` is followed by `y`. For example, `/Jack(?=Sprat)/` matches &#39;Jack&#39; only if
+ * |                  | it is followed by &#39;Sprat&#39;. `/Jack(?=Sprat|Frost)/` matches &#39;Jack&#39; only if it is followed by
+ * |                  | &#39;Sprat&#39; or &#39;Frost&#39;. However, neither &#39;Sprat&#39; nor &#39;Frost&#39; is part of the match results.
  * |                  |
  * | `x(?!y)`         | Matches `x` only if `x` is not followed by `y`. For example, `/\d+(?!\.)/` matches a number only
  * |                  | if it is not followed by a decimal point.
@@ -109,47 +109,47 @@
  * |                  |
  * |&lt;code&gt;x&amp;#124;y&lt;/code&gt;| Matches either `x` or `y`.
  * |                  |
- * |                  | For example, `/green|red/` matches 'green' in &quot;green apple&quot; and 'red' in &quot;red apple.&quot;
+ * |                  | For example, `/green|red/` matches &#39;green&#39; in &quot;green apple&quot; and &#39;red&#39; in &quot;red apple.&quot;
  * |                  |
  * | `{n}`            | Where `n` is a positive integer. Matches exactly n occurrences of the preceding item.
  * |                  |
- * |                  | For example, `/a{2}/` doesn't match the 'a' in &quot;candy,&quot; but it matches all of the a's
- * |                  | in &quot;caandy,&quot; and the first two a's in &quot;caaandy.&quot;
+ * |                  | For example, `/a{2}/` doesn&#39;t match the &#39;a&#39; in &quot;candy,&quot; but it matches all of the a&#39;s
+ * |                  | in &quot;caandy,&quot; and the first two a&#39;s in &quot;caaandy.&quot;
  * |                  |
  * | `{n,}`           | Where `n` is a positive integer. Matches at least n occurrences of the preceding item.
  * |                  |
- * |                  | For example, `/a{2,}/` doesn't match the 'a' in &quot;candy&quot;, but matches all of the a's in
+ * |                  | For example, `/a{2,}/` doesn&#39;t match the &#39;a&#39; in &quot;candy&quot;, but matches all of the a&#39;s in
  * |                  | &quot;caandy&quot; and in &quot;caaaaaaandy.&quot;
  * |                  |
  * | `{n,m}`          | Where `n` and `m` are positive integers. Matches at least `n` and at most `m` occurrences of the
  * |                  | preceding item.
  * |                  |
- * |                  | For example, `/a{1,3}/` matches nothing in &quot;cndy&quot;, the 'a' in &quot;candy,&quot; the first two a's
- * |                  | in &quot;caandy,&quot; and the first three a's in &quot;caaaaaaandy&quot;. Notice that when matching
- * |                  | &quot;caaaaaaandy&quot;, the match is &quot;aaa&quot;, even though the original string had more a's in it.
+ * |                  | For example, `/a{1,3}/` matches nothing in &quot;cndy&quot;, the &#39;a&#39; in &quot;candy,&quot; the first two a&#39;s
+ * |                  | in &quot;caandy,&quot; and the first three a&#39;s in &quot;caaaaaaandy&quot;. Notice that when matching
+ * |                  | &quot;caaaaaaandy&quot;, the match is &quot;aaa&quot;, even though the original string had more a&#39;s in it.
  * |                  |
  * | `[xyz]`          | A character set. Matches any one of the enclosed characters. You can specify a range of
  * |                  | characters by using a hyphen.
  * |                  |
- * |                  | For example, `[abcd]` is the same as `[a-d]`. They match the 'b' in &quot;brisket&quot; and the 'c'
+ * |                  | For example, `[abcd]` is the same as `[a-d]`. They match the &#39;b&#39; in &quot;brisket&quot; and the &#39;c&#39;
  * |                  | in &quot;chop&quot;.
  * |                  |
  * | `[^xyz]`         | A negated or complemented character set. That is, it matches anything that is not
  * |                  | enclosed in the brackets. You can specify a range of characters by using a hyphen.
  * |                  |
- * |                  | For example, `[^abc]` is the same as `[^a-c]`. They initially match 'r' in &quot;brisket&quot; and
- * |                  | 'h' in &quot;chop.&quot;
+ * |                  | For example, `[^abc]` is the same as `[^a-c]`. They initially match &#39;r&#39; in &quot;brisket&quot; and
+ * |                  | &#39;h&#39; in &quot;chop.&quot;
  * |                  |
  * | `[\b]`           | Matches a backspace. (Not to be confused with `\b`.)
  * |                  |
  * | `\b`             | Matches a word boundary, such as a space. (Not to be confused with `[\b]`.)
  * |                  |
- * |                  | For example, `/\bn\w/` matches the 'no' in &quot;noonday&quot;; `/\wy\b/` matches the 'ly' in
+ * |                  | For example, `/\bn\w/` matches the &#39;no&#39; in &quot;noonday&quot;; `/\wy\b/` matches the &#39;ly&#39; in
  * |                  | &quot;possibly yesterday.&quot;
  * |                  |
  * | `\B`             | Matches a non-word boundary.
  * |                  |
- * |                  | For example, `/\w\Bn/` matches 'on' in &quot;noonday&quot;, and `/y\B\w/` matches 'ye' in &quot;possibly
+ * |                  | For example, `/\w\Bn/` matches &#39;on&#39; in &quot;noonday&quot;, and `/y\B\w/` matches &#39;ye&#39; in &quot;possibly
  * |                  | yesterday.&quot;
  * |                  |
  * | `\cX`            | Where X is a letter from A - Z. Matches a control character in a string.
@@ -158,11 +158,11 @@
  * |                  |
  * | `\d`             | Matches a digit character in the basic Latin alphabet. Equivalent to `[0-9]`.
  * |                  |
- * |                  | For example, `/\d/` or `/[0-9]/` matches '2' in &quot;B2 is the suite number.&quot;
+ * |                  | For example, `/\d/` or `/[0-9]/` matches &#39;2&#39; in &quot;B2 is the suite number.&quot;
  * |                  |
  * | `\D`             | Matches any non-digit character in the basic Latin alphabet. Equivalent to `[^0-9]`.
  * |                  |
- * |                  | For example, `/\D/` or `/[^0-9]/` matches 'B' in &quot;B2 is the suite number.
+ * |                  | For example, `/\D/` or `/[^0-9]/` matches &#39;B&#39; in &quot;B2 is the suite number.
  * |                  |
  * | `\f`             | Matches a form-feed.
  * |                  |
@@ -175,13 +175,13 @@
  * |                  |
  * |                  | `[\t\n\v\f\r \u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u3000]`
  * |                  |
- * |                  | For example, `/\s\w*\/` matches ' bar' in &quot;foo bar.&quot;
+ * |                  | For example, `/\s\w*\/` matches &#39; bar&#39; in &quot;foo bar.&quot;
  * |                  |
  * | `\S`             | Matches a single character other than white space. Equivalent to:
  * |                  |
  * |                  | `[^\t\n\v\f\r \u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u3000]`
  * |                  |
- * |                  | For example, `/\S\w*\/` matches 'foo' in &quot;foo bar.&quot;
+ * |                  | For example, `/\S\w*\/` matches &#39;foo&#39; in &quot;foo bar.&quot;
  * |                  |
  * | `\t`             | Matches a tab.
  * |                  |
@@ -190,17 +190,17 @@
  * | `\w`             | Matches any alphanumeric character from the basic Latin alphabet, including the
  * |                  | underscore. Equivalent to `[A-Za-z0-9_]`.
  * |                  |
- * |                  | For example, `/\w/` matches 'a' in &quot;apple,&quot; '5' in &quot;$5.28,&quot; and '3' in &quot;3D.&quot;
+ * |                  | For example, `/\w/` matches &#39;a&#39; in &quot;apple,&quot; &#39;5&#39; in &quot;$5.28,&quot; and &#39;3&#39; in &quot;3D.&quot;
  * |                  |
  * | `\W`             | Matches any character that is not a word character from the basic Latin alphabet. Equivalent
  * |                  | to `[^A-Za-z0-9_]`.
  * |                  |
- * |                  | For example, `/\W/` or `/[^A-Za-z0-9_]/` matches '%' in &quot;50%.&quot;
+ * |                  | For example, `/\W/` or `/[^A-Za-z0-9_]/` matches &#39;%&#39; in &quot;50%.&quot;
  * |                  |
  * | `\n`             | Where `n` is a positive integer. A back reference to the last substring matching the n
  * |                  | parenthetical in the regular expression (counting left parentheses).
  * |                  |
- * |                  | For example, `/apple(,)\sorange\1/` matches 'apple, orange,' in &quot;apple, orange, cherry,
+ * |                  | For example, `/apple(,)\sorange\1/` matches &#39;apple, orange,&#39; in &quot;apple, orange, cherry,
  * |                  | peach.&quot; A more complete example follows this table.
  * |                  |
  * | `\0`             | Matches a NULL character. Do not follow this with another digit.
@@ -211,11 +211,11 @@
  *
  * The literal notation provides compilation of the regular expression when the expression is evaluated. Use
  * literal notation when the regular expression will remain constant. For example, if you use literal notation
- * to construct a regular expression used in a loop, the regular expression won't be recompiled on each iteration.
+ * to construct a regular expression used in a loop, the regular expression won&#39;t be recompiled on each iteration.
  *
  * The constructor of the regular expression object, for example, new RegExp(&quot;ab+c&quot;), provides runtime
  * compilation of the regular expression. Use the constructor function when you know the regular expression
- * pattern will be changing, or you don't know the pattern and are getting it from another source, such as user input.
+ * pattern will be changing, or you don&#39;t know the pattern and are getting it from another source, such as user input.
  *
  * &lt;div class=&quot;notice&quot;&gt;
  * Documentation for this class comes from &lt;a href=&quot;https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/RegExp&quot;&gt;MDN&lt;/a&gt;
@@ -255,8 +255,8 @@
  *
  * Consider the following example:
  *
- *     // Match one d followed by one or more b's followed by one d
- *     // Remember matched b's and the following d
+ *     // Match one d followed by one or more b&#39;s followed by one d
+ *     // Remember matched b&#39;s and the following d
  *     // Ignore case
  *     var re = /d(b+)(d)/ig;
  *     var result = re.exec(&quot;cdbBdbsbz&quot;);
@@ -280,7 +280,7 @@
  *
  * If your regular expression uses the &quot;`g`&quot; flag, you can use the `exec` method multiple times to find
  * successive matches in the same string. When you do so, the search starts at the substring of `str`
- * specified by the regular expression's `lastIndex` property (`test` will also advance the `lastIndex`
+ * specified by the regular expression&#39;s `lastIndex` property (`test` will also advance the `lastIndex`
  * property). For example, assume you have this script:
  *
  *     var myRe = /ab*\/g;
@@ -300,10 +300,10 @@
  *
  * You can also use `exec()` without creating a RegExp object:
  *
- *     var matches = /(hello \S+)/.exec('This is a hello world!');
+ *     var matches = /(hello \S+)/.exec(&#39;This is a hello world!&#39;);
  *     alert(matches[1]);
  *
- * This will display an alert containing 'hello world!';
+ * This will display an alert containing &#39;hello world!&#39;;
  *
  * @param {String} str The string against which to match the regular expression.
  * @return {Array} Array of results or `NULL`.

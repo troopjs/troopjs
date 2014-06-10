@@ -25,8 +25,8 @@ define([
 	&quot;use strict&quot;;
 
 <span id='core-event-emitter'>	/**
-</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
-	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism, which makes it supports for both:
+</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it&#39;s aligned with Node&#39;s events module,
+	 * while behind the regularity it&#39;s powered by a highly customizable **event runner** mechanism, which makes it supports for both:
 	 *
 	 *  - **synchronous event**: all your event handlers are run in a single loop.
 	 *  - **async event with promise**: you can return a promise where the next handler will be called upon the
@@ -164,7 +164,7 @@ define([
 							continue;
 						}
 
-						// It there's no head - link head -&gt; tail -&gt; handler
+						// It there&#39;s no head - link head -&gt; tail -&gt; handler
 						if (!head) {
 							head = tail = handler;
 						}
@@ -229,7 +229,7 @@ define([
 			}
 			// Otherwise something is wrong
 			else {
-				throw Error(&quot;first argument has to be of type '&quot; + TOSTRING_STRING + &quot;' or have a '&quot; + TYPE + &quot;' property&quot;);
+				throw Error(&quot;first argument has to be of type &#39;&quot; + TOSTRING_STRING + &quot;&#39; or have a &#39;&quot; + TYPE + &quot;&#39; property&quot;);
 			}
 
 			// Get handlers[type] as handlers
