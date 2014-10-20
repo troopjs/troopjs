@@ -52,11 +52,8 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|scripts|test|tasks|guides|jsduck|(?:version|Gruntfile)\.js|(?:package|bower)\.json)/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|scripts|test|tasks|guides|jsduck|(?:version|dev|Gruntfile)\.js|(?:package|bower)\.json)/,
 				"packages" : [{
-					"name": "text",
-					"location": "empty:"
-				}, {
 					"name" : "jquery",
 					"location" : "empty:"
 				}, {
@@ -66,9 +63,24 @@ module.exports = function(grunt) {
 					"name" : "poly",
 					"location" : "empty:"
 				}, {
+					"name" : "mu-getargs",
+					"location" : "mu-getargs"
+				}, {
+					"name" : "mu-select",
+					"location" : "mu-select"
+				}, {
+					"name" : "mu-merge",
+					"location" : "mu-merge"
+				}, {
+					"name" : "mu-unique",
+					"location" : "mu-unique"
+				}, {
+					"name" : "mu-jquery-destroy",
+					"location" : "mu-jquery-destroy",
+					"main" : "jquery.destroy.js"
+				}, {
 					"name" : "troopjs",
-					"location" : "..",
-					"main" : "maxi"
+					"location" : ".."
 				}],
 				"rawText" : {
 					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
@@ -78,15 +90,9 @@ module.exports = function(grunt) {
 			"bundles" : {
 				"options" : {
 					"modules" : [{
-						"name" : "troopjs/maxi",
-						"excludeShallow" : [
-							"troopjs/maxi",
-							"troopjs/mini"
-						]
-					}, {
-						"name" : "troopjs/mini",
-						"excludeShallow" : [
-							"troopjs/mini"
+						"name": "troopjs/main",
+						"excludeShallow": [
+							"troopjs/main"
 						]
 					}]
 				}
@@ -120,7 +126,7 @@ module.exports = function(grunt) {
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
 					"cwd" : "<%= build.dist %>",
-					"src" : [ "{mini,maxi}.js" ],
+					"src" : [ "main.js" ],
 					"ext" : ".min.js"
 				}]
 			}
@@ -140,8 +146,8 @@ module.exports = function(grunt) {
 					"expand" : true,
 					"cwd" : "<%= build.dist %>",
 					"src" : [
-						"{mini,maxi}.js",
-						"{mini,maxi}.min.js"
+						"main.js",
+						"main.min.js"
 					]
 				}]
 			}

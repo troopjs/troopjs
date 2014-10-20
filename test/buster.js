@@ -13,6 +13,7 @@ module.exports["troopjs"] = {
 		"*.js",
 		"bower.json",
 		"bower_components/troopjs-*/**/*.*",
+		"bower_components/mu-*/**/*.*",
 		"bower_components/jquery/dist/jquery.js",
 		"bower_components/when/**/*.js",
 		"bower_components/requirejs/require.js",

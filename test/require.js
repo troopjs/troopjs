@@ -13,6 +13,22 @@ var require = {
 		"name" : "poly",
 		"main" : "poly"
 	}, {
+		"name" : "mu-getargs",
+		"location" : "mu-getargs"
+	}, {
+		"name" : "mu-select",
+		"location" : "mu-select"
+	}, {
+		"name" : "mu-merge",
+		"location" : "mu-merge"
+	}, {
+		"name" : "mu-unique",
+		"location" : "mu-unique"
+	}, {
+		"name" : "mu-jquery-destroy",
+		"location" : "mu-jquery-destroy",
+		"main" : "jquery.destroy.js"
+	}, {
 		"name" : "troopjs",
 		"location" : ".."
 	}],
