@@ -52,7 +52,7 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|Gruntfile)\.js|(?:package|bower)\.json)/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|Gruntfile)\.js|(?:package|bower)\.json)/,
 				"packages" : [{
 					"name" : "jquery",
 					"location" : "empty:"
@@ -64,7 +64,8 @@ module.exports = function(grunt) {
 					"location" : "empty:"
 				}, {
 					"name" : "mu-getargs",
-					"location" : "mu-getargs"
+					"location" : "mu-getargs/dist",
+					"main" : "getargs"
 				}, {
 					"name" : "mu-select",
 					"location" : "mu-select"
@@ -73,7 +74,8 @@ module.exports = function(grunt) {
 					"location" : "mu-merge"
 				}, {
 					"name" : "mu-unique",
-					"location" : "mu-unique"
+					"location" : "mu-unique/dist/amd",
+					"main": "unique"
 				}, {
 					"name" : "mu-jquery-destroy",
 					"location" : "mu-jquery-destroy",

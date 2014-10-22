@@ -7,13 +7,12 @@
 			"email": "mikael@karon.se"
 		}
 	],
-	"description": "Meta package wiring together all TroopJS submodules",
+	"description": "Meta package wiring together all TroopJS modules",
 	"license": "http://troopjs.mit-license.org/",
 	"ignore": [
 		"**/.*",
 		"node_modules",
 		"bower_components"
-
 	],
 	"dependencies": {
 		"troopjs-compose": "3.0.1",
