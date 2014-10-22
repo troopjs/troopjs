@@ -20,8 +20,5 @@
 		"troopjs-core": "3.3.1",
 		"troopjs-dom": "5.1.4",
 		"troopjs-log": "1.0.1"
-	},
-	"devDependencies": {
-		"requirejs-text": "~2"
 	}
 }

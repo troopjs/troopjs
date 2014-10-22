@@ -52,7 +52,7 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|scripts|test|tasks|guides|jsduck|(?:version|dev|Gruntfile)\.js|(?:package|bower)\.json)/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|dist|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|Gruntfile)\.js|(?:package|bower)\.json)/,
 				"packages" : [{
 					"name" : "jquery",
 					"location" : "empty:"
@@ -83,7 +83,7 @@ module.exports = function(grunt) {
 					"location" : ".."
 				}],
 				"rawText" : {
-					"troopjs/version" : "define([], <%= JSON.stringify(pkg.version) %>);\n"
+					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
 				}
 			},
 

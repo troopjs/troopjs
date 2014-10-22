@@ -1,3 +1,6 @@
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define([
 	"./version",
 	"troopjs-compose/decorator/after",
