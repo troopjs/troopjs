@@ -11,6 +11,7 @@ define([
 	"troopjs-log/sink/console",
 	"troopjs-log/sink/forward",
 	"troopjs-log/sink/null",
+	"troopjs-core/component/service",
 	"troopjs-dom/application/widget",
 	"troopjs-dom/loom/plugin"
 ], function (version) {

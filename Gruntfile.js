@@ -31,7 +31,8 @@ module.exports = function(grunt) {
 		"build" : {
 			"src" : ".",
 			"dist" : "dist",
-			"banner" : "/**\n\
+			"banner" : "\
+**\n\
  *   ____ .     ____  ____  ____    ____.\n\
  *   \\   (/_\\___\\  (__\\  (__\\  (\\___\\  (/\n\
  *   / ._/  ( . _   \\  . /   . /  . _   \\_\n\
@@ -45,45 +46,14 @@ module.exports = function(grunt) {
 
 		"requirejs" : {
 			"options" : {
-				"baseUrl" : "bower_components",
+				"mainConfigFile": "require.js",
 				"appDir" : "<%= build.src %>",
 				"dir" : "<%= build.dist %>",
 				"optimize" : "none",
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|Gruntfile)\.js|(?:package|bower)\.json)/,
-				"packages" : [{
-					"name" : "jquery",
-					"location" : "empty:"
-				}, {
-					"name" : "when",
-					"location" : "empty:"
-				}, {
-					"name" : "poly",
-					"location" : "empty:"
-				}, {
-					"name" : "mu-getargs",
-					"location" : "mu-getargs/dist",
-					"main" : "getargs"
-				}, {
-					"name" : "mu-select",
-					"location" : "mu-select"
-				}, {
-					"name" : "mu-merge",
-					"location" : "mu-merge"
-				}, {
-					"name" : "mu-unique",
-					"location" : "mu-unique/dist/amd",
-					"main": "unique"
-				}, {
-					"name" : "mu-jquery-destroy",
-					"location" : "mu-jquery-destroy",
-					"main" : "jquery.destroy.js"
-				}, {
-					"name" : "troopjs",
-					"location" : ".."
-				}],
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|require|buster|Gruntfile)\.js|(?:package|bower)\.json)/,
 				"rawText" : {
 					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
 				}
@@ -93,6 +63,11 @@ module.exports = function(grunt) {
 				"options" : {
 					"modules" : [{
 						"name": "troopjs/main",
+						"exclude": [
+							"jquery",
+							"when",
+							"poly"
+						],
 						"excludeShallow": [
 							"troopjs/main"
 						]
