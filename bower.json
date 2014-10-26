@@ -15,10 +15,10 @@
 		"bower_components"
 	],
 	"dependencies": {
-		"troopjs-compose": "3.0.1",
-		"troopjs-core": "3.3.1",
-		"troopjs-dom": "5.1.4",
-		"troopjs-log": "1.0.1"
+		"troopjs-compose": "develop",
+		"troopjs-core": "develop",
+		"troopjs-widget": "develop",
+		"troopjs-log": "develop"
 	},
 	"devDependencies": {
 		"requirejs": "~2.1"

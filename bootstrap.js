@@ -29,7 +29,7 @@ define([ "module", "require", "./version" ], function (module, localRequire, ver
 	// Update configuration
 	require.config({
 		"context": contextName,
-		"packages": [ "compose", "core", "dom", "log" ].map(function (name) {
+		"packages": [ "compose", "core", "log", "dom", "widget" ].map(function (name) {
 			name = "troopjs-" + name;
 
 			return {
