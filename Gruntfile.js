@@ -2,7 +2,6 @@
 module.exports = function(grunt) {
 	"use strict";
 
-	var UNDEFINED;
 	var semver = require("semver");
 	var path = require("path");
 	var _ = require("lodash");
@@ -32,7 +31,7 @@ module.exports = function(grunt) {
 			"src" : ".",
 			"dist" : "dist",
 			"banner" : "\
-**\n\
+/**\n\
  *   ____ .     ____  ____  ____    ____.\n\
  *   \\   (/_\\___\\  (__\\  (__\\  (\\___\\  (/\n\
  *   / ._/  ( . _   \\  . /   . /  . _   \\_\n\
@@ -130,32 +129,6 @@ module.exports = function(grunt) {
 			}
 		},
 
-		"semver": {
-			"bundles": {
-				"files": [{
-					"expand": true,
-					"src" : [ "package.json", "bower.json" ]
-				}]
-			}
-		},
-
-		"git-dist" : {
-			"options" : {
-				"message" : "<%= pkg.name %> - <%= pkg.version %>",
-				"tag" : "<%= pkg.version %>",
-				"config" : {
-					"user.name" : UNDEFINED,
-					"user.email" : UNDEFINED
-				}
-			},
-			"bundles" : {
-				"options" : {
-					"branch" : "build/3.x",
-					"dir" : "<%= build.dist %>"
-				}
-			}
-		},
-
 		"buster" : {
 			"troopjs" : {}
 		},
@@ -174,57 +147,6 @@ module.exports = function(grunt) {
 
 	//Load all local grunt tasks
 	grunt.loadTasks("tasks");
-
-	grunt.registerTask("version", "Manage versions", function (phase, part, build) {
-		var args = [ "semver", "bundles" ];
-
-		switch (phase) {
-			case "bump" :
-			case "strip" :
-				if (grunt.util.kindOf(part) === "undefined") {
-					part = "prerelease";
-				}
-				/* falls through */
-
-			case "set" :
-				args.push(phase, part, build);
-				break;
-
-			default :
-				grunt.warn(new Error("Unknown phase '" + phase + "'"));
-		}
-
-		grunt.task.run([ args.join(":") ]);
-	});
-
-	grunt.registerTask("release", "Package and release", function (phase) {
-		var name = this.name;
-		var args = [];
-
-		switch (phase) {
-			case "prepare":
-				grunt.log.subhead("Preparing release");
-				args.push("clean", "git-dist:bundles:clone", "default");
-				break;
-
-			case "perform":
-				grunt.log.subhead("Performing release");
-				args.push("git-dist:bundles:add", "git-dist:bundles:commit");
-				if (grunt.option("no-tag")) {
-					grunt.log.writeln("Not tagging as " + "--no-tag".cyan + " was passed");
-				}
-				else {
-					args.push("git-dist:bundles:tag");
-				}
-				args.push("git-dist:bundles:push");
-				break;
-
-			default:
-				args.push(name + ":prepare", name + ":perform");
-		}
-
-		grunt.task.run(args);
-	});
 
 	grunt.registerTask("compile", [ "git-describe", "transform", "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);

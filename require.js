@@ -20,6 +20,9 @@ require({
 		"name" : "mu-select",
 		"location" : "mu-select"
 	}, {
+		"name" : "mu-selector-set",
+		"location" : "mu-selector-set"
+	}, {
 		"name" : "mu-merge",
 		"location" : "mu-merge"
 	}, {
