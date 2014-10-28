@@ -17,7 +17,7 @@
 	"dependencies": {
 		"troopjs-compose": "develop",
 		"troopjs-core": "develop",
-		"troopjs-widget": "develop",
+		"troopjs-dom": "develop",
 		"troopjs-log": "develop"
 	},
 	"devDependencies": {
