@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Framework",
+    "groups": [
+      {
+        "name": "troopjs-compose",
+        "classes": [ "compose.*" ]
+      },
+      {
+        "name": "troopjs-log",
+        "classes": [ "log.*" ]
+      },
+      {
+        "name": "troopjs-core",
+        "classes": [ "core.*" ]
+      },
+      {
+        "name": "troopjs-dom",
+        "classes": [ "dom.*" ]
+      }
+    ]
+  },
+  {
+    "name": "Stack",
+    "groups": [
+      {
+        "name": "troopjs-widget",
+        "classes": [ "widget.*" ]
+      }
+    ]
+  },
+  {
+    "name": "Other",
+    "groups": [
+      {
+        "name": "ECMAScript",
+        "classes": [
+          "RegExp",
+          "Boolean",
+          "Object",
+          "String",
+          "Date",
+          "Function",
+          "Array",
+          "Number"
+        ]
+      },
+      {
+        "name": "when.js",
+        "classes": [ "when", "when.*" ]
+      },
+      {
+        "name": "jQuery",
+        "classes": [ "$" ]
+      }
+    ]
+  }
+]
