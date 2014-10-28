@@ -4,6 +4,7 @@
 		"-nodoc(class,public)","-nodoc(member,public)"
 	],
 	"--css": "jsduck/custom.css",
+	"--categories": "jsduck/categories.json",
 	"--footer": "<a href='https://troopjs.com'><b>TroopJS</b></a> under <a href='http://troopjs.mit-license.org/'>MIT license</a> ",
 	"--builtin-classes": true,
 	"--external": [
