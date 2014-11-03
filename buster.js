@@ -1,4 +1,3 @@
-/*jshint node:true*/
 module.exports["troopjs"] = {
 	"environment" : "browser",
 

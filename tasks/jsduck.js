@@ -182,7 +182,6 @@ module.exports = function JSDuckTask(grunt) {
 
 			// Discard the temporary files after the JSDuck run.
 			return function cleanUp() {
-				/*jshint -W024 */
 				grunt.file.delete(GUIDES_TMP_DIR);
 				grunt.file.delete(GUIDES_FILE);
 				grunt.file.delete(CONFIG_FILE);
