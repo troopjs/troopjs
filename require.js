@@ -1,40 +1,35 @@
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+/*globals require:false*/
 require({
 	"baseUrl" : "bower_components",
-	"packages" : [{
-		"name" : "jquery",
-		"location" : "jquery/dist",
-		"main": "jquery"
-	}, {
-		"name" : "when",
-		"location" : "when",
-		"main": "when"
-	}, {
-		"name" : "poly",
-		"location" : "poly",
-		"main": "es5"
-	}, {
-		"name" : "mu-getargs",
-		"location" : "mu-getargs/dist",
-		"main" : "getargs"
-	}, {
-		"name" : "mu-select",
-		"location" : "mu-select"
-	}, {
-		"name" : "mu-selector-set",
-		"location" : "mu-selector-set"
-	}, {
-		"name" : "mu-merge",
-		"location" : "mu-merge"
-	}, {
-		"name" : "mu-unique",
-		"location" : "mu-unique/dist/amd",
-		"main": "unique"
-	}, {
-		"name" : "mu-jquery-destroy",
-		"location" : "mu-jquery-destroy",
-		"main" : "jquery.destroy.js"
-	}, {
-		"name" : "troopjs",
-		"location" : ".."
-	}]
+	"packages" : [ "jquery", "when", "poly", "mu-getargs", "mu-select", "mu-selector-set", "mu-merge", "mu-unique", "mu-jquery-destroy", "troopjs" ].map(function (name) {
+		var main;
+		var location;
+
+		switch (name) {
+			case "jquery":
+				location = "jquery/dist";
+				/* falls through */
+
+			case "when":
+				main = name;
+				break;
+
+			case "poly":
+				main = "es5";
+				break;
+
+			case "troopjs":
+				location = "..";
+				break;
+		}
+
+		return {
+			"name": name,
+			"location": location,
+			"main": main
+		}
+	})
 });
