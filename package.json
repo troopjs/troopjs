@@ -1,49 +1,9 @@
 {
 	"name": "troopjs",
-	"description": "TroopJS package",
-	"version": "3.0.0-pr.2",
-	"author": {
-		"name": "Mikael Karon",
-		"email": "mikael@karon.se"
-	},
-	"maintainers": [
-		{
-			"name": "Mikael Karon",
-			"web": "https://github.com/mikaelkaron"
-		},
-		{
-			"name": "Garry Yao",
-			"web": "https://github.com/garryyao"
-		}
-	],
-	"contributors": [
-		{
-			"name": "Kates Gasis",
-			"web": "https://github.com/kates"
-		},
-		{
-			"name": "Norman Xu",
-			"web": "https://github.com/normanzb"
-		},
-		{
-			"name": "Vincent Shao",
-			"web": "https://github.com/lupincn"
-		}
-	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/troopjs/troopjs.git"
 	},
-	"bugs": {
-		"url": "https://github.com/troopjs/troopjs/issues"
-	},
-	"homepage": "http://troopjs.com",
-	"licenses": [
-		{
-			"type": "MIT",
-			"url": "http://troopjs.mit-license.org/"
-		}
-	],
 	"scripts": {
 		"pretest": "scripts/pretest.js",
 		"test": "grunt test"

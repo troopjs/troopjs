@@ -1,13 +1,33 @@
 {
 	"name": "troopjs",
 	"version": "3.0.0-pr.3",
+	"homepage": "https://troopjs.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/troopjs/troopjs.git"
+	},
 	"authors": [
 		{
 			"name": "Mikael Karon",
 			"email": "mikael@karon.se"
+		},
+		{
+			"name": "Garry Yao",
+			"email": "yaojun85@gmail.com"
+		},
+		{
+			"name": "Eyal Arubas",
+			"email": "eyalarubas@gmail.com"
 		}
 	],
+	"main": "main.js",
+	"moduleType": [ "amd" ],
 	"description": "Meta package wiring together all TroopJS modules",
+	"keywords": [
+		"troopjs",
+		"framework",
+		"frontend"
+	],
 	"license": "http://troopjs.mit-license.org/",
 	"ignore": [
 		"**/.*",
@@ -15,12 +35,13 @@
 		"bower_components"
 	],
 	"dependencies": {
-		"troopjs-compose": "develop",
-		"troopjs-core": "develop",
-		"troopjs-dom": "develop",
-		"troopjs-log": "develop"
+		"troopjs-compose": "^3.1",
+		"troopjs-core": "^4",
+		"troopjs-dom": "^6",
+		"troopjs-log": "^1"
 	},
 	"devDependencies": {
-		"requirejs": "~2.1"
+		"troopjs-widget": "develop",
+		"requirejs": "^2.1"
 	}
 }
