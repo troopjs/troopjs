@@ -1,3 +1,7 @@
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+/*globals module:false*/
 module.exports = function(grunt) {
 	"use strict";
 
