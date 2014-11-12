@@ -22,13 +22,13 @@ define([
 	&quot;./methods&quot;,
 	&quot;../config&quot;,
 	&quot;poly/array&quot;
-], function ForwardModule(METHODS, CONF) {
+], function (METHODS, CONF) {
 	&quot;use strict&quot;;
 
 <span id='log-sink-forward'>	/**
 </span>	 * The forward log sink acts as a forwarder to other log sinks.
 	 *
-	 * It&#39;s mainly configured via the {@link log.config#sinks} configuration.
+	 * It's mainly configured via the {@link log.config#sinks} configuration.
 	 * To configure the forwarder for both the {@link log.sink.console} and the {@link log.sink.null} sink, one could
 	 * do this:
 	 *

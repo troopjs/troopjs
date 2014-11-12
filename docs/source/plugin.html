@@ -25,18 +25,17 @@ define([
 	&quot;./weave&quot;,
 	&quot;./unweave&quot;,
 	&quot;./woven&quot;,
-	&quot;troopjs-util/getargs&quot;,
 	&quot;poly/array&quot;
-], function WeaveModule($, when, config, weave, unweave, woven, getargs) {
+], function ($, when, config, weave, unweave, woven) {
 	&quot;use strict&quot;;
 
-<span id='dom-loom-plugin'>	/**
+<span id='widget-plugin'>	/**
 </span>	 * Extends {@link jQuery} with:
 	 *
-	 *  - {@link $#property-weave} and {@link $#property-woven} properties
+	 *  - {@link $#property-woven} property
 	 *  - {@link $#method-weave}, {@link $#method-unweave} and {@link $#method-woven} methods
 	 *
-	 * @class dom.loom.plugin
+	 * @class widget.plugin
 	 * @static
 	 * @alias plugin.jquery
 	 */
@@ -44,23 +43,10 @@ define([
 	var UNDEFINED;
 	var $FN = $.fn;
 	var $EXPR = $.expr;
-	var $CREATEPSEUDO = $EXPR.createPseudo;
 	var WEAVE = &quot;weave&quot;;
 	var UNWEAVE = &quot;unweave&quot;;
 	var WOVEN = &quot;woven&quot;;
-	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
-	var RE_SEPARATOR = /[\s,]+/;
-
-<span id='global-method-hasDataWeaveAttr'>	/**
-</span>	 * Tests if element has a data-weave attribute
-	 * @param element to test
-	 * @return {boolean}
-	 * @ignore
-	 */
-	function hasDataWeaveAttr(element) {
-		return $(element).attr(ATTR_WEAVE) !== UNDEFINED;
-	}
 
 <span id='global-method-hasDataWovenAttr'>	/**
 </span>	 * Tests if element has a data-woven attribute
@@ -76,98 +62,56 @@ define([
 </span>	 * @class $
 	 */
 
-<span id='$-property-weave'>	/**
-</span>	 * jQuery `:weave` expression
-	 * @property weave
-	 */
-	$EXPR[&quot;:&quot;][WEAVE] = $CREATEPSEUDO
-		// If we have jQuery &gt;= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don&#39;t have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWeaveAttr;
-			}
-
-			// Convert widgets to RegExp
-			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
-				return &quot;^&quot; + widget;
-			}).join(&quot;|&quot;), &quot;m&quot;);
-
-			// Return expression
-			return function (element) {
-				// Get weave attribute
-				var weave = $(element).attr(ATTR_WEAVE);
-
-				// Check that weave is not UNDEFINED, and that widgets test against a processed weave
-				return weave !== UNDEFINED &amp;&amp; widgets.test(weave.replace(RE_SEPARATOR, &quot;\n&quot;));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var weave = $(element).attr(ATTR_WEAVE);
-
-			return weave === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: new RegExp(getargs.call(match[3]).map(function (widget) {
-							return &quot;^&quot; + widget;
-						}).join(&quot;|&quot;), &quot;m&quot;).test(weave.replace(RE_SEPARATOR, &quot;\n&quot;));
-			};
-
 <span id='$-property-woven'>	/**
 </span>	 * jQuery `:woven` expression
 	 * @property woven
 	 */
-	$EXPR[&quot;:&quot;][WOVEN] = $CREATEPSEUDO
-		// If we have jQuery &gt;= 1.8 we want to use .createPseudo
-		? $CREATEPSEUDO(function (widgets) {
-			// If we don&#39;t have widgets to test, quick return optimized expression
-			if (widgets === UNDEFINED) {
-				return hasDataWovenAttr;
-			}
+	$EXPR[&quot;:&quot;][WOVEN] = $EXPR.createPseudo(function (widgets) {
+		// If we don't have widgets to test, quick return optimized expression
+		if (widgets === UNDEFINED) {
+			return hasDataWovenAttr;
+		}
 
-			// Convert widgets to RegExp
-			widgets = new RegExp(getargs.call(widgets).map(function (widget) {
-				return &quot;^&quot; + widget;
-			}).join(&quot;|&quot;), &quot;m&quot;);
+		// Scope `woven_re` locally since we use the `g` flag
+		var woven_re = /[\s,]*([\w\d_\/\.\-]+)(?:@(\d+))?/g;
+		var woven_res = [];
+		var woven_res_length = 0;
+		var matches;
 
-			// Return expression
-			return function (element) {
-				var attr_woven = $(element).attr(ATTR_WOVEN);
+		// Iterate `widgets` (while woven_re matches)
+		// matches[1] : widget name - &quot;widget/name&quot;
+		// matches[2] : widget instance id - &quot;123&quot;
+		while ((matches = woven_re.exec(widgets)) !== null) {
+			woven_res[woven_res_length++] = &quot;(?:^|[\\s,]+)&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;($|[\\s,]+)&quot;;
+		}
 
-				// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
-				return attr_woven !== UNDEFINED &amp;&amp; widgets.test(attr_woven.replace(RE_SEPARATOR, &quot;\n&quot;));
-			};
-		})
-		// Otherwise fall back to legacy
-		: function (element, index, match) {
-			var attr_woven = $(element).attr(ATTR_WOVEN);
+		// Redefine `woven_re` as a combined regexp
+		woven_re = new RegExp(woven_res.join(&quot;|&quot;));
 
-			return attr_woven === UNDEFINED
-				? false
-				: match === UNDEFINED
-					? true
-					: new RegExp(getargs.call(match[3]).map(function (widget) {
-						return &quot;^&quot; + widget;
-					}).join(&quot;|&quot;), &quot;m&quot;).test(attr_woven.replace(RE_SEPARATOR, &quot;\n&quot;));
+		// Return expression
+		return function (element) {
+			var attr_woven = $.attr(element, ATTR_WOVEN);
+
+			// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
+			return attr_woven !== UNDEFINED &amp;&amp; woven_re.test(attr_woven);
 		};
+	});
 
 <span id='$-method-weave'>	/**
 </span>	 * @method weave
-	 * @inheritdoc dom.loom.weave#constructor
+	 * @inheritdoc widget.weave#constructor
 	 */
 	$FN[WEAVE] = weave;
 
 <span id='$-method-unweave'>	/**
 </span>	 * @method unweave
-	 * @inheritdoc dom.loom.unweave#constructor
+	 * @inheritdoc widget.unweave#constructor
 	 */
 	$FN[UNWEAVE] = unweave;
 
 <span id='$-method-woven'>	/**
 </span>	 * @method woven
-	 * @inheritdoc dom.loom.woven#constructor
+	 * @inheritdoc widget.woven#constructor
 	 */
 	$FN[WOVEN] = woven;
 });

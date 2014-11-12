@@ -21,10 +21,10 @@
 define([
 	&quot;./config&quot;,
 	&quot;./decorator&quot;,
-	&quot;troopjs-util/unique&quot;,
-	&quot;troopjs-util/getargs&quot;,
+	&quot;mu-unique&quot;,
+	&quot;mu-getargs&quot;,
 	&quot;poly/object&quot;
-], function FactoryModule(config, Decorator, unique, getargs) {
+], function (config, Decorator, unique, getargs) {
 	&quot;use strict&quot;;
 
 <span id='compose-mixin-factory'>	/**
@@ -35,7 +35,7 @@ define([
 	 *    - Avoid occasionally unexpected modification from prototype chain, from the prototype-based inheritance;
 	 *    - Reduced the function creation overhead in classical inheritance pattern;
 	 *  - **Advice decorator** for method overriding without the need for super call;
-	 *  - **Declarative** &quot;special&quot; functions preserved for sending messages to object, that never overrides parent ones.
+	 *  - **Declarative** &quot;special&quot; functions that never overrides parent ones reserved for event emission
 	 *
 	 * Basically Factory takes objects or constructors as arguments and returns a new constructor, the arguments are
 	 * composed from left to right, later arguments taken precedence (overriding) former arguments,
@@ -106,6 +106,7 @@ define([
 	var ARRAY_PROTO = Array[PROTOTYPE];
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var ARRAY_UNSHIFT = ARRAY_PROTO.unshift;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var OBJECT_TOSTRING = Object[PROTOTYPE][TOSTRING];
 	var TYPEOF_FUNCTION = &quot;function&quot;;
 	var DISPLAYNAME = &quot;displayName&quot;;
@@ -123,11 +124,7 @@ define([
 	var TYPES = &quot;types&quot;;
 	var NAME = &quot;name&quot;;
 	var PRAGMAS = config[&quot;pragmas&quot;];
-
-	// A special must be in form of a function call (ended in parenthesis), and have an optional type following a slash,
-	// &lt;special&gt;[/&lt;type&gt;](&lt;arguments&gt;)
-	// e.g. sig/start(), hub(foo/bar/baz)
-	var RE = /^(.*?)(?:\/([^\(]+))?\((.*)\)$/;
+	var SPECIALS_PATTERN = config[&quot;specialsPattern&quot;];
 
 <span id='compose-mixin-factory-static-method-create'>	/**
 </span>	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
@@ -169,7 +166,7 @@ define([
 		var specials = [];
 		var specialsLength;
 		var arg;
-		var args = arguments;
+		var args = ARRAY_SLICE.call(arguments);
 		var argsLength = args[LENGTH];
 		var constructors = [];
 		var constructorsLength;
@@ -197,7 +194,7 @@ define([
 			// Get arg
 			arg = args[i];
 
-			// If this is a function we&#39;re going to add it as a constructor candidate
+			// If this is a function we're going to add it as a constructor candidate
 			if(typeof arg === TYPEOF_FUNCTION) {
 				// If this is a synthetic constructor then add (child) constructors
 				if (CONSTRUCTORS in arg) {
@@ -242,7 +239,7 @@ define([
 				}
 
 				// Check if this matches a SPECIAL signature
-				if ((matches = RE.exec(name))) {
+				if ((matches = SPECIALS_PATTERN.exec(name))) {
 					// Create special
 					special = {};
 
@@ -328,7 +325,7 @@ define([
 		}
 
 		function Constructor () {
-			// Allow to be created either via &#39;new&#39; or direct invocation
+			// Allow to be created either via 'new' or direct invocation
 			var instance = this instanceof Constructor
 				? this
 				: Object.create(prototype);
@@ -388,7 +385,7 @@ define([
 
 	// Add CREATE to factoryDescriptors
 	Object.defineProperty(Factory, CREATE, {
-		&quot;value&quot;: function FactoryCreate() {
+		&quot;value&quot;: function () {
 			return Factory.apply(null, arguments)();
 		}
 	});

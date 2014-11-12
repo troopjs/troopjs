@@ -23,64 +23,61 @@ define([
 	&quot;when&quot;,
 	&quot;jquery&quot;,
 	&quot;poly/array&quot;
-], function WovenModule(config, when, $) {
+], function (config, when, $) {
 	&quot;use strict&quot;;
 
-<span id='dom-loom-woven'>	/**
-</span>	 * @class dom.loom.woven
-	 * @mixin dom.loom.config
+<span id='widget-woven'>	/**
+</span>	 * @class widget.woven
+	 * @mixin widget.config
 	 * @mixin Function
 	 * @static
 	 */
 
+	var NULL = null;
 	var ARRAY_MAP = Array.prototype.map;
 	var LENGTH = &quot;length&quot;;
-	var WOVEN = &quot;woven&quot;;
-	var $WARP = config[&quot;$warp&quot;];
+	var $WEFT = config[&quot;$weft&quot;];
+	var RE_ANY = /.*/;
+	var RE_WIDGET = /([\w\/\.\-]+)(?:@(\d+))?/;
 
-<span id='dom-loom-woven-method-constructor'>	/**
-</span>	 * Retrieve all or specific widget instances living on this element, that are
-	 * created by {@link dom.loom.weave}.
+<span id='widget-woven-method-constructor'>	/**
+</span>	 * Retrieve all or specific {@link widget.component widget} instances living on this element, that are
+	 * created by {@link widget.weave}.
 	 *
 	 * It also lives as a jquery plugin as {@link $#method-woven}.
 	 * @method constructor
-	 * @param {...String} [widget] One or more widget names to narrow down the returned ones.
+	 * @param {...String} [selector] One or more widget selectors to narrow down the returned ones.
+	 *
+	 *   * (empty string) retrieves all woven widgets
+	 *   * `module/name` retrieves widgets matching module name
+	 *   * `module/name@instance` retrieves widgets matching both module name and instance id
 	 * @return {Promise} Promise to the completion of retrieving the woven widgets array.
 	 */
 	return function woven() {
-		var $woven = [];
-		var $wovenLength = 0;
-		var re;
+		var woven_re = arguments[LENGTH] &gt; 0
+			? new RegExp(
+				ARRAY_MAP
+					.call(arguments, function (arg) {
+						var matches;
 
-		// If we have arguments we have convert and filter
-		if (arguments[LENGTH] &gt; 0) {
-			// Map arguments to a regexp
-			re = new RegExp(ARRAY_MAP.call(arguments, function (widget) {
-				return &quot;^&quot; + widget;
-			}).join(&quot;|&quot;), &quot;m&quot;);
+						// matches[1] : widget name - &quot;widget/name&quot;
+						// matches[2] : widget instance id - &quot;123&quot;
+						return ((matches = RE_WIDGET.exec(arg)) !== NULL)
+							? &quot;^&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;$&quot;
+							: NULL;
+					})
+					.filter(function (arg) {
+						return arg !== NULL
+					})
+					.join(&quot;|&quot;)
+			)
+			: RE_ANY;
 
-			// Iterate
-			$(this).each(function (index, element) {
-				// Filter widget promises
-				var $widgets = ($.data(element, $WARP) || []).filter(function ($weft) {
-					return re.test($weft[WOVEN]);
-				});
-
-				// Add promise of widgets to $woven
-				$woven[$wovenLength++] = when.all($widgets);
+		return when.all(ARRAY_MAP.call(this, function (element) {
+			return when.filter($.data(element, $WEFT) || false, function (widget) {
+				return woven_re.test(widget);
 			});
-		}
-		// Otherwise we can use a faster approach
-		else {
-			// Iterate
-			$(this).each(function (index, element) {
-				// Add promise of widgets to $woven
-				$woven[$wovenLength++] = when.all($.data(element, $WARP));
-			});
-		}
-
-		// Return promise of $woven
-		return when.all($woven);
+		}));
 	};
 });
 </pre>

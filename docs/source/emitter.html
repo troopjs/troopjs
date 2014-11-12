@@ -21,12 +21,12 @@
 define([
 	&quot;../mixin/base&quot;,
 	&quot;./runner/sequence&quot;
-], function EventEmitterModule(Base, sequence) {
+], function (Base, sequence) {
 	&quot;use strict&quot;;
 
 <span id='core-event-emitter'>	/**
-</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it&#39;s aligned with Node&#39;s events module,
-	 * while behind the regularity it&#39;s powered by a highly customizable **event runner** mechanism, which makes it supports for both:
+</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
+	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism, which makes it supports for both:
 	 *
 	 *  - **synchronous event**: all your event handlers are run in a single loop.
 	 *  - **async event with promise**: you can return a promise where the next handler will be called upon the
@@ -45,6 +45,7 @@ define([
 	var ARRAY_SLICE = Array.prototype.slice;
 	var OBJECT_TOSTRING = Object.prototype.toString;
 	var TOSTRING_STRING = &quot;[object String]&quot;;
+	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
 	var HANDLERS = &quot;handlers&quot;;
 	var LENGTH = &quot;length&quot;;
 	var TYPE = &quot;type&quot;;
@@ -55,17 +56,67 @@ define([
 	var HEAD = &quot;head&quot;;
 	var TAIL = &quot;tail&quot;;
 	var NEXT = &quot;next&quot;;
+	var LIMIT = &quot;limit&quot;;
+
+<span id='global-method-createHandler'>	/**
+</span>	 * Creates a new handler
+	 * @inheritdoc #on
+	 * @return {core.event.emitter.handler} Handler
+	 * @ignore
+	 */
+	function createHandler(type, callback, data) {
+		var me = this;
+		var count = 0;
+
+		var handler = function () {
+			// Let `limit` be `handler[LIMIT]`
+			var limit = handler[LIMIT];
+
+			// Get result from execution of `handler[CALLBACK]`
+			var result = handler[CALLBACK].apply(this, arguments);
+
+			// If there's a `limit` and `++count` is greater or equal to it `off` the callback
+			if (limit !== 0 &amp;&amp; ++count &gt;= limit) {
+				me.off(type, callback);
+			}
+
+			// Return
+			return result;
+		};
+
+		if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+			handler[CALLBACK] = callback;
+			handler[CONTEXT] = me;
+			handler[LIMIT] = 0;
+		}
+		else {
+			handler[CALLBACK] = callback[CALLBACK];
+			handler[CONTEXT] = callback[CONTEXT] || me;
+			handler[LIMIT] = callback[LIMIT] || 0;
+		}
+
+		handler[DATA] = data;
+
+		return handler;
+	}
+
+<span id='core-event-emitter-method-one'>	/**
+</span>	 * Adds a listener for the specified event type exactly once.
+	 * @method one
+	 * @chainable
+	 * @inheritdoc #on
+	 */
 
 <span id='core-event-emitter-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
 	 */
-	return Base.extend(function Emitter() {
+	return Base.extend(function () {
 <span id='core-event-emitter-property-handlers'>		/**
 </span>		 * Handlers attached to this component, addressable either by key or index
-		 * @protected
+		 * @private
 		 * @readonly
-		 * @property {Array} handlers
+		 * @property {core.event.emitter.handler[]} handlers
 		 */
 		this[HANDLERS] = [];
 	}, {
@@ -75,11 +126,13 @@ define([
 </span>		 * Adds a listener for the specified event type.
 		 * @chainable
 		 * @param {String} type The event type to subscribe to.
-		 * @param {Object} context The context to scope the callback to.
-		 * @param {Function} callback The event listener function.
+		 * @param {Function|Object} callback The event callback to add. If callback is a function defaults from below will be used:
+		 * @param {Function} callback.callback Callback method.
+		 * @param {Object} [callback.context=this] Callback context.
+		 * @param {Number} [callback.limit=0] Callback limit.
 		 * @param {*} [data] Handler data
 		 */
-		&quot;on&quot; : function on(type, context, callback, data) {
+		&quot;on&quot; : function (type, callback, data) {
 			var me = this;
 			var handlers;
 			var handler;
@@ -89,16 +142,11 @@ define([
 				throw new Error(&quot;no callback provided&quot;);
 			}
 
+			// Create new handler
+			handler = createHandler.call(me, type, callback, data);
+
 			// Have handlers
 			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
-				// Create new handler
-				handler = {};
-
-				// Prepare handler
-				handler[CALLBACK] = callback;
-				handler[CONTEXT] = context;
-				handler[DATA] = data;
-
 				// Set tail handler
 				handlers[TAIL] = TAIL in handlers
 					// Have tail, update handlers[TAIL][NEXT] to point to handler
@@ -116,12 +164,7 @@ define([
 
 				// Prepare handlers
 				handlers[TYPE] = type;
-				handlers[HEAD] = handlers[TAIL] = handler = {};
-
-				// Prepare handler
-				handler[CALLBACK] = callback;
-				handler[CONTEXT] = context;
-				handler[DATA] = data;
+				handlers[HEAD] = handlers[TAIL] = handler;
 			}
 
 			return me;
@@ -132,11 +175,14 @@ define([
 		 * remove all callbacks of this type.
 		 * @chainable
 		 * @param {String} type The event type subscribed to
-		 * @param {Object} [context] The context to scope the callback to remove
-		 * @param {Function} [callback] The event listener function to remove
+		 * @param {Function|Object} [callback] The event callback to remove. If callback is a function context will be this, otherwise:
+		 * @param {Function} [callback.callback] Callback method to match.
+		 * @param {Object} [callback.context=this] Callback context to match.
 		 */
-		&quot;off&quot; : function off(type, context, callback) {
+		&quot;off&quot; : function (type, callback) {
 			var me = this;
+			var _callback;
+			var _context;
 			var handlers;
 			var handler;
 			var head;
@@ -146,17 +192,26 @@ define([
 			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
 				// Have HEAD in handlers
 				if (HEAD in handlers) {
+					if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+						_callback = callback;
+						_context = me;
+					}
+					else if (callback !== UNDEFINED) {
+						_callback = callback[CALLBACK];
+						_context = callback[CONTEXT];
+					}
+
 					// Iterate handlers
 					for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
 						// Should we remove?
 						remove : {
 							// If no context or context does not match we should break
-							if (context &amp;&amp; handler[CONTEXT] !== context) {
+							if (_context &amp;&amp; handler[CONTEXT] !== _context) {
 								break remove;
 							}
 
 							// If no callback or callback does not match we should break
-							if (callback &amp;&amp; handler[CALLBACK] !== callback) {
+							if (_callback &amp;&amp; handler[CALLBACK] !== _callback) {
 								break remove;
 							}
 
@@ -164,7 +219,7 @@ define([
 							continue;
 						}
 
-						// It there&#39;s no head - link head -&gt; tail -&gt; handler
+						// It there's no head - link head -&gt; tail -&gt; handler
 						if (!head) {
 							head = tail = handler;
 						}
@@ -194,6 +249,25 @@ define([
 			return me;
 		},
 
+		&quot;one&quot;: function (type, callback, data) {
+			var me = this;
+			var _callback;
+
+			if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+				_callback = {};
+				_callback[CALLBACK] = callback;
+				_callback[CONTEXT] = me;
+				_callback[LIMIT] = 1;
+			}
+			else {
+				_callback = callback;
+				_callback[LIMIT] = 1;
+			}
+
+			// Delegate return to `on`
+			return me.on(type, _callback, data);
+		},
+
 <span id='core-event-emitter-method-emit'>		/**
 </span>		 * Trigger an event which notifies each of the listeners of their subscribing,
 		 * optionally pass data values to the listeners.
@@ -209,7 +283,7 @@ define([
 		 * @param {...*} [args] Data params that are passed to the listener function.
 		 * @return {*} Result returned from runner.
 		 */
-		&quot;emit&quot; : function emit(event, args) {
+		&quot;emit&quot; : function (event, args) {
 			var me = this;
 			var type = event;
 			var handlers;
@@ -229,7 +303,7 @@ define([
 			}
 			// Otherwise something is wrong
 			else {
-				throw Error(&quot;first argument has to be of type &#39;&quot; + TOSTRING_STRING + &quot;&#39; or have a &#39;&quot; + TYPE + &quot;&#39; property&quot;);
+				throw Error(&quot;first argument has to be of type '&quot; + TOSTRING_STRING + &quot;' or have a '&quot; + TYPE + &quot;' property&quot;);
 			}
 
 			// Get handlers[type] as handlers

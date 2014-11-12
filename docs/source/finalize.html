@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;./stop&quot;,
+	&quot;when&quot;
+], function (stop, when) {
+	var ARRAY_PUSH = Array.prototype.push;
+	var PHASE = &quot;phase&quot;;
+
+<span id='core-component-signal-finalize'>	/**
+</span>	 * @class core.component.signal.finalize
+	 * @implement core.component.signal
+	 * @static
+	 * @alias feature.signal
+	 */
+
+<span id='core-component-signal-finalize-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Transitions the component {@link core.component.base#phase} to `finalized`
+	 */
+	return function finalize() {
+		var me = this;
+		var args = arguments;
+
+		return when(stop.apply(me, args), function (phase) {
+			var _args;
+
+			if (phase === &quot;stopped&quot;) {
+				// Let `me[PHASE]` be `&quot;finalize&quot;`
+				// Let `_args` be `[ &quot;finalize&quot; ]`
+				// Push `args` on `_args`
+				ARRAY_PUSH.apply(_args = [ me[PHASE] = &quot;finalize&quot; ], args);
+
+				return me
+					.signal.apply(me, _args)
+					.then(function() {
+						// Let `me[PHASE]` be `&quot;finalized&quot;`
+						return me[PHASE] = &quot;finalized&quot;;
+					});
+			}
+			else {
+				return phase;
+			}
+		});
+	}
+});</pre>
+</body>
+</html>

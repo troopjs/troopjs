@@ -21,23 +21,27 @@
 define([
 	&quot;../event/emitter&quot;,
 	&quot;./runner/sequence&quot;,
+	&quot;./signal/start&quot;,
+	&quot;./signal/finalize&quot;,
 	&quot;troopjs-compose/mixin/config&quot;,
 	&quot;./registry&quot;,
-	&quot;../task/registry&quot;,
-	&quot;troopjs-util/merge&quot;,
+	&quot;../task/factory&quot;,
+	&quot;mu-merge&quot;,
 	&quot;troopjs-compose/decorator/around&quot;,
 	&quot;when&quot;,
 	&quot;poly/array&quot;
-], function ComponentModule(Emitter, sequence, COMPOSE_CONF, componentRegistry, taskRegistry, merge, around, when) {
+], function (Emitter, sequence, start, finalize, COMPOSE_CONF, componentRegistry, taskFactory, merge, around, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-base'>	/**
 </span>	 * Imagine component as an object that has predefined life-cycle, with the following phases:
 	 *
 	 *   1. initialize
+	 *   1. initialized
 	 *   1. start
 	 *   1. started
 	 *   1. stop
+	 *   1. stopped
 	 *   1. finalize
 	 *   1. finalized
 	 *
@@ -50,13 +54,13 @@ define([
 	 * 		// Signal handler for &quot;start&quot; phase
 	 * 		&quot;sig/start&quot;: function start() {
 	 * 			// bind resize handler.
-	 * 			$(window).on(&#39;resize.app&#39;, $.proxy(this.onResize, this));
+	 * 			$(window).on('resize.app', $.proxy(this.onResize, this));
 	 * 		},
 	 *
 	 * 		// Signal handler for &quot;finalize&quot; phase
 	 * 		&quot;sig/finalize&quot;: function finalize() {
 	 * 			// cleanup the handler.
-	 * 			$(window).off(&#39;resize.app&#39;);
+	 * 			$(window).off('resize.app');
 	 * 		},
 	 *
 	 * 		&quot;onResize&quot;: function onResize(argument) {
@@ -80,28 +84,22 @@ define([
 	var FALSE = false;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var CONFIGURATION = &quot;configuration&quot;;
 	var RUNNER = &quot;runner&quot;;
 	var HANDLERS = &quot;handlers&quot;;
 	var HEAD = &quot;head&quot;;
 	var TAIL = &quot;tail&quot;;
-	var CONTEXT = &quot;context&quot;;
 	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
-	var PHASE = &quot;phase&quot;;
-	var TASK = &quot;task&quot;;
-	var STOP = &quot;stop&quot;;
-	var INITIALIZE = &quot;initialize&quot;;
-	var STARTED = &quot;started&quot;;
-	var FINALIZED = &quot;finalized&quot;;
-	var FINISHED = &quot;finished&quot;;
 	var SIG = &quot;sig&quot;;
 	var SIG_SETUP = SIG + &quot;/setup&quot;;
 	var SIG_ADD = SIG + &quot;/add&quot;;
 	var SIG_REMOVE = SIG + &quot;/remove&quot;;
 	var SIG_TEARDOWN = SIG + &quot;/teardown&quot;;
 	var ON = &quot;on&quot;;
+	var ONE = &quot;one&quot;;
 	var EVENT_TYPE_SIG = new RegExp(&quot;^&quot; + SIG + &quot;/(.+)&quot;);
 
 <span id='core-component-base-property-phase'>	/**
@@ -109,34 +107,6 @@ define([
 	 * @readonly
 	 * @protected
 	 * @property {&quot;initialized&quot;|&quot;started&quot;|&quot;stopped&quot;|&quot;finalized&quot;} phase
-	 */
-
-<span id='core-component-base-event-sig-initialize'>	/**
-</span>	 * Initialize signal
-	 * @event sig/initialize
-	 * @localdoc Triggered when this component enters the initialize phase
-	 * @param {...*} [args] Initialize arguments
-	 */
-
-<span id='core-component-base-event-sig-start'>	/**
-</span>	 * Start signal
-	 * @event sig/start
-	 * @localdoc Triggered when this component enters the start phase
-	 * @param {...*} [args] Initialize arguments
-	 */
-
-<span id='core-component-base-event-sig-stop'>	/**
-</span>	 * Stop signal
-	 * @localdoc Triggered when this component enters the stop phase
-	 * @event sig/stop
-	 * @param {...*} [args] Stop arguments
-	 */
-
-<span id='core-component-base-event-sig-finalize'>	/**
-</span>	 * Finalize signal
-	 * @event sig/finalize
-	 * @localdoc Triggered when this component enters the finalize phase
-	 * @param {...*} [args] Finalize arguments
 	 */
 
 <span id='core-component-base-event-sig-setup'>	/**
@@ -185,13 +155,43 @@ define([
 	 * @param {Function} callback
 	 */
 
+<span id='core-component-base-event-sig-initialize'>	/**
+</span>	 * Initialize signal
+	 * @event sig/initialize
+	 * @localdoc Triggered when this component enters the initialize phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+<span id='core-component-base-event-sig-start'>	/**
+</span>	 * Start signal
+	 * @event sig/start
+	 * @localdoc Triggered when this component enters the start phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+<span id='core-component-base-event-sig-stop'>	/**
+</span>	 * Stop signal
+	 * @localdoc Triggered when this component enters the stop phase
+	 * @event sig/stop
+	 * @param {...*} [args] Stop arguments
+	 */
+
+<span id='core-component-base-event-sig-finalize'>	/**
+</span>	 * Finalize signal
+	 * @event sig/finalize
+	 * @localdoc Triggered when this component enters the finalize phase
+	 * @param {...*} [args] Finalize arguments
+	 */
+
 <span id='core-component-base-event-sig-task'>	/**
 </span>	 * Task signal
 	 * @event sig/task
 	 * @localdoc Triggered when this component starts a {@link #method-task}.
-	 * @param {Promise} task Task
-	 * @param {Object} task.context Task context
+	 * @param {Object} task Task
+	 * @param {Promise} task.promise The Promise that makes up of this task
+	 * @param {Object} task.context from which component the task is issued
 	 * @param {Date} task.started Task start date
+	 * @param {Date} task.finished Task completion date
 	 * @param {String} task.name Task name
 	 * @return {Promise}
 	 */
@@ -244,9 +244,18 @@ define([
 	 * @return {*|Boolean}
 	 */
 
+<span id='core-component-base-method-one'>	/**
+</span>	 * @method one
+	 * @chainable
+	 * @inheritdoc
+	 * @localdoc Adds support for {@link #event-sig/setup} and {@link #event-sig/add}.
+	 * @fires sig/setup
+	 * @fires sig/add
+	 */
+
 	// Add pragma for signals and events.
 	COMPOSE_CONF.pragmas.push({
-		&quot;pattern&quot;: /^(?:sig|on)\/.+/,
+		&quot;pattern&quot;: /^(?:sig|one?)\/.+/,
 		&quot;replace&quot;: &quot;$&amp;()&quot;
 	});
 
@@ -280,16 +289,25 @@ define([
 		 * @handler
 		 * @return {Promise}
 		 */
-		&quot;sig/initialize&quot; : function onInitialize() {
+		&quot;sig/initialize&quot; : function () {
 			var me = this;
+			var specials = me.constructor.specials;
 
 			// Register component
 			componentRegistry.access(me.toString(), me);
 
 			// Initialize ON specials
-			return when.map(me.constructor.specials[ON] || ARRAY_PROTO, function (special) {
+			var specials_on = when.map(specials[ON] || ARRAY_PROTO, function (special) {
 				return me.on(special[TYPE], special[VALUE]);
 			});
+
+			// Initialize ONE specials
+			var specials_one = when.map(specials[ONE] || ARRAY_PROTO, function (special) {
+				return me.one(special[TYPE], special[VALUE]);
+			});
+
+			// Join and return
+			return when.join(specials_on, specials_one);
 		},
 
 <span id='core-component-base-handler-sig-finalize'>		/**
@@ -299,37 +317,20 @@ define([
 		 * @handler
 		 * @return {Promise}
 		 */
-		&quot;sig/finalize&quot; : function onFinalize() {
+		&quot;sig/finalize&quot; : function () {
 			var me = this;
 
-			// Unregister component
+			// Un-register component
 			componentRegistry.remove(me.toString());
 
-			// Finialize all handlers, in reverse
+			// Finalize all handlers, in reverse
 			return when.map(me[HANDLERS].reverse(), function (handlers) {
 				return me.off(handlers[TYPE]);
 			});
 		},
 
-<span id='core-component-base-handler-sig-task'>		/**
-</span>		 * Handles a component task
-		 * @handler sig/task
-		 * @inheritdoc #event-sig/task
-		 * @template
-		 * @return {Promise}
-		 */
-		&quot;sig/task&quot;: function onTask(task) {
-			// Compute task key
-			var key = task[NAME] + &quot;@&quot; + task[STARTED];
-
-			// Register task with remove callback
-			return taskRegistry.access(key, task.ensure(function () {
-				taskRegistry.remove(key);
-			}));
-		},
-
 <span id='core-component-base-method-configure'>		/**
-</span>		 * Add to the component {@link #configuration configuration}, possibly {@link util.merge merge} with the existing one.
+</span>		 * Add to the component {@link #configuration configuration}, possibly merge with the existing one.
 		 *
 		 * 		var List = Component.extend({
 		 * 			&quot;sig/start&quot;: function start() {
@@ -363,7 +364,7 @@ define([
 		 * @param {...Object} [config] Config(s) to add.
 		 * @return {Object} The new configuration.
 		 */
-		&quot;configure&quot; : function configure(config) {
+		&quot;configure&quot; : function (config) {
 			return merge.apply(this[CONFIGURATION], arguments);
 		},
 
@@ -371,23 +372,20 @@ define([
 </span>		 * @chainable
 		 * @method
 		 * @inheritdoc
-		 * @localdoc Context of the callback will always be **this** object.
-		 * @param {String} type The event type to subscribe to.
-		 * @param {Function} callback The event listener function.
-		 * @param {*} [data] Handler data
+		 * @localdoc Adds support for {@link #event-sig/setup} and {@link #event-sig/add}.
 		 * @fires sig/setup
 		 * @fires sig/add
 		 */
 		&quot;on&quot;: around(function (fn) {
-			return function on(type, callback, data) {
+			return function (type, callback, data) {
 				var me = this;
 				var event;
 				var handlers;
 				var result;
 
-				// If this type is NOT a signal we don&#39;t have to event try
+				// If this type is NOT a signal we don't have to event try
 				if (!EVENT_TYPE_SIG.test(type)) {
-					// Initialize the handlers for this type if they don&#39;t exist.
+					// Initialize the handlers for this type if they don't exist.
 					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
 						handlers = {};
 						handlers[TYPE] = type;
@@ -418,7 +416,7 @@ define([
 
 				// If we were not interrupted return result from super.on, otherwise just this
 				return result !== FALSE
-						? fn.call(me, type, me, callback, data)
+						? fn.call(me, type, callback, data)
 						: me;
 			};
 		}),
@@ -427,9 +425,7 @@ define([
 </span>		 * @chainable
 		 * @method
 		 * @inheritdoc
-		 * @localdoc Context of the callback will always be **this** object.
-		 * @param {String} type The event type subscribed to
-		 * @param {Function} [callback] The event listener function to remove
+		 * @localdoc Adds support for {@link #event-sig/remove} and {@link #event-sig/teardown}.
 		 * @fires sig/remove
 		 * @fires sig/teardown
 		 */
@@ -441,7 +437,7 @@ define([
 				var result;
 
 				if (!EVENT_TYPE_SIG.test(type)) {
-					// Initialize the handlers for this type if they don&#39;t exist.
+					// Initialize the handlers for this type if they don't exist.
 					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
 						handlers = {};
 						handlers[TYPE] = type;
@@ -469,7 +465,7 @@ define([
 
 				// If we were not interrupted return result from super.off, otherwise just this
 				return result !== FALSE
-					? fn.call(me, type, me, callback)
+					? fn.call(me, type, callback)
 					: me;
 			};
 		}),
@@ -480,14 +476,49 @@ define([
 		 * @param {...*} [args] signal arguments
 		 * @return {Promise}
 		 */
-		&quot;signal&quot;: function signal(_signal, args) {
+		&quot;signal&quot;: function (_signal) {
 			var me = this;
 
+			// Slice `arguments`
+			var args = ARRAY_SLICE.call(arguments);
+
 			// Modify first argument
-			arguments[0] = &quot;sig/&quot; + _signal;
+			args[0] = &quot;sig/&quot; + _signal;
 
 			// Emit
-			return me.emit.apply(me, arguments);
+			return me.emit.apply(me, args);
+		},
+
+<span id='core-component-base-method-task'>		/**
+</span>		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
+		 *
+		 * **Note:** It's recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
+		 * since in additional to an ordinary promise, it also helps to track the context of any running promise,
+		 * including it's name, completion time and a given ID.
+		 *
+		 * 	var widget = Widget.create({
+		 * 		&quot;sig/task&quot; : function(task) {
+		 * 			print('task %s started at: %s, finished at: %s', task.name, task.started, task.finished);
+		 * 		}
+		 * 	});
+		 *
+		 * 	widget.task(function(resolve) {
+		 * 		$(this.$element).fadeOut(resolve);
+		 * 	}, 'animate');
+		 *
+		 * @param {Promise|Resolver} promiseOrResolver The task resolver.
+		 * @param {String} [name] Task name
+		 * @return {Promise}
+		 * @fires sig/task
+		 */
+		&quot;task&quot; : function (promiseOrResolver, name) {
+			var me = this;
+
+			// Create task
+			var task = taskFactory.call(me, promiseOrResolver, name);
+
+			// Signal `TASK` and yield `task`
+			return me.signal(&quot;task&quot;, task).yield(task);
 		},
 
 <span id='core-component-base-method-start'>		/**
@@ -497,35 +528,7 @@ define([
 		 * @fires sig/initialize
 		 * @fires sig/start
 		 */
-		&quot;start&quot; : function start(args) {
-			var me = this;
-			var signal = me.signal;
-			var phase;
-
-			// Check PHASE
-			if ((phase = me[PHASE]) !== UNDEFINED &amp;&amp; phase !== FINALIZED) {
-				return when.resolve(UNDEFINED);
-			}
-
-			// Modify args to change signal (and store in PHASE)
-			args = [ me[PHASE] = INITIALIZE ];
-
-			// Add signal to arguments
-			ARRAY_PUSH.apply(args, arguments);
-
-			return signal.apply(me, args).then(function initialized(_initialized) {
-				// Modify args to change signal (and store in PHASE)
-				args[0] = me[PHASE] = &quot;start&quot;;
-
-				return signal.apply(me, args).then(function started(_started) {
-					// Update phase
-					me[PHASE] = STARTED;
-
-					// Return concatenated result
-					return ARRAY_PROTO.concat(_initialized, _started);
-				});
-			});
-		},
+		&quot;start&quot; : start,
 
 <span id='core-component-base-method-stop'>		/**
 </span>		 * Stops the component life-cycle.
@@ -534,72 +537,7 @@ define([
 		 * @fires sig/stop
 		 * @fires sig/finalize
 		 */
-		&quot;stop&quot; : function stop(args) {
-			var me = this;
-			var signal = me.signal;
-
-			// Check PHASE
-			if (me[PHASE] !== STARTED) {
-				return when.resolve(UNDEFINED);
-			}
-
-			// Modify args to change signal (and store in PHASE)
-			args = [ me[PHASE] = STOP ];
-
-			// Add signal to arguments
-			ARRAY_PUSH.apply(args, arguments);
-
-			return signal.apply(me, args).then(function stopped(_stopped) {
-				// Modify args to change signal (and store in PHASE)
-				args[0] = me[PHASE] = &quot;finalize&quot;;
-
-				return signal.apply(me, args).then(function finalized(_finalized) {
-					// Update phase
-					me[PHASE] = FINALIZED;
-
-					// Return concatenated result
-					return ARRAY_PROTO.concat(_stopped, _finalized);
-				});
-			});
-		},
-
-<span id='core-component-base-method-task'>		/**
-</span>		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
-		 *
-		 * **Note:** It&#39;s recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
-		 * since in additional to an ordinary promise, it also helps to track the context of any running promise,
-		 * including it&#39;s name, completion time and a given ID.
-		 *
-		 * 	var widget = Widget.create({
-		 * 		&quot;sig/task&quot; : function(promise) {
-		 * 			print(&#39;task %s started at: %s, finished at: %s&#39;, promise.name, promise.started);
-		 * 		}
-		 * 	});
-		 *
-		 * 	widget.task(function(resolve) {
-		 * 		$(this.$element).fadeOut(resolve);
-		 * 	}, &#39;animate&#39;);
-		 *
-		 * @param {Resolver} resolver The task resolver.
-		 * @param {String} [name]
-		 * @return {Promise}
-		 * @fires sig/task
-		 */
-		&quot;task&quot; : function task(resolver, name) {
-			var me = this;
-
-			var promise = when
-				.promise(resolver)
-				.ensure(function () {
-					promise[FINISHED] = new Date();
-				});
-
-			promise[CONTEXT] = me;
-			promise[STARTED] = new Date();
-			promise[NAME] = name || TASK;
-
-			return me.signal(TASK, promise).yield(promise);
-		}
+		&quot;stop&quot; : finalize
 	});
 });
 </pre>

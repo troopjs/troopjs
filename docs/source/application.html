@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;./component&quot;,
+	&quot;troopjs-core/component/signal/initialize&quot;,
+	&quot;troopjs-core/component/signal/start&quot;,
+	&quot;troopjs-core/component/signal/stop&quot;,
+	&quot;troopjs-core/component/signal/finalize&quot;,
+	&quot;when&quot;
+], function (Widget, initialize, start, stop, finalize, when) {
+	&quot;use strict&quot;;
+
+<span id='widget-application'>	/**
+</span>	 * The application widget serves as a container for all troop components that bootstrap the page.
+	 * @class widget.application
+	 * @extend widget.component
+	 * @alias widget.application
+	 */
+
+	var ARRAY_SLICE = Array.prototype.slice;
+	var COMPONENTS = &quot;components&quot;;
+
+<span id='widget-application-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 * @param {jQuery|HTMLElement} $element The element that this widget should be attached to
+	 * @param {String} displayName A friendly name for this widget
+	 * @param {...core.component.base} component List of components to start before starting the application.
+	 */
+	return Widget.extend(function ($element, displayName, component) {
+<span id='widget-application-property-components'>		/**
+</span>		 * Application components
+		 * @private
+		 * @readonly
+		 * @property {core.component.base[]} components
+		 */
+		this[COMPONENTS] = ARRAY_SLICE.call(arguments, 2);
+	}, {
+		&quot;displayName&quot; : &quot;widget/application&quot;,
+
+<span id='widget-application-handler-sig-initialize'>		/**
+</span>		 * @handler
+		 * @localdoc Initialize all registered components (widgets and services) that are passed in from the {@link #method-constructor}.
+		 * @inheritdoc
+		 */
+		&quot;sig/initialize&quot; : function () {
+			var args = arguments;
+
+			return when.map(this[COMPONENTS], function (component) {
+				return initialize.apply(component, args);
+			});
+		},
+
+<span id='widget-application-handler-sig-start'>		/**
+</span>		 * @handler
+		 * @localdoc weave all widgets that are within this element.
+		 * @inheritdoc
+		 */
+		&quot;sig/start&quot; : function () {
+			var me = this;
+			var args = arguments;
+
+			return when
+				.map(me[COMPONENTS], function (component) {
+					return start.apply(component, args);
+				}).then(function () {
+					return me.weave.apply(me, args);
+				});
+		},
+
+<span id='widget-application-handler-sig-stop'>		/**
+</span>		 * @handler
+		 * @localdoc stop all woven widgets that are within this element.
+		 * @inheritdoc
+		 */
+		&quot;sig/stop&quot;: function () {
+			var me = this;
+			var args = arguments;
+
+			return me.unweave.apply(me, args).then(function () {
+				return when.map(me[COMPONENTS], function (child) {
+					return stop.apply(child, args);
+				});
+			});
+		},
+
+<span id='widget-application-handler-sig-finalize'>		/**
+</span>		 * @handler
+		 * @localdoc finalize all registered components (widgets and services) that are registered from the {@link #method-constructor}.
+		 * @inheritdoc
+		 */
+		&quot;sig/finalize&quot; : function () {
+			var args = arguments;
+
+			return when.map(this[COMPONENTS], function (component) {
+				return finalize.apply(component, args);
+			});
+		}
+	});
+});
+</pre>
+</body>
+</html>

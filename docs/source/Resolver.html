@@ -16,7 +16,7 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js"><span id='when-Resolver'>/**
-</span> * In most situations, you&#39;ll deal with promises--observing them via {@link when#constructor} or {@link Promise#then},
+</span> * In most situations, you'll deal with promises--observing them via {@link when#constructor} or {@link Promise#then},
  * or returning them to callers. Sometimes it can also be useful to hand out a resolver and allow another
  * (possibly untrusted) party to provide the resolution value for a promise.
  * This provides a way to allow an untrusted to safely provide a result to your code, *or to another
@@ -30,7 +30,7 @@
  * Also, `when.js` resolver methods ({@link when#resolve} and {@link when#reject}) can be used as callback functions
  * by passing them to libraries that are built around traditional callback patterns, rather than promises.
  *
- * Here&#39;s a simple example:
+ * Here's a simple example:
  *
  *     function getWithPromise(url) {
  *       var deferred, resolver;
@@ -39,9 +39,9 @@
  *       deferred = when.defer();
  *       resolver = deferred.resolver;
  *
- *       // We can pass the deferred resolver&#39;s resolve() and reject() methods directly as the callbacks
- *       // because the resolver&#39;s methods can be called without their original context.
- *       oldSchoolAjaxFunctionThatUsesCallbacks(&#39;GET&#39;, url, resolver.resolve, resolver.reject);
+ *       // We can pass the deferred resolver's resolve() and reject() methods directly as the callbacks
+ *       // because the resolver's methods can be called without their original context.
+ *       oldSchoolAjaxFunctionThatUsesCallbacks('GET', url, resolver.resolve, resolver.reject);
  *
  *       // Return the promise part to the caller.
  *       // Now the oldSchoolAjaxFunctionThatUsesCallbacks and our caller can communicate (in one direction)
@@ -57,7 +57,7 @@
  * or product, a plugin could simply be an object with a method that accepts a resolver that can be used by
  * the plugin to signal that it has completed its work.
  *
- * This also allows the plugins to avoid creating their own deferreds/promises. Thus, they don&#39;t need to use
+ * This also allows the plugins to avoid creating their own deferreds/promises. Thus, they don't need to use
  * a promise library, and can easily use other callback-based APIs, if needed.
  *
  * For example:
@@ -78,7 +78,7 @@
  *           // Do stuff
  *           // ...
  *           // Compute the result asynchronously, using some old school callback/errback-based API
- *           // Again, we can pass the resolver&#39;s methods directly
+ *           // Again, we can pass the resolver's methods directly
  *
  *           computeAwesomePluginResultAsynchronously(resolver.resolve, resolver.reject);
  *         } catch(e) {
@@ -87,7 +87,7 @@
  *           resolver.reject(e);
  *         }
  *
- *         // Don&#39;t need to return anything
+ *         // Don't need to return anything
  *       }
  *     }
  *
@@ -101,7 +101,7 @@
  *       // Return the promise, so our own code can observe the plugin result, even though
  *       // the plugin may be asynchronous.
  *       // This promise can also safely be exposed to any number of untrusted parties since the resolver
- *       // and promise will facilitate safe, one-way communication of the plugin&#39;s result.
+ *       // and promise will facilitate safe, one-way communication of the plugin's result.
  *       return deferred.promise;
  *     }
  *

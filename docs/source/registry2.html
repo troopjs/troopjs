@@ -21,7 +21,7 @@
 define([
 	&quot;../registry/component&quot;,
 	&quot;../component/registry&quot;
-], function TaskRegistryModule(Registry, componentRegistry) {
+], function (Registry, componentRegistry) {
 	&quot;use strict&quot;;
 
 <span id='core-task-registry'>	/**
@@ -47,7 +47,7 @@ define([
 	 * @hide
 	 */
 
-	return Registry.create(function TaskRegistry() {
+	return Registry.create(function () {
 		var me = this;
 
 		// Register ourselves

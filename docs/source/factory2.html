@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;./registry&quot;,
+	&quot;when&quot;
+], function (registry, when) {
+	&quot;use strict&quot;;
+
+<span id='core-task-factory'>	/**
+</span>	 * @class core.task.factory
+	 * @mixin Function
+	 * @static
+	 */
+
+	var NAME = &quot;name&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var STARTED = &quot;started&quot;;
+	var FINISHED = &quot;finished&quot;;
+
+<span id='core-task-factory-method-constructor'>	/**
+</span>	 * Creates and registers a task
+	 * @method constructor
+	 * @param {Promise|Resolver} promiseOrResolver The task resolver.
+	 * @param {String} [name] Task name
+	 * @return {Promise}
+	 */
+	return function factory(promiseOrResolver, name) {
+		var task = when.isPromiseLike(promiseOrResolver)
+			? when(promiseOrResolver)
+			: when.promise(promiseOrResolver);
+
+		task[CONTEXT] = this;
+		task[NAME] = name || &quot;task&quot;;
+		task[STARTED] = new Date();
+
+		// Compute task `key`
+		var key = task[NAME] + &quot;@&quot; + task[STARTED];
+
+		// Register task
+		registry.access(key, task);
+
+		return task
+			// Cleanup
+			.ensure(function () {
+				// Let `task[FINISHED]` be `new Date()`
+				task[FINISHED] = new Date();
+
+				// Un-register task
+				registry.remove(key)
+			});
+	};
+});</pre>
+</body>
+</html>

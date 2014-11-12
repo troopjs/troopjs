@@ -18,7 +18,7 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;../mixin/decorator&quot; ], function BeforeDecoratorModule(Decorator) {
+define([ &quot;../mixin/decorator&quot; ], function (Decorator) {
 	&quot;use strict&quot;;
 
 <span id='compose-decorator-before'>	/**
@@ -33,7 +33,7 @@ define([ &quot;../mixin/decorator&quot; ], function BeforeDecoratorModule(Decora
 <span id='compose-decorator-before-method-constructor'>	/**
 </span>	 * Create a decorator method that is to add code that will be executed before the original method.
 	 * @method constructor
-	 * @param {Function} func The decorator function which receives the same arguments as with the original, it&#39;s return
+	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
 	 * value (if not undefined) will be send as the arguments of original function.
 	 * @return {compose.mixin.decorator}
 	 */
@@ -42,7 +42,7 @@ define([ &quot;../mixin/decorator&quot; ], function BeforeDecoratorModule(Decora
 			var next = descriptor[VALUE];
 
 			descriptor[VALUE] = next
-				? function decorated_before() {
+				? function () {
 					var me = this;
 					var retval = func.apply(me, arguments);
 

@@ -20,7 +20,7 @@
  */
 define([
 	&quot;module&quot;,
-	&quot;troopjs-util/merge&quot;
+	&quot;mu-merge&quot;
 ], function (module, merge) {
 	&quot;use strict&quot;;
 
@@ -38,7 +38,19 @@ define([
 		 * @cfg {String|Function} pragmas.replace Replacement String or function
 		 * @protected
 		 */
-		&quot;pragmas&quot;: []
+		&quot;pragmas&quot;: [],
+
+
+<span id='compose-mixin-config-cfg-specials'>		/**
+</span>		 * @cfg {RegExp} specials Regular Expression used parse 'specials'.
+		 * A special must be in form of a function call (ended in parenthesis), and have an optional type following a slash
+		 *
+		 * ````
+		 * &lt;special&gt;[/&lt;type&gt;](&lt;arguments&gt;)
+		 * ````
+		 * @protected
+		 */
+		&quot;specialsPattern&quot;: /^([^\/]+)(?:\/(.+?))?\((.*)\)$/
 	}, module.config());
 });
 </pre>

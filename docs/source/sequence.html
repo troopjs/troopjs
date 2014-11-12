@@ -18,7 +18,7 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;poly/array&quot; ], function SequenceModule() {
+define([ &quot;poly/array&quot; ], function () {
 	&quot;use strict&quot;;
 
 <span id='core-component-runner-sequence'>	/**
@@ -30,6 +30,7 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 	 */
 
 	var UNDEFINED;
+	var FALSE = false;
 	var HEAD = &quot;head&quot;;
 	var NEXT = &quot;next&quot;;
 	var CALLBACK = &quot;callback&quot;;
@@ -47,17 +48,15 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 		var candidate;
 		var candidates = [];
 		var candidatesCount = 0;
-		var result;
 
 		// Iterate handlers
 		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-			// Filter candidate[CONTEXT] if we have context
-			if (context !== UNDEFINED &amp;&amp; candidate[CONTEXT] !== context) {
-				continue;
-			}
-
-			// Filter candidate[CALLBACK] if we have callback
-			if (callback &amp;&amp; candidate[CALLBACK] !== callback) {
+			if (
+				// Filter `candidate[CONTEXT]` if we have `context`
+				(context !== UNDEFINED &amp;&amp; candidate[CONTEXT] !== context) ||
+					// Filter `candidate[CALLBACK]` if we have `callback`
+				(callback !== UNDEFINED &amp;&amp; candidate[CALLBACK] !== callback)
+			) {
 				continue;
 			}
 
@@ -66,14 +65,12 @@ define([ &quot;poly/array&quot; ], function SequenceModule() {
 
 		// Reduce and return
 		return candidates.reduce(function (current, candidate) {
-			// Store result if not UNDEFINED
-			if (current !== UNDEFINED) {
-				result = current;
-			}
+			var result = current !== FALSE
+				? candidate.apply(candidate[CONTEXT], args)
+				: current;
 
-			// If result is _not_ false, return result of candidate[CALLBACK], otherwise just false
-			return result !== false
-				? candidate[CALLBACK].apply(candidate[CONTEXT], args)
+			return result === UNDEFINED
+				? current
 				: result;
 		}, UNDEFINED);
 	}

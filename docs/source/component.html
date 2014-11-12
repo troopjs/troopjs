@@ -21,7 +21,7 @@
 define([
 	&quot;../mixin/base&quot;,
 	&quot;poly/array&quot;
-], function RegistryModule(Base) {
+], function (Base) {
 	&quot;use strict&quot;;
 
 <span id='core-registry-component'>	/**
@@ -39,12 +39,13 @@ define([
 	var INDEX_POS = &quot;index_pos&quot;;
 	var OBJECT_TOSTRING = Object.prototype.toString;
 	var TOSTRING_STRING = &quot;[object String]&quot;;
+	var REGEXP_STRING = &quot;[object RegExp]&quot;;
 
 <span id='core-registry-component-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
 	 */
-	return Base.extend(function Registry() {
+	return Base.extend(function () {
 <span id='core-registry-component-property-index_key'>		/**
 </span>		 * Registry key storage
 		 * @private
@@ -73,14 +74,16 @@ define([
 </span>		 * Either gets or puts values into the registry.
 		 *
 		 * - If no key is provided, all entries in the registry are returned.
-		 * - If no value is provided the current value for key is returned.
+		 * - If no value is provided, it depends on the **key**
+		 *   - if key is string or number, current value under this key is returned.
+		 *   - if key is regexp, all values whose key match this pattern are returned
 		 * - If value is provided it replaces the current value for the key
-		 * @param {String|Number} [key] Entry key or index
+		 * @param {String|Number|RegExp} [key] Entry key, index or pattern
 		 * @param {*} [value] Entry value
 		 * @return {*} All values if no key, current value for key if no value provided, otherwise the provided value if a new entry is created
 		 * @throws Error if a new entry is created and key is not of type String
 		 */
-		&quot;access&quot;: function access(key, value) {
+		&quot;access&quot;: function (key, value) {
 			var index_key = this[INDEX_KEY];
 			var index_pos = this[INDEX_POS];
 			var result;
@@ -92,8 +95,16 @@ define([
 					return item[VALUE];
 				});
 			}
+			// query registry by keys
+			else if (OBJECT_TOSTRING.call(key) === REGEXP_STRING &amp;&amp; value === UNDEFINED){
+				result = Object.keys(index_key).filter(function (name) {
+						return key.test(name);
+				}).map(function map(key) {
+					return index_key[key][VALUE];
+				});
+			}
 			else {
-				result = (typeof key === &#39;number&#39; ? index_pos : index_key)[key];
+				result = (typeof key === 'number' ? index_pos : index_key)[key];
 
 				// Reading
 				if (argc === 1) {
@@ -105,7 +116,7 @@ define([
 					if (result !== UNDEFINED) {
 						result = result[VALUE] = value;
 					}
-					// Check type of key (as now we&#39;re creating a new one)
+					// Check type of key (as now we're creating a new one)
 					else if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
 						throw Error(&quot;key has to be of type String&quot;);
 					}
@@ -130,7 +141,7 @@ define([
 		 * @param {String|Number} [key] Entry key or index
 		 *
 		 */
-		&quot;remove&quot;: function remove(key) {
+		&quot;remove&quot;: function (key) {
 			var me = this;
 			var result;
 			var index_key = me[INDEX_KEY];
@@ -148,7 +159,7 @@ define([
 			}
 		},
 
-		&quot;compact&quot;: function compact() {
+		&quot;compact&quot;: function () {
 
 		}
 	});

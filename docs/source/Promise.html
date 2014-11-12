@@ -22,7 +22,7 @@
  * ## Promise states
  *
  * A Promise starts in an *unresolved* or *pending* state.  For example, the Promise for a computation
- * that hasn&#39;t yet completed is in the *pending* state. At some point the computation will either complete
+ * that hasn't yet completed is in the *pending* state. At some point the computation will either complete
  * successfully, thus producing a result, or fail, either generating some sort of error or *reason* why
  * it could not complete.
  *
@@ -40,7 +40,7 @@
  * ## Consumers
  *
  * A Promise can be safely given to any number of consumers, who can register to observe the result
- * (or error/reason) of the promise using {@link when#constructor}, or the promise&#39;s {@link #then}.
+ * (or error/reason) of the promise using {@link when#constructor}, or the promise's {@link #then}.
  *
  *     when(promise,
  *       function(result) {
@@ -82,7 +82,7 @@
  * Either `return` the promise, thereby _passing the error-handling buck_ to the caller, or call {@link #done} and _assuming
  * responsibility for errors_.
  *
- * While {@link #then} is the primary API for transforming a promise&#39;s value and producing a new promise for the transformed
+ * While {@link #then} is the primary API for transforming a promise's value and producing a new promise for the transformed
  * value, {@link #done} is used to terminate a promise chain, and extract the final value or error. It signals that you
  * are taking responsibility for the final outcome. If the chain was ultimately successful, `handleValue` will be
  * called with the final value. If the chain was not successful and an error propagated to the end, `handleError` will be
@@ -97,7 +97,7 @@
  * {@link #done}!_ Thus, {@link #done} and the unhandled rejection monitor are complimentary in many ways. In fact,
  * when the monitor is enabled, any error that escapes `handleValue` or `handleError` will also trigger the monitor.
  *
- * Since {@link #done}&#39;s purpose is consumption rather than transformation, {@link #done} always returns `undefined`.
+ * Since {@link #done}'s purpose is consumption rather than transformation, {@link #done} always returns `undefined`.
  *
  * @method done
  * @param {Function} handleValue
@@ -105,7 +105,7 @@
  */
 
 <span id='when-Promise-method-then'>/**
-</span> * The primary API for transforming a promise&#39;s value and producing a new promise for the transformed result,
+</span> * The primary API for transforming a promise's value and producing a new promise for the transformed result,
  * or for handling and recovering from intermediate errors in a promise chain.
  *
  * 	// Main promise API
@@ -134,12 +134,12 @@
  */
 
 <span id='when-Promise-method-spread'>/**
-</span> * Arranges to call `variadicOnFulfilled` with promise&#39;s values, which is assumed to be an array, as its argument list,
+</span> * Arranges to call `variadicOnFulfilled` with promise's values, which is assumed to be an array, as its argument list,
  * e.g. `variadicOnFulfilled.spread(undefined, array)`.
  *
  * 	promise.spread(variadicOnFulfilled);
  *
- * It&#39;s a shortcut for either of the following:
+ * It's a shortcut for either of the following:
  *
  * 	// Wrapping variadicOnFulfilled
  * 	promise.then(function(array) {
@@ -155,13 +155,13 @@
  */
 
 <span id='when-Promise-method-catch'>/**
-</span> * Arranges to call `onRejected` on the promise&#39;s rejection reason if it is rejected.
+</span> * Arranges to call `onRejected` on the promise's rejection reason if it is rejected.
  *
  * 	promise.catch(onRejected);
  * 	// or
  * 	promise.otherwise(onRejected);
  *
- *  It&#39;s a shortcut for:
+ *  It's a shortcut for:
  *
  * 	promise.then(undefined, onRejected);
  *
@@ -179,7 +179,7 @@
  * 	promise.ensure(onFulfilledOrRejected);
  *
  * It arranges for `onFulfilledOrRejected` to be called, _with no arguments_, when promise is either fulfilled or rejected.
- * `onFulfilledOrRejected` cannot modify promise&#39;s fulfillment value, but may signal a new or additional error by
+ * `onFulfilledOrRejected` cannot modify promise's fulfillment value, but may signal a new or additional error by
  * throwing an exception or returning a rejected promise.
  *
  * {@link #finally} should be used instead of `promise.always.` It is safer in that it _cannot_ transform a failure
@@ -220,7 +220,7 @@
  *     - fulfilled with the fulfillment value of `promiseOrValue`, or
  *     - rejected with the rejection reason of `promiseOrValue`
  *
- * In other words, it&#39;s much like:
+ * In other words, it's much like:
  *
  * 	originalPromise.then(function() {
  * 		return promiseOrValue;
@@ -254,12 +254,12 @@
  * Returns a new promise:
  *
  *  - If `promise` fulfills, `onFulfilledSideEffect` is executed:
- *    - If `onFulfilledSideEffect` returns successfully, the promise returned by {@link #tap} fulfills with `promise`&#39;s
- *    original fulfillment value. That is, `onfulfilledSideEffect`&#39;s result is discarded.
+ *    - If `onFulfilledSideEffect` returns successfully, the promise returned by {@link #tap} fulfills with `promise`'s
+ *    original fulfillment value. That is, `onfulfilledSideEffect`'s result is discarded.
  *    - If `onFulfilledSideEffect` throws or returns a rejected promise, the promise returned by {@link #tap} rejects with
  *    the same reason.
  *  - If `promise` rejects, `onFulfilledSideEffect` is _not_ executed, and the promise returned by {@link #tap} rejects
- *  with `promise`&#39;s rejection reason.
+ *  with `promise`'s rejection reason.
  *
  * These are equivalent:
  *
@@ -288,7 +288,7 @@
  *
  * 	// delayed is a pending promise that will become fulfilled
  * 	// in 1 second with the value &quot;hello&quot;
- * 	delayed = when(&#39;hello&#39;).delay(1000);
+ * 	delayed = when('hello').delay(1000);
  *
  * 	// delayed is a pending promise that will become fulfilled
  * 	// 1 second after anotherPromise resolves, or will become rejected
@@ -307,7 +307,7 @@
 <span id='when-Promise-method-timeout'>/**
 </span> * Create a new promise that will reject after a timeout if `promise` does not fulfill or reject beforehand.
  *
- * 	var node = require(&#39;when/node&#39;);
+ * 	var node = require('when/node');
  *
  * 	// Lift fs.readFile so it returns promises
  * 	var readFile = node.lift(fs.readFile);
@@ -329,14 +329,14 @@
  *
  * 	var status = promise.inspect();
  *
- * This descriptor is _not live_ and will not update when `promise`&#39;s state changes.
+ * This descriptor is _not live_ and will not update when `promise`'s state changes.
  * The descriptor is an object with the following properties. When promise is:
  *
- * - pending: `{ state: &#39;pending&#39; }`
- * - fulfilled: `{ state: &#39;fulfilled&#39;, value: &lt;promise&#39;s fulfillment value&gt; }`
- * - rejected: `{ state: &#39;rejected&#39;, reason: &lt;promise&#39;s rejection reason&gt; }`
+ * - pending: `{ state: 'pending' }`
+ * - fulfilled: `{ state: 'fulfilled', value: &lt;promise's fulfillment value&gt; }`
+ * - rejected: `{ state: 'rejected', reason: &lt;promise's rejection reason&gt; }`
  *
- * While there are use cases where synchronously inspecting a promise&#39;s state can be helpful, the use of {@link #inspect}
+ * While there are use cases where synchronously inspecting a promise's state can be helpful, the use of {@link #inspect}
  * is discouraged. It is almost always preferable to simply use `when()` or {@link #then} to be notified when the
  * promise fulfills or rejects.
  *
@@ -378,11 +378,11 @@
  * 	};
  *
  * 	// Using it
- * 	var thing = new Thing(41, &#39;The answer is &#39;);
+ * 	var thing = new Thing(41, 'The answer is ');
  *
  * 	thing.doSomething(1)
  * 		.with(console) // Re-bind thisArg now to console
- * 		.then(console.log); // Logs &#39;The answer is 42&#39;
+ * 		.then(console.log); // Logs 'The answer is 42'
  *
  * All promises created from `boundPromise` will also be bound to the same thisArg until {@link #with} is used
  * to re-bind or unbind it. In the previous example, the promise returned from `thing.doSomething` still has
@@ -420,14 +420,14 @@
  *  a progress event to be propagated to the next link in the chain. If you return nothing, `undefined`
  *  will be propagated.
  *
- *  2. Also in the same way as resolutions and rejections, if you don&#39;t register a progress handler
+ *  2. Also in the same way as resolutions and rejections, if you don't register a progress handler
  *  (e.g. .`then(handleResolve, handleReject &lt;no-progress-handler&gt;))`, the update will be propagated through.
  *
  *  3. **This behavior will likely change in future releases**: If your progress handler throws an exception,
  *  the exception will be propagated to the next link in the chain.
  *  The best thing to do is to ensure your progress handlers do not throw exceptions.
  *  &gt; **Known Issue**: If you allow an exception to propagate and there are no more progress
- *  &gt; handlers in the chain, the exception will be silently ignored. We&#39;re working on a solution to this.
+ *  &gt; handlers in the chain, the exception will be silently ignored. We're working on a solution to this.
  *
  * This gives you the opportunity to _transform_ progress events at each step in the chain so that they
  * are meaningful to the next step. It also allows you to choose _not_ to transform them,
