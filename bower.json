@@ -32,7 +32,8 @@
 	"ignore": [
 		"**/.*",
 		"node_modules",
-		"bower_components"
+		"bower_components",
+		"docs"
 	],
 	"dependencies": {
 		"troopjs-compose": "^3.1",

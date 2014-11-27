@@ -55,7 +55,7 @@ module.exports = function(grunt) {
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|require|buster|Gruntfile)\.js|(?:package|bower)\.json)/,
+				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|require|buster|Gruntfile)\.js|package\.json)/,
 				"rawText" : {
 					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
 				}
@@ -81,13 +81,13 @@ module.exports = function(grunt) {
 		eslint: {
 			options: {
 				// custom eslint rules configuration.
-				config: '.eslintrc',
-				rulesdir: ['eslint']
+				config: ".eslintrc",
+				rulesdir: [ "eslint" ]
 			},
 			// including all source files.
 			target: grunt.file.expand([
-				'bower_components/troopjs-*/**/*.js',
-				'!bower_components/troopjs-*/{test,bower_components}/**'
+				"bower_components/troopjs-*/**/*.js",
+				"!bower_components/troopjs-*/{test,bower_components}/**"
 			])
 		},
 
@@ -148,10 +148,11 @@ module.exports = function(grunt) {
 	// Load all grunt tasks from package.json
 	require("load-grunt-tasks")(grunt);
 
-	//Load all local grunt tasks
+	// Load all local grunt tasks
 	grunt.loadTasks("tasks");
 
-	grunt.registerTask("compile", [ "git-describe", "transform", "requirejs" ]);
+	// Define tasks
+	grunt.registerTask("compile", [ "git-describe", "requirejs" ]);
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("docs", [ "jsduck" ]);
