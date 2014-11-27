@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.3+c60ef66 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.4+158353c ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
 
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.3+c60ef66"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.4+158353c"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -1488,6 +1488,8 @@ define('troopjs-core/event/emitter',[
 	var TAIL = "tail";
 	var NEXT = "next";
 	var LIMIT = "limit";
+	var ON = "on";
+	var OFF = "off";
 
 	/**
 	 * Creates a new handler
@@ -1524,19 +1526,19 @@ define('troopjs-core/event/emitter',[
 			handler[CALLBACK] = callback[CALLBACK];
 			handler[CONTEXT] = callback[CONTEXT] || me;
 			handler[LIMIT] = callback[LIMIT] || 0;
+
+			if (callback.hasOwnProperty(ON)) {
+				handler[ON] = callback[ON];
+			}
+			if (callback.hasOwnProperty(OFF)) {
+				handler[OFF] = callback[OFF];
+			}
 		}
 
 		handler[DATA] = data;
 
 		return handler;
 	}
-
-	/**
-	 * Adds a listener for the specified event type exactly once.
-	 * @method one
-	 * @chainable
-	 * @inheritdoc #on
-	 */
 
 	/**
 	 * @method constructor
@@ -1561,6 +1563,12 @@ define('troopjs-core/event/emitter',[
 		 * @param {Function} callback.callback Callback method.
 		 * @param {Object} [callback.context=this] Callback context.
 		 * @param {Number} [callback.limit=0] Callback limit.
+		 * @param {Function} [callback.on=undefined] Will be called once this handler is added to the handlers list.
+		 * @param {core.event.emitter.handler} [callback.on.handler] The handler that was just added.
+		 * @param {Object} [callback.on.handlers] The list of handlers the handler was added to.
+		 * @param {Function} [callback.off=undefined] Will be called once this handler is removed from the handlers list.
+		 * @param {core.event.emitter.handler} [callback.off.handler] The handler that was just removed.
+		 * @param {Object} [callback.off.handlers] The list of handlers the handler was removed from.
 		 * @param {*} [data] Handler data
 		 */
 		"on" : function (type, callback, data) {
@@ -1596,6 +1604,12 @@ define('troopjs-core/event/emitter',[
 				// Prepare handlers
 				handlers[TYPE] = type;
 				handlers[HEAD] = handlers[TAIL] = handler;
+			}
+
+			// If we have an `ON` callback ...
+			if (handler.hasOwnProperty(ON)) {
+				// .. call it in the context of `me`
+				handler[ON].call(me, handler, handlers);
 			}
 
 			return me;
@@ -1646,6 +1660,12 @@ define('troopjs-core/event/emitter',[
 								break remove;
 							}
 
+							// If we have an `OFF` callback ...
+							if (handler.hasOwnProperty(OFF)) {
+								// .. call it in the context of `me`
+								handler[OFF].call(me, handler, handlers);
+							}
+
 							// Remove this handler, just continue
 							continue;
 						}
@@ -1680,6 +1700,11 @@ define('troopjs-core/event/emitter',[
 			return me;
 		},
 
+		/**
+		 * Adds a listener for the specified event type exactly once.
+		 * @chainable
+		 * @inheritdoc #on
+		 */
 		"one": function (type, callback, data) {
 			var me = this;
 			var _callback;
@@ -1687,7 +1712,6 @@ define('troopjs-core/event/emitter',[
 			if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
 				_callback = {};
 				_callback[CALLBACK] = callback;
-				_callback[CONTEXT] = me;
 				_callback[LIMIT] = 1;
 			}
 			else {
@@ -3484,6 +3508,50 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
     }
 }());
 
+(function() {
+    
+
+    /* istanbul ignore next */
+    if (typeof define === 'function' && define.amd) {
+        define('mu-selector-set/src/splitter',[], factory);
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
+    } else {
+        throw Error("no module loader found");
+    }
+
+    function factory(){
+
+        var IGNORE_BOUNDARIES = ['\'', '"'],
+            SELECTORS_DELIMITER = ',';
+
+        function splitter(selector){
+            var res, len = 0, flag = false, tot = selector.length;
+            if (!tot) return [];
+            while (
+                selector[len] &&
+                (flag || selector[len] !== SELECTORS_DELIMITER)
+            ) {
+                if (selector[len] === flag){
+                    flag = false;
+                } else if (
+                    flag === false &&
+                    IGNORE_BOUNDARIES.indexOf(selector[len]) !== -1
+                ){
+                    flag = selector[len];
+                }
+                len++;
+            }
+            res = splitter(selector.substr(len + 1));
+            res.push(selector.substr(0, len));
+            return res;
+        }
+
+        return splitter;
+
+    }
+}());
+
 (function(global) {
     
 
@@ -3521,6 +3589,27 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
         };
 
         /**
+         * Remove data from the list in `key`
+         * @param key The key of the list
+         * @param data Data to add
+         * @param {Function} comp custom comparator to determine which items to remove
+         * @returns {MappedLists}
+         */
+        MappedLists.prototype.remove = function(key, data, comp) {
+            key += " ";
+            comp = comp || eqComp;
+            var i, list = this.lists[key];
+            if (!list) return this;
+            if (!data){
+                delete this.lists[key];
+                return this;
+            }
+            i = list.length;
+            while(i--) if (comp(data, list[i])) list.splice(i, 1);
+            return this;
+        };
+
+        /**
          * Get the list associated with 'key', or an empty list
          * if not found.
          * @param key
@@ -3528,10 +3617,15 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
          */
         MappedLists.prototype.get = function(key) {
             key += " ";
-            return this.lists[key] || [];
+            if (!this.lists[key]) this.lists[key] = [];
+            return this.lists[key];
         };
 
         return MappedLists;
+    }
+
+    function eqComp(o1, o2){
+        return o1 === o2;
     }
 }(this));
 
@@ -3572,6 +3666,10 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
                 mappedLists.add(ci ? key.toLowerCase() : key, data);
                 return this;
             };
+            this.remove = function(key, data, comp) {
+                mappedLists.remove(ci ? key.toLowerCase() : key, data, comp);
+                return this;
+            };
             this.get = function(key) {
                 return mappedLists.get(ci ? key.toLowerCase() : key);
             };
@@ -3580,6 +3678,10 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
         return function() {
 
             var subsets = [];
+
+            // Note: The order of subsets in this array matters!
+            // It determined the priority of checking elements against
+            // subsets.
 
             // ID selectors subset
             subsets.push(
@@ -3614,7 +3716,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
                 new Subset(
                     /^[^\*\.#].*$/,
                     function(el) {
-                        return [el.nodeName];
+                        return el.nodeName ? [el.nodeName] : [];
                     },
                     true // case insensitive
                 )
@@ -3695,12 +3797,14 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
     if (typeof define === 'function' && define.amd) {
         define('mu-selector-set/src/SelectorSet',[
             './classifier',
+            './splitter',
             './Subsets',
             './matchesSelector'
         ], factory);
     } else if (typeof exports === 'object') {
         module.exports = factory(
             require('./classifier'),
+            require('./splitter'),
             require('./Subsets'),
             require('./matchesSelector')
         );
@@ -3708,7 +3812,7 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
         throw Error("no module loader found");
     }
 
-    function factory(classify, Subsets, matchesSelector) {
+    function factory(classify, splitter, Subsets, matchesSelector) {
 
         /**
          * A SelectorSet is an object which manages a set of CSS selectors.
@@ -3760,18 +3864,72 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
          * @returns {SelectorSet}
          */
         SelectorSet.prototype.add = function(selector) {
-            var i, subset,
-                args = Array.prototype.slice.call(arguments),
-                key = classify(selector);
+            // selector might actually contain multiple selections seperated
+            // by a comma. we need to separate them.
+            var args = Array.prototype.slice.call(arguments),
+                selectors = splitter(selector),
+                i = selectors.length;
+            while (i--) {
+                args.splice(0, 1, selectors[i]);
+                _add.apply(this, args);
+            }
+            return this;
+        };
+
+        function _add( /* selector, arg1, arg2, ... */ ) {
+            var i, subset, key,
+                args = Array.prototype.slice.call(arguments);
+            args[0] = args[0].trim();
+            key = classify(args[0]);
             for (i = 0; i < this.subsets.length; i++) {
                 subset = this.subsets[i];
                 if (subset.isOfType(key)) {
                     subset.add(key, args);
-                    return this;
+                    return;
                 }
+            }
+        }
+
+        /**
+         * Remove a selector from the set.
+         * @param selector {String} The selector to remove.
+         * @param datum1, datum2, ... Arbitrary number of additional parameters.
+         * @returns {SelectorSet}
+         */
+        SelectorSet.prototype.remove = function(selector) {
+            // selector might actually contain multiple selections seperated
+            // by a comma. we need to separate them.
+            var args = Array.prototype.slice.call(arguments),
+                selectors = splitter(selector),
+                i = selectors.length;
+            while (i--) {
+                args.splice(0, 1, selectors[i]);
+                _remove.apply(this, args);
             }
             return this;
         };
+
+        function _remove( /* selector, arg1, arg2, ... */ ) {
+            var i, subset, key,
+                args = Array.prototype.slice.call(arguments);
+            args[0] = args[0].trim();
+            key = classify(args[0]);
+            for (i = 0; i < this.subsets.length; i++) {
+                subset = this.subsets[i];
+                if (subset.isOfType(key)) {
+                    subset.remove(key, args, compare);
+                    return;
+                }
+            }
+
+            function compare(args, candidate){
+                var i = 0, len = args.length;
+                for (; i < len; i++){
+                    if (args[i] !== candidate[i]) return false;
+                }
+                return true;
+            }
+        }
 
         /**
          * Match DOM elements to selectors in the set.
@@ -3808,9 +3966,8 @@ define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
     }
 }());
 
-
-
 (function() {
+    
 
     if (typeof define === 'function' && define.amd) {
         define('mu-selector-set/main',['./src/SelectorSet'], factory);
@@ -3849,12 +4006,12 @@ define('troopjs-dom/runner/sequence',[
 	 */
 
 	var UNDEFINED;
-	var CONTEXT = "context";
-	var DATA = "data";
-	var HEAD = "head";
-	var NEXT = "next";
-	var SELECTOR = "selector";
-	var MODIFIED = "modified";
+	var FALSE = false;
+	var LEFT_BUTTON = 0;
+
+	function map (match) {
+		return match[1];
+	}
 
 	// Use `$.find.matchesSelector` for wider browser support
 	SelectorSet.prototype.matchesSelector = $.find.matchesSelector;
@@ -3866,75 +4023,67 @@ define('troopjs-dom/runner/sequence',[
 	 * @return {*} Result from last handler
 	 */
 	return function sequence(event, handlers, args) {
-		var modified = handlers[MODIFIED];
-		var $event = args[0];
-		var selector;
-		var candidate;
-		var root = $event.delegateTarget;
-		var current = $event.target;
-		var elements;
-		var isClick;
 
-		// Try get SELECTOR from handlers and check if MODIFIED
-		if ((selector = handlers[SELECTOR]) === UNDEFINED || selector[MODIFIED] !== modified) {
-			// Create and cache SELECTOR
-			selector = handlers[SELECTOR] = new SelectorSet();
-
-			// Set MODIFIED on selector
-			selector[MODIFIED] = modified;
-
-			// Iterate handlers
-			for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-				// Add candidate with selector or default selector '*'
-				selector.add(candidate[DATA] || "*", candidate);
+		var result = UNDEFINED;
+		var direct = handlers.direct;
+		var delegated = handlers.delegated;
+		var reduce = function (result, handler) {
+			// If immediate propagation is stopped we should just return last result
+			if ($event.isImmediatePropagationStopped()) {
+				return result;
 			}
+
+			// If the previous handler return false we should stopPropagation and preventDefault
+			if (result === FALSE) {
+				$event.stopPropagation();
+				$event.preventDefault();
+			}
+
+			return handler.apply(handler.context, args);
+		};
+
+		var $event = args[0];
+		var $delegate = $event.delegateTarget;
+		var $target = $event.target;
+		var $document = $target.ownerDocument;
+		var $notClick = $event.type !== "click";
+
+		// Bubble the event up the dom if
+		// ... this is not a black-holed element (jQuery #13180)
+		// ... and this is the left button or it's a not a click event (jQuery #3861)
+		var $bubble = $target.nodeType !== UNDEFINED && ($event.button === LEFT_BUTTON || $notClick);
+
+		// Loop ...
+		do {
+			// Don't process clicks on disabled elements (jQuery #6911, #8165, #11382, #11764)
+			if ($target.disabled !== true || $notClick) {
+				// Run delegated handlers which match this element
+				result = delegated
+					.matches($event.currentTarget = $target)
+					.map(map)
+					.reduce(reduce, result);
+			}
+
+			// Bubble if ...
+			$bubble = $bubble
+				// ... we were not told to stop propagation
+				&& !$event.isPropagationStopped()
+				// ... we are not at the delegate element
+				&& $target !== $delegate
+				// ... we have a parent node
+				&& ($target = $target.parentNode) !== null
+				// ... the new target is not the document
+				&& $target !== $document;
+		}
+		// ... while we are still bubbling
+		while ($bubble);
+
+		// Run all the direct (non-delegated) handlers of the root element
+		if (result !== FALSE) {
+			result = direct.reduce(reduce, result);
 		}
 
-		// If the event target is the same as the delegateTarget we can just match against current ...
-		if (root === current) {
-			elements = current;
-		}
-		// ... otherwise we have to build a delegate tree of elements
-		//
-		// Black-hole SVG <use> instance trees (jQuery #13180)
-		// Avoid non-left-click bubbling in Firefox (jQuery #3861)
-		else if(current.nodeType !== UNDEFINED && ($event.button !== 0 || !(isClick = $event.type === "click"))) {
-			// Let `elements` be `[]`
-			elements = [];
-
-			do {
-				// Don't process clicks on disabled elements (jQuery #6911, #8165, #11382, #11764)
-				if (current.disabled !== true || !isClick) {
-					elements.push(current);
-				}
-			} while (current !== root && (current = current.parentNode) !== null);
-		}
-		else {
-			return UNDEFINED;
-		}
-
-		return selector
-			// Filter to only selectors that match target
-			.matches(elements)
-			// Reduce so we can catch the end value
-			.reduce(function (result, selector) {
-				// If immediate propagation is stopped we should just return last result
-				if ($event.isImmediatePropagationStopped()) {
-					return result;
-				}
-
-				// If the previous candidate return false we should stopPropagation and preventDefault
-				if (result === false) {
-					$event.stopPropagation();
-					$event.preventDefault();
-				}
-
-				// Get candidate from selector
-				var candidate = selector[1];
-
-				// Run candidate, provide result to next run
-				return candidate.apply(candidate[CONTEXT], args);
-			}, UNDEFINED);
+		return result;
 	}
 });
 /**
@@ -4023,11 +4172,13 @@ define('troopjs-dom/component',[
 	"troopjs-core/component/runner/sequence",
 	"./runner/sequence",
 	"troopjs-compose/mixin/config",
+	"troopjs-compose/decorator/before",
 	"jquery",
 	"when",
+	"mu-selector-set",
 	"poly/array",
 	"mu-jquery-destroy"
-], function (Gadget, core_sequence, dom_sequence, COMPOSE_CONF, $, when) {
+], function (Gadget, core_sequence, dom_sequence, COMPOSE_CONF, before, $, when, SelectorSet) {
 	
 
 	/**
@@ -4039,15 +4190,15 @@ define('troopjs-dom/component',[
 
 	var UNDEFINED;
 	var NULL = null;
+	var OBJECT_TOSTRING = Object.prototype.toString;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var $FN = $.fn;
 	var $GET = $FN.get;
 	var WHEN_ATTEMPT = when.attempt;
-	var TYPEOF_FUNCTION = "function";
+	var TOSTRING_FUNCTION = "[object Function]";
 	var $ELEMENT = "$element";
-	var MODIFIED = "modified";
 	var PROXY = "proxy";
 	var DOM = "dom";
 	var ARGS = "args";
@@ -4056,18 +4207,32 @@ define('troopjs-dom/component',[
 	var TYPE = "type";
 	var RUNNER = "runner";
 	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var DATA = "data";
+	var DIRECT = "direct";
+	var DELEGATED = "delegated";
+	var ON = "on";
+	var OFF = "off";
 	var RE = new RegExp("^" + DOM + "/(.+)");
 
-	/**
-	 * Sets MODIFIED on handlers
-	 * @ignore
-	 * @param {Object} handlers
-	 * @param {String} type
-	 */
-	function set_modified(handlers, type) {
-		if (RE.test(type)) {
-			// Set modified
-			handlers[MODIFIED] = new Date().getTime();
+	function on_delegated(handler, handlers) {
+		handlers[DELEGATED].add(handler[DATA], handler);
+	}
+
+	function on_direct(handler, handlers) {
+		handlers[DIRECT].push(handler);
+	}
+
+	function off_delegated(handler, handlers) {
+		handlers[DELEGATED].remove(handler[DATA], handler);
+	}
+
+	function off_direct(handler, handlers) {
+		var direct = handlers[DIRECT];
+		var index = direct.indexOf(handler);
+
+		if (index !== -1) {
+			direct.splice(index, 1);
 		}
 	}
 
@@ -4152,7 +4317,9 @@ define('troopjs-dom/component',[
 	// Add pragmas for DOM specials
 	COMPOSE_CONF.pragmas.push({
 		"pattern": /^dom(?::([^\/]+))?\/([^\(]+(?=$))/,
-		"replace": DOM + "/$2(\"$1\")"
+		"replace": function(match, $1, $2) {
+			return DOM + "/" + $2 + ($1 === UNDEFINED ? "()" : "(\"" + $1 + "\")");
+		}
 	});
 
 	/**
@@ -4233,6 +4400,10 @@ define('troopjs-dom/component',[
 			var matches;
 
 			if ((matches = RE.exec(type)) !== NULL) {
+				// Create delegated and direct event stores
+				handlers[DIRECT] = [];
+				handlers[DELEGATED] = new SelectorSet();
+
 				// $element.on handlers[PROXY]
 				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
 					var args = {};
@@ -4249,20 +4420,6 @@ define('troopjs-dom/component',[
 				});
 			}
 		},
-
-		/**
-		 * @handler
-		 * @localdoc Sets MODIFIED on handlers for matching types
-		 * @inheritdoc
-		 */
-		"sig/add": set_modified,
-
-		/**
-		 * @handler
-		 * @localdoc Sets MODIFIED on handlers for matching types
-		 * @inheritdoc
-		 */
-		"sig/remove": set_modified,
 
 		/**
 		 * @handler
@@ -4286,7 +4443,37 @@ define('troopjs-dom/component',[
 		 */
 		"sig/task" : function (task) {
 			this[$ELEMENT].trigger("task", [ task ]);
-		}
+		},
+
+		/**
+		 * @method
+		 * @localdoc Registers emitter `on` and `off` callbacks
+		 * @inheritdoc
+		 */
+		"on": before(function (type, callback, data) {
+			var _callback = callback;
+
+			// Check if this is a DOM type
+			if (RE.test(type)) {
+				// If `callback` is a function ...
+				if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+					// Create `_callback` object
+					_callback = {};
+					_callback[CALLBACK] = callback;
+				}
+
+				// Set `ON` and `OFF` callbacks
+				_callback[ON] = data !== UNDEFINED
+					? on_delegated
+					: on_direct;
+				_callback[OFF] = data !== UNDEFINED
+					? off_delegated
+					: off_direct;
+			}
+
+			// Mutate return args to next method
+			return [ type, _callback, data ];
+		})
 	}, [ "html", "text", "before", "after", "append", "prepend" ].reduce(function (spec, method) {
 		// Let `$fn` be `$FN[method]`
 		var $fn = $FN[method];
@@ -4313,7 +4500,7 @@ define('troopjs-dom/component',[
 				event[TYPE] = "sig/render";
 
 				// If `contents` is a function ...
-				if (typeof contents === TYPEOF_FUNCTION) {
+				if (OBJECT_TOSTRING.call(contents) === TOSTRING_FUNCTION) {
 					// ... attempt and wait for resolution
 					result = WHEN_ATTEMPT.apply(me, _args).then(function (output) {
 						// Call `$fn` with `output`

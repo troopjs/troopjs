@@ -42,6 +42,7 @@ bower_components/troopjs-core/component/runner/pipeline.js
 bower_components/troopjs-core/component/gadget.js
 bower_components/troopjs-core/component/service.js
 bower_components/mu-selector-set/src/classifier.js
+bower_components/mu-selector-set/src/splitter.js
 bower_components/mu-selector-set/src/MappedLists.js
 bower_components/mu-selector-set/src/Subsets.js
 bower_components/mu-selector-set/src/matchesSelector.js

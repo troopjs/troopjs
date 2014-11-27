@@ -1,6 +1,5 @@
 {
 	"name": "troopjs",
-	"version": "3.0.0-pr.3+c60ef66",
 	"homepage": "https://troopjs.com",
 	"repository": {
 		"type": "git",
@@ -21,9 +20,7 @@
 		}
 	],
 	"main": "main.js",
-	"moduleType": [
-		"amd"
-	],
+	"moduleType": [ "amd" ],
 	"description": "Meta package wiring together all TroopJS modules",
 	"keywords": [
 		"troopjs",
@@ -34,12 +31,12 @@
 	"ignore": [
 		"**/.*",
 		"node_modules",
-		"bower_components"
+		"bower_components",
+		"docs"
 	],
 	"dependencies": {
-		"jquery": ">=1.8.1 <4",
+		"when": "^3.4",
 		"poly": "^0.6",
-		"requirejs": "^2.1",
-		"when": "^3.4"
+		"jquery": ">=1.8.1 <4"
 	}
 }

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+/*globals require:false*/
+require({
+	&quot;baseUrl&quot; : &quot;bower_components&quot;,
+	&quot;packages&quot; : [ &quot;jquery&quot;, &quot;when&quot;, &quot;poly&quot;, &quot;troopjs-compose&quot;, &quot;troopjs-core&quot;, &quot;troopjs-dom&quot;, &quot;mu-merge&quot;, &quot;mu-getargs&quot;, &quot;mu-unique&quot;, &quot;mu-selector-set&quot;, &quot;mu-jquery-destroy&quot;, &quot;troopjs-widget&quot; ].map(function (name) {
+		var main;
+		var location;
+
+		switch (name) {
+			case &quot;jquery&quot;:
+				location = &quot;jquery/dist&quot;;
+				/* falls through */
+
+			case &quot;when&quot;:
+				main = name;
+				break;
+
+			case &quot;poly&quot;:
+				main = &quot;es5&quot;;
+				break;
+
+			case &quot;troopjs-widget&quot;:
+				location = &quot;..&quot;;
+				break;
+		}
+
+		return {
+			&quot;name&quot;: name,
+			&quot;location&quot;: location,
+			&quot;main&quot;: main
+		}
+	})
+});</pre>
+</body>
+</html>

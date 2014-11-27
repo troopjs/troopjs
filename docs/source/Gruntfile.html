@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+/*globals module:false*/
+module.exports = function(grunt) {
+	&quot;use strict&quot;;
+
+	// Configure grunt
+	grunt.initConfig({
+		&quot;pkg&quot;: grunt.file.readJSON(&quot;bower.json&quot;),
+
+		&quot;build&quot;: {
+			&quot;src&quot;: &quot;.&quot;,
+			&quot;dist&quot;: &quot;dist&quot;
+		},
+
+		&quot;requirejs&quot;: {
+			&quot;options&quot;: {
+				&quot;mainConfigFile&quot;: &quot;require.js&quot;,
+				&quot;appDir&quot;: &quot;&lt;%= build.src %&gt;&quot;,
+				&quot;dir&quot;: &quot;&lt;%= build.dist %&gt;&quot;,
+				&quot;optimize&quot;: &quot;none&quot;,
+				&quot;optimizeCss&quot;: &quot;none&quot;,
+				&quot;skipDirOptimize&quot;: true,
+				&quot;keepBuildDir&quot;: true,
+				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!travis|gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|(?:package|bower)\.json)/,
+				&quot;rawText&quot;: {
+					&quot;troopjs-widget/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
+				}
+			},
+
+			&quot;bundles&quot;: {
+				&quot;options&quot;: {
+					&quot;modules&quot;: [{
+						&quot;name&quot;: &quot;troopjs-widget/main&quot;,
+						&quot;exclude&quot;: [
+							&quot;jquery&quot;,
+							&quot;when&quot;,
+							&quot;poly&quot;,
+							&quot;mu-merge&quot;,
+							&quot;mu-getargs&quot;,
+							&quot;mu-unique&quot;,
+							&quot;mu-selector-set&quot;,
+							&quot;mu-jquery-destroy&quot;,
+							&quot;troopjs-core/component/signal/start&quot;,
+							&quot;troopjs-core/component/signal/stop&quot;,
+							&quot;troopjs-dom/component&quot;
+						],
+						&quot;excludeShallow&quot;: [
+							&quot;troopjs-widget/main&quot;
+						]
+					}]
+				}
+			}
+		},
+
+		&quot;clean&quot;: {
+			&quot;dist&quot;: [&quot;&lt;%= build.dist %&gt;&quot;]
+		},
+
+		&quot;uglify&quot;: {
+			&quot;options&quot;: {
+				&quot;report&quot;: &quot;min&quot;,
+				&quot;preserveComments&quot;: false
+			},
+			&quot;bundles&quot;: {
+				&quot;files&quot;: [{
+					&quot;expand&quot;: true,
+					&quot;dest&quot;: &quot;&lt;%= build.dist %&gt;&quot;,
+					&quot;cwd&quot;: &quot;&lt;%= build.dist %&gt;&quot;,
+					&quot;src&quot;: [&quot;main.js&quot;],
+					&quot;ext&quot;: &quot;.min.js&quot;
+				}]
+			}
+		}
+	});
+
+	// Load all grunt tasks from package.json
+	require(&quot;load-grunt-tasks&quot;)(grunt);
+
+	grunt.registerTask(&quot;compile&quot;, [ &quot;requirejs&quot; ]);
+	grunt.registerTask(&quot;compress&quot;, [ &quot;uglify&quot; ]);
+	grunt.registerTask(&quot;default&quot;, [ &quot;compile&quot;, &quot;compress&quot; ]);
+};
+</pre>
+</body>
+</html>

@@ -34,12 +34,12 @@ define([
 	 */
 
 	var UNDEFINED;
-	var CONTEXT = &quot;context&quot;;
-	var DATA = &quot;data&quot;;
-	var HEAD = &quot;head&quot;;
-	var NEXT = &quot;next&quot;;
-	var SELECTOR = &quot;selector&quot;;
-	var MODIFIED = &quot;modified&quot;;
+	var FALSE = false;
+	var LEFT_BUTTON = 0;
+
+	function map (match) {
+		return match[1];
+	}
 
 	// Use `$.find.matchesSelector` for wider browser support
 	SelectorSet.prototype.matchesSelector = $.find.matchesSelector;
@@ -51,75 +51,67 @@ define([
 	 * @return {*} Result from last handler
 	 */
 	return function sequence(event, handlers, args) {
-		var modified = handlers[MODIFIED];
-		var $event = args[0];
-		var selector;
-		var candidate;
-		var root = $event.delegateTarget;
-		var current = $event.target;
-		var elements;
-		var isClick;
 
-		// Try get SELECTOR from handlers and check if MODIFIED
-		if ((selector = handlers[SELECTOR]) === UNDEFINED || selector[MODIFIED] !== modified) {
-			// Create and cache SELECTOR
-			selector = handlers[SELECTOR] = new SelectorSet();
-
-			// Set MODIFIED on selector
-			selector[MODIFIED] = modified;
-
-			// Iterate handlers
-			for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-				// Add candidate with selector or default selector '*'
-				selector.add(candidate[DATA] || &quot;*&quot;, candidate);
+		var result = UNDEFINED;
+		var direct = handlers.direct;
+		var delegated = handlers.delegated;
+		var reduce = function (result, handler) {
+			// If immediate propagation is stopped we should just return last result
+			if ($event.isImmediatePropagationStopped()) {
+				return result;
 			}
+
+			// If the previous handler return false we should stopPropagation and preventDefault
+			if (result === FALSE) {
+				$event.stopPropagation();
+				$event.preventDefault();
+			}
+
+			return handler.apply(handler.context, args);
+		};
+
+		var $event = args[0];
+		var $delegate = $event.delegateTarget;
+		var $target = $event.target;
+		var $document = $target.ownerDocument;
+		var $notClick = $event.type !== &quot;click&quot;;
+
+		// Bubble the event up the dom if
+		// ... this is not a black-holed element (jQuery #13180)
+		// ... and this is the left button or it's a not a click event (jQuery #3861)
+		var $bubble = $target.nodeType !== UNDEFINED &amp;&amp; ($event.button === LEFT_BUTTON || $notClick);
+
+		// Loop ...
+		do {
+			// Don't process clicks on disabled elements (jQuery #6911, #8165, #11382, #11764)
+			if ($target.disabled !== true || $notClick) {
+				// Run delegated handlers which match this element
+				result = delegated
+					.matches($event.currentTarget = $target)
+					.map(map)
+					.reduce(reduce, result);
+			}
+
+			// Bubble if ...
+			$bubble = $bubble
+				// ... we were not told to stop propagation
+				&amp;&amp; !$event.isPropagationStopped()
+				// ... we are not at the delegate element
+				&amp;&amp; $target !== $delegate
+				// ... we have a parent node
+				&amp;&amp; ($target = $target.parentNode) !== null
+				// ... the new target is not the document
+				&amp;&amp; $target !== $document;
+		}
+		// ... while we are still bubbling
+		while ($bubble);
+
+		// Run all the direct (non-delegated) handlers of the root element
+		if (result !== FALSE) {
+			result = direct.reduce(reduce, result);
 		}
 
-		// If the event target is the same as the delegateTarget we can just match against current ...
-		if (root === current) {
-			elements = current;
-		}
-		// ... otherwise we have to build a delegate tree of elements
-		//
-		// Black-hole SVG &lt;use&gt; instance trees (jQuery #13180)
-		// Avoid non-left-click bubbling in Firefox (jQuery #3861)
-		else if(current.nodeType !== UNDEFINED &amp;&amp; ($event.button !== 0 || !(isClick = $event.type === &quot;click&quot;))) {
-			// Let `elements` be `[]`
-			elements = [];
-
-			do {
-				// Don't process clicks on disabled elements (jQuery #6911, #8165, #11382, #11764)
-				if (current.disabled !== true || !isClick) {
-					elements.push(current);
-				}
-			} while (current !== root &amp;&amp; (current = current.parentNode) !== null);
-		}
-		else {
-			return UNDEFINED;
-		}
-
-		return selector
-			// Filter to only selectors that match target
-			.matches(elements)
-			// Reduce so we can catch the end value
-			.reduce(function (result, selector) {
-				// If immediate propagation is stopped we should just return last result
-				if ($event.isImmediatePropagationStopped()) {
-					return result;
-				}
-
-				// If the previous candidate return false we should stopPropagation and preventDefault
-				if (result === false) {
-					$event.stopPropagation();
-					$event.preventDefault();
-				}
-
-				// Get candidate from selector
-				var candidate = selector[1];
-
-				// Run candidate, provide result to next run
-				return candidate.apply(candidate[CONTEXT], args);
-			}, UNDEFINED);
+		return result;
 	}
 });</pre>
 </body>
