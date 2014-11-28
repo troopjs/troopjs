@@ -18,10 +18,7 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;../registry/component&quot;,
-	&quot;../component/registry&quot;
-], function (Registry, componentRegistry) {
+define([ &quot;../registry/component&quot; ], function (Registry) {
 	&quot;use strict&quot;;
 
 <span id='core-task-registry'>	/**
@@ -47,12 +44,7 @@ define([
 	 * @hide
 	 */
 
-	return Registry.create(function () {
-		var me = this;
-
-		// Register ourselves
-		componentRegistry.access(me.toString(), me);
-	}, {
+	return Registry.create({
 		&quot;displayName&quot;: &quot;core/task/registry&quot;
 	});
 });</pre>

@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.4+158353c ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.5+e1aa0ce ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
 
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.4+158353c"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.5+e1aa0ce"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2186,251 +2186,7 @@ define('troopjs-core/registry/component',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/runner/pattern',[], function () {
-	return /^(?:initi|fin)alized?$/;
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/runner/pipeline',[
-	"./pattern",
-	"when"
-], function (RE_PHASE, when) {
-	
-
-	/**
-	 * @class core.pubsub.runner.pipeline
-	 * @implement core.event.emitter.runner
-	 * @private
-	 * @static
-	 * @alias feature.runner
-	 */
-
-	var UNDEFINED;
-	var FUNCTION_PROTO = Function.prototype;
-	var APPLY = FUNCTION_PROTO.apply;
-	var CALL = FUNCTION_PROTO.call;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_ARGUMENTS = "[object Arguments]";
-	var TOSTRING_ARRAY = "[object Array]";
-	var ARRAY_SLICE = Array.prototype.slice;
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var HEAD = "head";
-	var NEXT = "next";
-	var PHASE = "phase";
-	var MEMORY = "memory";
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
-	 * @return {Promise}
-	 */
-	return function pipeline(event, handlers, args) {
-		var context = event[CONTEXT];
-		var callback = event[CALLBACK];
-		var candidate;
-		var candidates = [];
-		var candidatesCount = 0;
-
-		// Iterate handlers
-		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-			if (
-				// Filter `candidate[CONTEXT]` if we have `context`
-			(context !== UNDEFINED && candidate[CONTEXT] !== context) ||
-				// Filter `candidate[CALLBACK]` if we have `callback`
-			(callback !== UNDEFINED && candidate[CALLBACK] !== callback)
-			) {
-				continue;
-			}
-
-			candidates[candidatesCount++] = candidate;
-		}
-
-		return when
-			// Reduce `candidates`
-			.reduce(candidates, function (current, candidate) {
-				// Let `context` be `candidate[CONTEXT]`
-				var context = candidate[CONTEXT];
-
-				// Return early if `context` is `UNDEFINED` or matches a blocked phase
-				if (context !== UNDEFINED && RE_PHASE.test(context[PHASE])) {
-					return current;
-				}
-
-				// Get object type
-				var type = OBJECT_TOSTRING.call(current);
-
-				// Calculate method depending on type
-				var method = (type === TOSTRING_ARRAY || type === TOSTRING_ARGUMENTS)
-					? APPLY
-					: CALL;
-
-				// Execute `candidate` using `method` in `context` passing `current`
-				return when(method.call(candidate, context, current), function (result) {
-					// Return result defaulting to `current`
-					return result === UNDEFINED
-						? current
-						: result;
-				});
-			}, args)
-			// Convert and remember result
-			.then(function (result) {
-				// Get object type
-				var type = OBJECT_TOSTRING.call(result);
-
-				// Convert, store and return `result` in `handlers[MEMORY]`
-				return handlers[MEMORY] = type === TOSTRING_ARRAY
-					? result
-					: type === TOSTRING_ARGUMENTS
-						? ARRAY_SLICE.call(result)
-						: [ result ];
-			});
-	}
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/hub',[
-	"../event/emitter",
-	"./runner/pipeline",
-	"troopjs-compose/decorator/from"
-], function (Emitter, pipeline, from) {
-	
-
-	/**
-	 * The centric "bus" that handlers publishing and subscription.
-	 *
-	 * ## Memorized emitting
-	 * A fired event will memorize the "current" value of each event. Each executor may have it's own interpretation
-	 * of what "current" means.
-	 *
-	 * **Note:** It's NOT necessarily to pub/sub on this module, prefer to
-	 * use methods like {@link core.component.gadget#publish publish} and {@link core.component.gadget#subscribe subscribe}
-	 * that are provided as shortcuts.
-	 *
-	 * @class core.pubsub.hub
-	 * @extend core.event.emitter
-	 * @singleton
-	 */
-
-	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var MEMORY = "memory";
-	var HANDLERS = "handlers";
-	var RUNNER = "runner";
-	var TYPE = "type";
-
-	/**
-	 * @method create
-	 * @static
-	 * @hide
-	 */
-
-	/**
-	 * @method extend
-	 * @static
-	 * @hide
-	 */
-
-	/**
-	 * @method constructor
-	 * @hide
-	 */
-
-	/**
-	 * @method on
-	 * @inheritdoc
-	 * @private
-	 */
-
-	/**
-	 * @method off
-	 * @inheritdoc
-	 * @private
-	 */
-
-	/**
-	 * @method emit
-	 * @inheritdoc
-	 * @private
-	 */
-
-	return Emitter.create({
-		"displayName": "core/pubsub/hub",
-
-		/**
-		 * Listen to an event that are emitted publicly.
-		 * @chainable
-		 * @inheritdoc #on
-		 * @method
-		 */
-		"subscribe" : from("on"),
-
-		/**
-		 * Remove a public event listener.
-		 * @chainable
-		 * @inheritdoc #off
-		 * @method
-		 */
-		"unsubscribe" : from("off"),
-
-		/**
-		 * Emit a public event that can be subscribed by other components.
-		 *
-		 * Handlers are run in a pipeline, in which each handler will receive muted
-		 * data params depending on the return value of the previous handler:
-		 *
-		 *   - The original data params from {@link #publish} if this is the first handler, or the previous handler returns `undefined`.
-		 *   - One value as the single argument if the previous handler return a non-array.
-		 *   - Each argument value deconstructed from the returning array of the previous handler.
-		 *
-		 * @param {String} type The topic to publish.
-		 * @param {...*} [args] Additional params that are passed to the handler function.
-		 * @return {Promise}
-		 */
-		"publish" : function (type) {
-			var me = this;
-
-			// Prepare event object
-			var event = {};
-			event[TYPE] = type;
-			event[RUNNER] = pipeline;
-
-			// Slice `arguments`
-			var args = ARRAY_SLICE.call(arguments);
-
-			// Modify first `arg`
-			args[0] = event;
-
-			// Delegate the actual emitting to event emitter.
-			return me.emit.apply(me, args);
-		},
-
-		/**
-		 * Returns value in handlers MEMORY
-		 * @param {String} type event type to peek at
-		 * @param {*} [value] Value to use _only_ if no memory has been recorder
-		 * @return {*} Value in MEMORY
-		 */
-		"peek": function (type, value) {
-			var handlers;
-
-			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
-				? value
-				: handlers[MEMORY];
-		}
-	});
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/component/registry',[
-	"../registry/component",
-	"../pubsub/hub"
-], function (Registry, hub) {
+define('troopjs-core/component/registry',[ "../registry/component" ], function (Registry) {
 	
 
 	/**
@@ -2456,25 +2212,14 @@ define('troopjs-core/component/registry',[
 	 * @hide
 	 */
 
-	return Registry.create(function () {
-		var me = this;
-
-		// Register the hub
-		me.access(hub.toString(), hub);
-
-		// Register ourselves
-		me.access(me.toString(), me);
-	}, {
+	return Registry.create({
 		"displayName": "core/component/registry"
 	});
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/task/registry',[
-	"../registry/component",
-	"../component/registry"
-], function (Registry, componentRegistry) {
+define('troopjs-core/task/registry',[ "../registry/component" ], function (Registry) {
 	
 
 	/**
@@ -2500,12 +2245,7 @@ define('troopjs-core/task/registry',[
 	 * @hide
 	 */
 
-	return Registry.create(function () {
-		var me = this;
-
-		// Register ourselves
-		componentRegistry.access(me.toString(), me);
-	}, {
+	return Registry.create({
 		"displayName": "core/task/registry"
 	});
 });
@@ -3170,6 +2910,262 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function (when) {
 						: [ result ];
 			});
 	}
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/runner/pattern',[], function () {
+	return /^(?:initi|fin)alized?$/;
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/runner/pipeline',[
+	"./pattern",
+	"when"
+], function (RE_PHASE, when) {
+	
+
+	/**
+	 * @class core.pubsub.runner.pipeline
+	 * @implement core.event.emitter.runner
+	 * @private
+	 * @static
+	 * @alias feature.runner
+	 */
+
+	var UNDEFINED;
+	var FUNCTION_PROTO = Function.prototype;
+	var APPLY = FUNCTION_PROTO.apply;
+	var CALL = FUNCTION_PROTO.call;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_ARGUMENTS = "[object Arguments]";
+	var TOSTRING_ARRAY = "[object Array]";
+	var ARRAY_SLICE = Array.prototype.slice;
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var HEAD = "head";
+	var NEXT = "next";
+	var PHASE = "phase";
+	var MEMORY = "memory";
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
+	 * @return {Promise}
+	 */
+	return function pipeline(event, handlers, args) {
+		var context = event[CONTEXT];
+		var callback = event[CALLBACK];
+		var candidate;
+		var candidates = [];
+		var candidatesCount = 0;
+
+		// Iterate handlers
+		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
+			if (
+				// Filter `candidate[CONTEXT]` if we have `context`
+			(context !== UNDEFINED && candidate[CONTEXT] !== context) ||
+				// Filter `candidate[CALLBACK]` if we have `callback`
+			(callback !== UNDEFINED && candidate[CALLBACK] !== callback)
+			) {
+				continue;
+			}
+
+			candidates[candidatesCount++] = candidate;
+		}
+
+		return when
+			// Reduce `candidates`
+			.reduce(candidates, function (current, candidate) {
+				// Let `context` be `candidate[CONTEXT]`
+				var context = candidate[CONTEXT];
+
+				// Return early if `context` is `UNDEFINED` or matches a blocked phase
+				if (context !== UNDEFINED && RE_PHASE.test(context[PHASE])) {
+					return current;
+				}
+
+				// Get object type
+				var type = OBJECT_TOSTRING.call(current);
+
+				// Calculate method depending on type
+				var method = (type === TOSTRING_ARRAY || type === TOSTRING_ARGUMENTS)
+					? APPLY
+					: CALL;
+
+				// Execute `candidate` using `method` in `context` passing `current`
+				return when(method.call(candidate, context, current), function (result) {
+					// Return result defaulting to `current`
+					return result === UNDEFINED
+						? current
+						: result;
+				});
+			}, args)
+			// Convert and remember result
+			.then(function (result) {
+				// Get object type
+				var type = OBJECT_TOSTRING.call(result);
+
+				// Convert, store and return `result` in `handlers[MEMORY]`
+				return handlers[MEMORY] = type === TOSTRING_ARRAY
+					? result
+					: type === TOSTRING_ARGUMENTS
+						? ARRAY_SLICE.call(result)
+						: [ result ];
+			});
+	}
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/emitter',[
+	"../event/emitter",
+	"./runner/pipeline",
+	"troopjs-compose/decorator/from"
+], function (Emitter, pipeline, from) {
+	
+
+	/**
+	 * A specialized version of {@link core.event.emitter emitter} for memorized events.
+	 *
+	 * ## Memorized emitting
+	 *
+	 * A emitter event will memorize the "current" value of each event. Each runner may have it's own interpretation
+	 * of what "current" means.
+	 *
+	 * @class core.pubsub.emitter
+	 * @extend core.event.emitter
+	 */
+
+	var UNDEFINED;
+	var ARRAY_SLICE = Array.prototype.slice;
+	var MEMORY = "memory";
+	var HANDLERS = "handlers";
+	var RUNNER = "runner";
+	var TYPE = "type";
+
+	/**
+	 * @method on
+	 * @inheritdoc
+	 * @private
+	 */
+
+	/**
+	 * @method off
+	 * @inheritdoc
+	 * @private
+	 */
+
+	/**
+	 * @method emit
+	 * @inheritdoc
+	 * @private
+	 */
+
+	return Emitter.extend({
+		"displayName": "core/pubsub/emitter",
+
+		/**
+		 * Listen to an event that are emitted publicly.
+		 * @chainable
+		 * @inheritdoc #on
+		 * @method
+		 */
+		"subscribe" : from("on"),
+
+		/**
+		 * Remove a public event listener.
+		 * @chainable
+		 * @inheritdoc #off
+		 * @method
+		 */
+		"unsubscribe" : from("off"),
+
+		/**
+		 * Emit a public event that can be subscribed by other components.
+		 *
+		 * Handlers are run in a pipeline, in which each handler will receive muted
+		 * data params depending on the return value of the previous handler:
+		 *
+		 *   - The original data params from {@link #publish} if this is the first handler, or the previous handler returns `undefined`.
+		 *   - One value as the single argument if the previous handler return a non-array.
+		 *   - Each argument value deconstructed from the returning array of the previous handler.
+		 *
+		 * @param {String} type The topic to publish.
+		 * @param {...*} [args] Additional params that are passed to the handler function.
+		 * @return {Promise}
+		 */
+		"publish" : function (type) {
+			var me = this;
+
+			// Prepare event object
+			var event = {};
+			event[TYPE] = type;
+			event[RUNNER] = pipeline;
+
+			// Slice `arguments`
+			var args = ARRAY_SLICE.call(arguments);
+
+			// Modify first `arg`
+			args[0] = event;
+
+			// Delegate the actual emitting to event emitter.
+			return me.emit.apply(me, args);
+		},
+
+		/**
+		 * Returns value in handlers MEMORY
+		 * @param {String} type event type to peek at
+		 * @param {*} [value] Value to use _only_ if no memory has been recorder
+		 * @return {*} Value in MEMORY
+		 */
+		"peek": function (type, value) {
+			var handlers;
+
+			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
+				? value
+				: handlers[MEMORY];
+		}
+	});
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/pubsub/hub',[ "./emitter" ], function (Emitter) {
+	
+
+	/**
+	 * @class core.pubsub.hub
+	 * @extend core.pubsub.emitter
+	 * @inheritdoc
+	 * @localdoc This is the singleton instance of the {@link core.pubsub.emitter hub emitter}
+	 * @singleton
+	 */
+
+	/**
+	 * @method create
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method extend
+	 * @static
+	 * @hide
+	 */
+
+	/**
+	 * @method constructor
+	 * @hide
+	 */
+
+	return Emitter.create({
+		"displayName": "core/pubsub/hub"
+	});
 });
 
 /**

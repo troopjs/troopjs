@@ -18,10 +18,7 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;../registry/component&quot;,
-	&quot;../pubsub/hub&quot;
-], function (Registry, hub) {
+define([ &quot;../registry/component&quot; ], function (Registry) {
 	&quot;use strict&quot;;
 
 <span id='core-component-registry'>	/**
@@ -47,15 +44,7 @@ define([
 	 * @hide
 	 */
 
-	return Registry.create(function () {
-		var me = this;
-
-		// Register the hub
-		me.access(hub.toString(), hub);
-
-		// Register ourselves
-		me.access(me.toString(), me);
-	}, {
+	return Registry.create({
 		&quot;displayName&quot;: &quot;core/component/registry&quot;
 	});
 });</pre>
