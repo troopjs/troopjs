@@ -36,7 +36,7 @@ bower_components/troopjs-core/task/registry.js
 bower_components/troopjs-core/task/factory.js
 bower_components/troopjs-core/component/base.js
 bower_components/troopjs-core/component/runner/pipeline.js
-bower_components/troopjs-core/pubsub/runner/pattern.js
+bower_components/troopjs-core/pubsub/config.js
 bower_components/troopjs-core/pubsub/runner/pipeline.js
 bower_components/troopjs-core/pubsub/emitter.js
 bower_components/troopjs-core/pubsub/hub.js

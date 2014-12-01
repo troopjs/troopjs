@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.5+e1aa0ce ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.6+bba2d6c ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
 
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.5+e1aa0ce"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.6+bba2d6c"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -1414,7 +1414,6 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
 	var UNDEFINED;
 	var HEAD = "head";
 	var NEXT = "next";
-	var CALLBACK = "callback";
 	var CONTEXT = "context";
 
 	/**
@@ -2915,21 +2914,39 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function (when) {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/runner/pattern',[], function () {
-	return /^(?:initi|fin)alized?$/;
+define('troopjs-core/pubsub/config',[
+	"module",
+	"mu-merge"
+], function (module, merge) {
+	
+
+	/**
+	 * Provides configuration for the pubsub components
+	 * @class core.pubsub.config
+	 * @private
+	 * @alias feature.config
+	 */
+
+	return merge.call({
+		/**
+		 * @cfg {RegExp} skip Pattern of phases to skip.
+		 */
+		"skip" : /^(?:initi|fin)alized?$/
+	}, module.config());
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/pubsub/runner/pipeline',[
-	"./pattern",
+	"../config",
 	"when"
-], function (RE_PHASE, when) {
+], function (config, when) {
 	
 
 	/**
 	 * @class core.pubsub.runner.pipeline
 	 * @implement core.event.emitter.runner
+	 * @mixin core.pubsub.config
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -2940,9 +2957,10 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	var APPLY = FUNCTION_PROTO.apply;
 	var CALL = FUNCTION_PROTO.call;
 	var OBJECT_TOSTRING = Object.prototype.toString;
+	var ARRAY_SLICE = Array.prototype.slice;
 	var TOSTRING_ARGUMENTS = "[object Arguments]";
 	var TOSTRING_ARRAY = "[object Array]";
-	var ARRAY_SLICE = Array.prototype.slice;
+	var SKIP = config.skip;
 	var CONTEXT = "context";
 	var CALLBACK = "callback";
 	var HEAD = "head";
@@ -2984,7 +3002,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 				var context = candidate[CONTEXT];
 
 				// Return early if `context` is `UNDEFINED` or matches a blocked phase
-				if (context !== UNDEFINED && RE_PHASE.test(context[PHASE])) {
+				if (context !== UNDEFINED && SKIP.test(context[PHASE])) {
 					return current;
 				}
 

@@ -19,20 +19,22 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./pattern&quot;,
+	&quot;../config&quot;,
 	&quot;when&quot;
-], function (RE_PHASE, when) {
+], function (config, when) {
 	&quot;use strict&quot;;
 
 <span id='core-pubsub-runner-sequence'>	/**
 </span>	 * @class core.pubsub.runner.sequence
 	 * @implement core.event.emitter.runner
+	 * @mixin core.pubsub.config
 	 * @private
 	 * @static
 	 * @alias feature.runner
 	 */
 
 	var UNDEFINED;
+	var SKIP = config.skip;
 	var CONTEXT = &quot;context&quot;;
 	var CALLBACK = &quot;callback&quot;;
 	var HEAD = &quot;head&quot;;
@@ -74,7 +76,7 @@ define([
 				var context = candidate[CONTEXT];
 
 				// Return early if `context` is `UNDEFINED` or matches a blocked phase
-				if (context !== UNDEFINED &amp;&amp; RE_PHASE.test(context[PHASE])) {
+				if (context !== UNDEFINED &amp;&amp; SKIP.test(context[PHASE])) {
 					return results;
 				}
 
