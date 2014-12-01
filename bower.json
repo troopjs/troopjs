@@ -1,6 +1,6 @@
 {
 	"name": "troopjs",
-	"version": "3.0.0-pr.6",
+	"version": "3.0.0-pr.7",
 	"homepage": "https://troopjs.com",
 	"repository": {
 		"type": "git",
@@ -37,7 +37,7 @@
 		"docs"
 	],
 	"dependencies": {
-		"troopjs-compose": "^3.1",
+		"troopjs-compose": "^3.2",
 		"troopjs-core": "^4.3",
 		"troopjs-dom": "^6",
 		"troopjs-log": "^1"
