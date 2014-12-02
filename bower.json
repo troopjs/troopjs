@@ -38,12 +38,12 @@
 	],
 	"dependencies": {
 		"troopjs-compose": "^3.2",
-		"troopjs-core": "^4.3",
-		"troopjs-dom": "^6",
+		"troopjs-core": "^4.4",
+		"troopjs-dom": "^6.1",
 		"troopjs-log": "^1"
 	},
 	"devDependencies": {
-		"troopjs-widget": "develop",
+		"troopjs-widget": "^1",
 		"requirejs": "^2.1"
 	}
 }
