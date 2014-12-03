@@ -470,25 +470,6 @@ define([
 			};
 		}),
 
-<span id='core-component-base-method-signal'>		/**
-</span>		 * Signals the component
-		 * @param {String} _signal Signal
-		 * @param {...*} [args] signal arguments
-		 * @return {Promise}
-		 */
-		&quot;signal&quot;: function (_signal) {
-			var me = this;
-
-			// Slice `arguments`
-			var args = ARRAY_SLICE.call(arguments);
-
-			// Modify first argument
-			args[0] = &quot;sig/&quot; + _signal;
-
-			// Emit
-			return me.emit.apply(me, args);
-		},
-
 <span id='core-component-base-method-task'>		/**
 </span>		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
 		 *
@@ -518,7 +499,7 @@ define([
 			var task = taskFactory.call(me, promiseOrResolver, name);
 
 			// Signal `TASK` and yield `task`
-			return me.signal(&quot;task&quot;, task).yield(task);
+			return me.emit(&quot;sig/task&quot;, task).yield(task);
 		},
 
 <span id='core-component-base-method-start'>		/**

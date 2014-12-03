@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.6+bba2d6c ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.7+8bfa41f ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
 
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.6+bba2d6c"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.7+8bfa41f"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -927,7 +927,8 @@ define('troopjs-compose/mixin/factory',[
 	"./decorator",
 	"mu-unique",
 	"mu-getargs",
-	"poly/object"
+	"poly/object",
+	"poly/function"
 ], function (config, Decorator, unique, getargs) {
 	
 
@@ -1082,6 +1083,7 @@ define('troopjs-compose/mixin/factory',[
 		var j;
 		var k;
 		var pragma;
+		var replace;
 		var groups = specials[TYPES] = [];
 		var group;
 		var types;
@@ -1137,7 +1139,7 @@ define('troopjs-compose/mixin/factory',[
 					pragma = PRAGMAS[k];
 
 					// Process name with pragma, break if replacement occurred
-					if ((name = name.replace(pragma.pattern, pragma.replace)) !== nameRaw) {
+					if ((name = name.replace(pragma.pattern, typeof (replace = pragma.replace) === TYPEOF_FUNCTION ? replace.bind(arg) : replace)) !== nameRaw) {
 						break;
 					}
 				}
@@ -1414,6 +1416,7 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
 	var UNDEFINED;
 	var HEAD = "head";
 	var NEXT = "next";
+	var CALLBACK = "callback";
 	var CONTEXT = "context";
 
 	/**
@@ -1842,14 +1845,77 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/signal/initialize',[ "when" ], function (when) {
+define('troopjs-core/component/config',[
+	"module",
+	"mu-merge"
+], function (module, merge) {
+	
+
+	/**
+	 * Component configuration
+	 * @class core.component.config
+	 * @protected
+	 * @alias feature.config
+	 */
+
+	return merge.call({
+		/**
+		 * @cfg signal Signal related configuration.
+		 * @cfg {String} signal.initialize=initialize Signal emitted when component initializes.
+		 * @cfg {String} signal.start=start Signal emitted when component starts.
+		 * @cfg {String} signal.stop=stop Signal emitted when component stops.
+		 * @cfg {String} signal.finalize=finalize Signal emitted when component finalizes.
+		 */
+		"signal": {
+			"initialize": "initialize",
+			"start": "start",
+			"stop": "stop",
+			"finalize": "finalize"
+		},
+
+		/**
+		 * @cfg phase Phase related configuration.
+		 * @cfg {RegExp} phase.skip=^(?:initi|fin)alized?$ Pattern of protected phases.
+		 * @cfg {String} phase.initialize=initialize Phase while component is initializing.
+		 * @cfg {String} phase.initialized=initialized Phase when component is initialized.
+		 * @cfg {String} phase.start=start Phase while component is starting.
+		 * @cfg {String} phase.started=started Phase when component is started.
+		 * @cfg {String} phase.stop=stop Phase while component is stopping.
+		 * @cfg {String} phase.stopped=stopped Phase when component is stopped.
+		 * @cfg {String} phase.finalize=finalize Phase while component is finalizing.
+		 * @cfg {String} phase.finalized=finalized Phase when component is finalized.
+		 */
+		"phase": {
+			"skip" : /^(?:initi|fin)alized?$/,
+			"initialize": "initialize",
+			"initialized": "initialized",
+			"start": "start",
+			"started": "started",
+			"stop": "stop",
+			"stopped": "stopped",
+			"finalize": "finalize",
+			"finalized": "finalized"
+		}
+	}, module.config());
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/component/signal/initialize',[
+	"../config",
+	"when"
+], function (config, when) {
 	var UNDEFINED;
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
+	var INITIALIZE = config.phase.initialize;
+	var INITIALIZED = config.phase.initialized;
+	var SIG_INITIALIZE = "sig/" + config.signal.initialize;
 
 	/**
 	 * @class core.component.signal.initialize
 	 * @implement core.component.signal
+	 * @mixin core.component.config
 	 * @static
 	 * @alias feature.signal
 	 */
@@ -1868,16 +1934,18 @@ define('troopjs-core/component/signal/initialize',[ "when" ], function (when) {
 			var _args;
 
 			if (phase === UNDEFINED) {
-				// Let `me[PHASE]` be `"initialize"`
-				// Let `_args` be `[ "initialize" ]`
+				// Let `me[PHASE]` be `INITIALIZE`
+				me[PHASE] = INITIALIZE;
+
+				// Let `_args` be `[ SIG_INITIALIZE ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ me[PHASE] = "initialize" ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_INITIALIZE ], args);
 
 				return me
-					.signal.apply(me, _args)
+					.emit.apply(me, _args)
 					.then(function() {
-						// Let `me[PHASE]` be `"initialized"`
-						return me[PHASE] = "initialized";
+						// Let `me[PHASE]` be `INITIALIZED`
+						return me[PHASE] = INITIALIZED;
 					});
 			}
 			else {
@@ -1891,14 +1959,20 @@ define('troopjs-core/component/signal/initialize',[ "when" ], function (when) {
  */
 define('troopjs-core/component/signal/start',[
 	"./initialize",
+	"../config",
 	"when"
-], function (initialize, when) {
+], function (initialize, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
+	var INITIALIZED = config.phase.initialized;
+	var START = config.phase.start;
+	var STARTED = config.phase.started;
+	var SIG_START = "sig/" + config.signal.start;
 
 	/**
 	 * @class core.component.signal.start
 	 * @implement core.component.signal
+	 * @mixin core.component.config
 	 * @static
 	 * @alias feature.signal
 	 */
@@ -1916,17 +1990,19 @@ define('troopjs-core/component/signal/start',[
 		return when(initialize.apply(me, args), function (phase) {
 			var _args;
 
-			if (phase === "initialized") {
-				// Let `me[PHASE]` be `"start"`
-				// Let `_args` be `[ "start" ]`
+			if (phase === INITIALIZED) {
+				// Let `me[PHASE]` be `START`
+				me[PHASE] = START;
+
+				// Let `_args` be `[ SIG_START ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ me[PHASE] = "start" ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_START ], args);
 
 				return me
-					.signal.apply(me, _args)
+					.emit.apply(me, _args)
 					.then(function() {
-						// Let `me[PHASE]` be `"started"`
-						return me[PHASE] = "started";
+						// Let `me[PHASE]` be `STARTED`
+						return me[PHASE] = STARTED;
 					});
 			}
 			else {
@@ -1940,14 +2016,20 @@ define('troopjs-core/component/signal/start',[
  */
 define('troopjs-core/component/signal/stop',[
 	"./start",
+	"../config",
 	"when"
-], function (start, when) {
+], function (start, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
+	var STARTED = config.phase.started;
+	var STOP = config.phase.stop;
+	var STOPPED = config.phase.stopped;
+	var SIG_STOP = "sig/" + config.signal.stop;
 
 	/**
 	 * @class core.component.signal.stop
 	 * @implement core.component.signal
+	 * @mixin core.component.config
 	 * @static
 	 * @alias feature.signal
 	 */
@@ -1965,17 +2047,19 @@ define('troopjs-core/component/signal/stop',[
 		return when(start.apply(me, args), function (phase) {
 			var _args;
 
-			if (phase === "started") {
+			if (phase === STARTED) {
 				// Let `me[PHASE]` be `"stop"`
-				// Let `_args` be `[ "stop" ]`
+				me[PHASE] = STOP;
+
+				// Let `_args` be `[ SIG_STOP ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ me[PHASE] = "stop" ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_STOP ], args);
 
 				return me
-					.signal.apply(me, _args)
+					.emit.apply(me, _args)
 					.then(function () {
-						// Let `me[PHASE]` be `"stopped"`
-						return me[PHASE] = "stopped";
+						// Let `me[PHASE]` be `STOPPED`
+						return me[PHASE] = STOPPED;
 					});
 			}
 			else {
@@ -1989,14 +2073,20 @@ define('troopjs-core/component/signal/stop',[
  */
 define('troopjs-core/component/signal/finalize',[
 	"./stop",
+	"../config",
 	"when"
-], function (stop, when) {
+], function (stop, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
+	var STOPPED = config.phase.stopped;
+	var FINALIZE = config.phase.finalize;
+	var FINALIZED = config.phase.finalized;
+	var SIG_FINALIZE = "sig/" + config.signal.finalize;
 
 	/**
 	 * @class core.component.signal.finalize
 	 * @implement core.component.signal
+	 * @mixin core.component.config
 	 * @static
 	 * @alias feature.signal
 	 */
@@ -2013,17 +2103,19 @@ define('troopjs-core/component/signal/finalize',[
 		return when(stop.apply(me, args), function (phase) {
 			var _args;
 
-			if (phase === "stopped") {
-				// Let `me[PHASE]` be `"finalize"`
-				// Let `_args` be `[ "finalize" ]`
+			if (phase === STOPPED) {
+				// Let `me[PHASE]` be `FINALIZE`
+				me[PHASE] = FINALIZE;
+
+				// Let `_args` be `[ SIG_FINALIZE ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ me[PHASE] = "finalize" ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_FINALIZE ], args);
 
 				return me
-					.signal.apply(me, _args)
+					.emit.apply(me, _args)
 					.then(function() {
-						// Let `me[PHASE]` be `"finalized"`
-						return me[PHASE] = "finalized";
+						// Let `me[PHASE]` be `FINALIZED`
+						return me[PHASE] = FINALIZED;
 					});
 			}
 			else {
@@ -2757,25 +2849,6 @@ define('troopjs-core/component/base',[
 		}),
 
 		/**
-		 * Signals the component
-		 * @param {String} _signal Signal
-		 * @param {...*} [args] signal arguments
-		 * @return {Promise}
-		 */
-		"signal": function (_signal) {
-			var me = this;
-
-			// Slice `arguments`
-			var args = ARRAY_SLICE.call(arguments);
-
-			// Modify first argument
-			args[0] = "sig/" + _signal;
-
-			// Emit
-			return me.emit.apply(me, args);
-		},
-
-		/**
 		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
 		 *
 		 * **Note:** It's recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
@@ -2804,7 +2877,7 @@ define('troopjs-core/component/base',[
 			var task = taskFactory.call(me, promiseOrResolver, name);
 
 			// Signal `TASK` and yield `task`
-			return me.signal("task", task).yield(task);
+			return me.emit("sig/task", task).yield(task);
 		},
 
 		/**
@@ -2914,31 +2987,8 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function (when) {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/config',[
-	"module",
-	"mu-merge"
-], function (module, merge) {
-	
-
-	/**
-	 * Provides configuration for the pubsub components
-	 * @class core.pubsub.config
-	 * @private
-	 * @alias feature.config
-	 */
-
-	return merge.call({
-		/**
-		 * @cfg {RegExp} skip Pattern of phases to skip.
-		 */
-		"skip" : /^(?:initi|fin)alized?$/
-	}, module.config());
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
 define('troopjs-core/pubsub/runner/pipeline',[
-	"../config",
+	"../../component/config",
 	"when"
 ], function (config, when) {
 	
@@ -2946,7 +2996,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	/**
 	 * @class core.pubsub.runner.pipeline
 	 * @implement core.event.emitter.runner
-	 * @mixin core.pubsub.config
+	 * @mixin core.component.config
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -2960,7 +3010,7 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	var ARRAY_SLICE = Array.prototype.slice;
 	var TOSTRING_ARGUMENTS = "[object Arguments]";
 	var TOSTRING_ARRAY = "[object Array]";
-	var SKIP = config.skip;
+	var SKIP = config.phase.skip;
 	var CONTEXT = "context";
 	var CALLBACK = "callback";
 	var HEAD = "head";
@@ -4101,6 +4151,83 @@ define('troopjs-dom/runner/sequence',[
 	}
 });
 /**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-dom/config',[
+	"troopjs-core/component/config",
+	"module",
+	"mu-merge"
+], function (config, module, merge) {
+	
+
+	/**
+	 * DOM component configuration
+	 * @class dom.config
+	 * @extends core.component.config
+	 * @protected
+	 * @alias feature.config
+	 */
+
+	return merge.call(config, {
+		/**
+		 * @cfg signal
+		 * @cfg {String} signal.render=signal.render Signal emitted when component has rendered.
+		 * @inheritdoc
+		 */
+		"signal": {
+			"render": "render"
+		}
+	}, module.config());
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-dom/signal/render',[
+	"../config",
+	"when"
+], function (config, when) {
+	var ARRAY_PUSH = Array.prototype.push;
+	var PHASE = "phase";
+	var SKIP = config.phase.skip;
+	var SIG_RENDER = "sig/" + config.signal.render;
+
+	/**
+	 * @class dom.signal.render
+	 * @implement core.component.signal
+	 * @mixin dom.config
+	 * @static
+	 * @alias feature.signal
+	 */
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Signals that the component has rendered something
+	 */
+
+	return function render() {
+		var me = this;
+		var args = arguments;
+
+		return when(me[PHASE], function (phase) {
+			var _args;
+
+			if (!SKIP.test(phase)) {
+				// Let `_args` be `[ SIG_RENDER ]`
+				// Push `args` on `_args`
+				ARRAY_PUSH.apply(_args = [ SIG_RENDER ], args);
+
+				return me
+					.emit.apply(me, _args)
+					.yield(phase);
+			}
+			else {
+				return phase;
+			}
+		});
+	}
+});
+/**
  * @license MIT http://mu-lib.mit-license.org/
  */
 (function() {
@@ -4183,8 +4310,8 @@ define('mu-jquery-destroy', ['mu-jquery-destroy/main'], function (main) { return
  */
 define('troopjs-dom/component',[
 	"troopjs-core/component/gadget",
-	"troopjs-core/component/runner/sequence",
 	"./runner/sequence",
+	"./signal/render",
 	"troopjs-compose/mixin/config",
 	"troopjs-compose/decorator/before",
 	"jquery",
@@ -4192,7 +4319,7 @@ define('troopjs-dom/component',[
 	"mu-selector-set",
 	"poly/array",
 	"mu-jquery-destroy"
-], function (Gadget, core_sequence, dom_sequence, COMPOSE_CONF, before, $, when, SelectorSet) {
+], function (Gadget, sequence, render, COMPOSE_CONF, before, $, when, SelectorSet) {
 	
 
 	/**
@@ -4422,7 +4549,7 @@ define('troopjs-dom/component',[
 				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
 					var args = {};
 					args[TYPE] = type;
-					args[RUNNER] = dom_sequence;
+					args[RUNNER] = sequence;
 					args[CONTEXT] = me;
 					args = [ args ];
 
@@ -4493,50 +4620,44 @@ define('troopjs-dom/component',[
 		var $fn = $FN[method];
 
 		// Create `spec[method]`
-		spec[method] = function (contentOrPromise, args) {
+		spec[method] = function (contentOrPromise) {
 			var me = this;
 
-			// If `_args.length` is `0` just return `$fn.call(...)`
+			// If `arguments.length` is `0` just return `$fn.call(...)`
 			if (arguments.length === 0) {
 				return $fn.call(me[$ELEMENT]);
 			}
 
 			// Convert arguments to an array
-			var _args = ARRAY_SLICE.call(arguments);
+			var args = ARRAY_SLICE.call(arguments);
 
-			return when(contentOrPromise, function (contents) {
+			return when(contentOrPromise, function (content) {
 				var result;
 
-				// Initialize event
-				var event = {};
-				event[RUNNER] = core_sequence;
-				event[CONTEXT] = me;
-				event[TYPE] = "sig/render";
-
-				// If `contents` is a function ...
-				if (OBJECT_TOSTRING.call(contents) === TOSTRING_FUNCTION) {
+				// If `content` is a function ...
+				if (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION) {
 					// ... attempt and wait for resolution
-					result = WHEN_ATTEMPT.apply(me, _args).then(function (output) {
-						// Call `$fn` with `output`
-						$fn.call(me[$ELEMENT], output);
+					result = WHEN_ATTEMPT.apply(me, args).then(function (_content) {
+						// Let `args[0]` be `_content`
+						// Call `$fn` with `_content`
+						$fn.call(me[$ELEMENT], args[0] = _content);
 
-						// Let `_args[0]` be `event`
-						_args[0] = event;
-
-						// Emit
-						return me.emit.apply(me, _args);
+						// Signal render
+						return render
+							.apply(me, args)
+							.yield(_content);
 					});
 				}
 				// ... otherwise we can emit right away
 				else {
-					// Call `$fn` with `contents`
-					$fn.call(me[$ELEMENT], contents);
+					// Let `args[0]` be `content`
+					// Call `$fn` with `content`
+					$fn.call(me[$ELEMENT], args[0] = content);
 
-					// Let `_args[0]` be `event`
-					_args[0] = event;
-
-					// Emit
-					result = me.emit.apply(me, _args);
+					// Signal render
+					result = render
+						.apply(me, args)
+						.yield(content);
 				}
 
 				// Return `result`

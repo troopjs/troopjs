@@ -40,7 +40,7 @@ module.exports = function(grunt) {
 				&quot;optimizeCss&quot;: &quot;none&quot;,
 				&quot;skipDirOptimize&quot;: true,
 				&quot;keepBuildDir&quot;: true,
-				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!travis|gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|(?:package|bower)\.json)/,
+				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!travis|gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|package\.json)/,
 				&quot;rawText&quot;: {
 					&quot;troopjs-widget/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
 				}

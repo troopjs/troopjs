@@ -19,7 +19,7 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../config&quot;,
+	&quot;../../component/config&quot;,
 	&quot;when&quot;
 ], function (config, when) {
 	&quot;use strict&quot;;
@@ -27,7 +27,7 @@ define([
 <span id='core-pubsub-runner-pipeline'>	/**
 </span>	 * @class core.pubsub.runner.pipeline
 	 * @implement core.event.emitter.runner
-	 * @mixin core.pubsub.config
+	 * @mixin core.component.config
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -41,7 +41,7 @@ define([
 	var ARRAY_SLICE = Array.prototype.slice;
 	var TOSTRING_ARGUMENTS = &quot;[object Arguments]&quot;;
 	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
-	var SKIP = config.skip;
+	var SKIP = config.phase.skip;
 	var CONTEXT = &quot;context&quot;;
 	var CALLBACK = &quot;callback&quot;;
 	var HEAD = &quot;head&quot;;

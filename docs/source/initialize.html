@@ -18,14 +18,21 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;when&quot; ], function (when) {
+define([
+	&quot;../config&quot;,
+	&quot;when&quot;
+], function (config, when) {
 	var UNDEFINED;
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = &quot;phase&quot;;
+	var INITIALIZE = config.phase.initialize;
+	var INITIALIZED = config.phase.initialized;
+	var SIG_INITIALIZE = &quot;sig/&quot; + config.signal.initialize;
 
 <span id='core-component-signal-initialize'>	/**
 </span>	 * @class core.component.signal.initialize
 	 * @implement core.component.signal
+	 * @mixin core.component.config
 	 * @static
 	 * @alias feature.signal
 	 */
@@ -44,16 +51,18 @@ define([ &quot;when&quot; ], function (when) {
 			var _args;
 
 			if (phase === UNDEFINED) {
-				// Let `me[PHASE]` be `&quot;initialize&quot;`
-				// Let `_args` be `[ &quot;initialize&quot; ]`
+				// Let `me[PHASE]` be `INITIALIZE`
+				me[PHASE] = INITIALIZE;
+
+				// Let `_args` be `[ SIG_INITIALIZE ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ me[PHASE] = &quot;initialize&quot; ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_INITIALIZE ], args);
 
 				return me
-					.signal.apply(me, _args)
+					.emit.apply(me, _args)
 					.then(function() {
-						// Let `me[PHASE]` be `&quot;initialized&quot;`
-						return me[PHASE] = &quot;initialized&quot;;
+						// Let `me[PHASE]` be `INITIALIZED`
+						return me[PHASE] = INITIALIZED;
 					});
 			}
 			else {

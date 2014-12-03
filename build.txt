@@ -26,6 +26,7 @@ bower_components/troopjs-core/mixin/base.js
 bower_components/troopjs-core/event/runner/sequence.js
 bower_components/troopjs-core/event/emitter.js
 bower_components/troopjs-core/component/runner/sequence.js
+bower_components/troopjs-core/component/config.js
 bower_components/troopjs-core/component/signal/initialize.js
 bower_components/troopjs-core/component/signal/start.js
 bower_components/troopjs-core/component/signal/stop.js
@@ -36,7 +37,6 @@ bower_components/troopjs-core/task/registry.js
 bower_components/troopjs-core/task/factory.js
 bower_components/troopjs-core/component/base.js
 bower_components/troopjs-core/component/runner/pipeline.js
-bower_components/troopjs-core/pubsub/config.js
 bower_components/troopjs-core/pubsub/runner/pipeline.js
 bower_components/troopjs-core/pubsub/emitter.js
 bower_components/troopjs-core/pubsub/hub.js
@@ -50,6 +50,8 @@ bower_components/mu-selector-set/src/matchesSelector.js
 bower_components/mu-selector-set/src/SelectorSet.js
 bower_components/mu-selector-set/main.js
 bower_components/troopjs-dom/runner/sequence.js
+bower_components/troopjs-dom/config.js
+bower_components/troopjs-dom/signal/render.js
 bower_components/mu-jquery-destroy/src/jQueryDestroy.js
 bower_components/mu-jquery-destroy/main.js
 bower_components/troopjs-dom/component.js

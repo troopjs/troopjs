@@ -19,52 +19,43 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./start&quot;,
 	&quot;../config&quot;,
 	&quot;when&quot;
-], function (start, config, when) {
+], function (config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = &quot;phase&quot;;
-	var STARTED = config.phase.started;
-	var STOP = config.phase.stop;
-	var STOPPED = config.phase.stopped;
-	var SIG_STOP = &quot;sig/&quot; + config.signal.stop;
+	var SKIP = config.phase.skip;
+	var SIG_RENDER = &quot;sig/&quot; + config.signal.render;
 
-<span id='core-component-signal-stop'>	/**
-</span>	 * @class core.component.signal.stop
+<span id='dom-signal-render'>	/**
+</span>	 * @class dom.signal.render
 	 * @implement core.component.signal
-	 * @mixin core.component.config
+	 * @mixin dom.config
 	 * @static
 	 * @alias feature.signal
 	 */
 
-<span id='core-component-signal-stop-method-constructor'>	/**
+<span id='dom-signal-render-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `stopped`
+	 * @localdoc Signals that the component has rendered something
 	 */
 
-	return function stop() {
+	return function render() {
 		var me = this;
 		var args = arguments;
 
-		return when(start.apply(me, args), function (phase) {
+		return when(me[PHASE], function (phase) {
 			var _args;
 
-			if (phase === STARTED) {
-				// Let `me[PHASE]` be `&quot;stop&quot;`
-				me[PHASE] = STOP;
-
-				// Let `_args` be `[ SIG_STOP ]`
+			if (!SKIP.test(phase)) {
+				// Let `_args` be `[ SIG_RENDER ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_STOP ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_RENDER ], args);
 
 				return me
 					.emit.apply(me, _args)
-					.then(function () {
-						// Let `me[PHASE]` be `STOPPED`
-						return me[PHASE] = STOPPED;
-					});
+					.yield(phase);
 			}
 			else {
 				return phase;

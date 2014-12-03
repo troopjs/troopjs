@@ -20,14 +20,20 @@
  */
 define([
 	&quot;./initialize&quot;,
+	&quot;../config&quot;,
 	&quot;when&quot;
-], function (initialize, when) {
+], function (initialize, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = &quot;phase&quot;;
+	var INITIALIZED = config.phase.initialized;
+	var START = config.phase.start;
+	var STARTED = config.phase.started;
+	var SIG_START = &quot;sig/&quot; + config.signal.start;
 
 <span id='core-component-signal-start'>	/**
 </span>	 * @class core.component.signal.start
 	 * @implement core.component.signal
+	 * @mixin core.component.config
 	 * @static
 	 * @alias feature.signal
 	 */
@@ -45,17 +51,19 @@ define([
 		return when(initialize.apply(me, args), function (phase) {
 			var _args;
 
-			if (phase === &quot;initialized&quot;) {
-				// Let `me[PHASE]` be `&quot;start&quot;`
-				// Let `_args` be `[ &quot;start&quot; ]`
+			if (phase === INITIALIZED) {
+				// Let `me[PHASE]` be `START`
+				me[PHASE] = START;
+
+				// Let `_args` be `[ SIG_START ]`
 				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ me[PHASE] = &quot;start&quot; ], args);
+				ARRAY_PUSH.apply(_args = [ SIG_START ], args);
 
 				return me
-					.signal.apply(me, _args)
+					.emit.apply(me, _args)
 					.then(function() {
-						// Let `me[PHASE]` be `&quot;started&quot;`
-						return me[PHASE] = &quot;started&quot;;
+						// Let `me[PHASE]` be `STARTED`
+						return me[PHASE] = STARTED;
 					});
 			}
 			else {
