@@ -39,7 +39,7 @@
 	"dependencies": {
 		"troopjs-compose": "^3.2",
 		"troopjs-core": "^4.4",
-		"troopjs-dom": "^6.1",
+		"troopjs-dom": "^6.1.1",
 		"troopjs-log": "^1"
 	},
 	"devDependencies": {
