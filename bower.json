@@ -43,7 +43,7 @@
 		"troopjs-log": "^1"
 	},
 	"devDependencies": {
-		"troopjs-widget": "^1",
+		"troopjs-widget": "develop",
 		"requirejs": "^2.1"
 	}
 }
