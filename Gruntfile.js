@@ -156,5 +156,5 @@ module.exports = function(grunt) {
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("docs", [ "jsduck" ]);
-	grunt.registerTask("default", [ "troopjs-lint", "compile", "compress", "usebanner", "docs" ]);
+	grunt.registerTask("default", [ "compile", "compress", "usebanner", "docs" ]);
 };
