@@ -4,12 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.7+8bfa41f ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.8+b595709 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
 
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.7+8bfa41f"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.8+b595709"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -4188,7 +4188,6 @@ define('troopjs-dom/signal/render',[
 ], function (config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
-	var SKIP = config.phase.skip;
 	var SIG_RENDER = "sig/" + config.signal.render;
 
 	/**
@@ -4212,18 +4211,13 @@ define('troopjs-dom/signal/render',[
 		return when(me[PHASE], function (phase) {
 			var _args;
 
-			if (!SKIP.test(phase)) {
-				// Let `_args` be `[ SIG_RENDER ]`
-				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_RENDER ], args);
+			// Let `_args` be `[ SIG_RENDER ]`
+			// Push `args` on `_args`
+			ARRAY_PUSH.apply(_args = [ SIG_RENDER ], args);
 
-				return me
-					.emit.apply(me, _args)
-					.yield(phase);
-			}
-			else {
-				return phase;
-			}
+			return me
+				.emit.apply(me, _args)
+				.yield(phase);
 		});
 	}
 });
