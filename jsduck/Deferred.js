@@ -23,7 +23,7 @@
  * ## Consumers
  *
  * Consumers can observe the result via {@link #promise}. The promise can be given to any number of components,
- * who can observe the result using {@link when#constructor}.
+ * who can observe the result using {@link Promise#then}.
  * Like {@link #resolver}, even though when.js's Deferred implements the {@link Promise} API, it is better to
  * give only the {@link #promise} to consumers so that they can't modify the Deferred (such as calling
  * {@link #resolve} or {@link #reject} on it!).
@@ -35,27 +35,27 @@
  * ## Resolving and rejecting
  *
  * When a producer provides the result by calling {@link Resolver#resolve resolver.resolve} (or {@link #resolve}), all consumers
- * are notified by having their callbacks (which they registered via {@link when#constructor}) called with the result.
+ * are notified by having their callbacks (which they registered via {@link Promise#then}) called with the result.
  *
  * A producer may also *reject* the Deferred, signalling that the Deferred's computation failed, or could not complete
  * given some set of constraints. In this case, all consumers will be notified by having their `errorback` called
- * (the 3rd parameter passed to {@link when#constructor}, or the 2nd parameter passed to `{@link Promise#then}).
+ * (the 2nd parameter passed to `{@link Promise#then}).
  *
  * ## Progress
  *
  * when.js's Deferreds also support progress notifications, to indicate to consumers that the computation is making
  * progress toward its result. A producer may call {@link Resolver#notify resolver.notify} (or {@link #notify}) and pass
  * a single parameter (whatever it wants) to indicate progress. All consumers will be notified by having their
- * progress handler called (the 4th parameter to {@link when#constructor}, or the 3rd parameter to {@link Promise#then}).
+ * progress handler called (the 3rd parameter to {@link Promise#then}).
  *
  * <div class="notice">
  * Documentation for this class comes from <a href="https://github.com/cujojs/when/blob/master/docs/api.md">when.js</a>
  * and is available under <a href="ttp://www.opensource.org/licenses/mit-license.php">MIT license</a>.
  * </div>
  *
- * @class when.Deferred
- * @alternateClassName Deferred
+ * @class Deferred
  * @author Brian Cavalier
+ * @private
  */
 
 /**

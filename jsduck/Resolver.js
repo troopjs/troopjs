@@ -1,5 +1,5 @@
 /**
- * In most situations, you'll deal with promises--observing them via {@link when#constructor} or {@link Promise#then},
+ * In most situations, you'll deal with promises--observing them via {@link Promise#then},
  * or returning them to callers. Sometimes it can also be useful to hand out a resolver and allow another
  * (possibly untrusted) party to provide the resolution value for a promise.
  * This provides a way to allow an untrusted to safely provide a result to your code, *or to another
@@ -10,7 +10,7 @@
  *
  * ## Adapting callback-based APIs
  *
- * Also, `when.js` resolver methods ({@link when#resolve} and {@link when#reject}) can be used as callback functions
+ * Also, `when.js` resolver methods ({@link #resolve} and {@link #reject}) can be used as callback functions
  * by passing them to libraries that are built around traditional callback patterns, rather than promises.
  *
  * Here's a simple example:
@@ -93,23 +93,39 @@
  * and is available under <a href="ttp://www.opensource.org/licenses/mit-license.php">MIT license</a>.
  * </div>
  *
- * @class when.Resolver
- * @alternateClassName Resolver
+ * @class Resolver
  * @author Brian Cavalier
+ * @private
  */
 
 /**
- * @inheritdoc when#resolve
+ * Create a resolved promise for the supplied promiseOrValue. If promiseOrValue is a value, it will
+ * be the resolution value of the returned promise. Returns promiseOrValue if it's a trusted promise.
+ * If promiseOrValue is a foreign promise, returns a promise in the same state (resolved or rejected)
+ * and with the same value as promiseOrValue.
+ *
+ * 	promise.resolve(promiseOrValue);
+ *
  * @method resolve
+ * @param  {*} promiseOrValue
  * @return {undefined}
  */
 
 /**
- * @inheritdoc when#reject
+ * Create a rejected promise with the supplied error as the rejection reason.
+ *
+ * 	promise.reject(error);
+ *
+ * > **DEPRECATION WARNING**: In when.js 2.x, error is allowed to be a promise for an error.
+ * > In when.js 3.0, error will always be used verbatim as the rejection reason, even if it is a promise.
+ *
+ * If error is a value, it will be the rejection reason of the returned promise.
+ * If error is a promise, its rejection reason will be the rejection reason of the returned promise.
+ *
  * @method reject
+ * @param {*} promiseOrValue the rejected value of the returned promise.
  * @return {undefined}
  */
-
 /**
  * Notify about the promise progress.
  * @method notify
