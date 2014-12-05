@@ -8,9 +8,8 @@ define([
 	"troopjs-compose/decorator/before",
 	"troopjs-compose/decorator/extend",
 	"troopjs-compose/decorator/from",
-	"troopjs-log/sink/console",
-	"troopjs-log/sink/forward",
-	"troopjs-log/sink/null",
+	"troopjs-log/console",
+	"troopjs-log/null",
 	"troopjs-core/component/service",
 	"troopjs-dom/component"
 ], function (version) {
