@@ -23,7 +23,7 @@
  * ## Consumers
  *
  * A Promise can be safely given to any number of consumers, who can register to observe the result
- * (or error/reason) of the promise using {@link when#constructor}, or the promise's {@link #then}.
+ * (or error/reason) of the promise using the promise's {@link #then}.
  *
  *     when(promise,
  *       function(result) {
@@ -50,9 +50,9 @@
  * and is available under <a href="ttp://www.opensource.org/licenses/mit-license.php">MIT license</a>.
  * </div>
  *
- * @class when.Promise
- * @alternateClassName Promise
+ * @class Promise
  * @author Brian Cavalier
+ * @private
  */
 
 /**

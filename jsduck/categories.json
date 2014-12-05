@@ -44,14 +44,6 @@
           "Array",
           "Number"
         ]
-      },
-      {
-        "name": "when.js",
-        "classes": [ "when", "when.*" ]
-      },
-      {
-        "name": "jQuery",
-        "classes": [ "$" ]
       }
     ]
   }
