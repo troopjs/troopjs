@@ -30,11 +30,11 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		"pkg": grunt.file.readJSON("bower.json"),
 
-		"build" : {
-			"src" : ".",
-			"dist" : "dist",
-			"banner" : "\
-/**\n\
+		"build": {
+			"src": ".",
+			"dist": "dist",
+			"header": "\
+/*!\n\
  *   ____ .     ____  ____  ____    ____.\n\
  *   \\   (/_\\___\\  (__\\  (__\\  (\\___\\  (/\n\
  *   / ._/  ( . _   \\  . /   . /  . _   \\_\n\
@@ -43,7 +43,12 @@ module.exports = function(grunt) {
  *  \\_t:_____r:_______o:____o:___p:/ [ <%= pkg.name %> - <%= pkg.version %> ]\n\
  *\n\
  * @license <%= pkg.license %> © <%= _.pluck(pkg.authors, 'name').join(', ') %>\n\
- */\n"
+ */\n",
+
+		"footer": "\
+define(['troopjs/version'], function (version) {\n\
+	return version;\n\
+});"
 		},
 
 		"requirejs" : {
@@ -58,6 +63,10 @@ module.exports = function(grunt) {
 				"fileExclusionRegExp": /^(?:\.(?!travis|gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|require|buster|Gruntfile)\.js|package\.json)/,
 				"rawText" : {
 					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
+				},
+				"wrap": {
+					"start": "<%= build.header %>",
+					"end": "<%= build.footer %>"
 				}
 			},
 
@@ -99,7 +108,9 @@ module.exports = function(grunt) {
 		"uglify" : {
 			"options" : {
 				"report": "min",
-				"preserveComments" : false
+				"preserveComments" : function (node, comment) {
+					return /^!/.test(comment.value);
+				}
 			},
 			"bundles" : {
 				"files" : [{
@@ -114,23 +125,6 @@ module.exports = function(grunt) {
 
 		"git-describe" : {
 			"bundles" : {}
-		},
-
-		"usebanner" : {
-			"options" : {
-				"position" : "top",
-				"banner" : "<%= build.banner %>"
-			},
-			"bundles" : {
-				"files" : [{
-					"expand" : true,
-					"cwd" : "<%= build.dist %>",
-					"src" : [
-						"main.js",
-						"main.min.js"
-					]
-				}]
-			}
 		},
 
 		"buster" : {
@@ -157,5 +151,5 @@ module.exports = function(grunt) {
 	grunt.registerTask("compress", [ "uglify" ]);
 	grunt.registerTask("test", [ "buster" ]);
 	grunt.registerTask("docs", [ "jsduck" ]);
-	grunt.registerTask("default", [ "compile", "compress", "usebanner", "docs" ]);
+	grunt.registerTask("default", [ "compile", "compress", "docs" ]);
 };
