@@ -19,365 +19,76 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/gadget&quot;,
-	&quot;./runner/sequence&quot;,
-	&quot;./signal/render&quot;,
-	&quot;troopjs-compose/mixin/config&quot;,
-	&quot;troopjs-compose/decorator/before&quot;,
-	&quot;jquery&quot;,
-	&quot;when&quot;,
-	&quot;mu-selector-set&quot;,
-	&quot;poly/array&quot;,
-	&quot;mu-jquery-destroy&quot;
-], function (Gadget, sequence, render, COMPOSE_CONF, before, $, when, SelectorSet) {
+	&quot;troopjs-dom/component&quot;,
+	&quot;./config&quot;,
+	&quot;./weave&quot;,
+	&quot;./unweave&quot;,
+	&quot;./woven&quot;
+], function (Component, config, weave, unweave, woven) {
 	&quot;use strict&quot;;
 
-<span id='dom-component'>	/**
-</span>	 * Component that manages all DOM manipulation and integration.
-	 * @class dom.component
-	 * @extend core.component.gadget
-	 * @alias dom.component
+<span id='widget-component'>	/**
+</span>	 * @class widget.component
+	 * @extend dom.component
+	 * @alias feature.component
+	 * @mixin widget.config
+	 * @localdoc Adds functionality for working with the loom
 	 */
 
-	var UNDEFINED;
-	var NULL = null;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var $FN = $.fn;
-	var $GET = $FN.get;
-	var WHEN_ATTEMPT = when.attempt;
-	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
 	var $ELEMENT = &quot;$element&quot;;
-	var PROXY = &quot;proxy&quot;;
-	var DOM = &quot;dom&quot;;
-	var ARGS = &quot;args&quot;;
-	var NAME = &quot;name&quot;;
-	var VALUE = &quot;value&quot;;
-	var TYPE = &quot;type&quot;;
-	var RUNNER = &quot;runner&quot;;
-	var CONTEXT = &quot;context&quot;;
-	var CALLBACK = &quot;callback&quot;;
-	var DATA = &quot;data&quot;;
-	var DIRECT = &quot;direct&quot;;
-	var DELEGATED = &quot;delegated&quot;;
-	var ON = &quot;on&quot;;
-	var OFF = &quot;off&quot;;
-	var RE = new RegExp(&quot;^&quot; + DOM + &quot;/(.+)&quot;);
+	var SELECTOR_WEAVE = &quot;[&quot; + config.widget.weave + &quot;]&quot;;
+	var SELECTOR_WOVEN = &quot;[&quot; + config.widget.woven + &quot;]&quot;;
 
-	function on_delegated(handler, handlers) {
-		handlers[DELEGATED].add(handler[DATA], handler);
+	function widget_weave() {
+		return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
 	}
 
-	function on_direct(handler, handlers) {
-		handlers[DIRECT].push(handler);
-	}
-
-	function off_delegated(handler, handlers) {
-		handlers[DELEGATED].remove(handler[DATA], handler);
-	}
-
-	function off_direct(handler, handlers) {
-		var direct = handlers[DIRECT];
-		var index = direct.indexOf(handler);
-
-		if (index !== -1) {
-			direct.splice(index, 1);
-		}
-	}
-
-<span id='dom-component-event-sig-render'>	/**
-</span>	 * Render signal
-	 * @event sig/render
-	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #text}, {@link #append} and {@link #prepend}
-	 * @since 3.0
-	 * @preventable
-	 * @param {...*} [args] Render arguments
+<span id='widget-component-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
 	 */
+	return Component.extend({
+		&quot;displayName&quot; : &quot;widget/component&quot;,
 
-<span id='dom-component-handler-sig-render'>	/**
-</span>	 * Handles component render
-	 * @handler sig/render
-	 * @template
-	 * @inheritdoc #event-sig/render
-	 * @return {Promise}
-	 */
+<span id='widget-component-handler-sig-render'>		/**
+</span>		 * Handles component render
+		 * @handler
+		 * @inheritdoc
+		 * @localdoc Calls {@link #method-weave} to ensure newly rendered html is woven
+		 */
+		&quot;sig/render&quot;: widget_weave,
 
-<span id='dom-component-event-dom-destroy'>	/**
-</span>	 * Destroy DOM event
-	 * @localdoc Triggered when {@link #$element} of this widget is removed from the DOM tree.
-	 * @event dom/destroy
-	 * @param {jQuery} $event jQuery event object
-	 * @param {...*} [args] Event arguments
-	 * @preventable
-	 */
+<span id='widget-component-handler-dom-destroy'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc Calls {@link #method-unweave} to ensure this element is unwoven
+		 */
+		&quot;dom/destroy&quot; : function () {
+			if (this.phase !== &quot;finalize&quot;) {
+				unweave.call(this[$ELEMENT]);
+			}
+		},
 
-<span id='dom-component-handler-dom-destroy'>	/**
-</span>	 * Handles widget destruction from a DOM perspective
-	 * @handler dom/destroy
-	 * @template
-	 * @inheritdoc #event-dom/destroy
-	 * @localdoc Triggered when this widget is removed from the DOM
-	 */
+<span id='widget-component-method-weave'>		/**
+</span>		 * @method
+		 * @inheritdoc widget.weave#constructor
+		 */
+		&quot;weave&quot; : widget_weave,
 
-<span id='dom-component-method-html'>	/**
-</span>	 * Renders content and replaces {@link #$element} html contents
-	 * @method html
-	 * @param {Function|String|Promise} [contentOrPromise] Contents to render or a Promise for contents
-	 * @param {...*} [args] Template arguments
-	 * @fires sig/render
-	 * @return {String|Promise} The returned content string or promise of rendering.
-	 */
+<span id='widget-component-method-unweave'>		/**
+</span>		 * @inheritdoc widget.unweave#constructor
+		 */
+		&quot;unweave&quot; : function () {
+			return unweave.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
+		},
 
-<span id='dom-component-method-text'>	/**
-</span>	 * Renders content and replaces {@link #$element} text contents
-	 * @method text
-	 * @inheritdoc #html
-	 * @fires sig/render
-	 */
-
-<span id='dom-component-method-before'>	/**
-</span>	 * Renders content and inserts it before {@link #$element}
-	 * @method before
-	 * @inheritdoc #html
-	 * @fires sig/render
-	 */
-
-<span id='dom-component-method-after'>	/**
-</span>	 * Renders content and inserts it after {@link #$element}
-	 * @method after
-	 * @inheritdoc #html
-	 * @fires sig/render
-	 */
-
-<span id='dom-component-method-append'>	/**
-</span>	 * Renders content and appends it to {@link #$element}
-	 * @method append
-	 * @inheritdoc #html
-	 * @fires sig/render
-	 */
-
-<span id='dom-component-method-prepend'>	/**
-</span>	 * Renders content and prepends it to {@link #$element}
-	 * @method prepend
-	 * @inheritdoc #html
-	 * @fires sig/render
-	 */
-
-	// Add pragmas for DOM specials
-	COMPOSE_CONF.pragmas.push({
-		&quot;pattern&quot;: /^dom(?::([^\/]+))?\/([^\(]+(?=$))/,
-		&quot;replace&quot;: function(match, $1, $2) {
-			return DOM + &quot;/&quot; + $2 + ($1 === UNDEFINED ? &quot;()&quot; : &quot;(\&quot;&quot; + $1 + &quot;\&quot;)&quot;);
+<span id='widget-component-method-woven'>		/**
+</span>		 * @inheritdoc widget.woven#constructor
+		 */
+		&quot;woven&quot; : function () {
+			return woven.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
 		}
 	});
-
-<span id='dom-component-method-constructor'>	/**
-</span>	 * Creates a new component that attaches to a specified (jQuery) DOM element.
-	 * @method constructor
-	 * @param {jQuery|HTMLElement} $element The element that this component should be attached to
-	 * @param {String} [displayName] A friendly name for this component
-	 * @throws {Error} If no $element is provided
-	 * @throws {Error} If $element is not of supported type
-	 */
-	return Gadget.extend(function ($element, displayName) {
-		var me = this;
-		var $get;
-		var args;
-
-		// No $element
-		if ($element === UNDEFINED || $element === NULL) {
-			throw new Error(&quot;No $element provided&quot;);
-		}
-		// Is _not_ a jQuery element
-		else if (!$element.jquery) {
-			// Let `args` be `ARRAY_SLICE.call(arguments)`
-			args = ARRAY_SLICE.call(arguments);
-
-			// Let `$element` be `$($element)`
-			// Let `args[0]` be `$element`
-			args[0] = $element = $($element);
-		}
-		// From a different jQuery instance
-		else if (($get = $element.get) !== $GET) {
-			// Let `args` be `ARRAY_SLICE.call(arguments)`
-			args = ARRAY_SLICE.call(arguments);
-
-			// Let `$element` be `$($get.call($element, 0))`
-			// Let `args[0]` be `$element`
-			args[0] = $element = $($get.call($element, 0));
-		}
-
-<span id='dom-component-property-S-element'>		/**
-</span>		 * jQuery element this widget is attached to
-		 * @property {jQuery} $element
-		 * @readonly
-		 * @protected
-		 */
-		me[$ELEMENT] = $element;
-
-		// Update `me.displayName` if `displayName` was supplied
-		if (displayName !== UNDEFINED) {
-			me.displayName = displayName;
-		}
-
-		// Return potentially modified `args`
-		return args;
-	}, {
-		&quot;displayName&quot; : &quot;dom/component&quot;,
-
-<span id='dom-component-handler-sig-initialize'>		/**
-</span>		 * @handler
-		 * @localdoc Registers event handlers that are declared as DOM specials.
-		 * @inheritdoc
-		 */
-		&quot;sig/initialize&quot; : function () {
-			var me = this;
-
-			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
-				return me.on(special[NAME], special[VALUE], special[ARGS][0]);
-			});
-		},
-
-<span id='dom-component-handler-sig-setup'>		/**
-</span>		 * @handler
-		 * @localdoc Registers for each type of DOM event a proxy function on the DOM element that
-		 * re-dispatches those events.
-		 * @inheritdoc
-		 */
-		&quot;sig/setup&quot;: function (handlers, type) {
-			var me = this;
-			var matches;
-
-			if ((matches = RE.exec(type)) !== NULL) {
-				// Create delegated and direct event stores
-				handlers[DIRECT] = [];
-				handlers[DELEGATED] = new SelectorSet();
-
-				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
-					var args = {};
-					args[TYPE] = type;
-					args[RUNNER] = sequence;
-					args[CONTEXT] = me;
-					args = [ args ];
-
-					// Push original arguments on args
-					ARRAY_PUSH.apply(args, arguments);
-
-					// Return result of emit
-					return me.emit.apply(me, args);
-				});
-			}
-		},
-
-<span id='dom-component-handler-sig-teardown'>		/**
-</span>		 * @handler
-		 * @localdoc Remove for the DOM event handler proxies that are registered on the DOM element.
-		 * @inheritdoc
-		 */
-		&quot;sig/teardown&quot;: function (handlers, type) {
-			var me = this;
-			var matches;
-
-			if ((matches = RE.exec(type)) !== NULL) {
-				// $element.off handlers[PROXY]
-				me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
-			}
-		},
-
-<span id='dom-component-handler-sig-task'>		/**
-</span>		 * @handler
-		 * @localdoc Trigger a custom DOM event &quot;task&quot; whenever this widget performs a task.
-		 * @inheritdoc
-		 */
-		&quot;sig/task&quot; : function (task) {
-			this[$ELEMENT].trigger(&quot;task&quot;, [ task ]);
-		},
-
-<span id='dom-component-method-on'>		/**
-</span>		 * @method
-		 * @localdoc Registers emitter `on` and `off` callbacks
-		 * @inheritdoc
-		 */
-		&quot;on&quot;: before(function (type, callback, data) {
-			var _callback = callback;
-
-			// Check if this is a DOM type
-			if (RE.test(type)) {
-				// If `callback` is a function ...
-				if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-					// Create `_callback` object
-					_callback = {};
-					_callback[CALLBACK] = callback;
-				}
-
-				// Set `ON` and `OFF` callbacks
-				_callback[ON] = data !== UNDEFINED
-					? on_delegated
-					: on_direct;
-				_callback[OFF] = data !== UNDEFINED
-					? off_delegated
-					: off_direct;
-			}
-
-			// Mutate return args to next method
-			return [ type, _callback, data ];
-		})
-	}, [ &quot;html&quot;, &quot;text&quot;, &quot;before&quot;, &quot;after&quot;, &quot;append&quot;, &quot;prepend&quot; ].reduce(function (spec, method) {
-		// Let `$fn` be `$FN[method]`
-		var $fn = $FN[method];
-
-		// Create `spec[method]`
-		spec[method] = function (contentOrPromise) {
-			var me = this;
-
-			// If `arguments.length` is `0` just return `$fn.call(...)`
-			if (arguments.length === 0) {
-				return $fn.call(me[$ELEMENT]);
-			}
-
-			// Convert arguments to an array
-			var args = ARRAY_SLICE.call(arguments);
-
-			return when(contentOrPromise, function (content) {
-				var result;
-
-				// If `content` is a function ...
-				if (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION) {
-					// ... attempt and wait for resolution
-					result = WHEN_ATTEMPT.apply(me, args).then(function (_content) {
-						// Let `args[0]` be `_content`
-						// Call `$fn` with `_content`
-						$fn.call(me[$ELEMENT], args[0] = _content);
-
-						// Signal render
-						return render
-							.apply(me, args)
-							.yield(_content);
-					});
-				}
-				// ... otherwise we can emit right away
-				else {
-					// Let `args[0]` be `content`
-					// Call `$fn` with `content`
-					$fn.call(me[$ELEMENT], args[0] = content);
-
-					// Signal render
-					result = render
-						.apply(me, args)
-						.yield(content);
-				}
-
-				// Return `result`
-				return result;
-			});
-		};
-
-		// Return spec for next iteration
-		return spec;
-	}, {}));
 });
 </pre>
 </body>

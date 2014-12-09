@@ -19,44 +19,44 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-compose/mixin/factory&quot;,
+	&quot;troopjs-compose/factory&quot;,
 	&quot;troopjs-log/logger&quot;
 ], function ObjectBaseModule(Factory, logger) {
 	var INSTANCE_COUNTER = 0;
 	var INSTANCE_COUNT = &quot;instanceCount&quot;;
 
-<span id='core-mixin-base'>	/**
-</span>	 * Base object with instance count.
-	 * @class core.mixin.base
-	 * @implement compose.mixin
+<span id='core-composition'>	/**
+</span>	 * Base composition with instance count.
+	 * @class core.composition
+	 * @implement compose.composition
 	 * @mixin log.logger
 	 */
 
-<span id='core-mixin-base-static-method-create'>	/**
+<span id='core-composition-static-method-create'>	/**
 </span>	 * @method create
 	 * @static
 	 * @inheritable
 	 * @inheritdoc
-	 * @return {core.mixin.base} Instance of this class
+	 * @return {core.composition} Instance of this class
 	 */
 
-<span id='core-mixin-base-static-method-extend'>	/**
+<span id='core-composition-static-method-extend'>	/**
 </span>	 * @method extend
 	 * @static
 	 * @inheritable
 	 * @inheritdoc
-	 * @return {core.mixin.base} The extended subclass
+	 * @return {core.composition} The extended subclass
 	 */
 
-<span id='core-mixin-base-method-constructor'>	/**
+<span id='core-composition-method-constructor'>	/**
 </span>	 * Creates a new component instance
 	 * @method constructor
 	 */
-	return Factory(function ObjectBase() {
+	return Factory(function () {
 		// Update instance count
 		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
 	}, logger, {
-<span id='core-mixin-base-property-instanceCount'>		/**
+<span id='core-composition-property-instanceCount'>		/**
 </span>		 * Instance counter
 		 * @private
 		 * @readonly
@@ -64,15 +64,15 @@ define([
 		 */
 		&quot;instanceCount&quot; : INSTANCE_COUNTER,
 
-<span id='core-mixin-base-property-displayName'>		/**
+<span id='core-composition-property-displayName'>		/**
 </span>		 * The hierarchical namespace for this component that indicates it's functionality.
-		 * @private
+		 * @protected
 		 * @readonly
 		 * @property {String}
 		 */
-		&quot;displayName&quot; : &quot;core/mixin/base&quot;,
+		&quot;displayName&quot; : &quot;core/composition&quot;,
 
-<span id='core-mixin-base-method-toString'>		/**
+<span id='core-composition-method-toString'>		/**
 </span>		 * Gives string representation of this component instance.
 		 * @return {String} {@link #displayName}`@`{@link #instanceCount}
 		 * @protected

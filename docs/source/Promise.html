@@ -15,7 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='when-Promise'>/**
+  <pre class="prettyprint lang-js"><span id='Promise'>/**
 </span> *
  * A Promise represents the pending result of a computation that may not have completed yet.
  *
@@ -40,7 +40,7 @@
  * ## Consumers
  *
  * A Promise can be safely given to any number of consumers, who can register to observe the result
- * (or error/reason) of the promise using {@link when#constructor}, or the promise's {@link #then}.
+ * (or error/reason) of the promise using the promise's {@link #then}.
  *
  *     when(promise,
  *       function(result) {
@@ -67,12 +67,12 @@
  * and is available under &lt;a href=&quot;ttp://www.opensource.org/licenses/mit-license.php&quot;&gt;MIT license&lt;/a&gt;.
  * &lt;/div&gt;
  *
- * @class when.Promise
- * @alternateClassName Promise
+ * @class Promise
  * @author Brian Cavalier
+ * @private
  */
 
-<span id='when-Promise-method-done'>/**
+<span id='Promise-method-done'>/**
 </span> * Consumes a promise as the final handler in a thenable chain.
  *
  * 	promise.done(handleValue, handleError);
@@ -104,7 +104,7 @@
  * @param {Function} [handlerError]
  */
 
-<span id='when-Promise-method-then'>/**
+<span id='Promise-method-then'>/**
 </span> * The primary API for transforming a promise's value and producing a new promise for the transformed result,
  * or for handling and recovering from intermediate errors in a promise chain.
  *
@@ -133,7 +133,7 @@
  * @returns {Promise}
  */
 
-<span id='when-Promise-method-spread'>/**
+<span id='Promise-method-spread'>/**
 </span> * Arranges to call `variadicOnFulfilled` with promise's values, which is assumed to be an array, as its argument list,
  * e.g. `variadicOnFulfilled.spread(undefined, array)`.
  *
@@ -154,7 +154,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-catch'>/**
+<span id='Promise-method-catch'>/**
 </span> * Arranges to call `onRejected` on the promise's rejection reason if it is rejected.
  *
  * 	promise.catch(onRejected);
@@ -171,7 +171,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-finally'>/**
+<span id='Promise-method-finally'>/**
 </span> * Finally allows you to execute &quot;cleanup&quot; type tasks in a promise chain.
  *
  * 	promise.finally(onFulfilledOrRejected);
@@ -208,7 +208,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-yield'>/**
+<span id='Promise-method-yield'>/**
 </span> * Returns a yielded promise
  *
  * 	originalPromise.yield(promiseOrValue);
@@ -231,7 +231,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-else'>/**
+<span id='Promise-method-else'>/**
 </span> * If a promise is rejected, {@link #else} catches the rejection and resolves the returned promise with a default value.
  * This is a shortcut for manually {@link #catch}ing a promise and returning a different value, as such:
  *
@@ -246,7 +246,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-tap'>/**
+<span id='Promise-method-tap'>/**
 </span> * Executes a function as a side effect when `promise` fulfills.
  *
  * 	promise.tap(onFulfilledSideEffect);
@@ -277,7 +277,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-delay'>/**
+<span id='Promise-method-delay'>/**
 </span> * Create a new promise that will, after `milliseconds` delay, fulfill with the same value as promise.
  *
  * 	var delayedPromise = promise.delay(milliseconds);
@@ -304,7 +304,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-timeout'>/**
+<span id='Promise-method-timeout'>/**
 </span> * Create a new promise that will reject after a timeout if `promise` does not fulfill or reject beforehand.
  *
  * 	var node = require('when/node');
@@ -324,7 +324,7 @@
  * @return {Promise}
  */
 
-<span id='when-Promise-method-inspect'>/**
+<span id='Promise-method-inspect'>/**
 </span> * Returns a snapshot descriptor of the current state of `promise`.
  *
  * 	var status = promise.inspect();
@@ -347,7 +347,7 @@
  * @return {*} return.reason Promises rejection reason
  */
 
-<span id='when-Promise-method-with'>/**
+<span id='Promise-method-with'>/**
 </span> * Creates a new promise that follows `promise`, but which will invoke its handlers with their `this` set to object.
  * Normally, promise handlers are invoked with no specific `thisArg`, so with can be very useful when bridging
  * promises to object-oriented patterns and libraries.
@@ -403,7 +403,7 @@
  * @returns {Promise}
  */
 
-<span id='when-Promise-method-progress'>/**
+<span id='Promise-method-progress'>/**
 </span> * Registers a handler for progress updates from `promise`. It is a shortcut for:
  *
  * 	promise.then(void 0, void 0, onProgress);
@@ -464,7 +464,7 @@
  * @param {Function} onProgress
  */
 
-<span id='when-Promise-method-never'>/**
+<span id='Promise-method-never'>/**
 </span> * Return a promise that remains pending forever
  *
  * @method never

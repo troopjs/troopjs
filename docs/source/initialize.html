@@ -19,7 +19,7 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../config&quot;,
+	&quot;../../config&quot;,
 	&quot;when&quot;
 ], function (config, when) {
 	var UNDEFINED;
@@ -27,20 +27,21 @@ define([
 	var PHASE = &quot;phase&quot;;
 	var INITIALIZE = config.phase.initialize;
 	var INITIALIZED = config.phase.initialized;
-	var SIG_INITIALIZE = &quot;sig/&quot; + config.signal.initialize;
+	var SIG_INITIALIZE = config.signal.initialize;
 
 <span id='core-component-signal-initialize'>	/**
 </span>	 * @class core.component.signal.initialize
 	 * @implement core.component.signal
-	 * @mixin core.component.config
+	 * @mixin core.config
 	 * @static
 	 * @alias feature.signal
+	 * @private
 	 */
 
 <span id='core-component-signal-initialize-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `initialized`
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `initialized`
 	 */
 
 	return function initialize() {

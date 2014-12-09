@@ -20,7 +20,7 @@
  */
 define([
 	&quot;./start&quot;,
-	&quot;../config&quot;,
+	&quot;../../config&quot;,
 	&quot;when&quot;
 ], function (start, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
@@ -28,20 +28,21 @@ define([
 	var STARTED = config.phase.started;
 	var STOP = config.phase.stop;
 	var STOPPED = config.phase.stopped;
-	var SIG_STOP = &quot;sig/&quot; + config.signal.stop;
+	var SIG_STOP = config.signal.stop;
 
 <span id='core-component-signal-stop'>	/**
 </span>	 * @class core.component.signal.stop
 	 * @implement core.component.signal
-	 * @mixin core.component.config
+	 * @mixin core.config
 	 * @static
 	 * @alias feature.signal
+	 * @private
 	 */
 
 <span id='core-component-signal-stop-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `stopped`
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `stopped`
 	 */
 
 	return function stop() {

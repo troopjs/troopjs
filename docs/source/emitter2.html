@@ -20,111 +20,372 @@
  */
 define([
 	&quot;../event/emitter&quot;,
-	&quot;./runner/pipeline&quot;,
-	&quot;troopjs-compose/decorator/from&quot;
-], function (Emitter, pipeline, from) {
+	&quot;../config&quot;,
+	&quot;./registry&quot;,
+	&quot;./runner/sequence&quot;,
+	&quot;../task/factory&quot;,
+	&quot;mu-merge&quot;,
+	&quot;troopjs-compose/decorator/around&quot;,
+	&quot;when&quot;,
+	&quot;poly/array&quot;
+], function (Emitter, config, registry, sequence, taskFactory, merge, around, when) {
 	&quot;use strict&quot;;
 
-<span id='core-pubsub-emitter'>	/**
-</span>	 * A specialized version of {@link core.event.emitter emitter} for memorized events.
-	 *
-	 * ## Memorized emitting
-	 *
-	 * A emitter event will memorize the &quot;current&quot; value of each event. Each runner may have it's own interpretation
-	 * of what &quot;current&quot; means.
-	 *
-	 * @class core.pubsub.emitter
+<span id='core-component-emitter'>	/**
+</span>	 * Component emitter
+	 * @class core.component.emitter
 	 * @extend core.event.emitter
+	 * @mixin core.config
+	 * @alias feature.component
 	 */
 
 	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var MEMORY = &quot;memory&quot;;
-	var HANDLERS = &quot;handlers&quot;;
+	var FALSE = false;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var RUNNER = &quot;runner&quot;;
+	var HANDLERS = &quot;handlers&quot;;
+	var HEAD = &quot;head&quot;;
+	var TAIL = &quot;tail&quot;;
+	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
+	var VALUE = &quot;value&quot;;
+	var ON = &quot;on&quot;;
+	var ONE = &quot;one&quot;;
+	var SIG = &quot;sig&quot;;
+	var SIG_SETUP = config.signal.setup;
+	var SIG_ADD = config.signal.add;
+	var SIG_REMOVE = config.signal.remove;
+	var SIG_TEARDOWN = config.signal.teardown;
+	var SIG_TASK = config.signal.task;
+	var SIG_PATTERN = new RegExp(&quot;^&quot; + SIG + &quot;/(.+)&quot;);
 
-<span id='core-pubsub-emitter-method-on'>	/**
-</span>	 * @method on
-	 * @inheritdoc
-	 * @private
+<span id='core-component-emitter-property-phase'>	/**
+</span>	 * Current lifecycle phase
+	 * @protected
+	 * @readonly
+	 * @property {core.config.phase} phase
 	 */
 
-<span id='core-pubsub-emitter-method-off'>	/**
-</span>	 * @method off
-	 * @inheritdoc
-	 * @private
+<span id='core-component-emitter-event-sig-setup'>	/**
+</span>	 * Setup signal
+	 * @event sig/setup
+	 * @localdoc Triggered when the first event handler of a particular type is added via {@link #method-on}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {*} [data]
 	 */
 
-<span id='core-pubsub-emitter-method-emit'>	/**
-</span>	 * @method emit
-	 * @inheritdoc
-	 * @private
+<span id='core-component-emitter-event-sig-add'>	/**
+</span>	 * Add signal
+	 * @event sig/add
+	 * @localdoc Triggered when a event handler of a particular type is added via {@link #method-on}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 * @param {*} [data]
 	 */
 
-	return Emitter.extend({
-		&quot;displayName&quot;: &quot;core/pubsub/emitter&quot;,
+<span id='core-component-emitter-event-sig-remove'>	/**
+</span>	 * Remove signal
+	 * @event sig/remove
+	 * @localdoc Triggered when a event handler of a particular type is removed via {@link #method-off}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 */
 
-<span id='core-pubsub-emitter-method-subscribe'>		/**
-</span>		 * Listen to an event that are emitted publicly.
-		 * @chainable
-		 * @inheritdoc #on
-		 * @method
-		 */
-		&quot;subscribe&quot; : from(&quot;on&quot;),
+<span id='core-component-emitter-event-sig-teardown'>	/**
+</span>	 * Teardown signal
+	 * @event sig/teardown
+	 * @localdoc Triggered when the last event handler of type is removed for a particular type via {@link #method-off}.
+	 * @since 3.0
+	 * @preventable
+	 * @param {Object} handlers
+	 * @param {String} type
+	 * @param {Function} callback
+	 */
 
-<span id='core-pubsub-emitter-method-unsubscribe'>		/**
-</span>		 * Remove a public event listener.
-		 * @chainable
-		 * @inheritdoc #off
-		 * @method
-		 */
-		&quot;unsubscribe&quot; : from(&quot;off&quot;),
+<span id='core-component-emitter-event-sig-initialize'>	/**
+</span>	 * Initialize signal
+	 * @event sig/initialize
+	 * @localdoc Triggered when this component enters the initialize phase
+	 * @param {...*} [args] Initialize arguments
+	 */
 
-<span id='core-pubsub-emitter-method-publish'>		/**
-</span>		 * Emit a public event that can be subscribed by other components.
-		 *
-		 * Handlers are run in a pipeline, in which each handler will receive muted
-		 * data params depending on the return value of the previous handler:
-		 *
-		 *   - The original data params from {@link #publish} if this is the first handler, or the previous handler returns `undefined`.
-		 *   - One value as the single argument if the previous handler return a non-array.
-		 *   - Each argument value deconstructed from the returning array of the previous handler.
-		 *
-		 * @param {String} type The topic to publish.
-		 * @param {...*} [args] Additional params that are passed to the handler function.
+<span id='core-component-emitter-event-sig-start'>	/**
+</span>	 * Start signal
+	 * @event sig/start
+	 * @localdoc Triggered when this component enters the start phase
+	 * @param {...*} [args] Initialize arguments
+	 */
+
+<span id='core-component-emitter-event-sig-stop'>	/**
+</span>	 * Stop signal
+	 * @event sig/stop
+	 * @localdoc Triggered when this component enters the stop phase
+	 * @param {...*} [args] Stop arguments
+	 */
+
+<span id='core-component-emitter-event-sig-finalize'>	/**
+</span>	 * Finalize signal
+	 * @event sig/finalize
+	 * @localdoc Triggered when this component enters the finalize phase
+	 * @param {...*} [args] Finalize arguments
+	 */
+
+<span id='core-component-emitter-event-sig-task'>	/**
+</span>	 * Task signal
+	 * @event sig/task
+	 * @localdoc Triggered when this component starts a {@link #method-task}.
+	 * @param {Promise} task Task
+	 * @param {String} name Task name
+	 * @return {Promise}
+	 */
+
+<span id='core-component-emitter-handler-sig-start'>	/**
+</span>	 * Handles the component start
+	 * @handler sig/start
+	 * @inheritdoc #event-sig/start
+	 * @template
+	 * @return {Promise}
+	 */
+
+<span id='core-component-emitter-handler-sig-stop'>	/**
+</span>	 * Handles the component stop
+	 * @handler sig/stop
+	 * @inheritdoc #event-sig/stop
+	 * @template
+	 * @return {Promise}
+	 */
+
+<span id='core-component-emitter-handler-sig-setup'>	/**
+</span>	 * Handles an event setup
+	 * @handler sig/setup
+	 * @inheritdoc #event-sig/setup
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-emitter-handler-sig-add'>	/**
+</span>	 * Handles an event add
+	 * @handler sig/add
+	 * @inheritdoc #event-sig/add
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-emitter-handler-sig-remove'>	/**
+</span>	 * Handles an event remove
+	 * @handler sig/remove
+	 * @inheritdoc #event-sig/remove
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-emitter-handler-sig-teardown'>	/**
+</span>	 * Handles an event teardown
+	 * @handler sig/teardown
+	 * @inheritdoc #event-sig/teardown
+	 * @template
+	 * @return {*|Boolean}
+	 */
+
+<span id='core-component-emitter-method-one'>	/**
+</span>	 * @method one
+	 * @chainable
+	 * @inheritdoc
+	 * @localdoc Adds support for {@link #event-sig/setup} and {@link #event-sig/add}.
+	 * @fires sig/setup
+	 * @fires sig/add
+	 */
+
+<span id='core-component-emitter-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 */
+	return Emitter.extend(function Component() {
+		var me = this;
+		var specials = me.constructor.specials[SIG] || ARRAY_PROTO;
+
+		// Iterate specials
+		specials.forEach(function (special) {
+			me.on(special[NAME], special[VALUE]);
+		});
+	}, {
+		&quot;displayName&quot; : &quot;core/component/base&quot;,
+
+<span id='core-component-emitter-handler-sig-initialize'>		/**
+</span>		 * Handles the component initialization.
+		 * @inheritdoc #event-sig/initialize
+		 * @localdoc Registers event handlers declared ON specials
+		 * @handler
 		 * @return {Promise}
 		 */
-		&quot;publish&quot; : function (type) {
+		&quot;sig/initialize&quot; : function () {
 			var me = this;
+			var specials = me.constructor.specials;
 
-			// Prepare event object
-			var event = {};
-			event[TYPE] = type;
-			event[RUNNER] = pipeline;
+			// Register component
+			registry.register(me.toString(), me);
 
-			// Slice `arguments`
-			var args = ARRAY_SLICE.call(arguments);
+			// Initialize ON specials
+			var specials_on = when.map(specials[ON] || ARRAY_PROTO, function (special) {
+				return me.on(special[TYPE], special[VALUE]);
+			});
 
-			// Modify first `arg`
-			args[0] = event;
+			// Initialize ONE specials
+			var specials_one = when.map(specials[ONE] || ARRAY_PROTO, function (special) {
+				return me.one(special[TYPE], special[VALUE]);
+			});
 
-			// Delegate the actual emitting to event emitter.
-			return me.emit.apply(me, args);
+			// Join and return
+			return when.join(specials_on, specials_one);
 		},
 
-<span id='core-pubsub-emitter-method-peek'>		/**
-</span>		 * Returns value in handlers MEMORY
-		 * @param {String} type event type to peek at
-		 * @param {*} [value] Value to use _only_ if no memory has been recorder
-		 * @return {*} Value in MEMORY
+<span id='core-component-emitter-handler-sig-finalize'>		/**
+</span>		 * Handles the component finalization.
+		 * @inheritdoc #event-sig/finalize
+		 * @localdoc Un-registers all handlers
+		 * @handler
+		 * @return {Promise}
 		 */
-		&quot;peek&quot;: function (type, value) {
-			var handlers;
+		&quot;sig/finalize&quot; : function () {
+			var me = this;
 
-			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
-				? value
-				: handlers[MEMORY];
+			// Un-register component
+			registry.unregister(me.toString(), me);
+
+			// Finalize all handlers, in reverse
+			return when.map(me[HANDLERS].reverse(), function (handlers) {
+				return me.off(handlers[TYPE]);
+			});
+		},
+
+<span id='core-component-emitter-method-on'>		/**
+</span>		 * @chainable
+		 * @method
+		 * @inheritdoc
+		 * @localdoc Adds support for {@link #event-sig/setup} and {@link #event-sig/add}.
+		 * @fires sig/setup
+		 * @fires sig/add
+		 */
+		&quot;on&quot;: around(function (fn) {
+			return function (type, callback, data) {
+				var me = this;
+				var event;
+				var handlers;
+				var result;
+
+				// If this type is NOT a signal we don't have to event try
+				if (!SIG_PATTERN.test(type)) {
+					// Initialize the handlers for this type if they don't exist.
+					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
+						handlers = {};
+						handlers[TYPE] = type;
+					}
+
+					// Initialize event
+					event = {};
+					event[RUNNER] = sequence;
+
+					// If this is the first handler signal SIG_SETUP
+					if (!(HEAD in handlers)) {
+						event[TYPE] = SIG_SETUP;
+						result = me.emit(event, handlers, type, callback, data);
+					}
+
+					// If we were not interrupted
+					if (result !== FALSE) {
+						// Signal SIG_ADD
+						event[TYPE] = SIG_ADD;
+						result = me.emit(event, handlers, type, callback, data);
+					}
+
+					// If we were not interrupted and `handlers` is not the list for `type` append it
+					if (result !== FALSE &amp;&amp; me[HANDLERS][type] !== handlers) {
+						ARRAY_PUSH.call(me[HANDLERS], me[HANDLERS][type] = handlers);
+					}
+				}
+
+				// If we were not interrupted return result from super.on, otherwise just this
+				return result !== FALSE
+						? fn.call(me, type, callback, data)
+						: me;
+			};
+		}),
+
+<span id='core-component-emitter-method-off'>		/**
+</span>		 * @chainable
+		 * @method
+		 * @inheritdoc
+		 * @localdoc Adds support for {@link #event-sig/remove} and {@link #event-sig/teardown}.
+		 * @fires sig/remove
+		 * @fires sig/teardown
+		 */
+		&quot;off&quot;: around(function(fn) {
+			return function off(type, callback) {
+				var me = this;
+				var event;
+				var handlers;
+				var result;
+
+				if (!SIG_PATTERN.test(type)) {
+					// Initialize the handlers for this type if they don't exist.
+					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
+						handlers = {};
+						handlers[TYPE] = type;
+					}
+
+					// Initialize event
+					event = {};
+					event[RUNNER] = sequence;
+
+					// Signal SIG_REMOVE
+					event[TYPE] = SIG_REMOVE;
+					result = me.emit(event, handlers, type, callback);
+
+					// If we were not interrupted and this is the last handler signal SIG_TEARDOWN
+					if (result !== FALSE &amp;&amp; handlers[HEAD] === handlers[TAIL]) {
+						event[TYPE] = SIG_TEARDOWN;
+						result = me.emit(event, handlers, type, callback);
+					}
+
+					// If we were not interrupted and `handlers` is not the list for `type` append it
+					if (result !== FALSE &amp;&amp; me[HANDLERS][type] !== handlers) {
+						ARRAY_PUSH.call(me[HANDLERS], me[HANDLERS][type] = handlers);
+					}
+				}
+
+				// If we were not interrupted return result from super.off, otherwise just this
+				return result !== FALSE
+					? fn.call(me, type, callback)
+					: me;
+			};
+		}),
+
+<span id='core-component-emitter-method-task'>		/**
+</span>		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
+		 * @param {Promise|Resolver} promiseOrResolver The task resolver.
+		 * @param {String} [name] Task name
+		 * @return {Promise}
+		 * @fires sig/task
+		 */
+		&quot;task&quot; : function (promiseOrResolver, name) {
+			var me = this;
+
+			// Create task
+			var task = taskFactory.call(me, promiseOrResolver, name);
+
+			// Signal `SIG_TASK` and yield `task`
+			return me.emit(SIG_TASK, task, name).yield(task);
 		}
 	});
 });

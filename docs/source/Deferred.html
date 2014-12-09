@@ -15,7 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='when-Deferred'>/**
+  <pre class="prettyprint lang-js"><span id='Deferred'>/**
 </span> * A Deferred represents a computation or unit of work that may not have completed yet. Typically (but not always),
  * that computation will be something that executes asynchronously and completes at some point in the future.
  * For example, XHR operations (asynchronous ones, anyway, which is typical) in a browser never complete in
@@ -40,7 +40,7 @@
  * ## Consumers
  *
  * Consumers can observe the result via {@link #promise}. The promise can be given to any number of components,
- * who can observe the result using {@link when#constructor}.
+ * who can observe the result using {@link Promise#then}.
  * Like {@link #resolver}, even though when.js's Deferred implements the {@link Promise} API, it is better to
  * give only the {@link #promise} to consumers so that they can't modify the Deferred (such as calling
  * {@link #resolve} or {@link #reject} on it!).
@@ -52,52 +52,52 @@
  * ## Resolving and rejecting
  *
  * When a producer provides the result by calling {@link Resolver#resolve resolver.resolve} (or {@link #resolve}), all consumers
- * are notified by having their callbacks (which they registered via {@link when#constructor}) called with the result.
+ * are notified by having their callbacks (which they registered via {@link Promise#then}) called with the result.
  *
  * A producer may also *reject* the Deferred, signalling that the Deferred's computation failed, or could not complete
  * given some set of constraints. In this case, all consumers will be notified by having their `errorback` called
- * (the 3rd parameter passed to {@link when#constructor}, or the 2nd parameter passed to `{@link Promise#then}).
+ * (the 2nd parameter passed to `{@link Promise#then}).
  *
  * ## Progress
  *
  * when.js's Deferreds also support progress notifications, to indicate to consumers that the computation is making
  * progress toward its result. A producer may call {@link Resolver#notify resolver.notify} (or {@link #notify}) and pass
  * a single parameter (whatever it wants) to indicate progress. All consumers will be notified by having their
- * progress handler called (the 4th parameter to {@link when#constructor}, or the 3rd parameter to {@link Promise#then}).
+ * progress handler called (the 3rd parameter to {@link Promise#then}).
  *
  * &lt;div class=&quot;notice&quot;&gt;
  * Documentation for this class comes from &lt;a href=&quot;https://github.com/cujojs/when/blob/master/docs/api.md&quot;&gt;when.js&lt;/a&gt;
  * and is available under &lt;a href=&quot;ttp://www.opensource.org/licenses/mit-license.php&quot;&gt;MIT license&lt;/a&gt;.
  * &lt;/div&gt;
  *
- * @class when.Deferred
- * @alternateClassName Deferred
+ * @class Deferred
  * @author Brian Cavalier
+ * @private
  */
 
-<span id='when-Deferred-property-promise'>/**
+<span id='Deferred-property-promise'>/**
 </span> * The promise under this Deferred.
  * @property {Promise} promise
  */
 
-<span id='when-Deferred-method-resolve'>/**
+<span id='Deferred-method-resolve'>/**
 </span> * @inheritdoc Resolver#resolve
  * @method resolve
  * @return {undefined}
  */
 
-<span id='when-Deferred-method-reject'>/**
+<span id='Deferred-method-reject'>/**
 </span> * @inheritdoc Resolver#reject
  * @method reject
  * @return {undefined}
  */
 
-<span id='when-Deferred-method-notify'>/**
+<span id='Deferred-method-notify'>/**
 </span> * @inheritdoc Resolver#notify
  * @method notify
  */
 
-<span id='when-Deferred-property-resolver'>/**
+<span id='Deferred-property-resolver'>/**
 </span> * The resolver represents responsibility--the responsibility of fulfilling or rejecting the associated promise.
  * This responsibility may be given out separately from the promise itself.
  * @property {Resolver} resolver

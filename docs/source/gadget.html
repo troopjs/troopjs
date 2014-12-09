@@ -19,12 +19,11 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./base&quot;,
+	&quot;./emitter&quot;,
 	&quot;./runner/pipeline&quot;,
-	&quot;troopjs-compose/mixin/config&quot;,
-	&quot;when&quot;,
-	&quot;../pubsub/hub&quot;
-],function (Component, pipeline, COMPOSE_CONF, when, hub) {
+	&quot;../pubsub/hub&quot;,
+	&quot;when&quot;
+],function (Emitter, pipeline, hub, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-gadget'>	/**
@@ -60,8 +59,9 @@ define([
 	 * 	});
 	 *
 	 * @class core.component.gadget
-	 * @extend core.component.base
+	 * @extend core.component.emitter
 	 * @localdoc Adds convenience methods and specials to interact with the hub
+	 * @alias feature.component
 	 */
 
 	var UNDEFINED;
@@ -71,24 +71,17 @@ define([
 	var CONTEXT = &quot;context&quot;;
 	var CALLBACK = &quot;callback&quot;;
 	var ARGS = &quot;args&quot;;
+	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
 	var VALUE = &quot;value&quot;;
 	var HUB = &quot;hub&quot;;
 	var RE = new RegExp(&quot;^&quot; + HUB + &quot;/(.+)&quot;);
 
-	// Add pragma for HUB special
-	COMPOSE_CONF.pragmas.push({
-		&quot;pattern&quot;: /^hub(?::(memory))?\/(.+)/,
-		&quot;replace&quot;: function ($0, $1, $2) {
-			return HUB + &quot;(\&quot;&quot; + $2 + &quot;\&quot;, &quot; + !!$1 + &quot;)&quot;;
-		}
-	});
-
 <span id='core-component-gadget-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
 	 */
-	return Component.extend({
+	return Emitter.extend({
 		&quot;displayName&quot; : &quot;core/component/gadget&quot;,
 
 <span id='core-component-gadget-handler-sig-initialize'>		/**
@@ -100,7 +93,7 @@ define([
 			var me = this;
 
 			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
-				return me.subscribe(special[ARGS][0], special[VALUE]);
+				return me.on(special[NAME], special[VALUE]);
 			});
 		},
 
@@ -119,12 +112,11 @@ define([
 				.map(function (special) {
 					var memory;
 					var result;
-					var topic = special[ARGS][0];
 
-					if (special[ARGS][1] === true &amp;&amp; (memory = me.peek(topic, empty)) !== empty) {
+					if (special[ARGS][0] === true &amp;&amp; (memory = hub.peek(special[TYPE], empty)) !== empty) {
 						// Redefine result
 						result = {};
-						result[TYPE] = HUB + &quot;/&quot; + topic;
+						result[TYPE] = special[NAME];
 						result[RUNNER] = pipeline;
 						result[CONTEXT] = me;
 						result[CALLBACK] = special[VALUE];
@@ -182,50 +174,6 @@ define([
 				// Unsubscribe from the hub
 				hub.unsubscribe(matches[1], _callback);
 			}
-		},
-
-<span id='core-component-gadget-handler-sig-task'>		/**
-</span>		 * Handles a component task
-		 * @inheritdoc #event-sig/task
-		 * @localdoc Publishes `task` on the {@link core.pubsub.hub hub} whenever a {@link #event-sig/task task} event is emitted
-		 * @return {Promise}
-		 * @template
-		 * @handler
-		 */
-		&quot;sig/task&quot; : function (task) {
-			return this.publish(&quot;task&quot;, task);
-		},
-
-<span id='core-component-gadget-method-publish'>		/**
-</span>		 * @inheritdoc core.pubsub.hub#publish
-		 */
-		&quot;publish&quot; : function () {
-			return hub.publish.apply(hub, arguments);
-		},
-
-<span id='core-component-gadget-method-subscribe'>		/**
-</span>		 * @chainable
-		 * @inheritdoc core.pubsub.hub#subscribe
-		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
-		 */
-		&quot;subscribe&quot; : function (event, callback, data) {
-			return this.on(HUB + &quot;/&quot; + event, callback, data);
-		},
-
-<span id='core-component-gadget-method-unsubscribe'>		/**
-</span>		 * @chainable
-		 * @inheritdoc core.pubsub.hub#unsubscribe
-		 * @localdoc Unsubscribe from public events in context of this component.
-		 */
-		&quot;unsubscribe&quot; : function (event, callback) {
-			return this.off(HUB + &quot;/&quot; + event, callback);
-		},
-
-<span id='core-component-gadget-method-peek'>		/**
-</span>		 * @inheritdoc core.pubsub.hub#peek
-		 */
-		&quot;peek&quot; : function (event, value) {
-			return hub.peek(event, value);
 		}
 	});
 });

@@ -28,7 +28,7 @@ define([
 ], function (config, Decorator, unique, getargs) {
 	&quot;use strict&quot;;
 
-<span id='compose-mixin-factory'>	/**
+<span id='compose-factory'>	/**
 </span>	 * The factory module establishes the fundamental object composition in TroopJS:
 	 *
 	 *  - **First-class mixin** based on prototype, that supports deterministic multiple inheritance that:
@@ -97,8 +97,8 @@ define([
 	 *  		instance.somethingElse();
 	 *  		instance.evenMore();
 	 *
-	 * @class compose.mixin.factory
-	 * @mixin compose.mixin.config
+	 * @class compose.factory
+	 * @mixin compose.config
 	 * @static
 	 */
 
@@ -125,21 +125,21 @@ define([
 	var TYPES = &quot;types&quot;;
 	var NAME = &quot;name&quot;;
 	var PRAGMAS = config[&quot;pragmas&quot;];
-	var SPECIALS_PATTERN = config[&quot;specialsPattern&quot;];
+	var PATTERN = config[SPECIALS];
 
-<span id='compose-mixin-factory-static-method-create'>	/**
+<span id='compose-factory-static-method-create'>	/**
 </span>	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
 	 * @method create
 	 * @static
-	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @return {Object} Object instance created out of the mixin of constructors and objects.
+	 * @param {...(Function|Object)} composition One or more constructors or objects to be mixed in.
+	 * @return {compose.composition} Object instance created out of the composition of constructors and objects.
 	 */
-	function create(mixin) {
+	function create(composition) {
 		/*jshint validthis:true*/
 		return extend.apply(this, arguments)();
 	}
 
-	function extend(mixin) {
+	function extend(composition) {
 		/*jshint validthis:true*/
 		var args = [ this ];
 		ARRAY_PUSH.apply(args, arguments);
@@ -155,14 +155,14 @@ define([
 			: OBJECT_TOSTRING.call(me);
 	}
 
-<span id='compose-mixin-factory-static-method-constructor'>	/**
+<span id='compose-factory-static-method-constructor'>	/**
 </span>	 * Create a new constructor or to extend an existing one from multiple others constructors/objects.
 	 * @method constructor
 	 * @static
-	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @return {compose.mixin} Object class created out of the mixin of constructors and objects.
+	 * @param {...(Function|Object)} composition One or more constructors or objects to be mixed in.
+	 * @return {compose.composition} Object class created out of the composition of constructors and objects.
 	 */
-	function Factory (mixin) {
+	function Factory (composition) {
 		var special;
 		var specials = [];
 		var specialsLength;
@@ -241,7 +241,7 @@ define([
 				}
 
 				// Check if this matches a SPECIAL signature
-				if ((matches = SPECIALS_PATTERN.exec(name))) {
+				if ((matches = PATTERN.exec(name))) {
 					// Create special
 					special = {};
 

@@ -19,22 +19,51 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
+	&quot;troopjs-dom/config&quot;,
 	&quot;module&quot;,
 	&quot;mu-merge&quot;
-], function (module, merge) {
-<span id='log-config'>	/**
-</span>	 * Provides configuration for the logging package
-	 * @class log.config
-	 * @protected
+], function (config, module, merge) {
+	&quot;use strict&quot;;
+
+<span id='widget-config-widget'>	/**
+</span>	 * @class widget.config.widget
+	 * @enum
+	 * @private
+	 */
+	var WIDGET = {
+<span id='widget-config-widget-property-S-weft'>		/**
+</span>		 * Property of the widget where the **weft** resides.
+		 */
+		&quot;$weft&quot; : &quot;$weft&quot;,
+<span id='widget-config-widget-property-weave'>		/**
+</span>		 * Attribute name of the element where the **weave** resides.
+		 */
+		&quot;weave&quot; : &quot;data-weave&quot;,
+<span id='widget-config-widget-property-unweave'>		/**
+</span>		 * Attribute name of the element where the **unweave** resides.
+		 */
+		&quot;unweave&quot; : &quot;data-unweave&quot;,
+<span id='widget-config-widget-property-woven'>		/**
+</span>		 * Attribute name of the element where the **woven** resides.
+		 */
+		&quot;woven&quot; : &quot;data-woven&quot;
+	};
+
+<span id='widget-config'>	/**
+</span>	 * Provides configuration for the widget package
+	 * @class widget.config
+	 * @extends dom.config
+	 * @private
 	 * @alias feature.config
 	 */
 
-	return merge.call({
-<span id='log-config-cfg-sinks'>		/**
-</span>		 * Sinks that the {@link log.sink.forward} logger will use
-		 * @cfg {log.console[]} sinks
+	return merge.call({}, config, {
+<span id='widget-config-cfg-widget'>		/**
+</span>		 * Widget related configuration
+		 * @cfg {widget.config.widget}
+		 * @protected
 		 */
-		&quot;sinks&quot;: []
+		&quot;widget&quot;: WIDGET
 	}, module.config());
 });</pre>
 </body>

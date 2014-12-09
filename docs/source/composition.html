@@ -15,27 +15,27 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='compose-mixin'>/**
-</span> * Mixin interface.
+  <pre class="prettyprint lang-js"><span id='compose-composition'>/**
+</span> * Composition interface.
  *
- * Represents any constructor or instance returned by any {@link compose.mixin.factory} method.
- * @class compose.mixin
+ * Represents any constructor or instance returned by any {@link compose.factory} method.
+ * @class compose.composition
  * @interface
+ * @private
  */
 
-
-<span id='compose-mixin-static-method-extend'>/**
+<span id='compose-composition-static-method-extend'>/**
 </span> * Extend this constructor from multiple others constructors/objects.
  * @method extend
  * @inheritable
  * @static
- * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
- * @return {compose.mixin} The extended subclass
+ * @param {...(Function|Object)} composition One or more constructors or objects to be mixed in.
+ * @return {compose.composition} The extended subclass
  */
 
-<span id='compose-mixin-static-method-create'>/**
+<span id='compose-composition-static-method-create'>/**
 </span> * @method create
- * @inheritdoc compose.mixin.factory#create
+ * @inheritdoc compose.factory#create
  * @inheritable
  * @static
  */</pre>

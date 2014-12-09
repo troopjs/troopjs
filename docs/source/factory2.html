@@ -30,42 +30,30 @@ define([
 	 * @static
 	 */
 
-	var NAME = &quot;name&quot;;
-	var CONTEXT = &quot;context&quot;;
-	var STARTED = &quot;started&quot;;
-	var FINISHED = &quot;finished&quot;;
+	var TASK_COUNTER = 0;
 
 <span id='core-task-factory-method-constructor'>	/**
 </span>	 * Creates and registers a task
 	 * @method constructor
 	 * @param {Promise|Resolver} promiseOrResolver The task resolver.
-	 * @param {String} [name] Task name
+	 * @param {String} [name=task] Task name
 	 * @return {Promise}
 	 */
 	return function factory(promiseOrResolver, name) {
-		var task = when.isPromiseLike(promiseOrResolver)
+		// Get promise
+		var promise = when.isPromiseLike(promiseOrResolver)
 			? when(promiseOrResolver)
 			: when.promise(promiseOrResolver);
 
-		task[CONTEXT] = this;
-		task[NAME] = name || &quot;task&quot;;
-		task[STARTED] = new Date();
+		// Create key
+		var key = (name || &quot;task&quot;) + &quot;@&quot; + ++TASK_COUNTER;
 
-		// Compute task `key`
-		var key = task[NAME] + &quot;@&quot; + task[STARTED];
-
+		// Ensure un-registration
 		// Register task
-		registry.access(key, task);
-
-		return task
-			// Cleanup
-			.ensure(function () {
-				// Let `task[FINISHED]` be `new Date()`
-				task[FINISHED] = new Date();
-
-				// Un-register task
-				registry.remove(key)
-			});
+		// Return
+		return registry.register(key, promise.ensure(function () {
+			registry.unregister(key);
+		}));
 	};
 });</pre>
 </body>

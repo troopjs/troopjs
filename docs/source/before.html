@@ -18,7 +18,7 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;../mixin/decorator&quot; ], function (Decorator) {
+define([ &quot;../decorator&quot; ], function (Decorator) {
 	&quot;use strict&quot;;
 
 <span id='compose-decorator-before'>	/**
@@ -35,7 +35,7 @@ define([ &quot;../mixin/decorator&quot; ], function (Decorator) {
 	 * @method constructor
 	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
 	 * value (if not undefined) will be send as the arguments of original function.
-	 * @return {compose.mixin.decorator}
+	 * @return {compose.decorator}
 	 */
 	return function before(func) {
 		return new Decorator(function (descriptor) {

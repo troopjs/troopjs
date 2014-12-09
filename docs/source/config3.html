@@ -19,29 +19,39 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/config&quot;,
+	&quot;troopjs-core/config&quot;,
 	&quot;module&quot;,
 	&quot;mu-merge&quot;
 ], function (config, module, merge) {
 	&quot;use strict&quot;;
 
+<span id='dom-config-signal'>	/**
+</span>	 * @class dom.config.signal
+	 * @extends core.config.signal
+	 * @private
+	 */
+	var SIGNAL = {
+<span id='dom-config-signal-property-render'>		/**
+</span>		 * Signal emitted when component renders.
+		 */
+		&quot;render&quot;: &quot;sig/render&quot;
+	};
+
 <span id='dom-config'>	/**
 </span>	 * DOM component configuration
 	 * @class dom.config
-	 * @extends core.component.config
-	 * @protected
+	 * @extends core.config
+	 * @private
 	 * @alias feature.config
 	 */
 
-	return merge.call(config, {
-<span id='dom-config-cfg-signal'>		/**
-</span>		 * @cfg signal
-		 * @cfg {String} signal.render=signal.render Signal emitted when component has rendered.
+	return merge.call({}, config, {
+<span id='dom-config-cfg-signal'>		 /**
+</span>		 * @cfg {dom.config.signal}
 		 * @inheritdoc
+		 * @protected
 		 */
-		&quot;signal&quot;: {
-			&quot;render&quot;: &quot;render&quot;
-		}
+		&quot;signal&quot;: SIGNAL
 	}, module.config());
 });</pre>
 </body>

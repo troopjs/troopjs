@@ -1,25 +1,25 @@
-/**
+/*!
  *   ____ .     ____  ____  ____    ____.
  *   \   (/_\___\  (__\  (__\  (\___\  (/
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.8+b595709 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.9+9cc532e ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.8+b595709"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.9+9cc532e"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/mixin/decorator',[ "poly/object" ], function () {
+define('troopjs-compose/decorator',[ "poly/object" ], function () {
 	
 
 	/**
-	 * Decorator provides customized way to add properties/methods to object created by {@link compose.mixin.factory}.
-	 * @class compose.mixin.decorator
+	 * Decorator provides customized way to add properties/methods to object created by {@link compose.factory}.
+	 * @class compose.decorator
+	 * @protected
 	 */
 
 	/**
@@ -51,7 +51,7 @@ define('troopjs-compose/mixin/decorator',[ "poly/object" ], function () {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/decorator/after',[ "../mixin/decorator" ], function (Decorator) {
+define('troopjs-compose/decorator/after',[ "../decorator" ], function (Decorator) {
 	
 
 	/**
@@ -68,7 +68,7 @@ define('troopjs-compose/decorator/after',[ "../mixin/decorator" ], function (Dec
 	 * @method constructor
 	 * @param {Function} func The decorator function which receives the arguments of the original, it's return value (if
 	 * not undefined) will be the used as the new return value.
-	 * @return {compose.mixin.decorator}
+	 * @return {compose.decorator}
 	 */
 	return function after(func) {
 		return new Decorator(function (descriptor) {
@@ -91,7 +91,7 @@ define('troopjs-compose/decorator/after',[ "../mixin/decorator" ], function (Dec
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function (Decorator) {
+define('troopjs-compose/decorator/around',[ "../decorator" ], function (Decorator) {
 	
 
 	/**
@@ -108,7 +108,7 @@ define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function (De
 	 * @method constructor
 	 * @param {Function} func The decorator function which receives the original function as parameter and is supposed to
 	 * return a function that is to replace the original.
-	 * @return {compose.mixin.decorator}
+	 * @return {compose.decorator}
 	 */
 	return function around(func) {
 		return new Decorator(function (descriptor) {
@@ -121,7 +121,7 @@ define('troopjs-compose/decorator/around',[ "../mixin/decorator" ], function (De
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/decorator/before',[ "../mixin/decorator" ], function (Decorator) {
+define('troopjs-compose/decorator/before',[ "../decorator" ], function (Decorator) {
 	
 
 	/**
@@ -138,7 +138,7 @@ define('troopjs-compose/decorator/before',[ "../mixin/decorator" ], function (De
 	 * @method constructor
 	 * @param {Function} func The decorator function which receives the same arguments as with the original, it's return
 	 * value (if not undefined) will be send as the arguments of original function.
-	 * @return {compose.mixin.decorator}
+	 * @return {compose.decorator}
 	 */
 	return function before(func) {
 		return new Decorator(function (descriptor) {
@@ -255,7 +255,7 @@ define('mu-merge', ['mu-merge/main'], function (main) { return main; });
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/extend',[
-	"../mixin/decorator",
+	"../decorator",
 	"mu-merge"
 ], function (Decorator, merge) {
 	
@@ -274,7 +274,7 @@ define('troopjs-compose/decorator/extend',[
 	 * Create a decorator that is to augment an existing Object property.
 	 * @method constructor
 	 * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
-	 * @return {compose.mixin.decorator}
+	 * @return {compose.decorator}
 	 */
 	return function extend(ext) {
 		var args = arguments;
@@ -300,7 +300,7 @@ define('troopjs-compose/decorator/extend',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function (Decorator) {
+define('troopjs-compose/decorator/from',[ "../decorator" ], function (Decorator) {
 	
 
 	/**
@@ -318,7 +318,7 @@ define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function (Deco
 	 * @method constructor
 	 * @param {Function} [which] The other class from which to borrow the method, otherwise to borrow from the host class.
 	 * @param {String} [prop] The property name to borrow from, otherwise to borrow the same property name.
-	 * @return {compose.mixin.decorator}
+	 * @return {compose.decorator}
 	 */
 	return function from(which, prop) {
 		// Shifting arguments.
@@ -344,13 +344,423 @@ define('troopjs-compose/decorator/from',[ "../mixin/decorator" ], function (Deco
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-log/sink/methods',[], function () {
+define('troopjs-compose/config',[
+	"module",
+	"mu-merge"
+], function (module, merge) {
+	
+
+	/**
+	 * Pragma interface.
+	 * @class compose.config.pragma
+	 * @interface
+	 * @private
+	 */
+	/**
+	 * @property {RegExp} pattern Matching pattern
+	 */
+	/**
+	 * @property {String|Function} replace Replacement String or function
+	 */
+
+	/**
+	 * Provides configuration for the {@link compose.factory}
+	 * @class compose.config
+	 * @private
+	 * @alias feature.config
+	 */
+
+	return merge.call({
+		/**
+		 * @cfg {compose.config.pragma[]}
+		 * Pragmas used to rewrite methods before processing
+		 * @protected
+		 */
+		"pragmas": [],
+
+
+		/**
+		 * @cfg {RegExp}
+		 * Regular Expression used parse 'specials'.
+		 * ````
+		 * <special>/<type>[(<arguments>)]
+		 * ````
+		 * @protected
+		 */
+		"specials": /^([^\/]+)\/(.+?)(?:\((.*)\))?$/
+	}, module.config());
+});
+
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/config',[
+	"module",
+	"troopjs-compose/config",
+	"mu-merge"
+], function (module, config, merge) {
+	
+
+	/**
+	 * @class core.config.phase
+	 * @enum
+	 * @private
+	 */
+	var PHASE = {
+		/**
+		 * Protected phases
+		 */
+		"skip": /^(?:initi|fin)alized?$/,
+		/**
+		 * Phase while component is initializing.
+		 */
+		"initialize": "initialize",
+		/**
+		 * Phase when component is initialized.
+		 */
+		"initialized": "initialized",
+		/**
+		 * Phase while component is starting.
+		 */
+		"start": "start",
+		/**
+		 * Phase when component is started.
+		 */
+		"started": "started",
+		/**
+		 * Phase while component is stopping.
+		 */
+		"stop": "stop",
+		/**
+		 * Phase when component is stopped.
+		 */
+		"stopped": "stopped",
+		/**
+		 * Phase while component is finalizing.
+		 */
+		"finalize": "finalize",
+		/**
+		 * Phase when component is finalized.
+		 */
+		"finalized": "finalized"
+	};
+
+	/**
+	 * @class core.config.signal
+	 * @enum {String}
+	 * @private
+	 */
+	var SIGNAL = {
+		/**
+		 * Signal emitted first time an event handler is added.
+		 */
+		"setup": "sig/setup",
+		/**
+		 * Signal emitted each time an event handler is added.
+		 */
+		"add": "sig/add",
+		/**
+		 * Signal emitted each time an event handler is removed.
+		 */
+		"remove": "sig/remove",
+		/**
+		 * Signal emitted last time an event handler is removed.
+		 */
+		"teardown": "sig/teardown",
+		/**
+		 * Signal emitted when component initializes.
+		 */
+		"initialize": "sig/initialize",
+		/**
+		 * Signal emitted when component starts.
+		 */
+		"start": "sig/start",
+		/**
+		 * Signal emitted when component stops.
+		 */
+		"stop": "sig/stop",
+		/**
+		 * Signal emitted when component finalizes.
+		 */
+		"finalize": "sig/finalize",
+		/**
+		 * Signal emitted during registration.
+		 */
+		"register": "sig/register",
+		/**
+		 * Signal emitted during un-registeration.
+		 */
+		"unregister": "sig/unregister",
+		/**
+		 * Signal emitted when component starts a task.
+		 */
+		"task": "sig/task"
+	};
+
+	/**
+	 * Component configuration
+	 * @class core.config
+	 * @extends compose.config
+	 * @private
+	 * @alias feature.config
+	 */
+
+	return merge.call({}, config, {
+		/**
+		 * Component signals
+		 * @cfg {core.config.signal}
+		 * @protected
+		 */
+		"signal": SIGNAL,
+
+		/**
+		 * Component phases
+		 * @cfg {core.config.phase}
+		 * @protected
+		 */
+		"phase": PHASE
+	}, module.config());
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/component/signal/initialize',[
+	"../../config",
+	"when"
+], function (config, when) {
+	var UNDEFINED;
+	var ARRAY_PUSH = Array.prototype.push;
+	var PHASE = "phase";
+	var INITIALIZE = config.phase.initialize;
+	var INITIALIZED = config.phase.initialized;
+	var SIG_INITIALIZE = config.signal.initialize;
+
+	/**
+	 * @class core.component.signal.initialize
+	 * @implement core.component.signal
+	 * @mixin core.config
+	 * @static
+	 * @alias feature.signal
+	 * @private
+	 */
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `initialized`
+	 */
+
+	return function initialize() {
+		var me = this;
+		var args = arguments;
+
+		return when(me[PHASE], function (phase) {
+			var _args;
+
+			if (phase === UNDEFINED) {
+				// Let `me[PHASE]` be `INITIALIZE`
+				me[PHASE] = INITIALIZE;
+
+				// Let `_args` be `[ SIG_INITIALIZE ]`
+				// Push `args` on `_args`
+				ARRAY_PUSH.apply(_args = [ SIG_INITIALIZE ], args);
+
+				return me
+					.emit.apply(me, _args)
+					.then(function() {
+						// Let `me[PHASE]` be `INITIALIZED`
+						return me[PHASE] = INITIALIZED;
+					});
+			}
+			else {
+				return phase;
+			}
+		});
+	}
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/component/signal/start',[
+	"./initialize",
+	"../../config",
+	"when"
+], function (initialize, config, when) {
+	var ARRAY_PUSH = Array.prototype.push;
+	var PHASE = "phase";
+	var INITIALIZED = config.phase.initialized;
+	var START = config.phase.start;
+	var STARTED = config.phase.started;
+	var SIG_START = config.signal.start;
+
+	/**
+	 * @class core.component.signal.start
+	 * @implement core.component.signal
+	 * @mixin core.config
+	 * @static
+	 * @alias feature.signal
+	 * @private
+	 */
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `started`
+	 */
+
+	return function start() {
+		var me = this;
+		var args = arguments;
+
+		return when(initialize.apply(me, args), function (phase) {
+			var _args;
+
+			if (phase === INITIALIZED) {
+				// Let `me[PHASE]` be `START`
+				me[PHASE] = START;
+
+				// Let `_args` be `[ SIG_START ]`
+				// Push `args` on `_args`
+				ARRAY_PUSH.apply(_args = [ SIG_START ], args);
+
+				return me
+					.emit.apply(me, _args)
+					.then(function() {
+						// Let `me[PHASE]` be `STARTED`
+						return me[PHASE] = STARTED;
+					});
+			}
+			else {
+				return phase;
+			}
+		});
+	}
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/component/signal/stop',[
+	"./start",
+	"../../config",
+	"when"
+], function (start, config, when) {
+	var ARRAY_PUSH = Array.prototype.push;
+	var PHASE = "phase";
+	var STARTED = config.phase.started;
+	var STOP = config.phase.stop;
+	var STOPPED = config.phase.stopped;
+	var SIG_STOP = config.signal.stop;
+
+	/**
+	 * @class core.component.signal.stop
+	 * @implement core.component.signal
+	 * @mixin core.config
+	 * @static
+	 * @alias feature.signal
+	 * @private
+	 */
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `stopped`
+	 */
+
+	return function stop() {
+		var me = this;
+		var args = arguments;
+
+		return when(start.apply(me, args), function (phase) {
+			var _args;
+
+			if (phase === STARTED) {
+				// Let `me[PHASE]` be `"stop"`
+				me[PHASE] = STOP;
+
+				// Let `_args` be `[ SIG_STOP ]`
+				// Push `args` on `_args`
+				ARRAY_PUSH.apply(_args = [ SIG_STOP ], args);
+
+				return me
+					.emit.apply(me, _args)
+					.then(function () {
+						// Let `me[PHASE]` be `STOPPED`
+						return me[PHASE] = STOPPED;
+					});
+			}
+			else {
+				return phase;
+			}
+		});
+	}
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/component/signal/finalize',[
+	"./stop",
+	"../../config",
+	"when"
+], function (stop, config, when) {
+	var ARRAY_PUSH = Array.prototype.push;
+	var PHASE = "phase";
+	var STOPPED = config.phase.stopped;
+	var FINALIZE = config.phase.finalize;
+	var FINALIZED = config.phase.finalized;
+	var SIG_FINALIZE = config.signal.finalize;
+
+	/**
+	 * @class core.component.signal.finalize
+	 * @implement core.component.signal
+	 * @mixin core.config
+	 * @static
+	 * @alias feature.signal
+	 * @private
+	 */
+
+	/**
+	 * @method constructor
+	 * @inheritdoc
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `finalized`
+	 */
+	return function finalize() {
+		var me = this;
+		var args = arguments;
+
+		return when(stop.apply(me, args), function (phase) {
+			var _args;
+
+			if (phase === STOPPED) {
+				// Let `me[PHASE]` be `FINALIZE`
+				me[PHASE] = FINALIZE;
+
+				// Let `_args` be `[ SIG_FINALIZE ]`
+				// Push `args` on `_args`
+				ARRAY_PUSH.apply(_args = [ SIG_FINALIZE ], args);
+
+				return me
+					.emit.apply(me, _args)
+					.then(function() {
+						// Let `me[PHASE]` be `FINALIZED`
+						return me[PHASE] = FINALIZED;
+					});
+			}
+			else {
+				return phase;
+			}
+		});
+	}
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-log/methods',[], function () {
 	return [ "assert", "debug", "dir", "error", "info", "log", "time", "timeEnd", "trace", "warn" ];
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-log/sink/console',[
+define('troopjs-log/console',[
 	"./methods",
 	"poly/array",
 	"poly/function"
@@ -358,12 +768,12 @@ define('troopjs-log/sink/console',[
 	
 
 	/**
-	 * This class implements the {@link log.console} API and can acts like a sink for {@link log.sink.forward}.
+	 * This class implements the {@link log.logger} API.
 	 * @localdoc
-	 * On platforms where the native `console` object doesn't support the full {@link log.console} API,
+	 * On platforms where the native `console` object doesn't support the full {@link log.logger} API,
 	 * this class acts like a polyfill for the missing methods.
-	 * @class log.sink.console
-	 * @implement log.console
+	 * @class log.console
+	 * @implement log.logger
 	 * @singleton
 	 * @alias feature.logger
 	 */
@@ -388,97 +798,17 @@ define('troopjs-log/sink/console',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-log/config',[
-	"module",
-	"mu-merge"
-], function (module, merge) {
-	/**
-	 * Provides configuration for the logging package
-	 * @class log.config
-	 * @protected
-	 * @alias feature.config
-	 */
-
-	return merge.call({
-		/**
-		 * Sinks that the {@link log.sink.forward} logger will use
-		 * @cfg {log.console[]} sinks
-		 */
-		"sinks": []
-	}, module.config());
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-log/sink/forward',[
-	"./methods",
-	"../config",
-	"poly/array"
-], function (METHODS, CONF) {
-	
-
-	/**
-	 * The forward log sink acts as a forwarder to other log sinks.
-	 *
-	 * It's mainly configured via the {@link log.config#sinks} configuration.
-	 * To configure the forwarder for both the {@link log.sink.console} and the {@link log.sink.null} sink, one could
-	 * do this:
-	 *
-	 *     require.config({
-	 *       "map": {
-	 *         "*": {
-	 *           "troopjs-log/logger": "troopjs-log/sink/forward" // Changes the framework logger
-	 *         }
-	 *       },
-	 *       "deps": [ "troopjs-log/config", "troopjs-log/sink/console", "troopjs-log/sink/null" ],
-	 *       "callback": function (loggingConfig, consoleSink, nullSink) {
-	 *         loggingConfig.sinks.push(consoleSink, nullSink); // Add sinks
-	 *       }
-	 *     });
-	 *
-	 * @class log.sink.forward
-	 * @implement log.console
-	 * @mixin log.config
-	 * @singleton
-	 * @inheritdoc log.sink.console
-	 * @alias feature.logger
-	 */
-
-	var FUNCTION_APPLY = Function.apply;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var SINKS = CONF["sinks"];
-
-	return (function () {
-		var me = this;
-		var forward = function (method) {
-			var args = ARRAY_SLICE.call(arguments, 1);
-
-			SINKS.forEach(function (sink) {
-				FUNCTION_APPLY.call(sink[method], me, args);
-			});
-		};
-
-		METHODS.forEach(function (method) {
-			me[method] = forward.bind(me, method);
-		});
-
-		return me;
-	}).call({});
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-log/sink/null',[
+define('troopjs-log/null',[
 	"./methods",
 	"poly/array"
 ], function (METHODS) {
 	
 
 	/**
-	 * @class log.sink.null
-	 * @implement log.console
+	 * @class log.null
+	 * @implement log.logger
 	 * @singleton
-	 * @inheritdoc log.sink.console
+	 * @inheritdoc log.console
 	 * @localdoc
 	 * This class maps every log method to a [nop](https://en.wikipedia.org/wiki/NOP) function,
 	 * effectively suppressing all logging.
@@ -496,45 +826,6 @@ define('troopjs-log/sink/null',[
 		return me;
 	}).call({});
 });
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-compose/mixin/config',[
-	"module",
-	"mu-merge"
-], function (module, merge) {
-	
-
-	/**
-	 * Provides configuration for the {@link compose.mixin.factory}
-	 * @class compose.mixin.config
-	 * @protected
-	 * @alias feature.config
-	 */
-
-	return merge.call({
-		/**
-		 * @cfg {Object[]} pragmas Pragmas used to rewrite methods before processing
-		 * @cfg {RegExp} pragmas.pattern Matching pattern
-		 * @cfg {String|Function} pragmas.replace Replacement String or function
-		 * @protected
-		 */
-		"pragmas": [],
-
-
-		/**
-		 * @cfg {RegExp} specials Regular Expression used parse 'specials'.
-		 * A special must be in form of a function call (ended in parenthesis), and have an optional type following a slash
-		 *
-		 * ````
-		 * <special>[/<type>](<arguments>)
-		 * ````
-		 * @protected
-		 */
-		"specialsPattern": /^([^\/]+)(?:\/(.+?))?\((.*)\)$/
-	}, module.config());
-});
-
 (function() {
     
 
@@ -922,7 +1213,7 @@ define('mu-getargs', ['mu-getargs/main'], function (main) { return main; });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/mixin/factory',[
+define('troopjs-compose/factory',[
 	"./config",
 	"./decorator",
 	"mu-unique",
@@ -1001,8 +1292,8 @@ define('troopjs-compose/mixin/factory',[
 	 *  		instance.somethingElse();
 	 *  		instance.evenMore();
 	 *
-	 * @class compose.mixin.factory
-	 * @mixin compose.mixin.config
+	 * @class compose.factory
+	 * @mixin compose.config
 	 * @static
 	 */
 
@@ -1029,21 +1320,21 @@ define('troopjs-compose/mixin/factory',[
 	var TYPES = "types";
 	var NAME = "name";
 	var PRAGMAS = config["pragmas"];
-	var SPECIALS_PATTERN = config["specialsPattern"];
+	var PATTERN = config[SPECIALS];
 
 	/**
 	 * Instantiate immediately after extending this constructor from multiple others constructors/objects.
 	 * @method create
 	 * @static
-	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @return {Object} Object instance created out of the mixin of constructors and objects.
+	 * @param {...(Function|Object)} composition One or more constructors or objects to be mixed in.
+	 * @return {compose.composition} Object instance created out of the composition of constructors and objects.
 	 */
-	function create(mixin) {
+	function create(composition) {
 		/*jshint validthis:true*/
 		return extend.apply(this, arguments)();
 	}
 
-	function extend(mixin) {
+	function extend(composition) {
 		/*jshint validthis:true*/
 		var args = [ this ];
 		ARRAY_PUSH.apply(args, arguments);
@@ -1063,10 +1354,10 @@ define('troopjs-compose/mixin/factory',[
 	 * Create a new constructor or to extend an existing one from multiple others constructors/objects.
 	 * @method constructor
 	 * @static
-	 * @param {...(Function|Object)} mixin One or more constructors or objects to be mixed in.
-	 * @return {compose.mixin} Object class created out of the mixin of constructors and objects.
+	 * @param {...(Function|Object)} composition One or more constructors or objects to be mixed in.
+	 * @return {compose.composition} Object class created out of the composition of constructors and objects.
 	 */
-	function Factory (mixin) {
+	function Factory (composition) {
 		var special;
 		var specials = [];
 		var specialsLength;
@@ -1145,7 +1436,7 @@ define('troopjs-compose/mixin/factory',[
 				}
 
 				// Check if this matches a SPECIAL signature
-				if ((matches = SPECIALS_PATTERN.exec(name))) {
+				if ((matches = PATTERN.exec(name))) {
 					// Create special
 					special = {};
 
@@ -1302,16 +1593,126 @@ define('troopjs-compose/mixin/factory',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-log/logger',[ "./sink/console" ], function (logger) {
+define('troopjs-log/logger',[ "./console" ], function (logger) {
 	
 
 	/**
-	 * This is a _virtual_ class that under normal circumstances is an alias for the {@link log.sink.console} sink.
+	 * The console interface describes the API of the client's debugging console
+	 * (e.g. the [Web Console](https://developer.mozilla.org/en-US/docs/Tools/Web_Console) in Firefox).
+	 * The specifics of how it works vary from client to client, but there is a _de facto_ set of features that are
+	 * typically provided.
+	 *
+	 * ## Outputting text to the console
+	 *
+	 * The most frequently-used feature of the console is logging of text and other data.
+	 * There are four categories of output you can generate, using the {@link #log}, {@link #info}, {@link #warn},
+	 * and {@link #error} methods. Each of these results in output that's styled differently in the log,
+	 * and you can use the filtering controls provided by your client to only view the kinds of output that interest you.
+	 *
+	 * There are two ways to use each of the output methods; you can simply pass in a list of objects whose
+	 * string representations get concatenated into one string then output to the console, or you can pass in a string
+	 * containing zero or more substitution strings followed by a list of the objects with which to replace them.
+	 *
+	 * ### Writing a single object
+	 *
+	 * The simplest way to use the logging methods is to output a single object:
+	 *
+	 *     var someObject = { str: "Some text", id: 5 };
+	 *     logger.log(someObject);
+	 *
+	 * The output looks something like this:
+	 *
+	 *     [09:27:13.475] ({str:"Some text", id:5})
+	 *
+	 * ### Writing multiple objects
+	 *
+	 * You can also output multiple objects by simply listing them when calling the logging method, like this:
+	 *
+	 *     var car = "Dodge Charger";
+	 *     var someObject = {str:"Some text", id:5};
+	 *     console.info("My first car was a", car, ". The object is: ", someObject);
+	 *
+	 * This output will look like this:
+	 *
+	 *     [09:28:22.711] My first car was a Dodge Charger . The object is:  ({str:"Some text", id:5})
+	 *
+	 * ### Using string substitutions
+	 *
+	 * When passing a string to one of the console methods that accepts a string, you may use these substitution strings:
+	 *
+	 * - `%o`         : Outputs a hyperlink to a JavaScript object. Clicking the link opens an inspector.
+	 * - `%d` or `%i` : Outputs an integer. Formatting is not yet supported.
+	 * - `%s`         : Outputs a string.
+	 * - `%f`         : Outputs a floating-point value. Formatting is not yet supported.
+	 *
+	 * Each of these pulls the next argument after the format string off the parameter list. For example:
+	 *
+	 *     for (var i=0; i<5; i++) {
+	 *       console.log("Hello, %s. You've called me %d times.", "Bob", i+1);
+	 *     }
+	 *
+	 * The output looks like this:
+	 *
+	 *     [13:14:13.481] Hello, Bob. You've called me 1 times.
+	 *     [13:14:13.483] Hello, Bob. You've called me 2 times.
+	 *     [13:14:13.485] Hello, Bob. You've called me 3 times.
+	 *     [13:14:13.487] Hello, Bob. You've called me 4 times.
+	 *     [13:14:13.488] Hello, Bob. You've called me 5 times.
+	 *
+	 * ## Timers
+	 *
+	 * In order to calculate the duration of a specific operation, you can use timers.
+	 * To start a timer, call the {@link #time} method, giving it a name as only parameter.
+	 * To stop the timer, and to get the elapsed time in miliseconds, just call the {@link #timeEnd} method,
+	 * again passing the timer's name as the parameter.
+	 * Up to 10,000 timers can run simultaneously on a given page.
+	 *
+	 * For example, given this code:
+	 *
+	 *     console.time("answer time");
+	 *     alert("Click to continue");
+	 *     console.timeEnd("answer time");
+	 *
+	 * will log the time needed by the user to discard the alert box:
+	 *
+	 *     13:50:42.246: answer time: timer started
+	 *     13:50:43.243: answer time: 998ms
+	 *
+	 * Notice that the timer's name is displayed both when the timer is started and when it's stopped.
+	 *
+	 * ## Stack traces
+	 *
+	 * The console also supports outputting a stack trace; this will show you the call path taken to reach the point at
+	 * which you call {@link #trace}. Given code like this:
+	 *
+	 *     foo();
+	 *       function foo() {
+	 *         function bar() {
+	 *           console.trace();
+	 *         }
+	 *       bar();
+	 *     }
+	 *
+	 * The output in the console looks something like this:
+	 *
+	 *     console.trace():   main.js:46
+	 *       bar()           main.js:46
+	 *       foo()           main.js:48
+	 *       <anonymous>     main.js:42
+	 *
+	 * <div class="notice">
+	 * Documentation for this class comes from <a href="https://developer.mozilla.org/en-US/docs/Web/API/console">MDN</a>
+	 * and is available under <a href="http://creativecommons.org/licenses/by-sa/2.0/">Creative Commons: Attribution-Sharealike license</a>.
+	 * </div>
+	 *
+	 * @localdoc
+	 * ## Changing framework logger
+	 * This is a _virtual_ class that under normal circumstances is an alias for the {@link log.console} sink.
 	 *
 	 * If you want to change logger sink in your application you should use the [requirejs map config](http://requirejs.org/docs/api.html#config-map)
-	 * to map this class to any module that implements the {@link log.console} API.
+	 * to map this class to any module that implements the {@link log.logger} API.
 	 *
-	 * An example configuration that would change the logger to {@link log.sink.null} would look like this:
+	 * An example configuration that would change the logger to {@link log.null} would look like this:
 	 *
 	 *     requirejs.config({
 	 *       "map": {
@@ -1322,9 +1723,79 @@ define('troopjs-log/logger',[ "./sink/console" ], function (logger) {
 	 *     });
 	 *
 	 * @class log.logger
-	 * @implement log.console
 	 * @singleton
+	 * @interface
 	 * @alias feature.logger
+	 */
+
+	/**
+	 * Writes a message and stack trace to the log if first argument is false
+	 * @method assert
+	 * @param {Boolean} expression Conditional expression
+	 * @param {Object|String} payload Initial payload
+	 * @param {Object...} [obj] Supplementary payloads
+	 *
+	 * - If `payload` is of type `Object` the string representations of each of these objects are appended together in the order listed and output.
+	 * - If `payload` is of type `String` these are JavaScript objects with which to replace substitution strings within payload.
+	 */
+
+	/**
+	 * Writes a message to the log with level `debug`
+	 * @method debug
+	 * @inheritdoc #log
+	 * @deprecated An alias for {@link #log}. This was added to improve compatibility with existing sites already using `debug()`. However, you should use {@link #log} instead.
+	 */
+
+	/**
+	 * Displays an interactive list of the properties of the specified JavaScript object. The output is presented as a hierarchical listing that let you see the contents of child objects.
+	 * @method dir
+	 * @param {Object} object A JavaScript object whose properties should be output
+	 */
+
+	/**
+	 * Writes a message to the log with level `error`
+	 * @method error
+	 * @inheritdoc #log
+	 */
+
+	/**
+	 * Writes a message to the log with level `info`.
+	 * @method info
+	 * @inheritdoc #log
+	 */
+
+	/**
+	 * Writes a message to the log with level `log`
+	 * @method log
+	 * @param {Object|String} payload Initial payload
+	 * @param {Object...} [obj] Supplementary payloads
+	 *
+	 * - If `payload` is of type `Object` the string representations of each of these objects are appended together in the order listed and output.
+	 * - If `payload` is of type `String` these are JavaScript objects with which to replace substitution strings within payload.
+	 */
+
+	/**
+	 * Starts a timer you can use to track how long an operation takes. You give each timer a unique name, and may have up to 10,000 timers running on a given page.
+	 * When you call {@link #timeEnd} with the same name, the log will output the time, in milliseconds, that elapsed since the timer was started.
+	 * @method time
+	 * @param {String} timerName The name to give the new timer. This will identify the timer; use the same name when calling {@link #timeEnd} to stop the timer and get the time written to the log
+	 */
+
+	/**
+	 * Stops a timer that was previously started by calling {@link #time}.
+	 * @method timeEnd
+	 * @param {String} timerName The name of the timer to stop. Once stopped, the elapsed time is automatically written to the log
+	 */
+
+	/**
+	 * Outputs a stack trace to the log.
+	 * @method trace
+	 */
+
+	/**
+	 * Writes a message to the log with level `warn`
+	 * @method warn
+	 * @inheritdoc #log
 	 */
 
 	return logger;
@@ -1332,17 +1803,17 @@ define('troopjs-log/logger',[ "./sink/console" ], function (logger) {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/mixin/base',[
-	"troopjs-compose/mixin/factory",
+define('troopjs-core/composition',[
+	"troopjs-compose/factory",
 	"troopjs-log/logger"
 ], function ObjectBaseModule(Factory, logger) {
 	var INSTANCE_COUNTER = 0;
 	var INSTANCE_COUNT = "instanceCount";
 
 	/**
-	 * Base object with instance count.
-	 * @class core.mixin.base
-	 * @implement compose.mixin
+	 * Base composition with instance count.
+	 * @class core.composition
+	 * @implement compose.composition
 	 * @mixin log.logger
 	 */
 
@@ -1351,7 +1822,7 @@ define('troopjs-core/mixin/base',[
 	 * @static
 	 * @inheritable
 	 * @inheritdoc
-	 * @return {core.mixin.base} Instance of this class
+	 * @return {core.composition} Instance of this class
 	 */
 
 	/**
@@ -1359,14 +1830,14 @@ define('troopjs-core/mixin/base',[
 	 * @static
 	 * @inheritable
 	 * @inheritdoc
-	 * @return {core.mixin.base} The extended subclass
+	 * @return {core.composition} The extended subclass
 	 */
 
 	/**
 	 * Creates a new component instance
 	 * @method constructor
 	 */
-	return Factory(function ObjectBase() {
+	return Factory(function () {
 		// Update instance count
 		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
 	}, logger, {
@@ -1380,11 +1851,11 @@ define('troopjs-core/mixin/base',[
 
 		/**
 		 * The hierarchical namespace for this component that indicates it's functionality.
-		 * @private
+		 * @protected
 		 * @readonly
 		 * @property {String}
 		 */
-		"displayName" : "core/mixin/base",
+		"displayName" : "core/composition",
 
 		/**
 		 * Gives string representation of this component instance.
@@ -1407,7 +1878,7 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
 
 	/**
 	 * @class core.event.runner.sequence
-	 * @implement core.event.emitter.runner
+	 * @implement core.event.runner
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -1416,7 +1887,6 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
 	var UNDEFINED;
 	var HEAD = "head";
 	var NEXT = "next";
-	var CALLBACK = "callback";
 	var CONTEXT = "context";
 
 	/**
@@ -1452,9 +1922,9 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/event/emitter',[
-	"../mixin/base",
+	"../composition",
 	"./runner/sequence"
-], function (Base, sequence) {
+], function (Composition, sequence) {
 	
 
 	/**
@@ -1471,7 +1941,7 @@ define('troopjs-core/event/emitter',[
 	 *  - pipeline: where a handler receives the return value of the previous one.
 	 *
 	 * @class core.event.emitter
-	 * @extend core.mixin.base
+	 * @extend core.composition
 	 */
 
 	var UNDEFINED;
@@ -1546,7 +2016,7 @@ define('troopjs-core/event/emitter',[
 	 * @method constructor
 	 * @inheritdoc
 	 */
-	return Base.extend(function () {
+	return Composition.extend(function () {
 		/**
 		 * Handlers attached to this component, addressable either by key or index
 		 * @private
@@ -1789,7 +2259,7 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
 
 	/**
 	 * @class core.component.runner.sequence
-	 * @implement core.event.emitter.runner
+	 * @implement core.event.runner
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -1845,431 +2315,151 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/config',[
-	"module",
-	"mu-merge"
-], function (module, merge) {
-	
-
-	/**
-	 * Component configuration
-	 * @class core.component.config
-	 * @protected
-	 * @alias feature.config
-	 */
-
-	return merge.call({
-		/**
-		 * @cfg signal Signal related configuration.
-		 * @cfg {String} signal.initialize=initialize Signal emitted when component initializes.
-		 * @cfg {String} signal.start=start Signal emitted when component starts.
-		 * @cfg {String} signal.stop=stop Signal emitted when component stops.
-		 * @cfg {String} signal.finalize=finalize Signal emitted when component finalizes.
-		 */
-		"signal": {
-			"initialize": "initialize",
-			"start": "start",
-			"stop": "stop",
-			"finalize": "finalize"
-		},
-
-		/**
-		 * @cfg phase Phase related configuration.
-		 * @cfg {RegExp} phase.skip=^(?:initi|fin)alized?$ Pattern of protected phases.
-		 * @cfg {String} phase.initialize=initialize Phase while component is initializing.
-		 * @cfg {String} phase.initialized=initialized Phase when component is initialized.
-		 * @cfg {String} phase.start=start Phase while component is starting.
-		 * @cfg {String} phase.started=started Phase when component is started.
-		 * @cfg {String} phase.stop=stop Phase while component is stopping.
-		 * @cfg {String} phase.stopped=stopped Phase when component is stopped.
-		 * @cfg {String} phase.finalize=finalize Phase while component is finalizing.
-		 * @cfg {String} phase.finalized=finalized Phase when component is finalized.
-		 */
-		"phase": {
-			"skip" : /^(?:initi|fin)alized?$/,
-			"initialize": "initialize",
-			"initialized": "initialized",
-			"start": "start",
-			"started": "started",
-			"stop": "stop",
-			"stopped": "stopped",
-			"finalize": "finalize",
-			"finalized": "finalized"
-		}
-	}, module.config());
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/component/signal/initialize',[
+define('troopjs-core/registry/emitter',[
+	"../event/emitter",
 	"../config",
-	"when"
-], function (config, when) {
-	var UNDEFINED;
-	var ARRAY_PUSH = Array.prototype.push;
-	var PHASE = "phase";
-	var INITIALIZE = config.phase.initialize;
-	var INITIALIZED = config.phase.initialized;
-	var SIG_INITIALIZE = "sig/" + config.signal.initialize;
-
-	/**
-	 * @class core.component.signal.initialize
-	 * @implement core.component.signal
-	 * @mixin core.component.config
-	 * @static
-	 * @alias feature.signal
-	 */
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `initialized`
-	 */
-
-	return function initialize() {
-		var me = this;
-		var args = arguments;
-
-		return when(me[PHASE], function (phase) {
-			var _args;
-
-			if (phase === UNDEFINED) {
-				// Let `me[PHASE]` be `INITIALIZE`
-				me[PHASE] = INITIALIZE;
-
-				// Let `_args` be `[ SIG_INITIALIZE ]`
-				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_INITIALIZE ], args);
-
-				return me
-					.emit.apply(me, _args)
-					.then(function() {
-						// Let `me[PHASE]` be `INITIALIZED`
-						return me[PHASE] = INITIALIZED;
-					});
-			}
-			else {
-				return phase;
-			}
-		});
-	}
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/component/signal/start',[
-	"./initialize",
-	"../config",
-	"when"
-], function (initialize, config, when) {
-	var ARRAY_PUSH = Array.prototype.push;
-	var PHASE = "phase";
-	var INITIALIZED = config.phase.initialized;
-	var START = config.phase.start;
-	var STARTED = config.phase.started;
-	var SIG_START = "sig/" + config.signal.start;
-
-	/**
-	 * @class core.component.signal.start
-	 * @implement core.component.signal
-	 * @mixin core.component.config
-	 * @static
-	 * @alias feature.signal
-	 */
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `started`
-	 */
-
-	return function start() {
-		var me = this;
-		var args = arguments;
-
-		return when(initialize.apply(me, args), function (phase) {
-			var _args;
-
-			if (phase === INITIALIZED) {
-				// Let `me[PHASE]` be `START`
-				me[PHASE] = START;
-
-				// Let `_args` be `[ SIG_START ]`
-				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_START ], args);
-
-				return me
-					.emit.apply(me, _args)
-					.then(function() {
-						// Let `me[PHASE]` be `STARTED`
-						return me[PHASE] = STARTED;
-					});
-			}
-			else {
-				return phase;
-			}
-		});
-	}
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/component/signal/stop',[
-	"./start",
-	"../config",
-	"when"
-], function (start, config, when) {
-	var ARRAY_PUSH = Array.prototype.push;
-	var PHASE = "phase";
-	var STARTED = config.phase.started;
-	var STOP = config.phase.stop;
-	var STOPPED = config.phase.stopped;
-	var SIG_STOP = "sig/" + config.signal.stop;
-
-	/**
-	 * @class core.component.signal.stop
-	 * @implement core.component.signal
-	 * @mixin core.component.config
-	 * @static
-	 * @alias feature.signal
-	 */
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `stopped`
-	 */
-
-	return function stop() {
-		var me = this;
-		var args = arguments;
-
-		return when(start.apply(me, args), function (phase) {
-			var _args;
-
-			if (phase === STARTED) {
-				// Let `me[PHASE]` be `"stop"`
-				me[PHASE] = STOP;
-
-				// Let `_args` be `[ SIG_STOP ]`
-				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_STOP ], args);
-
-				return me
-					.emit.apply(me, _args)
-					.then(function () {
-						// Let `me[PHASE]` be `STOPPED`
-						return me[PHASE] = STOPPED;
-					});
-			}
-			else {
-				return phase;
-			}
-		});
-	}
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/component/signal/finalize',[
-	"./stop",
-	"../config",
-	"when"
-], function (stop, config, when) {
-	var ARRAY_PUSH = Array.prototype.push;
-	var PHASE = "phase";
-	var STOPPED = config.phase.stopped;
-	var FINALIZE = config.phase.finalize;
-	var FINALIZED = config.phase.finalized;
-	var SIG_FINALIZE = "sig/" + config.signal.finalize;
-
-	/**
-	 * @class core.component.signal.finalize
-	 * @implement core.component.signal
-	 * @mixin core.component.config
-	 * @static
-	 * @alias feature.signal
-	 */
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `finalized`
-	 */
-	return function finalize() {
-		var me = this;
-		var args = arguments;
-
-		return when(stop.apply(me, args), function (phase) {
-			var _args;
-
-			if (phase === STOPPED) {
-				// Let `me[PHASE]` be `FINALIZE`
-				me[PHASE] = FINALIZE;
-
-				// Let `_args` be `[ SIG_FINALIZE ]`
-				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_FINALIZE ], args);
-
-				return me
-					.emit.apply(me, _args)
-					.then(function() {
-						// Let `me[PHASE]` be `FINALIZED`
-						return me[PHASE] = FINALIZED;
-					});
-			}
-			else {
-				return phase;
-			}
-		});
-	}
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/registry/component',[
-	"../mixin/base",
-	"poly/array"
-], function (Base) {
+	"../component/runner/sequence",
+	"poly/array",
+	"poly/object"
+], function (Emitter, config, sequence) {
 	
 
 	/**
 	 * A light weight implementation to register key/value pairs by key and index
-	 * @class core.registry.component
-	 * @extend core.mixin.base
+	 * @class core.registry.emitter
+	 * @extend core.event.emitter
 	 */
 
-	var UNDEFINED;
+	var TYPE = "type";
+	var RUNNER = "runner";
 	var LENGTH = "length";
 	var INDEX = "index";
-	var KEY = "key";
-	var VALUE = "value";
-	var INDEX_KEY = "index_key";
-	var INDEX_POS = "index_pos";
 	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_STRING = "[object String]";
-	var REGEXP_STRING = "[object RegExp]";
+	var TOSTRING_REGEXP = "[object RegExp]";
+	var SIG_REGISTER = config.signal.register;
+	var SIG_UNREGISTER = config.signal.unregister;
+
+	/**
+	 * Register signal
+	 * @event sig/register
+	 * @localdoc Triggered when something is registered via {@link #register}.
+	 * @since 3.0
+	 * @param {String} key
+	 * @param {*} value
+	 */
+
+	/**
+	 * Un-register signal
+	 * @event sig/unregister
+	 * @localdoc Triggered when something is un-registered via {@link #unregister}.
+	 * @since 3.0
+	 * @param {String} key
+	 * @param {*} value
+	 */
 
 	/**
 	 * @method constructor
 	 * @inheritdoc
 	 */
-	return Base.extend(function () {
+	return Emitter.extend(function () {
 		/**
-		 * Registry key storage
+		 * Registry index
 		 * @private
 		 * @readonly
-		 * @property {Object[]} index_key
-		 * @property {String} index_key.key Entry key
-		 * @property {Number} index_key.index Entry index
-		 * @property {*} index_key.value Entry value
 		 */
-		this[INDEX_KEY] = {};
-
-		/**
-		 * Registry pos storage
-		 * @private
-		 * @readonly
-		 * @property {Object[]} index_pos
-		 * @property {String} index_pos.key Entry key
-		 * @property {Number} index_pos.index Entry index
-		 * @property {*} index_pos.value Entry value
-		 */
-		this[INDEX_POS] = [];
+		this[INDEX] = {};
 	}, {
-		"displayName": "core/registry/component",
+		"displayName": "core/registry/emitter",
 
 		/**
-		 * Either gets or puts values into the registry.
-		 *
-		 * - If no key is provided, all entries in the registry are returned.
-		 * - If no value is provided, it depends on the **key**
-		 *   - if key is string or number, current value under this key is returned.
-		 *   - if key is regexp, all values whose key match this pattern are returned
-		 * - If value is provided it replaces the current value for the key
-		 * @param {String|Number|RegExp} [key] Entry key, index or pattern
-		 * @param {*} [value] Entry value
-		 * @return {*} All values if no key, current value for key if no value provided, otherwise the provided value if a new entry is created
-		 * @throws Error if a new entry is created and key is not of type String
+		 * Gets value by key
+		 * @param {String|RegExp} [key] key to filter by
+		 *  - If `String` get value exactly registered for key.
+		 *  - If `RegExp` get value where key matches.
+		 *  - If not provided all values registered are returned
+		 * @return {*|*[]} result(s)
 		 */
-		"access": function (key, value) {
-			var index_key = this[INDEX_KEY];
-			var index_pos = this[INDEX_POS];
+		"get": function (key) {
+			var index = this[INDEX];
 			var result;
-			var argc;
 
-			// Reading _all_
-			if ((argc = arguments[LENGTH]) === 0) {
-				result = index_pos.map(function (item) {
-					return item[VALUE];
-				});
+			if (arguments[LENGTH] === 0) {
+				result = Object
+					.keys(index)
+					.map(function (_key) {
+						return index[_key];
+					});
 			}
-			// query registry by keys
-			else if (OBJECT_TOSTRING.call(key) === REGEXP_STRING && value === UNDEFINED){
-				result = Object.keys(index_key).filter(function (name) {
-						return key.test(name);
-				}).map(function map(key) {
-					return index_key[key][VALUE];
-				});
+			else if (OBJECT_TOSTRING.call(key) === TOSTRING_REGEXP) {
+				result = Object
+					.keys(index)
+					.filter(function (_key) {
+						return key.test(_key);
+					}).map(function (_key) {
+						return index[_key];
+					});
 			}
 			else {
-				result = (typeof key === 'number' ? index_pos : index_key)[key];
-
-				// Reading
-				if (argc === 1) {
-					result = result !== UNDEFINED ? result[VALUE] : UNDEFINED;
-				}
-				// Writing
-				else {
-					// Replace existing entry
-					if (result !== UNDEFINED) {
-						result = result[VALUE] = value;
-					}
-					// Check type of key (as now we're creating a new one)
-					else if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
-						throw Error("key has to be of type String");
-					}
-					// Create new entry
-					else {
-						result = {};
-						result = index_key[result[KEY] = key] = index_pos[result[INDEX] = index_pos[LENGTH]] = result;
-						result = result[VALUE] = value;
-					}
-				}
+				result = index[key];
 			}
 
 			return result;
 		},
 
 		/**
-		 * Removes entries from the registry
-		 * TODO: Fixed screwed up index when item is removed from registry.
-		 *
-		 * - If no key is provided, all entries in the registry are removed.
-		 * - Otherwise only the corresponding entry for key is removed.
-		 * @param {String|Number} [key] Entry key or index
-		 *
+		 * Registers value with key
+		 * @param {String} key Key
+		 * @param {*} value Value
+		 * @fires sig/register
+		 * @return {*} value registered
 		 */
-		"remove": function (key) {
+		"register": function (key, value) {
 			var me = this;
-			var result;
-			var index_key = me[INDEX_KEY];
-			var index_pos = me[INDEX_POS];
+			var index = me[INDEX];
+			var event;
 
-			// Remove all entries
-			if (arguments[LENGTH] === 0) {
-				me[INDEX_KEY] = {};
-				me[INDEX_POS] = [];
+			if (index[key] !== value) {
+
+				if (index.hasOwnProperty(key)) {
+					me.unregister(key);
+				}
+
+				event = {};
+				event[TYPE] = SIG_REGISTER;
+				event[RUNNER] = sequence;
+
+				me.emit(event, key, index[key] = value);
 			}
-			// Remove entry by key
-			else if ((result = index_key[key]) !== UNDEFINED) {
-				delete index_key[result[KEY]];
-				delete index_pos[result[INDEX]];
-			}
+
+			return value;
 		},
 
-		"compact": function () {
+		/**
+		 * Un-registers key
+		 * @param {String} key Key
+		 * @fires sig/unregister
+		 * @return {*} value unregistered
+		 */
+		"unregister": function (key) {
+			var me = this;
+			var index = me[INDEX];
+			var value;
+			var event;
 
+			if (index.hasOwnProperty(key)) {
+
+				value = index[key];
+
+				if (delete index[key]) {
+					event = {};
+					event[TYPE] = SIG_UNREGISTER;
+					event[RUNNER] = sequence;
+
+					me.emit(event, key, value);
+				}
+			}
+
+			return value;
 		}
 	});
 });
@@ -2277,12 +2467,12 @@ define('troopjs-core/registry/component',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/registry',[ "../registry/component" ], function (Registry) {
+define('troopjs-core/component/registry',[ "../registry/emitter" ], function (Registry) {
 	
 
 	/**
 	 * @class core.component.registry
-	 * @extend core.registry.component
+	 * @extend core.registry.emitter
 	 * @singleton
 	 */
 
@@ -2310,12 +2500,12 @@ define('troopjs-core/component/registry',[ "../registry/component" ], function (
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/task/registry',[ "../registry/component" ], function (Registry) {
+define('troopjs-core/task/registry',[ "../registry/emitter" ], function (Registry) {
 	
 
 	/**
 	 * @class core.task.registry
-	 * @extend core.registry.component
+	 * @extend core.registry.emitter
 	 * @singleton
 	 */
 
@@ -2355,115 +2545,60 @@ define('troopjs-core/task/factory',[
 	 * @static
 	 */
 
-	var NAME = "name";
-	var CONTEXT = "context";
-	var STARTED = "started";
-	var FINISHED = "finished";
+	var TASK_COUNTER = 0;
 
 	/**
 	 * Creates and registers a task
 	 * @method constructor
 	 * @param {Promise|Resolver} promiseOrResolver The task resolver.
-	 * @param {String} [name] Task name
+	 * @param {String} [name=task] Task name
 	 * @return {Promise}
 	 */
 	return function factory(promiseOrResolver, name) {
-		var task = when.isPromiseLike(promiseOrResolver)
+		// Get promise
+		var promise = when.isPromiseLike(promiseOrResolver)
 			? when(promiseOrResolver)
 			: when.promise(promiseOrResolver);
 
-		task[CONTEXT] = this;
-		task[NAME] = name || "task";
-		task[STARTED] = new Date();
+		// Create key
+		var key = (name || "task") + "@" + ++TASK_COUNTER;
 
-		// Compute task `key`
-		var key = task[NAME] + "@" + task[STARTED];
-
+		// Ensure un-registration
 		// Register task
-		registry.access(key, task);
-
-		return task
-			// Cleanup
-			.ensure(function () {
-				// Let `task[FINISHED]` be `new Date()`
-				task[FINISHED] = new Date();
-
-				// Un-register task
-				registry.remove(key)
-			});
+		// Return
+		return registry.register(key, promise.ensure(function () {
+			registry.unregister(key);
+		}));
 	};
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/base',[
+define('troopjs-core/component/emitter',[
 	"../event/emitter",
-	"./runner/sequence",
-	"./signal/start",
-	"./signal/finalize",
-	"troopjs-compose/mixin/config",
+	"../config",
 	"./registry",
+	"./runner/sequence",
 	"../task/factory",
 	"mu-merge",
 	"troopjs-compose/decorator/around",
 	"when",
 	"poly/array"
-], function (Emitter, sequence, start, finalize, COMPOSE_CONF, componentRegistry, taskFactory, merge, around, when) {
+], function (Emitter, config, registry, sequence, taskFactory, merge, around, when) {
 	
 
 	/**
-	 * Imagine component as an object that has predefined life-cycle, with the following phases:
-	 *
-	 *   1. initialize
-	 *   1. initialized
-	 *   1. start
-	 *   1. started
-	 *   1. stop
-	 *   1. stopped
-	 *   1. finalize
-	 *   1. finalized
-	 *
-	 * Calls on {@link #start} or {@link #stop} method of the component will trigger any defined signal
-	 * handlers declared.
-	 *
-	 * 	var app = Component.extend({
-	 * 		"displayName": "my/component/app",
-	 *
-	 * 		// Signal handler for "start" phase
-	 * 		"sig/start": function start() {
-	 * 			// bind resize handler.
-	 * 			$(window).on('resize.app', $.proxy(this.onResize, this));
-	 * 		},
-	 *
-	 * 		// Signal handler for "finalize" phase
-	 * 		"sig/finalize": function finalize() {
-	 * 			// cleanup the handler.
-	 * 			$(window).off('resize.app');
-	 * 		},
-	 *
-	 * 		"onResize": function onResize(argument) {
-	 * 			// window resized.
-	 * 		}
-	 * 	});
-	 *
-	 * 	$.ready(function on_load() {
-	 * 		app.start();
-	 * 	});
-	 *
-	 * 	$(window).unload(function on_unload (argument) {
-	 * 	  app.end();
-	 * 	});
-	 *
-	 * @class core.component.base
+	 * Component emitter
+	 * @class core.component.emitter
 	 * @extend core.event.emitter
+	 * @mixin core.config
+	 * @alias feature.component
 	 */
 
 	var UNDEFINED;
 	var FALSE = false;
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var CONFIGURATION = "configuration";
 	var RUNNER = "runner";
 	var HANDLERS = "handlers";
 	var HEAD = "head";
@@ -2471,20 +2606,21 @@ define('troopjs-core/component/base',[
 	var NAME = "name";
 	var TYPE = "type";
 	var VALUE = "value";
-	var SIG = "sig";
-	var SIG_SETUP = SIG + "/setup";
-	var SIG_ADD = SIG + "/add";
-	var SIG_REMOVE = SIG + "/remove";
-	var SIG_TEARDOWN = SIG + "/teardown";
 	var ON = "on";
 	var ONE = "one";
-	var EVENT_TYPE_SIG = new RegExp("^" + SIG + "/(.+)");
+	var SIG = "sig";
+	var SIG_SETUP = config.signal.setup;
+	var SIG_ADD = config.signal.add;
+	var SIG_REMOVE = config.signal.remove;
+	var SIG_TEARDOWN = config.signal.teardown;
+	var SIG_TASK = config.signal.task;
+	var SIG_PATTERN = new RegExp("^" + SIG + "/(.+)");
 
 	/**
 	 * Current lifecycle phase
-	 * @readonly
 	 * @protected
-	 * @property {"initialized"|"started"|"stopped"|"finalized"} phase
+	 * @readonly
+	 * @property {core.config.phase} phase
 	 */
 
 	/**
@@ -2549,8 +2685,8 @@ define('troopjs-core/component/base',[
 
 	/**
 	 * Stop signal
-	 * @localdoc Triggered when this component enters the stop phase
 	 * @event sig/stop
+	 * @localdoc Triggered when this component enters the stop phase
 	 * @param {...*} [args] Stop arguments
 	 */
 
@@ -2565,12 +2701,8 @@ define('troopjs-core/component/base',[
 	 * Task signal
 	 * @event sig/task
 	 * @localdoc Triggered when this component starts a {@link #method-task}.
-	 * @param {Object} task Task
-	 * @param {Promise} task.promise The Promise that makes up of this task
-	 * @param {Object} task.context from which component the task is issued
-	 * @param {Date} task.started Task start date
-	 * @param {Date} task.finished Task completion date
-	 * @param {String} task.name Task name
+	 * @param {Promise} task Task
+	 * @param {String} name Task name
 	 * @return {Promise}
 	 */
 
@@ -2631,12 +2763,6 @@ define('troopjs-core/component/base',[
 	 * @fires sig/add
 	 */
 
-	// Add pragma for signals and events.
-	COMPOSE_CONF.pragmas.push({
-		"pattern": /^(?:sig|one?)\/.+/,
-		"replace": "$&()"
-	});
-
 	/**
 	 * @method constructor
 	 * @inheritdoc
@@ -2649,14 +2775,6 @@ define('troopjs-core/component/base',[
 		specials.forEach(function (special) {
 			me.on(special[NAME], special[VALUE]);
 		});
-
-		/**
-		 * Configuration for this component, access via {@link #configure}
-		 * @private
-		 * @readonly
-		 * @property {Object} configuration
-		 */
-		me[CONFIGURATION] = {};
 	}, {
 		"displayName" : "core/component/base",
 
@@ -2672,7 +2790,7 @@ define('troopjs-core/component/base',[
 			var specials = me.constructor.specials;
 
 			// Register component
-			componentRegistry.access(me.toString(), me);
+			registry.register(me.toString(), me);
 
 			// Initialize ON specials
 			var specials_on = when.map(specials[ON] || ARRAY_PROTO, function (special) {
@@ -2699,51 +2817,12 @@ define('troopjs-core/component/base',[
 			var me = this;
 
 			// Un-register component
-			componentRegistry.remove(me.toString());
+			registry.unregister(me.toString(), me);
 
 			// Finalize all handlers, in reverse
 			return when.map(me[HANDLERS].reverse(), function (handlers) {
 				return me.off(handlers[TYPE]);
 			});
-		},
-
-		/**
-		 * Add to the component {@link #configuration configuration}, possibly merge with the existing one.
-		 *
-		 * 		var List = Component.extend({
-		 * 			"sig/start": function start() {
-		 * 				// configure the List.
-		 * 				this.configure({
-		 * 					"type": "list",
-		 * 					"cls": ["list"]
-		 * 				});
-		 * 			}
-		 * 		});
-		 * 		var Dropdown = List.extend({
-		 * 			"sig/start": function start() {
-		 * 				// configure the Dropdown.
-		 * 				this.configure({
-		 * 					"type": "dropdown",
-		 * 					"cls": ["dropdown"],
-		 * 					"shadow": true
-		 * 				});
-		 * 			}
-		 * 		});
-		 *
-		 * 		var dropdown = new Dropdown();
-		 *
-		 * 		// Overwritten: "dropdown"
-		 * 		print(dropdown.configuration.id);
-		 * 		// Augmented: ["list","dropdown"]
-		 * 		print(dropdown.configuration.cls);
-		 * 		// Added: true
-		 * 		print(dropdown.configuration.shadow);
-		 *
-		 * @param {...Object} [config] Config(s) to add.
-		 * @return {Object} The new configuration.
-		 */
-		"configure" : function (config) {
-			return merge.apply(this[CONFIGURATION], arguments);
 		},
 
 		/**
@@ -2762,7 +2841,7 @@ define('troopjs-core/component/base',[
 				var result;
 
 				// If this type is NOT a signal we don't have to event try
-				if (!EVENT_TYPE_SIG.test(type)) {
+				if (!SIG_PATTERN.test(type)) {
 					// Initialize the handlers for this type if they don't exist.
 					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
 						handlers = {};
@@ -2814,7 +2893,7 @@ define('troopjs-core/component/base',[
 				var handlers;
 				var result;
 
-				if (!EVENT_TYPE_SIG.test(type)) {
+				if (!SIG_PATTERN.test(type)) {
 					// Initialize the handlers for this type if they don't exist.
 					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
 						handlers = {};
@@ -2850,21 +2929,6 @@ define('troopjs-core/component/base',[
 
 		/**
 		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
-		 *
-		 * **Note:** It's recommended to use **this method instead of an ad-hoc promise** to do async lift on this component,
-		 * since in additional to an ordinary promise, it also helps to track the context of any running promise,
-		 * including it's name, completion time and a given ID.
-		 *
-		 * 	var widget = Widget.create({
-		 * 		"sig/task" : function(task) {
-		 * 			print('task %s started at: %s, finished at: %s', task.name, task.started, task.finished);
-		 * 		}
-		 * 	});
-		 *
-		 * 	widget.task(function(resolve) {
-		 * 		$(this.$element).fadeOut(resolve);
-		 * 	}, 'animate');
-		 *
 		 * @param {Promise|Resolver} promiseOrResolver The task resolver.
 		 * @param {String} [name] Task name
 		 * @return {Promise}
@@ -2876,27 +2940,9 @@ define('troopjs-core/component/base',[
 			// Create task
 			var task = taskFactory.call(me, promiseOrResolver, name);
 
-			// Signal `TASK` and yield `task`
-			return me.emit("sig/task", task).yield(task);
-		},
-
-		/**
-		 * Start the component life-cycle, sends out {@link #event-sig/initialize} and then {@link #event-sig/start}.
-		 * @param {...*} [args] arguments
-		 * @return {Promise}
-		 * @fires sig/initialize
-		 * @fires sig/start
-		 */
-		"start" : start,
-
-		/**
-		 * Stops the component life-cycle.
-		 * @param {...*} [args] arguments
-		 * @return {Promise}
-		 * @fires sig/stop
-		 * @fires sig/finalize
-		 */
-		"stop" : finalize
+			// Signal `SIG_TASK` and yield `task`
+			return me.emit(SIG_TASK, task, name).yield(task);
+		}
 	});
 });
 
@@ -2908,7 +2954,7 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function (when) {
 
 	/**
 	 * @class core.component.runner.pipeline
-	 * @implement core.event.emitter.runner
+	 * @implement core.event.runner
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -2988,15 +3034,15 @@ define('troopjs-core/component/runner/pipeline',[ "when" ], function (when) {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/pubsub/runner/pipeline',[
-	"../../component/config",
+	"../../config",
 	"when"
 ], function (config, when) {
 	
 
 	/**
 	 * @class core.pubsub.runner.pipeline
-	 * @implement core.event.emitter.runner
-	 * @mixin core.component.config
+	 * @implement core.event.runner
+	 * @mixin core.config
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -3240,12 +3286,11 @@ define('troopjs-core/pubsub/hub',[ "./emitter" ], function (Emitter) {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/gadget',[
-	"./base",
+	"./emitter",
 	"./runner/pipeline",
-	"troopjs-compose/mixin/config",
-	"when",
-	"../pubsub/hub"
-],function (Component, pipeline, COMPOSE_CONF, when, hub) {
+	"../pubsub/hub",
+	"when"
+],function (Emitter, pipeline, hub, when) {
 	
 
 	/**
@@ -3281,8 +3326,9 @@ define('troopjs-core/component/gadget',[
 	 * 	});
 	 *
 	 * @class core.component.gadget
-	 * @extend core.component.base
+	 * @extend core.component.emitter
 	 * @localdoc Adds convenience methods and specials to interact with the hub
+	 * @alias feature.component
 	 */
 
 	var UNDEFINED;
@@ -3292,24 +3338,17 @@ define('troopjs-core/component/gadget',[
 	var CONTEXT = "context";
 	var CALLBACK = "callback";
 	var ARGS = "args";
+	var NAME = "name";
 	var TYPE = "type";
 	var VALUE = "value";
 	var HUB = "hub";
 	var RE = new RegExp("^" + HUB + "/(.+)");
 
-	// Add pragma for HUB special
-	COMPOSE_CONF.pragmas.push({
-		"pattern": /^hub(?::(memory))?\/(.+)/,
-		"replace": function ($0, $1, $2) {
-			return HUB + "(\"" + $2 + "\", " + !!$1 + ")";
-		}
-	});
-
 	/**
 	 * @method constructor
 	 * @inheritdoc
 	 */
-	return Component.extend({
+	return Emitter.extend({
 		"displayName" : "core/component/gadget",
 
 		/**
@@ -3321,7 +3360,7 @@ define('troopjs-core/component/gadget',[
 			var me = this;
 
 			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
-				return me.subscribe(special[ARGS][0], special[VALUE]);
+				return me.on(special[NAME], special[VALUE]);
 			});
 		},
 
@@ -3340,12 +3379,11 @@ define('troopjs-core/component/gadget',[
 				.map(function (special) {
 					var memory;
 					var result;
-					var topic = special[ARGS][0];
 
-					if (special[ARGS][1] === true && (memory = me.peek(topic, empty)) !== empty) {
+					if (special[ARGS][0] === true && (memory = hub.peek(special[TYPE], empty)) !== empty) {
 						// Redefine result
 						result = {};
-						result[TYPE] = HUB + "/" + topic;
+						result[TYPE] = special[NAME];
 						result[RUNNER] = pipeline;
 						result[CONTEXT] = me;
 						result[CALLBACK] = special[VALUE];
@@ -3403,50 +3441,6 @@ define('troopjs-core/component/gadget',[
 				// Unsubscribe from the hub
 				hub.unsubscribe(matches[1], _callback);
 			}
-		},
-
-		/**
-		 * Handles a component task
-		 * @inheritdoc #event-sig/task
-		 * @localdoc Publishes `task` on the {@link core.pubsub.hub hub} whenever a {@link #event-sig/task task} event is emitted
-		 * @return {Promise}
-		 * @template
-		 * @handler
-		 */
-		"sig/task" : function (task) {
-			return this.publish("task", task);
-		},
-
-		/**
-		 * @inheritdoc core.pubsub.hub#publish
-		 */
-		"publish" : function () {
-			return hub.publish.apply(hub, arguments);
-		},
-
-		/**
-		 * @chainable
-		 * @inheritdoc core.pubsub.hub#subscribe
-		 * @localdoc Subscribe to public events from this component, forcing the context of which to be this component.
-		 */
-		"subscribe" : function (event, callback, data) {
-			return this.on(HUB + "/" + event, callback, data);
-		},
-
-		/**
-		 * @chainable
-		 * @inheritdoc core.pubsub.hub#unsubscribe
-		 * @localdoc Unsubscribe from public events in context of this component.
-		 */
-		"unsubscribe" : function (event, callback) {
-			return this.off(HUB + "/" + event, callback);
-		},
-
-		/**
-		 * @inheritdoc core.pubsub.hub#peek
-		 */
-		"peek" : function (event, value) {
-			return hub.peek(event, value);
 		}
 	});
 });
@@ -3454,23 +3448,41 @@ define('troopjs-core/component/gadget',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/service',[ "./gadget" ], function (Gadget) {
+define('troopjs-dom/config',[
+	"troopjs-core/config",
+	"module",
+	"mu-merge"
+], function (config, module, merge) {
 	
 
 	/**
-	 * Base class for all service alike components.
-	 *
-	 * @class core.component.service
-	 * @extend core.component.gadget
+	 * @class dom.config.signal
+	 * @extends core.config.signal
+	 * @private
 	 */
+	var SIGNAL = {
+		/**
+		 * Signal emitted when component renders.
+		 */
+		"render": "sig/render"
+	};
 
 	/**
-	 * @method constructor
-	 * @inheritdoc
+	 * DOM component configuration
+	 * @class dom.config
+	 * @extends core.config
+	 * @private
+	 * @alias feature.config
 	 */
-	return Gadget.extend({
-		"displayName" : "core/component/service"
-	});
+
+	return merge.call({}, config, {
+		 /**
+		 * @cfg {dom.config.signal}
+		 * @inheritdoc
+		 * @protected
+		 */
+		"signal": SIGNAL
+	}, module.config());
 });
 (function() {
     
@@ -4063,7 +4075,7 @@ define('troopjs-dom/runner/sequence',[
 
 	/**
 	 * @class dom.runner.sequence
-	 * @implement core.event.emitter.runner
+	 * @implement core.event.runner
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -4151,77 +4163,6 @@ define('troopjs-dom/runner/sequence',[
 	}
 });
 /**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-dom/config',[
-	"troopjs-core/component/config",
-	"module",
-	"mu-merge"
-], function (config, module, merge) {
-	
-
-	/**
-	 * DOM component configuration
-	 * @class dom.config
-	 * @extends core.component.config
-	 * @protected
-	 * @alias feature.config
-	 */
-
-	return merge.call(config, {
-		/**
-		 * @cfg signal
-		 * @cfg {String} signal.render=signal.render Signal emitted when component has rendered.
-		 * @inheritdoc
-		 */
-		"signal": {
-			"render": "render"
-		}
-	}, module.config());
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-dom/signal/render',[
-	"../config",
-	"when"
-], function (config, when) {
-	var ARRAY_PUSH = Array.prototype.push;
-	var PHASE = "phase";
-	var SIG_RENDER = "sig/" + config.signal.render;
-
-	/**
-	 * @class dom.signal.render
-	 * @implement core.component.signal
-	 * @mixin dom.config
-	 * @static
-	 * @alias feature.signal
-	 */
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Signals that the component has rendered something
-	 */
-
-	return function render() {
-		var me = this;
-		var args = arguments;
-
-		return when(me[PHASE], function (phase) {
-			var _args;
-
-			// Let `_args` be `[ SIG_RENDER ]`
-			// Push `args` on `_args`
-			ARRAY_PUSH.apply(_args = [ SIG_RENDER ], args);
-
-			return me
-				.emit.apply(me, _args)
-				.yield(phase);
-		});
-	}
-});
-/**
  * @license MIT http://mu-lib.mit-license.org/
  */
 (function() {
@@ -4304,23 +4245,24 @@ define('mu-jquery-destroy', ['mu-jquery-destroy/main'], function (main) { return
  */
 define('troopjs-dom/component',[
 	"troopjs-core/component/gadget",
+	"./config",
 	"./runner/sequence",
-	"./signal/render",
-	"troopjs-compose/mixin/config",
 	"troopjs-compose/decorator/before",
 	"jquery",
 	"when",
+	"when/function",
 	"mu-selector-set",
 	"poly/array",
 	"mu-jquery-destroy"
-], function (Gadget, sequence, render, COMPOSE_CONF, before, $, when, SelectorSet) {
+], function (Gadget, config, sequence, before, $, when, fn, SelectorSet) {
 	
 
 	/**
 	 * Component that manages all DOM manipulation and integration.
 	 * @class dom.component
 	 * @extend core.component.gadget
-	 * @alias dom.component
+	 * @mixin dom.config
+	 * @alias feature.component
 	 */
 
 	var UNDEFINED;
@@ -4331,7 +4273,7 @@ define('troopjs-dom/component',[
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var $FN = $.fn;
 	var $GET = $FN.get;
-	var WHEN_ATTEMPT = when.attempt;
+	var APPLY = fn.apply;
 	var TOSTRING_FUNCTION = "[object Function]";
 	var $ELEMENT = "$element";
 	var PROXY = "proxy";
@@ -4348,6 +4290,7 @@ define('troopjs-dom/component',[
 	var DELEGATED = "delegated";
 	var ON = "on";
 	var OFF = "off";
+	var SIG_RENDER = config.signal.render;
 	var RE = new RegExp("^" + DOM + "/(.+)");
 
 	function on_delegated(handler, handlers) {
@@ -4376,7 +4319,6 @@ define('troopjs-dom/component',[
 	 * @event sig/render
 	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #text}, {@link #append} and {@link #prepend}
 	 * @since 3.0
-	 * @preventable
 	 * @param {...*} [args] Render arguments
 	 */
 
@@ -4449,14 +4391,6 @@ define('troopjs-dom/component',[
 	 * @fires sig/render
 	 */
 
-	// Add pragmas for DOM specials
-	COMPOSE_CONF.pragmas.push({
-		"pattern": /^dom(?::([^\/]+))?\/([^\(]+(?=$))/,
-		"replace": function(match, $1, $2) {
-			return DOM + "/" + $2 + ($1 === UNDEFINED ? "()" : "(\"" + $1 + "\")");
-		}
-	});
-
 	/**
 	 * Creates a new component that attaches to a specified (jQuery) DOM element.
 	 * @method constructor
@@ -4497,7 +4431,6 @@ define('troopjs-dom/component',[
 		 * jQuery element this widget is attached to
 		 * @property {jQuery} $element
 		 * @readonly
-		 * @protected
 		 */
 		me[$ELEMENT] = $element;
 
@@ -4572,15 +4505,6 @@ define('troopjs-dom/component',[
 		},
 
 		/**
-		 * @handler
-		 * @localdoc Trigger a custom DOM event "task" whenever this widget performs a task.
-		 * @inheritdoc
-		 */
-		"sig/task" : function (task) {
-			this[$ELEMENT].trigger("task", [ task ]);
-		},
-
-		/**
 		 * @method
 		 * @localdoc Registers emitter `on` and `off` callbacks
 		 * @inheritdoc
@@ -4622,41 +4546,31 @@ define('troopjs-dom/component',[
 				return $fn.call(me[$ELEMENT]);
 			}
 
-			// Convert arguments to an array
-			var args = ARRAY_SLICE.call(arguments);
+			// Slice `arguments` to `args`
+			var args = ARRAY_SLICE.call(arguments, 1);
 
 			return when(contentOrPromise, function (content) {
-				var result;
-
 				// If `content` is a function ...
-				if (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION) {
-					// ... attempt and wait for resolution
-					result = WHEN_ATTEMPT.apply(me, args).then(function (_content) {
-						// Let `args[0]` be `_content`
-						// Call `$fn` with `_content`
-						$fn.call(me[$ELEMENT], args[0] = _content);
+				return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
+					// ... return promise of apply ...
+					? APPLY.call(me, content, args)
+					// ... otherwise return `content`
+					: content;
+			})
+				.tap(function (content) {
+					var _args;
 
-						// Signal render
-						return render
-							.apply(me, args)
-							.yield(_content);
-					});
-				}
-				// ... otherwise we can emit right away
-				else {
 					// Let `args[0]` be `content`
 					// Call `$fn` with `content`
-					$fn.call(me[$ELEMENT], args[0] = content);
+					$fn.call(me[$ELEMENT], content);
+
+					// Let `_args` be `[ SIG_RENDER, content ]`
+					// Push `args` on `_args`
+					ARRAY_PUSH.apply(_args = [ SIG_RENDER, content ], args);
 
 					// Signal render
-					result = render
-						.apply(me, args)
-						.yield(content);
-				}
-
-				// Return `result`
-				return result;
-			});
+					return me.emit.apply(me, _args);
+				});
 		};
 
 		// Return spec for next iteration
@@ -4664,3 +4578,6 @@ define('troopjs-dom/component',[
 	}, {}));
 });
 
+define(['troopjs/version'], function (version) {
+	return version;
+});

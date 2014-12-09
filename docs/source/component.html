@@ -19,150 +19,338 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../mixin/base&quot;,
-	&quot;poly/array&quot;
-], function (Base) {
+	&quot;troopjs-core/component/gadget&quot;,
+	&quot;./config&quot;,
+	&quot;./runner/sequence&quot;,
+	&quot;troopjs-compose/decorator/before&quot;,
+	&quot;jquery&quot;,
+	&quot;when&quot;,
+	&quot;when/function&quot;,
+	&quot;mu-selector-set&quot;,
+	&quot;poly/array&quot;,
+	&quot;mu-jquery-destroy&quot;
+], function (Gadget, config, sequence, before, $, when, fn, SelectorSet) {
 	&quot;use strict&quot;;
 
-<span id='core-registry-component'>	/**
-</span>	 * A light weight implementation to register key/value pairs by key and index
-	 * @class core.registry.component
-	 * @extend core.mixin.base
+<span id='dom-component'>	/**
+</span>	 * Component that manages all DOM manipulation and integration.
+	 * @class dom.component
+	 * @extend core.component.gadget
+	 * @mixin dom.config
+	 * @alias feature.component
 	 */
 
 	var UNDEFINED;
-	var LENGTH = &quot;length&quot;;
-	var INDEX = &quot;index&quot;;
-	var KEY = &quot;key&quot;;
-	var VALUE = &quot;value&quot;;
-	var INDEX_KEY = &quot;index_key&quot;;
-	var INDEX_POS = &quot;index_pos&quot;;
+	var NULL = null;
 	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_STRING = &quot;[object String]&quot;;
-	var REGEXP_STRING = &quot;[object RegExp]&quot;;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var $FN = $.fn;
+	var $GET = $FN.get;
+	var APPLY = fn.apply;
+	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
+	var $ELEMENT = &quot;$element&quot;;
+	var PROXY = &quot;proxy&quot;;
+	var DOM = &quot;dom&quot;;
+	var ARGS = &quot;args&quot;;
+	var NAME = &quot;name&quot;;
+	var VALUE = &quot;value&quot;;
+	var TYPE = &quot;type&quot;;
+	var RUNNER = &quot;runner&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var DATA = &quot;data&quot;;
+	var DIRECT = &quot;direct&quot;;
+	var DELEGATED = &quot;delegated&quot;;
+	var ON = &quot;on&quot;;
+	var OFF = &quot;off&quot;;
+	var SIG_RENDER = config.signal.render;
+	var RE = new RegExp(&quot;^&quot; + DOM + &quot;/(.+)&quot;);
 
-<span id='core-registry-component-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @inheritdoc
-	 */
-	return Base.extend(function () {
-<span id='core-registry-component-property-index_key'>		/**
-</span>		 * Registry key storage
-		 * @private
-		 * @readonly
-		 * @property {Object[]} index_key
-		 * @property {String} index_key.key Entry key
-		 * @property {Number} index_key.index Entry index
-		 * @property {*} index_key.value Entry value
-		 */
-		this[INDEX_KEY] = {};
+	function on_delegated(handler, handlers) {
+		handlers[DELEGATED].add(handler[DATA], handler);
+	}
 
-<span id='core-registry-component-property-index_pos'>		/**
-</span>		 * Registry pos storage
-		 * @private
-		 * @readonly
-		 * @property {Object[]} index_pos
-		 * @property {String} index_pos.key Entry key
-		 * @property {Number} index_pos.index Entry index
-		 * @property {*} index_pos.value Entry value
-		 */
-		this[INDEX_POS] = [];
-	}, {
-		&quot;displayName&quot;: &quot;core/registry/component&quot;,
+	function on_direct(handler, handlers) {
+		handlers[DIRECT].push(handler);
+	}
 
-<span id='core-registry-component-method-access'>		/**
-</span>		 * Either gets or puts values into the registry.
-		 *
-		 * - If no key is provided, all entries in the registry are returned.
-		 * - If no value is provided, it depends on the **key**
-		 *   - if key is string or number, current value under this key is returned.
-		 *   - if key is regexp, all values whose key match this pattern are returned
-		 * - If value is provided it replaces the current value for the key
-		 * @param {String|Number|RegExp} [key] Entry key, index or pattern
-		 * @param {*} [value] Entry value
-		 * @return {*} All values if no key, current value for key if no value provided, otherwise the provided value if a new entry is created
-		 * @throws Error if a new entry is created and key is not of type String
-		 */
-		&quot;access&quot;: function (key, value) {
-			var index_key = this[INDEX_KEY];
-			var index_pos = this[INDEX_POS];
-			var result;
-			var argc;
+	function off_delegated(handler, handlers) {
+		handlers[DELEGATED].remove(handler[DATA], handler);
+	}
 
-			// Reading _all_
-			if ((argc = arguments[LENGTH]) === 0) {
-				result = index_pos.map(function (item) {
-					return item[VALUE];
-				});
-			}
-			// query registry by keys
-			else if (OBJECT_TOSTRING.call(key) === REGEXP_STRING &amp;&amp; value === UNDEFINED){
-				result = Object.keys(index_key).filter(function (name) {
-						return key.test(name);
-				}).map(function map(key) {
-					return index_key[key][VALUE];
-				});
-			}
-			else {
-				result = (typeof key === 'number' ? index_pos : index_key)[key];
+	function off_direct(handler, handlers) {
+		var direct = handlers[DIRECT];
+		var index = direct.indexOf(handler);
 
-				// Reading
-				if (argc === 1) {
-					result = result !== UNDEFINED ? result[VALUE] : UNDEFINED;
-				}
-				// Writing
-				else {
-					// Replace existing entry
-					if (result !== UNDEFINED) {
-						result = result[VALUE] = value;
-					}
-					// Check type of key (as now we're creating a new one)
-					else if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
-						throw Error(&quot;key has to be of type String&quot;);
-					}
-					// Create new entry
-					else {
-						result = {};
-						result = index_key[result[KEY] = key] = index_pos[result[INDEX] = index_pos[LENGTH]] = result;
-						result = result[VALUE] = value;
-					}
-				}
-			}
-
-			return result;
-		},
-
-<span id='core-registry-component-method-remove'>		/**
-</span>		 * Removes entries from the registry
-		 * TODO: Fixed screwed up index when item is removed from registry.
-		 *
-		 * - If no key is provided, all entries in the registry are removed.
-		 * - Otherwise only the corresponding entry for key is removed.
-		 * @param {String|Number} [key] Entry key or index
-		 *
-		 */
-		&quot;remove&quot;: function (key) {
-			var me = this;
-			var result;
-			var index_key = me[INDEX_KEY];
-			var index_pos = me[INDEX_POS];
-
-			// Remove all entries
-			if (arguments[LENGTH] === 0) {
-				me[INDEX_KEY] = {};
-				me[INDEX_POS] = [];
-			}
-			// Remove entry by key
-			else if ((result = index_key[key]) !== UNDEFINED) {
-				delete index_key[result[KEY]];
-				delete index_pos[result[INDEX]];
-			}
-		},
-
-		&quot;compact&quot;: function () {
-
+		if (index !== -1) {
+			direct.splice(index, 1);
 		}
-	});
+	}
+
+<span id='dom-component-event-sig-render'>	/**
+</span>	 * Render signal
+	 * @event sig/render
+	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #text}, {@link #append} and {@link #prepend}
+	 * @since 3.0
+	 * @param {...*} [args] Render arguments
+	 */
+
+<span id='dom-component-handler-sig-render'>	/**
+</span>	 * Handles component render
+	 * @handler sig/render
+	 * @template
+	 * @inheritdoc #event-sig/render
+	 * @return {Promise}
+	 */
+
+<span id='dom-component-event-dom-destroy'>	/**
+</span>	 * Destroy DOM event
+	 * @localdoc Triggered when {@link #$element} of this widget is removed from the DOM tree.
+	 * @event dom/destroy
+	 * @param {jQuery} $event jQuery event object
+	 * @param {...*} [args] Event arguments
+	 * @preventable
+	 */
+
+<span id='dom-component-handler-dom-destroy'>	/**
+</span>	 * Handles widget destruction from a DOM perspective
+	 * @handler dom/destroy
+	 * @template
+	 * @inheritdoc #event-dom/destroy
+	 * @localdoc Triggered when this widget is removed from the DOM
+	 */
+
+<span id='dom-component-method-html'>	/**
+</span>	 * Renders content and replaces {@link #$element} html contents
+	 * @method html
+	 * @param {Function|String|Promise} [contentOrPromise] Contents to render or a Promise for contents
+	 * @param {...*} [args] Template arguments
+	 * @fires sig/render
+	 * @return {String|Promise} The returned content string or promise of rendering.
+	 */
+
+<span id='dom-component-method-text'>	/**
+</span>	 * Renders content and replaces {@link #$element} text contents
+	 * @method text
+	 * @inheritdoc #html
+	 * @fires sig/render
+	 */
+
+<span id='dom-component-method-before'>	/**
+</span>	 * Renders content and inserts it before {@link #$element}
+	 * @method before
+	 * @inheritdoc #html
+	 * @fires sig/render
+	 */
+
+<span id='dom-component-method-after'>	/**
+</span>	 * Renders content and inserts it after {@link #$element}
+	 * @method after
+	 * @inheritdoc #html
+	 * @fires sig/render
+	 */
+
+<span id='dom-component-method-append'>	/**
+</span>	 * Renders content and appends it to {@link #$element}
+	 * @method append
+	 * @inheritdoc #html
+	 * @fires sig/render
+	 */
+
+<span id='dom-component-method-prepend'>	/**
+</span>	 * Renders content and prepends it to {@link #$element}
+	 * @method prepend
+	 * @inheritdoc #html
+	 * @fires sig/render
+	 */
+
+<span id='dom-component-method-constructor'>	/**
+</span>	 * Creates a new component that attaches to a specified (jQuery) DOM element.
+	 * @method constructor
+	 * @param {jQuery|HTMLElement} $element The element that this component should be attached to
+	 * @param {String} [displayName] A friendly name for this component
+	 * @throws {Error} If no $element is provided
+	 * @throws {Error} If $element is not of supported type
+	 */
+	return Gadget.extend(function ($element, displayName) {
+		var me = this;
+		var $get;
+		var args;
+
+		// No $element
+		if ($element === UNDEFINED || $element === NULL) {
+			throw new Error(&quot;No $element provided&quot;);
+		}
+		// Is _not_ a jQuery element
+		else if (!$element.jquery) {
+			// Let `args` be `ARRAY_SLICE.call(arguments)`
+			args = ARRAY_SLICE.call(arguments);
+
+			// Let `$element` be `$($element)`
+			// Let `args[0]` be `$element`
+			args[0] = $element = $($element);
+		}
+		// From a different jQuery instance
+		else if (($get = $element.get) !== $GET) {
+			// Let `args` be `ARRAY_SLICE.call(arguments)`
+			args = ARRAY_SLICE.call(arguments);
+
+			// Let `$element` be `$($get.call($element, 0))`
+			// Let `args[0]` be `$element`
+			args[0] = $element = $($get.call($element, 0));
+		}
+
+<span id='dom-component-property-S-element'>		/**
+</span>		 * jQuery element this widget is attached to
+		 * @property {jQuery} $element
+		 * @readonly
+		 */
+		me[$ELEMENT] = $element;
+
+		// Update `me.displayName` if `displayName` was supplied
+		if (displayName !== UNDEFINED) {
+			me.displayName = displayName;
+		}
+
+		// Return potentially modified `args`
+		return args;
+	}, {
+		&quot;displayName&quot; : &quot;dom/component&quot;,
+
+<span id='dom-component-handler-sig-initialize'>		/**
+</span>		 * @handler
+		 * @localdoc Registers event handlers that are declared as DOM specials.
+		 * @inheritdoc
+		 */
+		&quot;sig/initialize&quot; : function () {
+			var me = this;
+
+			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
+				return me.on(special[NAME], special[VALUE], special[ARGS][0]);
+			});
+		},
+
+<span id='dom-component-handler-sig-setup'>		/**
+</span>		 * @handler
+		 * @localdoc Registers for each type of DOM event a proxy function on the DOM element that
+		 * re-dispatches those events.
+		 * @inheritdoc
+		 */
+		&quot;sig/setup&quot;: function (handlers, type) {
+			var me = this;
+			var matches;
+
+			if ((matches = RE.exec(type)) !== NULL) {
+				// Create delegated and direct event stores
+				handlers[DIRECT] = [];
+				handlers[DELEGATED] = new SelectorSet();
+
+				// $element.on handlers[PROXY]
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
+					var args = {};
+					args[TYPE] = type;
+					args[RUNNER] = sequence;
+					args[CONTEXT] = me;
+					args = [ args ];
+
+					// Push original arguments on args
+					ARRAY_PUSH.apply(args, arguments);
+
+					// Return result of emit
+					return me.emit.apply(me, args);
+				});
+			}
+		},
+
+<span id='dom-component-handler-sig-teardown'>		/**
+</span>		 * @handler
+		 * @localdoc Remove for the DOM event handler proxies that are registered on the DOM element.
+		 * @inheritdoc
+		 */
+		&quot;sig/teardown&quot;: function (handlers, type) {
+			var me = this;
+			var matches;
+
+			if ((matches = RE.exec(type)) !== NULL) {
+				// $element.off handlers[PROXY]
+				me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
+			}
+		},
+
+<span id='dom-component-method-on'>		/**
+</span>		 * @method
+		 * @localdoc Registers emitter `on` and `off` callbacks
+		 * @inheritdoc
+		 */
+		&quot;on&quot;: before(function (type, callback, data) {
+			var _callback = callback;
+
+			// Check if this is a DOM type
+			if (RE.test(type)) {
+				// If `callback` is a function ...
+				if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+					// Create `_callback` object
+					_callback = {};
+					_callback[CALLBACK] = callback;
+				}
+
+				// Set `ON` and `OFF` callbacks
+				_callback[ON] = data !== UNDEFINED
+					? on_delegated
+					: on_direct;
+				_callback[OFF] = data !== UNDEFINED
+					? off_delegated
+					: off_direct;
+			}
+
+			// Mutate return args to next method
+			return [ type, _callback, data ];
+		})
+	}, [ &quot;html&quot;, &quot;text&quot;, &quot;before&quot;, &quot;after&quot;, &quot;append&quot;, &quot;prepend&quot; ].reduce(function (spec, method) {
+		// Let `$fn` be `$FN[method]`
+		var $fn = $FN[method];
+
+		// Create `spec[method]`
+		spec[method] = function (contentOrPromise) {
+			var me = this;
+
+			// If `arguments.length` is `0` just return `$fn.call(...)`
+			if (arguments.length === 0) {
+				return $fn.call(me[$ELEMENT]);
+			}
+
+			// Slice `arguments` to `args`
+			var args = ARRAY_SLICE.call(arguments, 1);
+
+			return when(contentOrPromise, function (content) {
+				// If `content` is a function ...
+				return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
+					// ... return promise of apply ...
+					? APPLY.call(me, content, args)
+					// ... otherwise return `content`
+					: content;
+			})
+				.tap(function (content) {
+					var _args;
+
+					// Let `args[0]` be `content`
+					// Call `$fn` with `content`
+					$fn.call(me[$ELEMENT], content);
+
+					// Let `_args` be `[ SIG_RENDER, content ]`
+					// Push `args` on `_args`
+					ARRAY_PUSH.apply(_args = [ SIG_RENDER, content ], args);
+
+					// Signal render
+					return me.emit.apply(me, _args);
+				});
+		};
+
+		// Return spec for next iteration
+		return spec;
+	}, {}));
 });
 </pre>
 </body>

@@ -24,11 +24,11 @@ define([
 ], function (METHODS) {
 	&quot;use strict&quot;;
 
-<span id='log-sink-null'>	/**
-</span>	 * @class log.sink.null
-	 * @implement log.console
+<span id='log-null'>	/**
+</span>	 * @class log.null
+	 * @implement log.logger
 	 * @singleton
-	 * @inheritdoc log.sink.console
+	 * @inheritdoc log.console
 	 * @localdoc
 	 * This class maps every log method to a [nop](https://en.wikipedia.org/wiki/NOP) function,
 	 * effectively suppressing all logging.

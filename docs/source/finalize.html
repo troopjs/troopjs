@@ -20,7 +20,7 @@
  */
 define([
 	&quot;./stop&quot;,
-	&quot;../config&quot;,
+	&quot;../../config&quot;,
 	&quot;when&quot;
 ], function (stop, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
@@ -28,20 +28,21 @@ define([
 	var STOPPED = config.phase.stopped;
 	var FINALIZE = config.phase.finalize;
 	var FINALIZED = config.phase.finalized;
-	var SIG_FINALIZE = &quot;sig/&quot; + config.signal.finalize;
+	var SIG_FINALIZE = config.signal.finalize;
 
 <span id='core-component-signal-finalize'>	/**
 </span>	 * @class core.component.signal.finalize
 	 * @implement core.component.signal
-	 * @mixin core.component.config
+	 * @mixin core.config
 	 * @static
 	 * @alias feature.signal
+	 * @private
 	 */
 
 <span id='core-component-signal-finalize-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `finalized`
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `finalized`
 	 */
 	return function finalize() {
 		var me = this;

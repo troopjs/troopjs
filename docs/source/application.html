@@ -43,14 +43,14 @@ define([
 	 * @inheritdoc
 	 * @param {jQuery|HTMLElement} $element The element that this widget should be attached to
 	 * @param {String} displayName A friendly name for this widget
-	 * @param {...core.component.base} component List of components to start before starting the application.
+	 * @param {...core.component.emitter} component List of components to start before starting the application.
 	 */
 	return Widget.extend(function ($element, displayName, component) {
 <span id='widget-application-property-components'>		/**
 </span>		 * Application components
 		 * @private
 		 * @readonly
-		 * @property {core.component.base[]} components
+		 * @property {core.component.emitter[]} components
 		 */
 		this[COMPONENTS] = ARRAY_SLICE.call(arguments, 2);
 	}, {
@@ -113,7 +113,25 @@ define([
 			return when.map(this[COMPONENTS], function (component) {
 				return finalize.apply(component, args);
 			});
-		}
+		},
+
+<span id='widget-application-method-start'>		/**
+</span>		 * Start the component life-cycle, sends out {@link #event-sig/initialize} and then {@link #event-sig/start}.
+		 * @param {...*} [args] arguments
+		 * @return {Promise}
+		 * @fires sig/initialize
+		 * @fires sig/start
+		 */
+		&quot;start&quot;: start,
+
+<span id='widget-application-method-stop'>		/**
+</span>		 * Stops the component life-cycle, sends out {@link #event-sig/stop} and then {@link #event-sig/finalize}.
+		 * @param {...*} [args] arguments
+		 * @return {Promise}
+		 * @fires sig/stop
+		 * @fires sig/finalize
+		 */
+		&quot;stop&quot;: finalize
 	});
 });
 </pre>

@@ -20,7 +20,7 @@
  */
 define([
 	&quot;./initialize&quot;,
-	&quot;../config&quot;,
+	&quot;../../config&quot;,
 	&quot;when&quot;
 ], function (initialize, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
@@ -28,20 +28,21 @@ define([
 	var INITIALIZED = config.phase.initialized;
 	var START = config.phase.start;
 	var STARTED = config.phase.started;
-	var SIG_START = &quot;sig/&quot; + config.signal.start;
+	var SIG_START = config.signal.start;
 
 <span id='core-component-signal-start'>	/**
 </span>	 * @class core.component.signal.start
 	 * @implement core.component.signal
-	 * @mixin core.component.config
+	 * @mixin core.config
 	 * @static
 	 * @alias feature.signal
+	 * @private
 	 */
 
 <span id='core-component-signal-start-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.base#phase} to `started`
+	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `started`
 	 */
 
 	return function start() {
