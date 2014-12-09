@@ -37,10 +37,10 @@
 		"docs"
 	],
 	"dependencies": {
-		"troopjs-compose": "^3.2",
-		"troopjs-core": "^4.4",
-		"troopjs-dom": "^6.1.1",
-		"troopjs-log": "^1"
+		"troopjs-compose": "^4",
+		"troopjs-core": "^5",
+		"troopjs-dom": "^7",
+		"troopjs-log": "^2"
 	},
 	"devDependencies": {
 		"troopjs-widget": "develop",

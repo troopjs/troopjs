@@ -68,6 +68,7 @@ module.exports = function(grunt) {
 						"exclude": [
 							"jquery",
 							"when",
+							"when/function",
 							"poly"
 						],
 						"excludeShallow": [
