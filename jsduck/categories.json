@@ -42,7 +42,8 @@
           "Date",
           "Function",
           "Array",
-          "Number"
+          "Number",
+          "Promise"
         ]
       }
     ]
