@@ -9,7 +9,7 @@
  * (If the promise has already been fulfilled or rejected when a corresponding handler is attached, the handler
  * will be called, so there is no race condition between an asynchronous operation completing and its handlers being attached.)
  *
- * As the `Promise.prototype.then` and `Promise.prototype.catch` methods return promises, they can be chained—an operation called *composition*.
+ * As the {@link Promise#then} and {@link Promise#catch} methods return promises, they can be chained—an operation called *composition*.
  *
  * <div class="notice">
  * Documentation for this class comes from <a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Promise">MDN</a> and is available under <a href="http://creativecommons.org/licenses/by-sa/2.0/">Creative Commons: Attribution-Sharealike license</a>.
@@ -49,7 +49,7 @@
  *
  * @method all
  * @param {*} iterable An iterable object, such as an {@link Array}
- * @return {Promise} promise
+ * @return {Promise}
  * @static
  */
 
@@ -100,7 +100,7 @@
  *
  * @method race
  * @param {*} iterable An iterable object, such as an {@link Array}
- * @return {Promise} promise
+ * @return {Promise}
  * @static
  */
 
@@ -123,7 +123,7 @@
  *
  * @method reject
  * @param {Error|*} reason Reason why this `Promise` rejected.
- * @return {Promise} promise
+ * @return {Promise}
  * @static
  */
 
@@ -138,7 +138,7 @@
  *
  * @method resolve
  * @param {*} value Argument to be resolved by this `Promise`. Can also be a {@link Promise} or a `thenable` to resolve.
- * @return {Promise} promise
+ * @return {Promise}
  * @static
  */
 
@@ -159,7 +159,7 @@
  * @method catch
  * @param {Function} onRejected A `Function` called when the `Promise` is rejected. This function has one argument, the rejection `reason`.
  * @param {Error|*} onRejected.reason Reason why this `Promise` rejected.
- * @return {Promise} promise
+ * @return {Promise}
  */
 
 /**
@@ -182,5 +182,5 @@
  * @param {*} onFulfilled.value Argument to be resolved by this `Promise`. Can also be a {@link Promise} or a `thenable` to resolve.
  * @param {Function} onRejected A `Function` called when the `Promise` is rejected. This function has one argument, the rejection `reason`.
  * @param {Error|*} onRejected.reason Reason why this `Promise` rejected.
- * @return {Promise} promise
+ * @return {Promise}
  */
