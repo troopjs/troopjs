@@ -1,8 +1,7 @@
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
 /*globals module:false*/
 module.exports["troopjs"] = {
+	"autoRun": false,
+
 	"environment" : "browser",
 
 	"libs" : [
@@ -21,6 +20,14 @@ module.exports["troopjs"] = {
 		"bower_components/poly/lib/*.js",
 		"bower_components/poly/support/*.js"
 	],
+
+	"extensions": [ require("buster-amd") ],
+
+	"buster-amd": {
+		"pathMapper": function (path) {
+			return path.replace(/\.js$/, "").replace(/^\//, "../");
+		}
+	},
 
 	"tests" : [
 		"bower_components/troopjs-*/test/**/*-test.js"
