@@ -76,8 +76,8 @@ define(['troopjs/version'], function (version) {\n\
 						"name": "troopjs/main",
 						"exclude": [
 							"jquery",
-							"when",
-							"poly"
+							"when/when",
+							"poly/es5"
 						],
 						"excludeShallow": [
 							"troopjs/main"
