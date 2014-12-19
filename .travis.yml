@@ -1,9 +1,6 @@
 language: node_js
 before_install:
   - npm install -g grunt-cli bower buster
+  - npm install phantomjs
   - gem install jsduck-troopjs
   - bower install
-branches:
-  except:
-    - /^build\//
-    - /\+[a-f0-9]{7}$/
