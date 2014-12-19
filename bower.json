@@ -43,7 +43,9 @@
 		"troopjs-log": "^2"
 	},
 	"devDependencies": {
-		"troopjs-widget": "develop",
+		"troopjs-ajax": "master",
+		"troopjs-widget": "master",
+		"troopjs-pubsub": "master",
 		"requirejs": "^2.1"
 	}
 }

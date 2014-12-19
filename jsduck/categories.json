@@ -24,6 +24,14 @@
     "name": "Stack",
     "groups": [
       {
+        "name": "troopjs-ajax",
+        "classes": [ "ajax.*" ]
+      },
+      {
+        "name": "troopjs-pubsub",
+        "classes": [ "pubsub.*" ]
+      },
+      {
         "name": "troopjs-widget",
         "classes": [ "widget.*" ]
       }
