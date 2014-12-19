@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.9+9cc532e ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.1+75ca869 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-pr.9+9cc532e"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.1+75ca869"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -249,14 +249,12 @@ define('mu-merge/main',[ "poly/object" ], function () {
 	};
 });
 
-define('mu-merge', ['mu-merge/main'], function (main) { return main; });
-
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/extend',[
 	"../decorator",
-	"mu-merge"
+	"mu-merge/main"
 ], function (Decorator, merge) {
 	
 
@@ -346,7 +344,7 @@ define('troopjs-compose/decorator/from',[ "../decorator" ], function (Decorator)
  */
 define('troopjs-compose/config',[
 	"module",
-	"mu-merge"
+	"mu-merge/main"
 ], function (module, merge) {
 	
 
@@ -397,7 +395,7 @@ define('troopjs-compose/config',[
 define('troopjs-core/config',[
 	"module",
 	"troopjs-compose/config",
-	"mu-merge"
+	"mu-merge/main"
 ], function (module, config, merge) {
 	
 
@@ -526,7 +524,7 @@ define('troopjs-core/config',[
  */
 define('troopjs-core/component/signal/initialize',[
 	"../../config",
-	"when"
+	"when/when"
 ], function (config, when) {
 	var UNDEFINED;
 	var ARRAY_PUSH = Array.prototype.push;
@@ -584,7 +582,7 @@ define('troopjs-core/component/signal/initialize',[
 define('troopjs-core/component/signal/start',[
 	"./initialize",
 	"../../config",
-	"when"
+	"when/when"
 ], function (initialize, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
@@ -642,7 +640,7 @@ define('troopjs-core/component/signal/start',[
 define('troopjs-core/component/signal/stop',[
 	"./start",
 	"../../config",
-	"when"
+	"when/when"
 ], function (start, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
@@ -700,7 +698,7 @@ define('troopjs-core/component/signal/stop',[
 define('troopjs-core/component/signal/finalize',[
 	"./stop",
 	"../../config",
-	"when"
+	"when/when"
 ], function (stop, config, when) {
 	var ARRAY_PUSH = Array.prototype.push;
 	var PHASE = "phase";
@@ -756,44 +754,6 @@ define('troopjs-core/component/signal/finalize',[
  */
 define('troopjs-log/methods',[], function () {
 	return [ "assert", "debug", "dir", "error", "info", "log", "time", "timeEnd", "trace", "warn" ];
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-log/console',[
-	"./methods",
-	"poly/array",
-	"poly/function"
-], function (METHODS) {
-	
-
-	/**
-	 * This class implements the {@link log.logger} API.
-	 * @localdoc
-	 * On platforms where the native `console` object doesn't support the full {@link log.logger} API,
-	 * this class acts like a polyfill for the missing methods.
-	 * @class log.console
-	 * @implement log.logger
-	 * @singleton
-	 * @alias feature.logger
-	 */
-
-	/**
-	 * Creates a poly-filled version of the console object
-	 * @method constructor
-	 * @param {console} console Client console object
-	 * @ignore
-	 */
-	return (function (console) {
-		var me = this;
-		var nop = function () {};
-
-		METHODS.forEach(function (method) {
-			me[method] = this.call(console[method] || nop, console);
-		}, Function.prototype.bind);
-
-		return me;
-	}).call({}, ( this || window ).console || {});
 });
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -991,8 +951,6 @@ define('troopjs-log/null',[
     }
 
 })();
-
-define('mu-unique', ['mu-unique/main'], function (main) { return main; });
 
 (function() {
     
@@ -1208,16 +1166,14 @@ define('mu-unique', ['mu-unique/main'], function (main) { return main; });
 
 })();
 
-define('mu-getargs', ['mu-getargs/main'], function (main) { return main; });
-
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/factory',[
 	"./config",
 	"./decorator",
-	"mu-unique",
-	"mu-getargs",
+	"mu-unique/main",
+	"mu-getargs/main",
 	"poly/object",
 	"poly/function"
 ], function (config, Decorator, unique, getargs) {
@@ -1593,6 +1549,44 @@ define('troopjs-compose/factory',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
+define('troopjs-log/console',[
+	"./methods",
+	"poly/array",
+	"poly/function"
+], function (METHODS) {
+	
+
+	/**
+	 * This class implements the {@link log.logger} API.
+	 * @localdoc
+	 * On platforms where the native `console` object doesn't support the full {@link log.logger} API,
+	 * this class acts like a polyfill for the missing methods.
+	 * @class log.console
+	 * @implement log.logger
+	 * @singleton
+	 * @alias feature.logger
+	 */
+
+	/**
+	 * Creates a poly-filled version of the console object
+	 * @method constructor
+	 * @param {console} console Client console object
+	 * @ignore
+	 */
+	return (function (console) {
+		var me = this;
+		var nop = function () {};
+
+		METHODS.forEach(function (method) {
+			me[method] = this.call(console[method] || nop, console);
+		}, Function.prototype.bind);
+
+		return me;
+	}).call({}, ( this || window ).console || {});
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define('troopjs-log/logger',[ "./console" ], function (logger) {
 	
 
@@ -1873,12 +1867,137 @@ define('troopjs-core/composition',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
+define('troopjs-core/event/handler',[],function () {
+
+	/**
+	 * @class core.event.handler
+	 * @private
+	 */
+
+	/**
+	 * Handler emitter
+	 * @property {core.event.emitter} emitter
+	 */
+
+	/**
+	 * Handler type
+	 * @property {String} type
+	 */
+
+	/**
+	 * Handler data
+	 * @property {*} data
+	 */
+
+	/**
+	 * Handler callback
+	 * @property {Function} callback
+	 */
+
+	/**
+	 * Handler context
+	 * @property {core.event.emitter} context
+	 */
+
+	/**
+	 * Handler limit
+	 * @property {Number} limit
+	 */
+
+	/**
+	 * Handler count
+	 * @property {Number} count
+	 */
+
+	/**
+	 * Handler `on` callback
+	 * @property {Function} on
+	 */
+
+	/**
+	 * Handler `off` callback
+	 * @property {Function} off
+	 */
+
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_FUNCTION = "[object Function]";
+	var EMITTER = "emitter";
+	var CONTEXT = "context";
+	var CALLBACK = "callback";
+	var TYPE = "type";
+	var LIMIT = "limit";
+	var COUNT = "count";
+	var DATA = "data";
+	var ON = "on";
+	var OFF = "off";
+
+	/**
+	 * Creates new handler
+	 * @param {core.event.emitter} emitter Emitter that owns this handler
+	 * @param {String} type Type for this handler
+	 * @param {Function} callback Callback for this handler
+	 * @param {*} [data] Data for this handler
+	 * @method constructor
+	 */
+	function Handler(emitter, type, callback, data) {
+		var me = this;
+
+		me[EMITTER] = emitter;
+		me[TYPE] = type;
+		me[DATA] = data;
+
+		if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+			me[CALLBACK] = callback;
+			me[CONTEXT] = emitter;
+		}
+		else {
+			me[CALLBACK] = callback[CALLBACK];
+			me[CONTEXT] = callback[CONTEXT] || emitter;
+
+			if (callback.hasOwnProperty(LIMIT)) {
+				me[LIMIT] = callback[LIMIT];
+				me[COUNT] = 0;
+			}
+			if (callback.hasOwnProperty(ON)) {
+				me[ON] = callback[ON];
+			}
+			if (callback.hasOwnProperty(OFF)) {
+				me[OFF] = callback[OFF];
+			}
+		}
+	}
+
+	/**
+	 * Executes {@link #callback} and does some house keeping.
+	 * @param {Array} args Handler arguments
+	 */
+	Handler.prototype.run = function (args) {
+		// Let `me` be `this`
+		var me = this;
+
+		// Get result from execution of `handler[CALLBACK]`
+		var result = me[CALLBACK].apply(me[CONTEXT], args);
+
+		// If there's a `me[LIMIT]` and `++me[COUNT]` is greater or equal to it ...
+		if (LIMIT in me && ++me[COUNT] >= me[LIMIT]) {
+			// ... `me[EMITTER].off` `me` (note that `me[CALLBACK]` and `me[CONTEXT]` are used by `.off`)
+			me[EMITTER].off(me[TYPE], me);
+		}
+
+		return result;
+	};
+
+	return Handler;
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-core/event/runner',[ "when/when" ], function (when) {
 	
 
 	/**
-	 * @class core.event.runner.sequence
-	 * @implement core.event.runner
+	 * @class core.event.runner
+	 * @mixin Function
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -1887,13 +2006,19 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
 	var UNDEFINED;
 	var HEAD = "head";
 	var NEXT = "next";
-	var CONTEXT = "context";
 
 	/**
+	 * Run event handlers.
 	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Run event handlers **asynchronously** in "sequence", passing to each handler the same arguments from emitting.
-	 * @return {Promise}
+	 * @abstract
+	 * @param {Object} event Event object
+	 * @param {String} event.context Event context
+	 * @param {Function} event.callback Event callback
+	 * @param {Object} handlers List of handlers
+	 * @param {Array} args Initial arguments
+	 * @localdoc
+	 * - Run event handlers asynchronously passing each handler `args`.
+	 * @return {Promise} Promise for `[*]`
 	 */
 	return function sequence(event, handlers, args) {
 		var candidates = [];
@@ -1907,12 +2032,12 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
 
 		// Reduce `candidates`
 		return when.reduce(candidates, function (results, candidate, index) {
-			// Apply `candidate[CALLBACK]` with `candidate[CONTEXT]` passing `args`
-			// Pass result from apply to `when` and onwards to store in `results`
-			return when(candidate.apply(candidate[CONTEXT], args), function (result) {
+			// Run `candidate` passing `args`
+			// Pass result to `when` and onwards to store in `results`
+			return when(candidate.run(args), function (result) {
 				results[index] = result;
 			})
-			// `yield` results for next execution
+			// yield `results` for next execution
 			.yield(results);
 		}, candidates);
 	}
@@ -1923,22 +2048,14 @@ define('troopjs-core/event/runner/sequence',[ "when" ], function (when) {
  */
 define('troopjs-core/event/emitter',[
 	"../composition",
-	"./runner/sequence"
-], function (Composition, sequence) {
+	"./handler",
+	"./runner"
+], function (Composition, Handler, runner) {
 	
 
 	/**
 	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
-	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism, which makes it supports for both:
-	 *
-	 *  - **synchronous event**: all your event handlers are run in a single loop.
-	 *  - **async event with promise**: you can return a promise where the next handler will be called upon the
-	 *  completion of that promise.
-	 *
-	 * Event runner can even determinate the **parameters passing** strategy among handlers, which forms in two flavours:
-	 *
-	 *  - sequence: where each handler receives the arguments passed to {@link #method-emit}.
-	 *  - pipeline: where a handler receives the return value of the previous one.
+	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism.
 	 *
 	 * @class core.event.emitter
 	 * @extend core.composition
@@ -1955,62 +2072,12 @@ define('troopjs-core/event/emitter',[
 	var RUNNER = "runner";
 	var CONTEXT = "context";
 	var CALLBACK = "callback";
-	var DATA = "data";
 	var HEAD = "head";
 	var TAIL = "tail";
 	var NEXT = "next";
 	var LIMIT = "limit";
 	var ON = "on";
 	var OFF = "off";
-
-	/**
-	 * Creates a new handler
-	 * @inheritdoc #on
-	 * @return {core.event.emitter.handler} Handler
-	 * @ignore
-	 */
-	function createHandler(type, callback, data) {
-		var me = this;
-		var count = 0;
-
-		var handler = function () {
-			// Let `limit` be `handler[LIMIT]`
-			var limit = handler[LIMIT];
-
-			// Get result from execution of `handler[CALLBACK]`
-			var result = handler[CALLBACK].apply(this, arguments);
-
-			// If there's a `limit` and `++count` is greater or equal to it `off` the callback
-			if (limit !== 0 && ++count >= limit) {
-				me.off(type, callback);
-			}
-
-			// Return
-			return result;
-		};
-
-		if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-			handler[CALLBACK] = callback;
-			handler[CONTEXT] = me;
-			handler[LIMIT] = 0;
-		}
-		else {
-			handler[CALLBACK] = callback[CALLBACK];
-			handler[CONTEXT] = callback[CONTEXT] || me;
-			handler[LIMIT] = callback[LIMIT] || 0;
-
-			if (callback.hasOwnProperty(ON)) {
-				handler[ON] = callback[ON];
-			}
-			if (callback.hasOwnProperty(OFF)) {
-				handler[OFF] = callback[OFF];
-			}
-		}
-
-		handler[DATA] = data;
-
-		return handler;
-	}
 
 	/**
 	 * @method constructor
@@ -2021,7 +2088,7 @@ define('troopjs-core/event/emitter',[
 		 * Handlers attached to this component, addressable either by key or index
 		 * @private
 		 * @readonly
-		 * @property {core.event.emitter.handler[]} handlers
+		 * @property {core.event.handler[]} handlers
 		 */
 		this[HANDLERS] = [];
 	}, {
@@ -2036,10 +2103,10 @@ define('troopjs-core/event/emitter',[
 		 * @param {Object} [callback.context=this] Callback context.
 		 * @param {Number} [callback.limit=0] Callback limit.
 		 * @param {Function} [callback.on=undefined] Will be called once this handler is added to the handlers list.
-		 * @param {core.event.emitter.handler} [callback.on.handler] The handler that was just added.
+		 * @param {core.event.handler} [callback.on.handler] The handler that was just added.
 		 * @param {Object} [callback.on.handlers] The list of handlers the handler was added to.
 		 * @param {Function} [callback.off=undefined] Will be called once this handler is removed from the handlers list.
-		 * @param {core.event.emitter.handler} [callback.off.handler] The handler that was just removed.
+		 * @param {core.event.handler} [callback.off.handler] The handler that was just removed.
 		 * @param {Object} [callback.off.handlers] The list of handlers the handler was removed from.
 		 * @param {*} [data] Handler data
 		 */
@@ -2054,7 +2121,7 @@ define('troopjs-core/event/emitter',[
 			}
 
 			// Create new handler
-			handler = createHandler.call(me, type, callback, data);
+			handler = new Handler(me, type, callback, data);
 
 			// Have handlers
 			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
@@ -2212,41 +2279,41 @@ define('troopjs-core/event/emitter',[
 		 */
 		"emit" : function (event, args) {
 			var me = this;
-			var type = event;
+			var eventType = event;
+			var eventRunner;
 			var handlers;
-			var runner;
 
 			// If event is a plain string, convert to object with props
 			if (OBJECT_TOSTRING.call(event) === TOSTRING_STRING) {
 				// Recreate event
 				event = {};
-				event[RUNNER] = runner = sequence;
-				event[TYPE] = type;
+				event[RUNNER] = eventRunner = runner;
+				event[TYPE] = eventType;
 			}
 			// If event duck-types an event object we just override or use defaults
 			else if (TYPE in event) {
-				event[RUNNER] = runner = event[RUNNER] || sequence;
-				type = event[TYPE];
+				eventRunner = event[RUNNER] = event[RUNNER] || runner;
+				eventType = event[TYPE];
 			}
 			// Otherwise something is wrong
 			else {
 				throw Error("first argument has to be of type '" + TOSTRING_STRING + "' or have a '" + TYPE + "' property");
 			}
 
-			// Get handlers[type] as handlers
-			if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
-				// Get HANDLERS
+			// Let `handlers` be `handlers[eventType]`
+			if ((handlers = me[HANDLERS][eventType]) === UNDEFINED) {
+				// Let `handlers` be `me[HANDLERS]`
 				handlers = me[HANDLERS];
 
 				// Create type handlers
-				handlers = handlers[handlers[LENGTH]] = handlers[type] = {};
+				handlers = handlers[handlers[LENGTH]] = handlers[eventType] = {};
 
 				// Prepare handlers
-				handlers[TYPE] = type;
+				handlers[TYPE] = eventType;
 			}
 
-			// Return result from runner
-			return runner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
+			// Return result from `eventRunner`
+			return eventRunner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
 		}
 	});
 });
@@ -2254,12 +2321,12 @@ define('troopjs-core/event/emitter',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
+define('troopjs-core/component/runner',[ "poly/array" ], function () {
 	
 
 	/**
-	 * @class core.component.runner.sequence
-	 * @implement core.event.runner
+	 * @class core.component.runner
+	 * @mixin Function
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -2274,9 +2341,14 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
 
 	/**
 	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Run event handlers **synchronously** in "sequence", passing to each handler the same arguments from emitting.
-	 * @return {*[]} Result from each executed handler
+	 * @inheritdoc core.event.runner#constructor
+	 * @localdoc
+	 * - Runs event handlers synchronously passing each handler `args`.
+	 * - Anything returned from a handler except `undefined` will be stored as `result`
+	 * - If a handler returns `undefined` the current `result` will be kept
+	 * - If a handler returns `false` no more handlers will be executed.
+	 *
+	 * @return {*} Stored `result`
 	 */
 	return function sequence(event, handlers, args) {
 		var context = event[CONTEXT];
@@ -2302,7 +2374,7 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
 		// Reduce and return
 		return candidates.reduce(function (current, candidate) {
 			var result = current !== FALSE
-				? candidate.apply(candidate[CONTEXT], args)
+				? candidate.run(args)
 				: current;
 
 			return result === UNDEFINED
@@ -2318,10 +2390,10 @@ define('troopjs-core/component/runner/sequence',[ "poly/array" ], function () {
 define('troopjs-core/registry/emitter',[
 	"../event/emitter",
 	"../config",
-	"../component/runner/sequence",
+	"../component/runner",
 	"poly/array",
 	"poly/object"
-], function (Emitter, config, sequence) {
+], function (Emitter, config, runner) {
 	
 
 	/**
@@ -2426,7 +2498,7 @@ define('troopjs-core/registry/emitter',[
 
 				event = {};
 				event[TYPE] = SIG_REGISTER;
-				event[RUNNER] = sequence;
+				event[RUNNER] = runner;
 
 				me.emit(event, key, index[key] = value);
 			}
@@ -2453,7 +2525,7 @@ define('troopjs-core/registry/emitter',[
 				if (delete index[key]) {
 					event = {};
 					event[TYPE] = SIG_UNREGISTER;
-					event[RUNNER] = sequence;
+					event[RUNNER] = runner;
 
 					me.emit(event, key, value);
 				}
@@ -2535,7 +2607,7 @@ define('troopjs-core/task/registry',[ "../registry/emitter" ], function (Registr
  */
 define('troopjs-core/task/factory',[
 	"./registry",
-	"when"
+	"when/when"
 ], function (registry, when) {
 	
 
@@ -2550,7 +2622,7 @@ define('troopjs-core/task/factory',[
 	/**
 	 * Creates and registers a task
 	 * @method constructor
-	 * @param {Promise|Resolver} promiseOrResolver The task resolver.
+	 * @param {Promise|Function} promiseOrResolver The task resolver.
 	 * @param {String} [name=task] Task name
 	 * @return {Promise}
 	 */
@@ -2578,13 +2650,13 @@ define('troopjs-core/component/emitter',[
 	"../event/emitter",
 	"../config",
 	"./registry",
-	"./runner/sequence",
+	"./runner",
 	"../task/factory",
-	"mu-merge",
+	"mu-merge/main",
 	"troopjs-compose/decorator/around",
-	"when",
+	"when/when",
 	"poly/array"
-], function (Emitter, config, registry, sequence, taskFactory, merge, around, when) {
+], function (Emitter, config, registry, runner, taskFactory, merge, around, when) {
 	
 
 	/**
@@ -2850,7 +2922,7 @@ define('troopjs-core/component/emitter',[
 
 					// Initialize event
 					event = {};
-					event[RUNNER] = sequence;
+					event[RUNNER] = runner;
 
 					// If this is the first handler signal SIG_SETUP
 					if (!(HEAD in handlers)) {
@@ -2902,7 +2974,7 @@ define('troopjs-core/component/emitter',[
 
 					// Initialize event
 					event = {};
-					event[RUNNER] = sequence;
+					event[RUNNER] = runner;
 
 					// Signal SIG_REMOVE
 					event[TYPE] = SIG_REMOVE;
@@ -2928,10 +3000,7 @@ define('troopjs-core/component/emitter',[
 		}),
 
 		/**
-		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
-		 * @param {Promise|Resolver} promiseOrResolver The task resolver.
-		 * @param {String} [name] Task name
-		 * @return {Promise}
+		 * @inheritdoc core.task.factory#constructor
 		 * @fires sig/task
 		 */
 		"task" : function (promiseOrResolver, name) {
@@ -2949,99 +3018,15 @@ define('troopjs-core/component/emitter',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/runner/pipeline',[ "when" ], function (when) {
-	
-
-	/**
-	 * @class core.component.runner.pipeline
-	 * @implement core.event.runner
-	 * @private
-	 * @static
-	 * @alias feature.runner
-	 */
-
-	var UNDEFINED;
-	var FUNCTION_PROTO = Function.prototype;
-	var APPLY = FUNCTION_PROTO.apply;
-	var CALL = FUNCTION_PROTO.call;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_ARGUMENTS = "[object Arguments]";
-	var TOSTRING_ARRAY = "[object Array]";
-	var ARRAY_SLICE = Array.prototype.slice;
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var HEAD = "head";
-	var NEXT = "next";
-
-	/**
-	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Run event handlers **asynchronously** in "pipeline", passing the resolved return value (unless it's undefined) of the previous listen to the next handler as arguments.
-	 * @return {Promise}
-	 */
-	return function pipeline(event, handlers, args) {
-		var context = event[CONTEXT];
-		var callback = event[CALLBACK];
-		var candidate;
-		var candidates = [];
-		var candidatesCount = 0;
-
-		// Iterate handlers
-		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-			if (
-				// Filter `candidate[CONTEXT]` if we have `context`
-			(context !== UNDEFINED && candidate[CONTEXT] !== context) ||
-				// Filter `candidate[CALLBACK]` if we have `callback`
-			(callback !== UNDEFINED && candidate[CALLBACK] !== callback)
-			) {
-				continue;
-			}
-
-			// Add to candidates
-			candidates[candidatesCount++] = candidate;
-		}
-
-		return when
-			// Reduce `candidates`
-			.reduce(candidates, function (current, candidate) {
-				// Get object type
-				var type = OBJECT_TOSTRING.call(current);
-
-				// Calculate method depending on type
-				var method = (type === TOSTRING_ARRAY || type === TOSTRING_ARGUMENTS)
-					? APPLY
-					: CALL;
-
-				// Execute `candidate` using `method` in `context` passing `current`
-				return method.call(candidate, context, current);
-			}, args)
-			// Convert result
-			.then(function (result) {
-				// Get object type
-				var type = OBJECT_TOSTRING.call(result);
-
-				// Convert and return `result`
-				return type === TOSTRING_ARRAY
-					? result
-					: type === TOSTRING_ARGUMENTS
-						? ARRAY_SLICE.call(result)
-						: [ result ];
-			});
-	}
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/runner/pipeline',[
-	"../../config",
-	"when"
+define('troopjs-core/pubsub/runner',[
+	"../config",
+	"when/when"
 ], function (config, when) {
 	
 
 	/**
-	 * @class core.pubsub.runner.pipeline
-	 * @implement core.event.runner
+	 * @class core.pubsub.runner
+	 * @mixin Function
 	 * @mixin core.config
 	 * @private
 	 * @static
@@ -3049,9 +3034,6 @@ define('troopjs-core/pubsub/runner/pipeline',[
 	 */
 
 	var UNDEFINED;
-	var FUNCTION_PROTO = Function.prototype;
-	var APPLY = FUNCTION_PROTO.apply;
-	var CALL = FUNCTION_PROTO.call;
 	var OBJECT_TOSTRING = Object.prototype.toString;
 	var ARRAY_SLICE = Array.prototype.slice;
 	var TOSTRING_ARGUMENTS = "[object Arguments]";
@@ -3066,9 +3048,13 @@ define('troopjs-core/pubsub/runner/pipeline',[
 
 	/**
 	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Runner that filters and executes candidates in pipeline without overlap
-	 * @return {Promise}
+	 * @inheritdoc core.event.runner#constructor
+	 * @localdoc
+	 * - Skips handlers who's {@link core.event.handler#context context}.{@link core.component.gadget#property-phase phase} matches {@link core.config.phase#skip}.
+	 * - Executes handlers passing each handler the result from the previous.
+	 * - If a handler returns `undefined` the result from the previous is used.
+	 * - When all handlers are completed the end result is memorized on `handlers`
+	 * @return {Promise} Promise for `[*]`
 	 */
 	return function pipeline(event, handlers, args) {
 		var context = event[CONTEXT];
@@ -3094,41 +3080,45 @@ define('troopjs-core/pubsub/runner/pipeline',[
 		return when
 			// Reduce `candidates`
 			.reduce(candidates, function (current, candidate) {
-				// Let `context` be `candidate[CONTEXT]`
-				var context = candidate[CONTEXT];
+				// Let `candidate_context` be `candidate[CONTEXT]`
+				var candidate_context = candidate[CONTEXT];
 
-				// Return early if `context` is `UNDEFINED` or matches a blocked phase
-				if (context !== UNDEFINED && SKIP.test(context[PHASE])) {
+				// Return early if `candidate_context[PHASE]` matches a blocked phase
+				if (candidate_context !== UNDEFINED && SKIP.test(candidate_context[PHASE])) {
 					return current;
 				}
 
-				// Get object type
-				var type = OBJECT_TOSTRING.call(current);
+				// Run `candidate` passing `args`
+				// Pass to `when` to (potentially) update `result`
+				return when(candidate.run(current), function (result) {
+					// If `result` is `UNDEFINED` ...
+					if (result === UNDEFINED) {
+						// ... return `current` ...
+						return current;
+					}
 
-				// Calculate method depending on type
-				var method = (type === TOSTRING_ARRAY || type === TOSTRING_ARGUMENTS)
-					? APPLY
-					: CALL;
+					// Detect `result` type
+					switch (OBJECT_TOSTRING.call(result)) {
+						// `arguments` should be converted to an array
+						case TOSTRING_ARGUMENTS:
+							return ARRAY_SLICE.call(result);
+							break;
 
-				// Execute `candidate` using `method` in `context` passing `current`
-				return when(method.call(candidate, context, current), function (result) {
-					// Return result defaulting to `current`
-					return result === UNDEFINED
-						? current
-						: result;
+						// `array` can be passed as-is
+						case TOSTRING_ARRAY:
+							return result;
+							break;
+
+						// everything else should be wrapped in an array
+						default:
+							return [ result ];
+					}
 				});
 			}, args)
-			// Convert and remember result
-			.then(function (result) {
-				// Get object type
-				var type = OBJECT_TOSTRING.call(result);
-
-				// Convert, store and return `result` in `handlers[MEMORY]`
-				return handlers[MEMORY] = type === TOSTRING_ARRAY
-					? result
-					: type === TOSTRING_ARGUMENTS
-						? ARRAY_SLICE.call(result)
-						: [ result ];
+			// Memorize
+			.tap(function (result) {
+				// Store `result` in `handlers[MEMORY]`
+				handlers[MEMORY] = result;
 			});
 	}
 });
@@ -3137,13 +3127,13 @@ define('troopjs-core/pubsub/runner/pipeline',[
  */
 define('troopjs-core/pubsub/emitter',[
 	"../event/emitter",
-	"./runner/pipeline",
+	"./runner",
 	"troopjs-compose/decorator/from"
-], function (Emitter, pipeline, from) {
+], function (Emitter, runner, from) {
 	
 
 	/**
-	 * A specialized version of {@link core.event.emitter emitter} for memorized events.
+	 * A specialized version of {@link core.event.emitter} for memorized events and {@link core.component.gadget#property-phase phase} protection.
 	 *
 	 * ## Memorized emitting
 	 *
@@ -3218,7 +3208,7 @@ define('troopjs-core/pubsub/emitter',[
 			// Prepare event object
 			var event = {};
 			event[TYPE] = type;
-			event[RUNNER] = pipeline;
+			event[RUNNER] = runner;
 
 			// Slice `arguments`
 			var args = ARRAY_SLICE.call(arguments);
@@ -3287,10 +3277,10 @@ define('troopjs-core/pubsub/hub',[ "./emitter" ], function (Emitter) {
  */
 define('troopjs-core/component/gadget',[
 	"./emitter",
-	"./runner/pipeline",
 	"../pubsub/hub",
-	"when"
-],function (Emitter, pipeline, hub, when) {
+	"../pubsub/runner",
+	"when/when"
+],function (Emitter, hub, runner, when) {
 	
 
 	/**
@@ -3384,7 +3374,7 @@ define('troopjs-core/component/gadget',[
 						// Redefine result
 						result = {};
 						result[TYPE] = special[NAME];
-						result[RUNNER] = pipeline;
+						result[RUNNER] = runner;
 						result[CONTEXT] = me;
 						result[CALLBACK] = special[VALUE];
 						result = [ result ].concat(memory);
@@ -3451,7 +3441,7 @@ define('troopjs-core/component/gadget',[
 define('troopjs-dom/config',[
 	"troopjs-core/config",
 	"module",
-	"mu-merge"
+	"mu-merge/main"
 ], function (config, module, merge) {
 	
 
@@ -4061,21 +4051,19 @@ define('troopjs-dom/config',[
 
 })();
 
-define('mu-selector-set', ['mu-selector-set/main'], function (main) { return main; });
-
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-dom/runner/sequence',[
-	"mu-selector-set",
+define('troopjs-dom/runner',[
+	"mu-selector-set/main",
 	"jquery",
 	"poly/array"
 ], function (SelectorSet, $) {
 	
 
 	/**
-	 * @class dom.runner.sequence
-	 * @implement core.event.runner
+	 * @class dom.runner
+	 * @mixin Function
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -4094,8 +4082,11 @@ define('troopjs-dom/runner/sequence',[
 
 	/**
 	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Runner that executes DOM candidates in sequence without overlap
+	 * @inheritdoc core.event.runner#constructor
+	 * @localdoc
+	 * - Executes handlers synchronously passing each handler `args`.
+	 * - If a handler returns `false` no more handlers will be executed.
+	 * - If a handler stops propagation no more handlers will be executed.
 	 * @return {*} Result from last handler
 	 */
 	return function sequence(event, handlers, args) {
@@ -4115,7 +4106,7 @@ define('troopjs-dom/runner/sequence',[
 				$event.preventDefault();
 			}
 
-			return handler.apply(handler.context, args);
+			return handler.run(args);
 		};
 
 		var $event = args[0];
@@ -4238,23 +4229,20 @@ define('troopjs-dom/runner/sequence',[
 	}
 })();
 
-define('mu-jquery-destroy', ['mu-jquery-destroy/main'], function (main) { return main; });
-
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-dom/component',[
 	"troopjs-core/component/gadget",
 	"./config",
-	"./runner/sequence",
+	"./runner",
 	"troopjs-compose/decorator/before",
 	"jquery",
-	"when",
-	"when/function",
-	"mu-selector-set",
+	"when/when",
+	"mu-selector-set/main",
 	"poly/array",
-	"mu-jquery-destroy"
-], function (Gadget, config, sequence, before, $, when, fn, SelectorSet) {
+	"mu-jquery-destroy/main"
+], function (Gadget, config, runner, before, $, when, SelectorSet) {
 	
 
 	/**
@@ -4273,7 +4261,6 @@ define('troopjs-dom/component',[
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var $FN = $.fn;
 	var $GET = $FN.get;
-	var APPLY = fn.apply;
 	var TOSTRING_FUNCTION = "[object Function]";
 	var $ELEMENT = "$element";
 	var PROXY = "proxy";
@@ -4476,7 +4463,7 @@ define('troopjs-dom/component',[
 				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
 					var args = {};
 					args[TYPE] = type;
-					args[RUNNER] = sequence;
+					args[RUNNER] = runner;
 					args[CONTEXT] = me;
 					args = [ args ];
 
@@ -4552,8 +4539,8 @@ define('troopjs-dom/component',[
 			return when(contentOrPromise, function (content) {
 				// If `content` is a function ...
 				return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
-					// ... return promise of apply ...
-					? APPLY.call(me, content, args)
+					// ... return result of applying `content` ...
+					? content.apply(me, args)
 					// ... otherwise return `content`
 					: content;
 			})

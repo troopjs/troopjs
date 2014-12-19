@@ -21,15 +21,14 @@
 define([
 	&quot;troopjs-core/component/gadget&quot;,
 	&quot;./config&quot;,
-	&quot;./runner/sequence&quot;,
+	&quot;./runner&quot;,
 	&quot;troopjs-compose/decorator/before&quot;,
 	&quot;jquery&quot;,
-	&quot;when&quot;,
-	&quot;when/function&quot;,
-	&quot;mu-selector-set&quot;,
+	&quot;when/when&quot;,
+	&quot;mu-selector-set/main&quot;,
 	&quot;poly/array&quot;,
-	&quot;mu-jquery-destroy&quot;
-], function (Gadget, config, sequence, before, $, when, fn, SelectorSet) {
+	&quot;mu-jquery-destroy/main&quot;
+], function (Gadget, config, runner, before, $, when, SelectorSet) {
 	&quot;use strict&quot;;
 
 <span id='dom-component'>	/**
@@ -48,7 +47,6 @@ define([
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var $FN = $.fn;
 	var $GET = $FN.get;
-	var APPLY = fn.apply;
 	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
 	var $ELEMENT = &quot;$element&quot;;
 	var PROXY = &quot;proxy&quot;;
@@ -251,7 +249,7 @@ define([
 				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
 					var args = {};
 					args[TYPE] = type;
-					args[RUNNER] = sequence;
+					args[RUNNER] = runner;
 					args[CONTEXT] = me;
 					args = [ args ];
 
@@ -327,8 +325,8 @@ define([
 			return when(contentOrPromise, function (content) {
 				// If `content` is a function ...
 				return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
-					// ... return promise of apply ...
-					? APPLY.call(me, content, args)
+					// ... return result of applying `content` ...
+					? content.apply(me, args)
 					// ... otherwise return `content`
 					: content;
 			})

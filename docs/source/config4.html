@@ -19,51 +19,39 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-dom/config&quot;,
+	&quot;troopjs-core/config&quot;,
 	&quot;module&quot;,
-	&quot;mu-merge&quot;
+	&quot;mu-merge/main&quot;
 ], function (config, module, merge) {
 	&quot;use strict&quot;;
 
-<span id='widget-config-widget'>	/**
-</span>	 * @class widget.config.widget
-	 * @enum
+<span id='dom-config-signal'>	/**
+</span>	 * @class dom.config.signal
+	 * @extends core.config.signal
 	 * @private
 	 */
-	var WIDGET = {
-<span id='widget-config-widget-property-S-weft'>		/**
-</span>		 * Property of the widget where the **weft** resides.
+	var SIGNAL = {
+<span id='dom-config-signal-property-render'>		/**
+</span>		 * Signal emitted when component renders.
 		 */
-		&quot;$weft&quot; : &quot;$weft&quot;,
-<span id='widget-config-widget-property-weave'>		/**
-</span>		 * Attribute name of the element where the **weave** resides.
-		 */
-		&quot;weave&quot; : &quot;data-weave&quot;,
-<span id='widget-config-widget-property-unweave'>		/**
-</span>		 * Attribute name of the element where the **unweave** resides.
-		 */
-		&quot;unweave&quot; : &quot;data-unweave&quot;,
-<span id='widget-config-widget-property-woven'>		/**
-</span>		 * Attribute name of the element where the **woven** resides.
-		 */
-		&quot;woven&quot; : &quot;data-woven&quot;
+		&quot;render&quot;: &quot;sig/render&quot;
 	};
 
-<span id='widget-config'>	/**
-</span>	 * Provides configuration for the widget package
-	 * @class widget.config
-	 * @extends dom.config
+<span id='dom-config'>	/**
+</span>	 * DOM component configuration
+	 * @class dom.config
+	 * @extends core.config
 	 * @private
 	 * @alias feature.config
 	 */
 
 	return merge.call({}, config, {
-<span id='widget-config-cfg-widget'>		/**
-</span>		 * Widget related configuration
-		 * @cfg {widget.config.widget}
+<span id='dom-config-cfg-signal'>		 /**
+</span>		 * @cfg {dom.config.signal}
+		 * @inheritdoc
 		 * @protected
 		 */
-		&quot;widget&quot;: WIDGET
+		&quot;signal&quot;: SIGNAL
 	}, module.config());
 });</pre>
 </body>

@@ -28,7 +28,11 @@ module.exports = function(grunt) {
 
 		&quot;build&quot;: {
 			&quot;src&quot;: &quot;.&quot;,
-			&quot;dist&quot;: &quot;dist&quot;
+			&quot;dist&quot;: &quot;dist&quot;,
+			&quot;footer&quot;: &quot;\
+define(['troopjs-ajax/version'], function (version) {\n\
+	return version;\n\
+});&quot;
 		},
 
 		&quot;requirejs&quot;: {
@@ -42,29 +46,26 @@ module.exports = function(grunt) {
 				&quot;keepBuildDir&quot;: true,
 				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!travis|gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|package\.json)/,
 				&quot;rawText&quot;: {
-					&quot;troopjs-widget/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
+					&quot;troopjs-ajax/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
+				},
+				&quot;wrap&quot;: {
+					&quot;end&quot;: &quot;&lt;%= build.footer %&gt;&quot;
 				}
 			},
 
 			&quot;bundles&quot;: {
 				&quot;options&quot;: {
 					&quot;modules&quot;: [{
-						&quot;name&quot;: &quot;troopjs-widget/main&quot;,
+						&quot;name&quot;: &quot;troopjs-ajax/main&quot;,
 						&quot;exclude&quot;: [
 							&quot;jquery&quot;,
-							&quot;when&quot;,
-							&quot;poly&quot;,
-							&quot;mu-merge&quot;,
-							&quot;mu-getargs&quot;,
-							&quot;mu-unique&quot;,
-							&quot;mu-selector-set&quot;,
-							&quot;mu-jquery-destroy&quot;,
-							&quot;troopjs-core/component/signal/start&quot;,
-							&quot;troopjs-core/component/signal/stop&quot;,
-							&quot;troopjs-dom/component&quot;
+							&quot;when/when&quot;,
+							&quot;poly/es5&quot;,
+							&quot;mu-merge/main&quot;,
+							&quot;troopjs-core/component/gadget&quot;
 						],
 						&quot;excludeShallow&quot;: [
-							&quot;troopjs-widget/main&quot;
+							&quot;troopjs-ajax/main&quot;
 						]
 					}]
 				}

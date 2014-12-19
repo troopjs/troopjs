@@ -21,10 +21,10 @@
 define([
 	&quot;../event/emitter&quot;,
 	&quot;../config&quot;,
-	&quot;../component/runner/sequence&quot;,
+	&quot;../component/runner&quot;,
 	&quot;poly/array&quot;,
 	&quot;poly/object&quot;
-], function (Emitter, config, sequence) {
+], function (Emitter, config, runner) {
 	&quot;use strict&quot;;
 
 <span id='core-registry-emitter'>	/**
@@ -129,7 +129,7 @@ define([
 
 				event = {};
 				event[TYPE] = SIG_REGISTER;
-				event[RUNNER] = sequence;
+				event[RUNNER] = runner;
 
 				me.emit(event, key, index[key] = value);
 			}
@@ -156,7 +156,7 @@ define([
 				if (delete index[key]) {
 					event = {};
 					event[TYPE] = SIG_UNREGISTER;
-					event[RUNNER] = sequence;
+					event[RUNNER] = runner;
 
 					me.emit(event, key, value);
 				}

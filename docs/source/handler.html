@@ -15,32 +15,130 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='core-event-emitter-handler'>/**
-</span> * @class core.event.emitter.handler
- * @mixin Function
- * @private
- * @interface
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
  */
+define(function () {
 
-<span id='core-event-emitter-handler-method-constructor'>/**
-</span> * Executes {@link #callback} and does some house keeping.
- * @method constructor
- * @param {...*} args {@link #callback Callback} arguments
- */
+<span id='core-event-handler'>	/**
+</span>	 * @class core.event.handler
+	 * @private
+	 */
 
-<span id='core-event-emitter-handler-property-context'>/**
-</span> * Handler context
- * @property {Object} context
- */
+<span id='core-event-handler-property-emitter'>	/**
+</span>	 * Handler emitter
+	 * @property {core.event.emitter} emitter
+	 */
 
-<span id='core-event-emitter-handler-property-callback'>/**
-</span> * Handler callback
- * @property {Function} callback
- */
+<span id='core-event-handler-property-type'>	/**
+</span>	 * Handler type
+	 * @property {String} type
+	 */
 
-<span id='core-event-emitter-handler-property-limit'>/**
-</span> * Handler limit
- * @property {Number} limit
- */</pre>
+<span id='core-event-handler-property-data'>	/**
+</span>	 * Handler data
+	 * @property {*} data
+	 */
+
+<span id='core-event-handler-property-callback'>	/**
+</span>	 * Handler callback
+	 * @property {Function} callback
+	 */
+
+<span id='core-event-handler-property-context'>	/**
+</span>	 * Handler context
+	 * @property {core.event.emitter} context
+	 */
+
+<span id='core-event-handler-property-limit'>	/**
+</span>	 * Handler limit
+	 * @property {Number} limit
+	 */
+
+<span id='core-event-handler-property-count'>	/**
+</span>	 * Handler count
+	 * @property {Number} count
+	 */
+
+<span id='core-event-handler-property-on'>	/**
+</span>	 * Handler `on` callback
+	 * @property {Function} on
+	 */
+
+<span id='core-event-handler-property-off'>	/**
+</span>	 * Handler `off` callback
+	 * @property {Function} off
+	 */
+
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
+	var EMITTER = &quot;emitter&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var TYPE = &quot;type&quot;;
+	var LIMIT = &quot;limit&quot;;
+	var COUNT = &quot;count&quot;;
+	var DATA = &quot;data&quot;;
+	var ON = &quot;on&quot;;
+	var OFF = &quot;off&quot;;
+
+<span id='core-event-handler-method-constructor'>	/**
+</span>	 * Creates new handler
+	 * @param {core.event.emitter} emitter Emitter that owns this handler
+	 * @param {String} type Type for this handler
+	 * @param {Function} callback Callback for this handler
+	 * @param {*} [data] Data for this handler
+	 * @method constructor
+	 */
+	function Handler(emitter, type, callback, data) {
+		var me = this;
+
+		me[EMITTER] = emitter;
+		me[TYPE] = type;
+		me[DATA] = data;
+
+		if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+			me[CALLBACK] = callback;
+			me[CONTEXT] = emitter;
+		}
+		else {
+			me[CALLBACK] = callback[CALLBACK];
+			me[CONTEXT] = callback[CONTEXT] || emitter;
+
+			if (callback.hasOwnProperty(LIMIT)) {
+				me[LIMIT] = callback[LIMIT];
+				me[COUNT] = 0;
+			}
+			if (callback.hasOwnProperty(ON)) {
+				me[ON] = callback[ON];
+			}
+			if (callback.hasOwnProperty(OFF)) {
+				me[OFF] = callback[OFF];
+			}
+		}
+	}
+
+<span id='core-event-handler-method-run'>	/**
+</span>	 * Executes {@link #callback} and does some house keeping.
+	 * @param {Array} args Handler arguments
+	 */
+	Handler.prototype.run = function (args) {
+		// Let `me` be `this`
+		var me = this;
+
+		// Get result from execution of `handler[CALLBACK]`
+		var result = me[CALLBACK].apply(me[CONTEXT], args);
+
+		// If there's a `me[LIMIT]` and `++me[COUNT]` is greater or equal to it ...
+		if (LIMIT in me &amp;&amp; ++me[COUNT] &gt;= me[LIMIT]) {
+			// ... `me[EMITTER].off` `me` (note that `me[CALLBACK]` and `me[CONTEXT]` are used by `.off`)
+			me[EMITTER].off(me[TYPE], me);
+		}
+
+		return result;
+	};
+
+	return Handler;
+});</pre>
 </body>
 </html>

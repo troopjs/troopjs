@@ -22,13 +22,13 @@ define([
 	&quot;../event/emitter&quot;,
 	&quot;../config&quot;,
 	&quot;./registry&quot;,
-	&quot;./runner/sequence&quot;,
+	&quot;./runner&quot;,
 	&quot;../task/factory&quot;,
-	&quot;mu-merge&quot;,
+	&quot;mu-merge/main&quot;,
 	&quot;troopjs-compose/decorator/around&quot;,
-	&quot;when&quot;,
+	&quot;when/when&quot;,
 	&quot;poly/array&quot;
-], function (Emitter, config, registry, sequence, taskFactory, merge, around, when) {
+], function (Emitter, config, registry, runner, taskFactory, merge, around, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-emitter'>	/**
@@ -294,7 +294,7 @@ define([
 
 					// Initialize event
 					event = {};
-					event[RUNNER] = sequence;
+					event[RUNNER] = runner;
 
 					// If this is the first handler signal SIG_SETUP
 					if (!(HEAD in handlers)) {
@@ -346,7 +346,7 @@ define([
 
 					// Initialize event
 					event = {};
-					event[RUNNER] = sequence;
+					event[RUNNER] = runner;
 
 					// Signal SIG_REMOVE
 					event[TYPE] = SIG_REMOVE;
@@ -372,10 +372,7 @@ define([
 		}),
 
 <span id='core-component-emitter-method-task'>		/**
-</span>		 * Schedule a new promise that runs on this component, sends a {@link #event-sig/task} once finished.
-		 * @param {Promise|Resolver} promiseOrResolver The task resolver.
-		 * @param {String} [name] Task name
-		 * @return {Promise}
+</span>		 * @inheritdoc core.task.factory#constructor
 		 * @fires sig/task
 		 */
 		&quot;task&quot; : function (promiseOrResolver, name) {

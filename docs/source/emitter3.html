@@ -20,22 +20,14 @@
  */
 define([
 	&quot;../composition&quot;,
-	&quot;./runner/sequence&quot;
-], function (Composition, sequence) {
+	&quot;./handler&quot;,
+	&quot;./runner&quot;
+], function (Composition, Handler, runner) {
 	&quot;use strict&quot;;
 
 <span id='core-event-emitter'>	/**
 </span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
-	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism, which makes it supports for both:
-	 *
-	 *  - **synchronous event**: all your event handlers are run in a single loop.
-	 *  - **async event with promise**: you can return a promise where the next handler will be called upon the
-	 *  completion of that promise.
-	 *
-	 * Event runner can even determinate the **parameters passing** strategy among handlers, which forms in two flavours:
-	 *
-	 *  - sequence: where each handler receives the arguments passed to {@link #method-emit}.
-	 *  - pipeline: where a handler receives the return value of the previous one.
+	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism.
 	 *
 	 * @class core.event.emitter
 	 * @extend core.composition
@@ -52,62 +44,12 @@ define([
 	var RUNNER = &quot;runner&quot;;
 	var CONTEXT = &quot;context&quot;;
 	var CALLBACK = &quot;callback&quot;;
-	var DATA = &quot;data&quot;;
 	var HEAD = &quot;head&quot;;
 	var TAIL = &quot;tail&quot;;
 	var NEXT = &quot;next&quot;;
 	var LIMIT = &quot;limit&quot;;
 	var ON = &quot;on&quot;;
 	var OFF = &quot;off&quot;;
-
-<span id='global-method-createHandler'>	/**
-</span>	 * Creates a new handler
-	 * @inheritdoc #on
-	 * @return {core.event.emitter.handler} Handler
-	 * @ignore
-	 */
-	function createHandler(type, callback, data) {
-		var me = this;
-		var count = 0;
-
-		var handler = function () {
-			// Let `limit` be `handler[LIMIT]`
-			var limit = handler[LIMIT];
-
-			// Get result from execution of `handler[CALLBACK]`
-			var result = handler[CALLBACK].apply(this, arguments);
-
-			// If there's a `limit` and `++count` is greater or equal to it `off` the callback
-			if (limit !== 0 &amp;&amp; ++count &gt;= limit) {
-				me.off(type, callback);
-			}
-
-			// Return
-			return result;
-		};
-
-		if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-			handler[CALLBACK] = callback;
-			handler[CONTEXT] = me;
-			handler[LIMIT] = 0;
-		}
-		else {
-			handler[CALLBACK] = callback[CALLBACK];
-			handler[CONTEXT] = callback[CONTEXT] || me;
-			handler[LIMIT] = callback[LIMIT] || 0;
-
-			if (callback.hasOwnProperty(ON)) {
-				handler[ON] = callback[ON];
-			}
-			if (callback.hasOwnProperty(OFF)) {
-				handler[OFF] = callback[OFF];
-			}
-		}
-
-		handler[DATA] = data;
-
-		return handler;
-	}
 
 <span id='core-event-emitter-method-constructor'>	/**
 </span>	 * @method constructor
@@ -118,7 +60,7 @@ define([
 </span>		 * Handlers attached to this component, addressable either by key or index
 		 * @private
 		 * @readonly
-		 * @property {core.event.emitter.handler[]} handlers
+		 * @property {core.event.handler[]} handlers
 		 */
 		this[HANDLERS] = [];
 	}, {
@@ -133,10 +75,10 @@ define([
 		 * @param {Object} [callback.context=this] Callback context.
 		 * @param {Number} [callback.limit=0] Callback limit.
 		 * @param {Function} [callback.on=undefined] Will be called once this handler is added to the handlers list.
-		 * @param {core.event.emitter.handler} [callback.on.handler] The handler that was just added.
+		 * @param {core.event.handler} [callback.on.handler] The handler that was just added.
 		 * @param {Object} [callback.on.handlers] The list of handlers the handler was added to.
 		 * @param {Function} [callback.off=undefined] Will be called once this handler is removed from the handlers list.
-		 * @param {core.event.emitter.handler} [callback.off.handler] The handler that was just removed.
+		 * @param {core.event.handler} [callback.off.handler] The handler that was just removed.
 		 * @param {Object} [callback.off.handlers] The list of handlers the handler was removed from.
 		 * @param {*} [data] Handler data
 		 */
@@ -151,7 +93,7 @@ define([
 			}
 
 			// Create new handler
-			handler = createHandler.call(me, type, callback, data);
+			handler = new Handler(me, type, callback, data);
 
 			// Have handlers
 			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
@@ -309,41 +251,41 @@ define([
 		 */
 		&quot;emit&quot; : function (event, args) {
 			var me = this;
-			var type = event;
+			var eventType = event;
+			var eventRunner;
 			var handlers;
-			var runner;
 
 			// If event is a plain string, convert to object with props
 			if (OBJECT_TOSTRING.call(event) === TOSTRING_STRING) {
 				// Recreate event
 				event = {};
-				event[RUNNER] = runner = sequence;
-				event[TYPE] = type;
+				event[RUNNER] = eventRunner = runner;
+				event[TYPE] = eventType;
 			}
 			// If event duck-types an event object we just override or use defaults
 			else if (TYPE in event) {
-				event[RUNNER] = runner = event[RUNNER] || sequence;
-				type = event[TYPE];
+				eventRunner = event[RUNNER] = event[RUNNER] || runner;
+				eventType = event[TYPE];
 			}
 			// Otherwise something is wrong
 			else {
 				throw Error(&quot;first argument has to be of type '&quot; + TOSTRING_STRING + &quot;' or have a '&quot; + TYPE + &quot;' property&quot;);
 			}
 
-			// Get handlers[type] as handlers
-			if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
-				// Get HANDLERS
+			// Let `handlers` be `handlers[eventType]`
+			if ((handlers = me[HANDLERS][eventType]) === UNDEFINED) {
+				// Let `handlers` be `me[HANDLERS]`
 				handlers = me[HANDLERS];
 
 				// Create type handlers
-				handlers = handlers[handlers[LENGTH]] = handlers[type] = {};
+				handlers = handlers[handlers[LENGTH]] = handlers[eventType] = {};
 
 				// Prepare handlers
-				handlers[TYPE] = type;
+				handlers[TYPE] = eventType;
 			}
 
-			// Return result from runner
-			return runner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
+			// Return result from `eventRunner`
+			return eventRunner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
 		}
 	});
 });

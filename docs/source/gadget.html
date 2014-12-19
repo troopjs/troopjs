@@ -20,10 +20,10 @@
  */
 define([
 	&quot;./emitter&quot;,
-	&quot;./runner/pipeline&quot;,
 	&quot;../pubsub/hub&quot;,
-	&quot;when&quot;
-],function (Emitter, pipeline, hub, when) {
+	&quot;../pubsub/runner&quot;,
+	&quot;when/when&quot;
+],function (Emitter, hub, runner, when) {
 	&quot;use strict&quot;;
 
 <span id='core-component-gadget'>	/**
@@ -117,7 +117,7 @@ define([
 						// Redefine result
 						result = {};
 						result[TYPE] = special[NAME];
-						result[RUNNER] = pipeline;
+						result[RUNNER] = runner;
 						result[CONTEXT] = me;
 						result[CALLBACK] = special[VALUE];
 						result = [ result ].concat(memory);

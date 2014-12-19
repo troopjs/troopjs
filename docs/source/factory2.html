@@ -20,7 +20,7 @@
  */
 define([
 	&quot;./registry&quot;,
-	&quot;when&quot;
+	&quot;when/when&quot;
 ], function (registry, when) {
 	&quot;use strict&quot;;
 
@@ -35,7 +35,7 @@ define([
 <span id='core-task-factory-method-constructor'>	/**
 </span>	 * Creates and registers a task
 	 * @method constructor
-	 * @param {Promise|Resolver} promiseOrResolver The task resolver.
+	 * @param {Promise|Function} promiseOrResolver The task resolver.
 	 * @param {String} [name=task] Task name
 	 * @return {Promise}
 	 */

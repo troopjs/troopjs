@@ -18,12 +18,12 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;when&quot; ], function (when) {
+define([ &quot;when/when&quot; ], function (when) {
 	&quot;use strict&quot;;
 
-<span id='core-event-runner-sequence'>	/**
-</span>	 * @class core.event.runner.sequence
-	 * @implement core.event.runner
+<span id='core-event-runner'>	/**
+</span>	 * @class core.event.runner
+	 * @mixin Function
 	 * @private
 	 * @static
 	 * @alias feature.runner
@@ -32,13 +32,19 @@ define([ &quot;when&quot; ], function (when) {
 	var UNDEFINED;
 	var HEAD = &quot;head&quot;;
 	var NEXT = &quot;next&quot;;
-	var CONTEXT = &quot;context&quot;;
 
-<span id='core-event-runner-sequence-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Run event handlers **asynchronously** in &quot;sequence&quot;, passing to each handler the same arguments from emitting.
-	 * @return {Promise}
+<span id='core-event-runner-method-constructor'>	/**
+</span>	 * Run event handlers.
+	 * @method constructor
+	 * @abstract
+	 * @param {Object} event Event object
+	 * @param {String} event.context Event context
+	 * @param {Function} event.callback Event callback
+	 * @param {Object} handlers List of handlers
+	 * @param {Array} args Initial arguments
+	 * @localdoc
+	 * - Run event handlers asynchronously passing each handler `args`.
+	 * @return {Promise} Promise for `[*]`
 	 */
 	return function sequence(event, handlers, args) {
 		var candidates = [];
@@ -52,12 +58,12 @@ define([ &quot;when&quot; ], function (when) {
 
 		// Reduce `candidates`
 		return when.reduce(candidates, function (results, candidate, index) {
-			// Apply `candidate[CALLBACK]` with `candidate[CONTEXT]` passing `args`
-			// Pass result from apply to `when` and onwards to store in `results`
-			return when(candidate.apply(candidate[CONTEXT], args), function (result) {
+			// Run `candidate` passing `args`
+			// Pass result to `when` and onwards to store in `results`
+			return when(candidate.run(args), function (result) {
 				results[index] = result;
 			})
-			// `yield` results for next execution
+			// yield `results` for next execution
 			.yield(results);
 		}, candidates);
 	}

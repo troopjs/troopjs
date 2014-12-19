@@ -20,35 +20,15 @@
  */
 /*globals require:false*/
 require({
-	&quot;baseUrl&quot; : &quot;bower_components&quot;,
-	&quot;packages&quot; : [ &quot;jquery&quot;, &quot;when&quot;, &quot;poly&quot;, &quot;troopjs-compose&quot;, &quot;troopjs-core&quot;, &quot;troopjs-dom&quot;, &quot;mu-merge&quot;, &quot;mu-getargs&quot;, &quot;mu-unique&quot;, &quot;mu-selector-set&quot;, &quot;mu-jquery-destroy&quot;, &quot;troopjs-widget&quot; ].map(function (name) {
-		var main;
-		var location;
-
-		switch (name) {
-			case &quot;jquery&quot;:
-				location = &quot;jquery/dist&quot;;
-				/* falls through */
-
-			case &quot;when&quot;:
-				main = name;
-				break;
-
-			case &quot;poly&quot;:
-				main = &quot;es5&quot;;
-				break;
-
-			case &quot;troopjs-widget&quot;:
-				location = &quot;..&quot;;
-				break;
-		}
-
-		return {
-			&quot;name&quot;: name,
-			&quot;location&quot;: location,
-			&quot;main&quot;: main
-		}
-	})
+	&quot;baseUrl&quot;: &quot;bower_components&quot;,
+	&quot;packages&quot;: [{
+		&quot;name&quot;: &quot;jquery&quot;,
+		&quot;location&quot;: &quot;jquery/dist&quot;,
+		&quot;main&quot;: &quot;jquery&quot;
+	}, {
+		&quot;name&quot;: &quot;troopjs-ajax&quot;,
+		&quot;location&quot;: &quot;..&quot;
+	}]
 });</pre>
 </body>
 </html>

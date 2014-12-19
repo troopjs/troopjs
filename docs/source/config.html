@@ -20,48 +20,44 @@
  */
 define([
 	&quot;module&quot;,
-	&quot;mu-merge&quot;
-], function (module, merge) {
+	&quot;troopjs-core/config&quot;,
+	&quot;mu-merge/main&quot;
+], function (module, config, merge) {
 	&quot;use strict&quot;;
 
-<span id='compose-config-pragma'>	/**
-</span>	 * Pragma interface.
-	 * @class compose.config.pragma
-	 * @interface
+<span id='ajax-config-ajax'>	/**
+</span>	 * @class ajax.config.ajax
 	 * @private
 	 */
-<span id='compose-config-pragma-property-pattern'>	/**
-</span>	 * @property {RegExp} pattern Matching pattern
-	 */
-<span id='compose-config-pragma-property-replace'>	/**
-</span>	 * @property {String|Function} replace Replacement String or function
-	 */
+	var AJAX = {
+<span id='ajax-config-ajax-method-settings'>		/**
+</span>		 * Method that generates default settings which will be added to any ajax request
+		 * @return {Object}
+		 */
+		&quot;settings&quot; : function () {
+			return {
+				&quot;headers&quot;: {
+					&quot;x-troopjs-request-id&quot;: new Date().getTime()
+				}
+			}
+		}
+	};
 
-<span id='compose-config'>	/**
-</span>	 * Provides configuration for the {@link compose.factory}
-	 * @class compose.config
+<span id='ajax-config'>	/**
+</span>	 * Provides configuration for the ajax service
+	 * @class ajax.config
+	 * @extends core.config
 	 * @private
 	 * @alias feature.config
 	 */
 
-	return merge.call({
-<span id='compose-config-cfg-pragmas'>		/**
-</span>		 * @cfg {compose.config.pragma[]}
-		 * Pragmas used to rewrite methods before processing
+	return merge.call({}, config, {
+<span id='ajax-config-cfg-ajax'>		/**
+</span>		 * Ajax configuration
+		 * @cfg {ajax.config.ajax}
 		 * @protected
 		 */
-		&quot;pragmas&quot;: [],
-
-
-<span id='compose-config-cfg-specials'>		/**
-</span>		 * @cfg {RegExp}
-		 * Regular Expression used parse 'specials'.
-		 * ````
-		 * &lt;special&gt;/&lt;type&gt;[(&lt;arguments&gt;)]
-		 * ````
-		 * @protected
-		 */
-		&quot;specials&quot;: /^([^\/]+)\/(.+?)(?:\((.*)\))?$/
+		&quot;ajax&quot;: AJAX
 	}, module.config());
 });
 </pre>

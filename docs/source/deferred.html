@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;troopjs-core/component/emitter&quot;,
+	&quot;troopjs-core/pubsub/hub&quot;,
+	&quot;when/when&quot;,
+	&quot;poly/array&quot;,
+	&quot;poly/object&quot;
+], function (Emitter, local, when) {
+	&quot;use strict&quot;;
+
+<span id='pubsub-proxy-deferred'>	/**
+</span>	 * Proxies to hub where the last argument is a `deferred`
+	 * @class pubsub.proxy.deferred
+	 * @extend core.component.emitter
+	 */
+
+	var UNDEFINED;
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var OBJECT_KEYS = Object.keys;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_STRING = &quot;[object String]&quot;;
+	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
+	var TOSTRING_ARGUMENTS = &quot;[object Arguments]&quot;;
+	var PUBLISH = &quot;publish&quot;;
+	var SUBSCRIBE = &quot;subscribe&quot;;
+	var HUB = &quot;hub&quot;;
+	var ROUTES = &quot;routes&quot;;
+	var LENGTH = &quot;length&quot;;
+	var RESOLVE = &quot;resolve&quot;;
+	var TOPIC = &quot;topic&quot;;
+	var DEFER = &quot;defer&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var MEMORY = &quot;memory&quot;;
+
+	function spread(fn) {
+		return function (result) {
+			var toString_result = OBJECT_TOSTRING.call(result);
+
+			return toString_result === TOSTRING_ARRAY || toString_result === TOSTRING_ARGUMENTS
+				? fn.apply(this, result)
+				: fn.call(this, result);
+		}
+	}
+
+<span id='pubsub-proxy-deferred-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {...Object} routes Routes
+	 */
+	return Emitter.extend(function (routes) {
+		this[ROUTES] = ARRAY_SLICE.call(arguments);
+	}, {
+		&quot;displayName&quot; : &quot;pubsub/proxy/deferred&quot;,
+
+<span id='pubsub-proxy-deferred-handler-sig-initialize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Initializes proxy topics
+		 * @handler
+		 */
+		&quot;sig/initialize&quot; : function () {
+			var me = this;
+
+			// Iterate ROUTES
+			me[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				// Let `remote` be the deferred hub (ie. TroopJS 1.x hub)
+				var remote = routes[HUB];
+				var publish = routes[PUBLISH] || {};
+				var subscribe = routes[SUBSCRIBE] || {};
+
+				// Iterate publish keys
+				OBJECT_KEYS(publish).forEach(function (source) {
+					// Extract target
+					var target = publish[source];
+					var topic;
+					var context;
+					var defer;
+
+					// If target is a string use defaults
+					if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+						topic = target;
+						context = me;
+						defer = false;
+					}
+					// Otherwise just grab topic and defer from target
+					else {
+						// Make sure we have a topic
+						if (!(TOPIC in target)) {
+							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+						}
+
+						// Get topic
+						topic = target[TOPIC];
+						// Get context or default
+						context = target[CONTEXT] || me;
+						// Make sure defer is a boolean
+						defer = !!target[DEFER];
+					}
+
+					// Create callback
+					var callback = function () {
+						// Initialize args with topic as the first argument
+						var args = [ topic ];
+						var deferred;
+						var resolve;
+
+						// Push original arguments on args
+						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
+
+						if (defer) {
+							// Create deferred
+							deferred = when.defer();
+
+							// Store original resolve method
+							resolve = deferred[RESOLVE];
+
+							// Since the deferred implementation in jQuery (that we use in 1.x) allows
+							// to resolve with multiple arguments, we monkey-patch resolve here
+							deferred[RESOLVE] = deferred.resolver[RESOLVE] = function () {
+								resolve(ARRAY_SLICE.call(arguments));
+							};
+
+							// Push deferred as last argument on args
+							ARRAY_PUSH.call(args, deferred);
+						}
+
+						// Publish with args
+						remote.publish.apply(remote, args);
+
+						// Return promise
+						return deferred
+							? deferred.promise
+							: UNDEFINED;
+					};
+
+					var _callback = publish[source] = {};
+					_callback[CONTEXT] = context;
+					_callback[CALLBACK] = callback;
+
+					// Subscribe from local
+					local.subscribe(source, _callback);
+				});
+
+				// Iterate subscribe keys
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					// Extract target
+					var target = subscribe[source];
+					var topic;
+					var context;
+					var memory;
+
+					// If target is a string use defaults
+					if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+						topic = target;
+						context = me;
+						memory = false;
+					}
+					// Otherwise just grab from the properties
+					else {
+						// Make sure we have a topic
+						if (!(TOPIC in target)) {
+							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+						}
+
+						// Get topic
+						topic = target[TOPIC];
+						// Get context or default
+						context = target[CONTEXT] || me;
+						// Make sure memory is a boolean
+						memory = !!target[MEMORY];
+					}
+
+					// Create callback
+					var callback =  function () {
+						// Initialize args with topic as the first argument
+						var args = [ topic ];
+						var deferred;
+						var result;
+
+						// Push sliced (without topic) arguments on args
+						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
+
+						// If the last argument look like a promise we pop and store as deferred
+						if (when.isPromiseLike(args[args[LENGTH] - 1])) {
+							deferred = args.pop();
+						}
+
+						// Publish on local and store result
+						result = local.publish.apply(local, args);
+
+						// If we have a deferred we should chain it to result
+						if (deferred) {
+							when(result, spread(deferred.resolve), deferred.reject, deferred.progress);
+						}
+
+						// Return result
+						return result;
+					};
+
+					// Transfer topic and memory to callback
+					var _callback = subscribe[source] = {};
+					_callback[CONTEXT] = context;
+					_callback[CALLBACK] = callback;
+
+					// Subscribe from remote, notice that since we're providing `memory` there _is_ a chance that
+					// we'll get a callback before sig/start
+					remote.subscribe(source, context, memory, callback);
+				});
+			});
+		},
+
+<span id='pubsub-proxy-deferred-handler-sig-finalize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Finalizes proxy topics
+		 * @handler
+		 */
+		&quot;sig/finalize&quot; : function () {
+			var me = this;
+
+			// Iterate ROUTES
+			me[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				// Let `remote` be the deferred hub (ie. TroopJS 1.x hub)
+				var remote = routes[HUB];
+				var publish = routes[PUBLISH] || {};
+				var subscribe = routes[SUBSCRIBE] || {};
+
+				// Iterate publish keys and unsubscribe from local
+				OBJECT_KEYS(publish).forEach(function (source) {
+					local.unsubscribe(source, publish[source]);
+				});
+
+				// Iterate subscribe keys and unsubscribe from remote
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					var _callback = subscribe[source];
+
+					// Un-subscribe from remote hub
+					remote.unsubscribe(source, _callback[CONTEXT], _callback[CALLBACK]);
+				});
+			});
+		}
+	});
+});
+</pre>
+</body>
+</html>

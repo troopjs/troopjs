@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;troopjs-core/component/emitter&quot;,
+	&quot;troopjs-core/pubsub/hub&quot;,
+	&quot;when/when&quot;,
+	&quot;poly/array&quot;,
+	&quot;poly/object&quot;
+], function (Emitter, local, when) {
+	&quot;use strict&quot;;
+
+<span id='pubsub-proxy-promise'>	/**
+</span>	 * Proxies to hub that returns a {@link Promise promise} that will resolve to the result
+	 * @class pubsub.proxy.promise
+	 * @extend core.component.emitter
+	 */
+
+	var ARRAY_PROTO = Array.prototype;
+	var ARRAY_PUSH = ARRAY_PROTO.push;
+	var ARRAY_SLICE = ARRAY_PROTO.slice;
+	var OBJECT_KEYS = Object.keys;
+	var OBJECT_TOSTRING = Object.prototype.toString;
+	var TOSTRING_STRING = &quot;[object String]&quot;;
+	var PUBLISH = &quot;publish&quot;;
+	var SUBSCRIBE = &quot;subscribe&quot;;
+	var HUB = &quot;hub&quot;;
+	var ROUTES = &quot;routes&quot;;
+	var TOPIC = &quot;topic&quot;;
+	var CONTEXT = &quot;context&quot;;
+	var CALLBACK = &quot;callback&quot;;
+	var PEEK = &quot;peek&quot;;
+
+<span id='pubsub-proxy-promise-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @param {...Object} routes Routes
+	 */
+	return Emitter.extend(function (routes) {
+		this[ROUTES] = ARRAY_SLICE.call(arguments);
+	}, {
+		&quot;displayName&quot; : &quot;pubsub/proxy/promise&quot;,
+
+<span id='pubsub-proxy-promise-handler-sig-initialize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Initializes proxy topics
+		 * @handler
+		 */
+		&quot;sig/initialize&quot; : function ()  {
+			var me = this;
+
+			// Iterate ROUTES
+			me[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				var remote = routes[HUB];
+				var publish = routes[PUBLISH] || {};
+				var subscribe = routes[SUBSCRIBE] || {};
+
+				// Iterate publish keys
+				OBJECT_KEYS(publish).forEach(function (source) {
+					// Extract target
+					var target = publish[source];
+					var topic;
+					var context;
+					var peek;
+
+					// If target is a string set topic to target
+					if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+						topic = target;
+						context = me;
+						peek = false;
+					}
+					// Otherwise just grab topic from target
+					else {
+						// Make sure we have a topic
+						if (!(TOPIC in target)) {
+							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+						}
+
+						// Get topic
+						topic = target[TOPIC];
+						context = target[CONTEXT] || me;
+						peek = !!target[PEEK];
+					}
+
+					// Create callback
+					var callback = function () {
+						// Initialize args with topic as the first argument
+						var args = [ topic ];
+
+						// Push original arguments on args
+						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
+
+						return remote.publish.apply(remote, args);
+					};
+
+					var _callback = publish[source] = {};
+					_callback[CONTEXT] = context;
+					_callback[CALLBACK] = callback;
+					_callback[PEEK] = peek;
+
+					local.subscribe(source, _callback);
+				});
+
+				// Iterate subscribe keys
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					// Extract target
+					var target = subscribe[source];
+					var topic;
+					var context;
+					var peek;
+
+					// If target is a string set topic to target and republish to false
+					if (OBJECT_TOSTRING.call(target) === TOSTRING_STRING) {
+						topic = target;
+						context = me;
+						peek = false;
+					}
+					// Otherwise just grab topic and republish from target
+					else {
+						// Make sure we have a topic
+						if (!(TOPIC in target)) {
+							throw new Error(&quot;'&quot; + TOPIC + &quot;' is missing from target '&quot; + source + &quot;'&quot;);
+						}
+
+						// Get topic
+						topic = target[TOPIC];
+						context = target[CONTEXT] || me;
+						peek = !!target[PEEK];
+					}
+
+					// Create callback
+					var callback = function () {
+						// Initialize args with topic as the first argument
+						var args = [ topic ];
+
+						// Push original arguments on args
+						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments));
+
+						// Publish and store promise as result
+						return local.publish.apply(local, args);
+					};
+
+					var _callback = {};
+					_callback[CONTEXT] = context;
+					_callback[CALLBACK] = callback;
+					_callback[PEEK] = peek;
+
+					remote.subscribe(source, _callback);
+				});
+			});
+		},
+
+<span id='pubsub-proxy-promise-handler-sig-start'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Republishes memorized values
+		 * @handler
+		 */
+		&quot;sig/start&quot; : function () {
+			var me = this;
+			var results = [];
+			var empty = {};
+
+			// Iterate ROUTES
+			me[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				var subscribe = routes[SUBSCRIBE] || {};
+				var publish = routes[PUBLISH] || {};
+				var remote = routes[HUB];
+
+				// Iterate publish keys
+				OBJECT_KEYS(publish).forEach(function (source) {
+					var _callback = publish[source];
+					var value;
+
+					// Check if we should peek
+					if (_callback[PEEK] === true &amp;&amp; (value = local.peek(source, empty)) !== empty) {
+						// Push result from publish on results
+						results.push(remote.publish.apply(local, [ source ].concat(value)));
+					}
+				});
+
+				// Iterate subscribe keys
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					var _callback = subscribe[source];
+					var value;
+
+					// Check if we should peek
+					if (_callback[PEEK] === true &amp;&amp; (value = remote.peek(source, empty)) !== empty) {
+						// Push result from publish on results
+						results.push(local.publish.apply(local, [ source ].concat(value)));
+					}
+				});
+			});
+
+			// Return promise that will resolve once all results are resolved
+			return when.all(results);
+		},
+
+<span id='pubsub-proxy-promise-handler-sig-finalize'>		/**
+</span>		 * @inheritdoc
+		 * @localdoc Finalizes proxy topics
+		 * @handler
+		 */
+		&quot;sig/finalize&quot; : function () {
+			var me = this;
+
+			// Iterate ROUTES
+			me[ROUTES].forEach(function (routes) {
+				if (!(HUB in routes)) {
+					throw new Error(&quot;'&quot; + HUB + &quot;' is missing from routes&quot;);
+				}
+
+				var publish = routes[PUBLISH] || {};
+				var subscribe = routes[SUBSCRIBE] || {};
+				var remote = routes[HUB];
+
+				// Iterate publish keys and unsubscribe
+				OBJECT_KEYS(publish).forEach(function (source) {
+					local.unsubscribe(source, publish[source]);
+				});
+
+				// Iterate subscribe keys and unsubscribe
+				OBJECT_KEYS(subscribe).forEach(function (source) {
+					remote.unsubscribe(source, subscribe[source]);
+				});
+			});
+		}
+	});
+});
+</pre>
+</body>
+</html>
