@@ -46,6 +46,7 @@
 		"troopjs-ajax": "master",
 		"troopjs-widget": "master",
 		"troopjs-pubsub": "master",
+		"troopjs-l10n": "master",
 		"requirejs": "^2.1"
 	}
 }
