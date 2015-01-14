@@ -43,10 +43,10 @@
 		"troopjs-log": "^2"
 	},
 	"devDependencies": {
-		"troopjs-ajax": "master",
-		"troopjs-widget": "master",
-		"troopjs-pubsub": "master",
-		"troopjs-l10n": "master",
+		"troopjs-ajax": "73ba9d9123",
+		"troopjs-widget": "bac73aced5",
+		"troopjs-pubsub": "f5365d7c85",
+		"troopjs-l10n": "db9f9dd89c",
 		"requirejs": "^2.1"
 	}
 }
