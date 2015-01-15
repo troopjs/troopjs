@@ -143,7 +143,7 @@ define(['troopjs/version'], function (version) {\n\
 	require("load-grunt-tasks")(grunt);
 
 	// Load all local grunt tasks
-	grunt.loadTasks("tasks");
+	grunt.loadTasks("grunt");
 
 	// Define tasks
 	grunt.registerTask("compile", [ "git-describe", "requirejs" ]);

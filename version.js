@@ -3,6 +3,6 @@
  */
 define({
 	"toString": function () {
-		return "develop";
+		return "*";
 	}
 });
