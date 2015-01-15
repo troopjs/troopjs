@@ -60,7 +60,7 @@ define(['troopjs/version'], function (version) {\n\
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:\.(?!gitignore)|node_modules|scripts|test|tasks|guides|jsduck|(?:version|bootstrap|require|buster|Gruntfile)\.js|package\.json)/,
+				"fileExclusionRegExp": /^(?:node_modules|scripts|grunt|eslint|jsduck|test|guides|\.(?!gitignore)|package\.json|(?:version|bootstrap|require|buster|Gruntfile)\.js)/,
 				"rawText" : {
 					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
 				},
@@ -70,7 +70,7 @@ define(['troopjs/version'], function (version) {\n\
 				}
 			},
 
-			"bundles" : {
+			"bundle" : {
 				"options" : {
 					"modules" : [{
 						"name": "troopjs/main",
@@ -111,7 +111,7 @@ define(['troopjs/version'], function (version) {\n\
 					return /^!/.test(comment.value);
 				}
 			},
-			"bundles" : {
+			"bundle" : {
 				"files" : [{
 					"expand" : true,
 					"dest" : "<%= build.dist %>",
@@ -123,11 +123,11 @@ define(['troopjs/version'], function (version) {\n\
 		},
 
 		"git-describe" : {
-			"bundles" : {}
+			"bundle" : {}
 		},
 
 		"buster" : {
-			"troopjs" : {}
+			"bundle" : {}
 		},
 
 		"jsduck" : {
