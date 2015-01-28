@@ -47,7 +47,7 @@
 		"troopjs-widget": "10867b135519377365b6ee994278bf6c1fe45acd",
 		"troopjs-pubsub": "f5365d7c85482080d214944d2e5b0fff99482afb",
 		"troopjs-l10n": "db9f9dd89c5d4106ac5dadc9769d7f2e1835066e",
-		"troopjs-route-hash": "25ae017bd51fcf41621c32fa302226dfe6ec102c",
+		"troopjs-route-hash": "7eabecfe6682c355661ee2658e4df30d3edf11de",
 		"requirejs": "^2.1"
 	}
 }
