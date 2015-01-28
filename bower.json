@@ -43,10 +43,11 @@
 		"troopjs-log": "^2"
 	},
 	"devDependencies": {
-		"troopjs-ajax": "73ba9d9123",
-		"troopjs-widget": "bac73aced5",
-		"troopjs-pubsub": "f5365d7c85",
-		"troopjs-l10n": "db9f9dd89c",
+		"troopjs-ajax": "54f840e082e55565bb9ebbf4ec26c24504f0b0fd",
+		"troopjs-widget": "10867b135519377365b6ee994278bf6c1fe45acd",
+		"troopjs-pubsub": "f5365d7c85482080d214944d2e5b0fff99482afb",
+		"troopjs-l10n": "db9f9dd89c5d4106ac5dadc9769d7f2e1835066e",
+		"troopjs-route-hash": "25ae017bd51fcf41621c32fa302226dfe6ec102c",
 		"requirejs": "^2.1"
 	}
 }

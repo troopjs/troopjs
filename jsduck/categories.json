@@ -38,6 +38,10 @@
       {
         "name": "troopjs-l10n",
         "classes": [ "l10n.*" ]
+      },
+      {
+        "name": "troopjs-route-hash",
+        "classes": [ "route.hash.*" ]
       }
     ]
   },
