@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.1+75ca869 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.1+9f387df ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.1+75ca869"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.1+9f387df"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -4534,29 +4534,35 @@ define('troopjs-dom/component',[
 			}
 
 			// Slice `arguments` to `args`
-			var args = ARRAY_SLICE.call(arguments, 1);
+			var args = ARRAY_SLICE.call(arguments, 0);
 
 			return when(contentOrPromise, function (content) {
 				// If `content` is a function ...
 				return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
-					// ... return result of applying `content` ...
-					? content.apply(me, args)
+					// ... return result of applying `content` with sliced `args`...
+					? content.apply(me, ARRAY_SLICE.call(args, 1))
 					// ... otherwise return `content`
 					: content;
 			})
-				.tap(function (content) {
-					var _args;
+				.then(function (content) {
+					// Let `args[0]` be `$(content)`
+					// Let `$content` be `args[0]`
+					var $content = args[0] = $(content);
 
-					// Let `args[0]` be `content`
-					// Call `$fn` with `content`
-					$fn.call(me[$ELEMENT], content);
+					// Let `emit_args` be `[ SIG_RENDER ]`
+					var emit_args = [ SIG_RENDER ];
 
-					// Let `_args` be `[ SIG_RENDER, content ]`
-					// Push `args` on `_args`
-					ARRAY_PUSH.apply(_args = [ SIG_RENDER, content ], args);
+					// Push `args` on `emit_args`
+					ARRAY_PUSH.apply(emit_args, args);
 
-					// Signal render
-					return me.emit.apply(me, _args);
+					// Call `$fn` with `$content`
+					$fn.call(me[$ELEMENT], $content);
+
+					// Emit `emit_args`
+					// Yield `args`
+					return me.emit
+						.apply(me, emit_args)
+						.yield(args);
 				});
 		};
 

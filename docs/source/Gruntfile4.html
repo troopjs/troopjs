@@ -30,7 +30,7 @@ module.exports = function(grunt) {
 			&quot;src&quot;: &quot;.&quot;,
 			&quot;dist&quot;: &quot;dist&quot;,
 			&quot;footer&quot;: &quot;\
-define(['troopjs-pubsub/version'], function (version) {\n\
+define(['troopjs-route-hash/version'], function (version) {\n\
 	return version;\n\
 });&quot;
 		},
@@ -46,7 +46,7 @@ define(['troopjs-pubsub/version'], function (version) {\n\
 				&quot;keepBuildDir&quot;: true,
 				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!travis|gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|package\.json)/,
 				&quot;rawText&quot;: {
-					&quot;troopjs-pubsub/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
+					&quot;troopjs-route-hash/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
 				},
 				&quot;wrap&quot;: {
 					&quot;end&quot;: &quot;&lt;%= build.footer %&gt;&quot;
@@ -56,16 +56,13 @@ define(['troopjs-pubsub/version'], function (version) {\n\
 			&quot;bundles&quot;: {
 				&quot;options&quot;: {
 					&quot;modules&quot;: [{
-						&quot;name&quot;: &quot;troopjs-pubsub/main&quot;,
+						&quot;name&quot;: &quot;troopjs-route-hash/main&quot;,
 						&quot;exclude&quot;: [
-							&quot;when/when&quot;,
-							&quot;poly/es5&quot;,
-							&quot;mu-merge/main&quot;,
-							&quot;troopjs-core/component/emitter&quot;,
-							&quot;troopjs-core/pubsub/hub&quot;
+							&quot;troopjs-dom/component&quot;,
+              &quot;mu-jquery-hashchange/jquery.hashchange&quot;
 						],
 						&quot;excludeShallow&quot;: [
-							&quot;troopjs-pubsub/main&quot;
+							&quot;troopjs-route-hash/main&quot;
 						]
 					}]
 				}

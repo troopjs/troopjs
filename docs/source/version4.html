@@ -18,13 +18,10 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;./version&quot;,
-	&quot;./proxy/deferred&quot;,
-	&quot;./proxy/promise&quot;
-], function (version) {
-	return version;
-});
-</pre>
+define({
+	&quot;toString&quot;: function () {
+		return &quot;develop&quot;;
+	}
+});</pre>
 </body>
 </html>

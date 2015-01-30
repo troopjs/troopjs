@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;troopjs-core/component/gadget&quot;,
+	&quot;troopjs-core/pubsub/hub&quot;
+], function (Gadget, hub) {
+	&quot;use strict&quot;;
+
+	var UNDEFINED;
+	var DICTIONARY = &quot;dictionary&quot;;
+
+
+<span id='l10n-service'>	/**
+</span>	 * Provides localization as a service
+	 * @class l10n.service
+	 * @extend core.component.gadget
+	 * @alias service.l10n
+	 */
+
+<span id='l10n-service-event-hub-l10n-start'>	/**
+</span>	 * Localization start event
+	 * @event hub/l10n/start
+	 */
+
+<span id='l10n-service-event-hub-l10n-stop'>	/**
+</span>	 * Localization stop event
+	 * @event hub/l10n/stop
+	 */
+
+<span id='l10n-service-event-hub-l10n-get'>	/**
+</span>	 * Localization GET event
+	 * @event hub/l10n/get
+	 * @param {String} key Localization key
+	 * @param {String} [value] Default value
+	 */
+
+<span id='l10n-service-event-hub-l10n-fetch'>	/**
+</span>	 * Localization FETCH event
+	 * @event hub/l10n/fetch
+	 * @inheritdoc #event-hub/l10n/get
+	 */
+
+<span id='l10n-service-event-hub-l10n-put'>	/**
+</span>	 * Localization PUT event
+	 * @event hub/l10n/put
+	 * @param {String} key Localization key
+	 * @param {String} value Localization value
+	 */
+
+<span id='l10n-service-event-hub-l10n-update'>	/**
+</span>	 * Localization UPDATE event
+	 * @event hub/l10n/update
+	 * @inheritdoc #event-hub/l10n/put
+	 */
+
+<span id='l10n-service-method-constructor'>	/**
+</span>	 * @method constructor
+	 */
+	return Gadget.extend(function () {
+		this[DICTIONARY] = {};
+	}, {
+		&quot;displayName&quot;: &quot;l10n/service&quot;,
+
+<span id='l10n-service-handler-sig-start'>		/**
+</span>		 * @handler
+		 * @localdoc Notifies interested parties about the service start
+		 * @inheritdoc
+		 * @fires hub/l10n/start
+		 */
+		&quot;sig/start&quot;: function () {
+			return hub.publish(&quot;l10n/start&quot;);
+		},
+
+<span id='l10n-service-handler-sig-stop'>		/**
+</span>		 * @handler
+		 * @localdoc Notifies interested parties about the service stop
+		 * @inheritdoc
+		 * @fires hub/l10n/stop
+		 */
+		&quot;sig/stop&quot;: function () {
+			return hub.publish(&quot;l10n/stop&quot;);
+		},
+
+<span id='l10n-service-handler-hub-l10n-get'>		/**
+</span>		 * Gets localization
+		 * @handler
+		 * @inheritdoc #event-hub/l10n/get
+		 * @fires hub/l10n/fetch
+		 * @fires hub/l10n/put
+		 * @return {Array}
+		 */
+		&quot;hub/l10n/get&quot;: function (key, value) {
+			var me = this;
+			var dictionary = me[DICTIONARY];
+
+			return me.task(function (resolve, reject) {
+				if (dictionary.hasOwnProperty(key)) {
+					resolve([ key, dictionary[key] ]);
+				}
+				else {
+					hub
+						.publish(&quot;l10n/fetch&quot;, key, UNDEFINED)
+						.spread(function (_key, _value) {
+							return _value === UNDEFINED
+								? [ key, value ]
+								: hub.publish(&quot;l10n/put&quot;, _key, _value);
+						})
+						.then(resolve, reject);
+				}
+			});
+		},
+
+<span id='l10n-service-handler-hub-l10n-put'>		/**
+</span>		 * Puts localization
+		 * @handler
+		 * @inheritdoc #event-hub/l10n/put
+		 * @fires hub/l10n/update
+		 * @return {Array}
+		 */
+		&quot;hub/l10n/put&quot;: function (key, value) {
+			return hub
+				.publish(&quot;l10n/update&quot;, key, this[DICTIONARY][key] = value)
+				.yield([ key, value ]);
+		}
+	});
+});</pre>
+</body>
+</html>

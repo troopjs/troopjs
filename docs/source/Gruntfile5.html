@@ -30,7 +30,7 @@ module.exports = function(grunt) {
 			&quot;src&quot;: &quot;.&quot;,
 			&quot;dist&quot;: &quot;dist&quot;,
 			&quot;footer&quot;: &quot;\
-define(['troopjs-pubsub/version'], function (version) {\n\
+define(['troopjs-widget/version'], function (version) {\n\
 	return version;\n\
 });&quot;
 		},
@@ -44,9 +44,9 @@ define(['troopjs-pubsub/version'], function (version) {\n\
 				&quot;optimizeCss&quot;: &quot;none&quot;,
 				&quot;skipDirOptimize&quot;: true,
 				&quot;keepBuildDir&quot;: true,
-				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!travis|gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|package\.json)/,
+				&quot;fileExclusionRegExp&quot;: /^(?:\.(?!gitignore)|node_modules|test|guides|(?:version|require|Gruntfile)\.js|package\.json)/,
 				&quot;rawText&quot;: {
-					&quot;troopjs-pubsub/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
+					&quot;troopjs-widget/version&quot;: &quot;define([], { 'toString': function () { return &lt;%= JSON.stringify(pkg.version) %&gt;; } });\n&quot;
 				},
 				&quot;wrap&quot;: {
 					&quot;end&quot;: &quot;&lt;%= build.footer %&gt;&quot;
@@ -56,16 +56,17 @@ define(['troopjs-pubsub/version'], function (version) {\n\
 			&quot;bundles&quot;: {
 				&quot;options&quot;: {
 					&quot;modules&quot;: [{
-						&quot;name&quot;: &quot;troopjs-pubsub/main&quot;,
+						&quot;name&quot;: &quot;troopjs-widget/main&quot;,
 						&quot;exclude&quot;: [
+							&quot;jquery&quot;,
 							&quot;when/when&quot;,
 							&quot;poly/es5&quot;,
-							&quot;mu-merge/main&quot;,
-							&quot;troopjs-core/component/emitter&quot;,
-							&quot;troopjs-core/pubsub/hub&quot;
+							&quot;troopjs-core/component/signal/start&quot;,
+							&quot;troopjs-core/component/signal/finalize&quot;,
+							&quot;troopjs-dom/component&quot;
 						],
 						&quot;excludeShallow&quot;: [
-							&quot;troopjs-pubsub/main&quot;
+							&quot;troopjs-widget/main&quot;
 						]
 					}]
 				}
@@ -90,6 +91,10 @@ define(['troopjs-pubsub/version'], function (version) {\n\
 					&quot;ext&quot;: &quot;.min.js&quot;
 				}]
 			}
+		},
+
+		&quot;buster&quot;: {
+			&quot;bundles&quot;: {}
 		}
 	});
 
@@ -98,6 +103,7 @@ define(['troopjs-pubsub/version'], function (version) {\n\
 
 	grunt.registerTask(&quot;compile&quot;, [ &quot;requirejs&quot; ]);
 	grunt.registerTask(&quot;compress&quot;, [ &quot;uglify&quot; ]);
+	grunt.registerTask(&quot;test&quot;, [ &quot;buster&quot; ]);
 	grunt.registerTask(&quot;default&quot;, [ &quot;compile&quot;, &quot;compress&quot; ]);
 };
 </pre>
