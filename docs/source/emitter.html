@@ -19,28 +19,27 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../event/emitter&quot;,
+	&quot;../emitter/composition&quot;,
 	&quot;../config&quot;,
-	&quot;../component/runner&quot;,
+	&quot;../component/executor&quot;,
 	&quot;poly/array&quot;,
 	&quot;poly/object&quot;
-], function (Emitter, config, runner) {
+], function (Emitter, config, executor) {
 	&quot;use strict&quot;;
 
 <span id='core-registry-emitter'>	/**
 </span>	 * A light weight implementation to register key/value pairs by key and index
 	 * @class core.registry.emitter
-	 * @extend core.event.emitter
+	 * @extend core.emitter.composition
 	 */
 
-	var TYPE = &quot;type&quot;;
-	var RUNNER = &quot;runner&quot;;
 	var LENGTH = &quot;length&quot;;
 	var INDEX = &quot;index&quot;;
 	var OBJECT_TOSTRING = Object.prototype.toString;
 	var TOSTRING_REGEXP = &quot;[object RegExp]&quot;;
 	var SIG_REGISTER = config.signal.register;
 	var SIG_UNREGISTER = config.signal.unregister;
+	var EXECUTOR = config.emitter.executor;
 
 <span id='core-registry-emitter-event-sig-register'>	/**
 </span>	 * Register signal
@@ -71,7 +70,11 @@ define([
 		 * @readonly
 		 */
 		this[INDEX] = {};
-	}, {
+	}, (function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
 		&quot;displayName&quot;: &quot;core/registry/emitter&quot;,
 
 <span id='core-registry-emitter-method-get'>		/**
@@ -119,7 +122,6 @@ define([
 		&quot;register&quot;: function (key, value) {
 			var me = this;
 			var index = me[INDEX];
-			var event;
 
 			if (index[key] !== value) {
 
@@ -127,11 +129,7 @@ define([
 					me.unregister(key);
 				}
 
-				event = {};
-				event[TYPE] = SIG_REGISTER;
-				event[RUNNER] = runner;
-
-				me.emit(event, key, index[key] = value);
+				me.emit(SIG_REGISTER, key, index[key] = value);
 			}
 
 			return value;
@@ -147,24 +145,19 @@ define([
 			var me = this;
 			var index = me[INDEX];
 			var value;
-			var event;
 
 			if (index.hasOwnProperty(key)) {
 
 				value = index[key];
 
 				if (delete index[key]) {
-					event = {};
-					event[TYPE] = SIG_UNREGISTER;
-					event[RUNNER] = runner;
-
-					me.emit(event, key, value);
+					me.emit(SIG_UNREGISTER, key, value);
 				}
 			}
 
 			return value;
 		}
-	});
+	}, EXECUTOR, executor));
 });
 </pre>
 </body>

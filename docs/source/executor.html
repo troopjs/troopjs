@@ -18,56 +18,63 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;when/when&quot; ], function (when) {
+define([
+	&quot;../config&quot;,
+	&quot;when/when&quot;
+], function (config, when) {
 	&quot;use strict&quot;;
 
-<span id='core-event-runner'>	/**
-</span>	 * @class core.event.runner
+<span id='core-emitter-executor'>	/**
+</span>	 * @class core.emitter.executor
 	 * @mixin Function
 	 * @private
 	 * @static
-	 * @alias feature.runner
+	 * @alias feature.executor
 	 */
 
 	var UNDEFINED;
-	var HEAD = &quot;head&quot;;
-	var NEXT = &quot;next&quot;;
+	var CALLBACK = config.emitter.callback;
+	var SCOPE = config.emitter.scope;
+	var HEAD = config.emitter.head;
+	var NEXT = config.emitter.next;
 
-<span id='core-event-runner-method-constructor'>	/**
-</span>	 * Run event handlers.
+<span id='core-emitter-executor-method-constructor'>	/**
+</span>	 * Executes an emission
 	 * @method constructor
-	 * @abstract
 	 * @param {Object} event Event object
-	 * @param {String} event.context Event context
-	 * @param {Function} event.callback Event callback
 	 * @param {Object} handlers List of handlers
-	 * @param {Array} args Initial arguments
+	 * @param {*[]} [args] Handler arguments
 	 * @localdoc
-	 * - Run event handlers asynchronously passing each handler `args`.
-	 * @return {Promise} Promise for `[*]`
+	 * - Executes event handlers asynchronously passing each handler `args`.
+	 *
+	 * @return {*} Array of handler results
 	 */
-	return function sequence(event, handlers, args) {
-		var candidates = [];
-		var candidatesCount = 0;
+	return function (event, handlers, args) {
+		var _handlers = [];
+		var _handlersCount = 0;
+		var callback = event[CALLBACK];
+		var scope = event[SCOPE];
 		var handler;
 
-		// Copy from handlers list to candidates array
 		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-			candidates[candidatesCount++] = handler;
+			if (callback &amp;&amp; handler[CALLBACK] !== callback) {
+				continue;
+			}
+
+			if (scope &amp;&amp; handler[SCOPE] !== scope) {
+				continue;
+			}
+
+			_handlers[_handlersCount++] = handler;
 		}
 
-		// Reduce `candidates`
-		return when.reduce(candidates, function (results, candidate, index) {
-			// Run `candidate` passing `args`
-			// Pass result to `when` and onwards to store in `results`
-			return when(candidate.run(args), function (result) {
+		return when.reduce(_handlers, function (results, _handler, index) {
+			return when(_handler.handle(args), function (result) {
 				results[index] = result;
 			})
-			// yield `results` for next execution
-			.yield(results);
-		}, candidates);
+				.yield(results);
+		}, _handlers);
 	}
-});
-</pre>
+});</pre>
 </body>
 </html>

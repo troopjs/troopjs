@@ -10,6 +10,7 @@ bower_components/mu-merge/main.js
 bower_components/troopjs-compose/decorator/extend.js
 bower_components/troopjs-compose/decorator/from.js
 bower_components/troopjs-compose/config.js
+bower_components/mu-emitter/config.js
 bower_components/troopjs-core/config.js
 bower_components/troopjs-core/component/signal/initialize.js
 bower_components/troopjs-core/component/signal/start.js
@@ -17,6 +18,9 @@ bower_components/troopjs-core/component/signal/stop.js
 bower_components/troopjs-core/component/signal/finalize.js
 bower_components/troopjs-log/methods.js
 bower_components/troopjs-log/null.js
+bower_components/mu-emitter/handler.js
+bower_components/mu-emitter/executor.js
+bower_components/mu-emitter/main.js
 bower_components/mu-unique/src/sorter.js
 bower_components/mu-unique/src/unique.js
 bower_components/mu-unique/main.js
@@ -26,16 +30,15 @@ bower_components/troopjs-compose/factory.js
 bower_components/troopjs-log/console.js
 bower_components/troopjs-log/logger.js
 bower_components/troopjs-core/composition.js
-bower_components/troopjs-core/event/handler.js
-bower_components/troopjs-core/event/runner.js
-bower_components/troopjs-core/event/emitter.js
-bower_components/troopjs-core/component/runner.js
+bower_components/troopjs-core/emitter/executor.js
+bower_components/troopjs-core/emitter/composition.js
+bower_components/troopjs-core/component/executor.js
 bower_components/troopjs-core/registry/emitter.js
 bower_components/troopjs-core/component/registry.js
 bower_components/troopjs-core/task/registry.js
 bower_components/troopjs-core/task/factory.js
 bower_components/troopjs-core/component/emitter.js
-bower_components/troopjs-core/pubsub/runner.js
+bower_components/troopjs-core/pubsub/executor.js
 bower_components/troopjs-core/pubsub/emitter.js
 bower_components/troopjs-core/pubsub/hub.js
 bower_components/troopjs-core/component/gadget.js
@@ -47,7 +50,7 @@ bower_components/mu-selector-set/src/Subsets.js
 bower_components/mu-selector-set/src/matchesSelector.js
 bower_components/mu-selector-set/src/SelectorSet.js
 bower_components/mu-selector-set/main.js
-bower_components/troopjs-dom/runner.js
+bower_components/troopjs-dom/executor.js
 bower_components/mu-jquery-destroy/src/jQueryDestroy.js
 bower_components/mu-jquery-destroy/main.js
 bower_components/troopjs-dom/component.js

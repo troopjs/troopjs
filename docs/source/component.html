@@ -21,14 +21,14 @@
 define([
 	&quot;troopjs-core/component/gadget&quot;,
 	&quot;./config&quot;,
-	&quot;./runner&quot;,
+	&quot;./executor&quot;,
 	&quot;troopjs-compose/decorator/before&quot;,
 	&quot;jquery&quot;,
 	&quot;when/when&quot;,
 	&quot;mu-selector-set/main&quot;,
 	&quot;poly/array&quot;,
 	&quot;mu-jquery-destroy/main&quot;
-], function (Gadget, config, runner, before, $, when, SelectorSet) {
+], function (Gadget, config, executor, before, $, when, SelectorSet) {
 	&quot;use strict&quot;;
 
 <span id='dom-component'>	/**
@@ -54,11 +54,11 @@ define([
 	var ARGS = &quot;args&quot;;
 	var NAME = &quot;name&quot;;
 	var VALUE = &quot;value&quot;;
-	var TYPE = &quot;type&quot;;
-	var RUNNER = &quot;runner&quot;;
-	var CONTEXT = &quot;context&quot;;
-	var CALLBACK = &quot;callback&quot;;
-	var DATA = &quot;data&quot;;
+	var TYPE = config.emitter.type;
+	var EXECUTOR = config.emitter.executor;
+	var SCOPE = config.emitter.scope;
+	var CALLBACK = config.emitter.callback;
+	var DATA = config.emitter.data;
 	var DIRECT = &quot;direct&quot;;
 	var DELEGATED = &quot;delegated&quot;;
 	var ON = &quot;on&quot;;
@@ -249,8 +249,8 @@ define([
 				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
 					var args = {};
 					args[TYPE] = type;
-					args[RUNNER] = runner;
-					args[CONTEXT] = me;
+					args[EXECUTOR] = executor;
+					args[SCOPE] = me;
 					args = [ args ];
 
 					// Push original arguments on args

@@ -19,275 +19,101 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../composition&quot;,
-	&quot;./handler&quot;,
-	&quot;./runner&quot;
-], function (Composition, Handler, runner) {
+	&quot;../emitter/composition&quot;,
+	&quot;../config&quot;,
+	&quot;./executor&quot;,
+	&quot;troopjs-compose/decorator/from&quot;
+], function (Emitter, config, executor, from) {
 	&quot;use strict&quot;;
 
-<span id='core-event-emitter'>	/**
-</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
-	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism.
+<span id='core-pubsub-emitter'>	/**
+</span>	 * A specialized version of {@link core.emitter.composition} for memorized events and {@link core.component.gadget#property-phase phase} protection.
 	 *
-	 * @class core.event.emitter
-	 * @extend core.composition
+	 * ## Memorized emitting
+	 *
+	 * A emitter event will memorize the &quot;current&quot; value of each event. Each executor may have it's own interpretation
+	 * of what &quot;current&quot; means.
+	 *
+	 * @class core.pubsub.emitter
+	 * @extend core.emitter.composition
 	 */
 
 	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_STRING = &quot;[object String]&quot;;
-	var TOSTRING_FUNCTION = &quot;[object Function]&quot;;
-	var HANDLERS = &quot;handlers&quot;;
-	var LENGTH = &quot;length&quot;;
-	var TYPE = &quot;type&quot;;
-	var RUNNER = &quot;runner&quot;;
-	var CONTEXT = &quot;context&quot;;
-	var CALLBACK = &quot;callback&quot;;
-	var HEAD = &quot;head&quot;;
-	var TAIL = &quot;tail&quot;;
-	var NEXT = &quot;next&quot;;
-	var LIMIT = &quot;limit&quot;;
-	var ON = &quot;on&quot;;
-	var OFF = &quot;off&quot;;
+	var MEMORY = &quot;memory&quot;;
+	var HANDLERS = config.emitter.handlers;
+	var EXECUTOR = config.emitter.executor;
 
-<span id='core-event-emitter-method-constructor'>	/**
-</span>	 * @method constructor
+<span id='core-pubsub-emitter-method-on'>	/**
+</span>	 * @method on
 	 * @inheritdoc
+	 * @private
 	 */
-	return Composition.extend(function () {
-<span id='core-event-emitter-property-handlers'>		/**
-</span>		 * Handlers attached to this component, addressable either by key or index
-		 * @private
-		 * @readonly
-		 * @property {core.event.handler[]} handlers
-		 */
-		this[HANDLERS] = [];
-	}, {
-		&quot;displayName&quot; : &quot;core/event/emitter&quot;,
 
-<span id='core-event-emitter-method-on'>		/**
-</span>		 * Adds a listener for the specified event type.
-		 * @chainable
-		 * @param {String} type The event type to subscribe to.
-		 * @param {Function|Object} callback The event callback to add. If callback is a function defaults from below will be used:
-		 * @param {Function} callback.callback Callback method.
-		 * @param {Object} [callback.context=this] Callback context.
-		 * @param {Number} [callback.limit=0] Callback limit.
-		 * @param {Function} [callback.on=undefined] Will be called once this handler is added to the handlers list.
-		 * @param {core.event.handler} [callback.on.handler] The handler that was just added.
-		 * @param {Object} [callback.on.handlers] The list of handlers the handler was added to.
-		 * @param {Function} [callback.off=undefined] Will be called once this handler is removed from the handlers list.
-		 * @param {core.event.handler} [callback.off.handler] The handler that was just removed.
-		 * @param {Object} [callback.off.handlers] The list of handlers the handler was removed from.
-		 * @param {*} [data] Handler data
-		 */
-		&quot;on&quot; : function (type, callback, data) {
-			var me = this;
-			var handlers;
-			var handler;
+<span id='core-pubsub-emitter-method-off'>	/**
+</span>	 * @method off
+	 * @inheritdoc
+	 * @private
+	 */
 
-			// Get callback from next arg
-			if (callback === UNDEFINED) {
-				throw new Error(&quot;no callback provided&quot;);
-			}
+<span id='core-pubsub-emitter-method-emit'>	/**
+</span>	 * @method emit
+	 * @inheritdoc
+	 * @private
+	 */
 
-			// Create new handler
-			handler = new Handler(me, type, callback, data);
+	return Emitter.extend((function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
+		&quot;displayName&quot;: &quot;core/pubsub/emitter&quot;,
 
-			// Have handlers
-			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
-				// Set tail handler
-				handlers[TAIL] = TAIL in handlers
-					// Have tail, update handlers[TAIL][NEXT] to point to handler
-					? handlers[TAIL][NEXT] = handler
-					// Have no tail, update handlers[HEAD] to point to handler
-					: handlers[HEAD] = handler;
-			}
-			// No handlers
-			else {
-				// Get HANDLERS
-				handlers = me[HANDLERS];
-
-				// Create type handlers
-				handlers = handlers[handlers[LENGTH]] = handlers[type] = {};
-
-				// Prepare handlers
-				handlers[TYPE] = type;
-				handlers[HEAD] = handlers[TAIL] = handler;
-			}
-
-			// If we have an `ON` callback ...
-			if (handler.hasOwnProperty(ON)) {
-				// .. call it in the context of `me`
-				handler[ON].call(me, handler, handlers);
-			}
-
-			return me;
-		},
-
-<span id='core-event-emitter-method-off'>		/**
-</span>		 * Remove callback(s) from a subscribed event type, if no callback is specified,
-		 * remove all callbacks of this type.
-		 * @chainable
-		 * @param {String} type The event type subscribed to
-		 * @param {Function|Object} [callback] The event callback to remove. If callback is a function context will be this, otherwise:
-		 * @param {Function} [callback.callback] Callback method to match.
-		 * @param {Object} [callback.context=this] Callback context to match.
-		 */
-		&quot;off&quot; : function (type, callback) {
-			var me = this;
-			var _callback;
-			var _context;
-			var handlers;
-			var handler;
-			var head;
-			var tail;
-
-			// Have handlers
-			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
-				// Have HEAD in handlers
-				if (HEAD in handlers) {
-					if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-						_callback = callback;
-						_context = me;
-					}
-					else if (callback !== UNDEFINED) {
-						_callback = callback[CALLBACK];
-						_context = callback[CONTEXT];
-					}
-
-					// Iterate handlers
-					for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-						// Should we remove?
-						remove : {
-							// If no context or context does not match we should break
-							if (_context &amp;&amp; handler[CONTEXT] !== _context) {
-								break remove;
-							}
-
-							// If no callback or callback does not match we should break
-							if (_callback &amp;&amp; handler[CALLBACK] !== _callback) {
-								break remove;
-							}
-
-							// If we have an `OFF` callback ...
-							if (handler.hasOwnProperty(OFF)) {
-								// .. call it in the context of `me`
-								handler[OFF].call(me, handler, handlers);
-							}
-
-							// Remove this handler, just continue
-							continue;
-						}
-
-						// It there's no head - link head -&gt; tail -&gt; handler
-						if (!head) {
-							head = tail = handler;
-						}
-						// Otherwise just link tail -&gt; tail[NEXT] -&gt; handler
-						else {
-							tail = tail[NEXT] = handler;
-						}
-					}
-
-					// If we have both head and tail we should update handlers
-					if (head &amp;&amp; tail) {
-						// Set handlers HEAD and TAIL
-						handlers[HEAD] = head;
-						handlers[TAIL] = tail;
-
-						// Make sure to remove NEXT from tail
-						delete tail[NEXT];
-					}
-					// Otherwise we remove the handlers list
-					else {
-						delete handlers[HEAD];
-						delete handlers[TAIL];
-					}
-				}
-			}
-
-			return me;
-		},
-
-<span id='core-event-emitter-method-one'>		/**
-</span>		 * Adds a listener for the specified event type exactly once.
+<span id='core-pubsub-emitter-method-subscribe'>		/**
+</span>		 * Listen to an event that are emitted publicly.
 		 * @chainable
 		 * @inheritdoc #on
+		 * @method
 		 */
-		&quot;one&quot;: function (type, callback, data) {
-			var me = this;
-			var _callback;
+		&quot;subscribe&quot; : from(&quot;on&quot;),
 
-			if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-				_callback = {};
-				_callback[CALLBACK] = callback;
-				_callback[LIMIT] = 1;
-			}
-			else {
-				_callback = callback;
-				_callback[LIMIT] = 1;
-			}
-
-			// Delegate return to `on`
-			return me.on(type, _callback, data);
-		},
-
-<span id='core-event-emitter-method-emit'>		/**
-</span>		 * Trigger an event which notifies each of the listeners of their subscribing,
-		 * optionally pass data values to the listeners.
-		 *
-		 *  A sequential runner, is the default runner for this module, in which all handlers are running
-		 *  with the same argument data specified by the {@link #emit} function.
-		 *  Each handler will wait for the completion for the previous one if it returns a promise.
-		 *
-		 * @param {String|Object} event The event type to emit, or an event object
-		 * @param {String} [event.type] The event type name.
-		 * @param {Function} [event.runner] The runner function that determinate how the handlers are executed, overrides the
-		 * default behaviour of the event emitting.
-		 * @param {...*} [args] Data params that are passed to the listener function.
-		 * @return {*} Result returned from runner.
+<span id='core-pubsub-emitter-method-unsubscribe'>		/**
+</span>		 * Remove a public event listener.
+		 * @chainable
+		 * @inheritdoc #off
+		 * @method
 		 */
-		&quot;emit&quot; : function (event, args) {
-			var me = this;
-			var eventType = event;
-			var eventRunner;
+		&quot;unsubscribe&quot; : from(&quot;off&quot;),
+
+<span id='core-pubsub-emitter-method-publish'>		/**
+</span>		 * Emit a public event that can be subscribed by other components.
+		 *
+		 * Handlers are run in a pipeline, in which each handler will receive muted
+		 * data params depending on the return value of the previous handler:
+		 *
+		 *   - The original data params from {@link #publish} if this is the first handler, or the previous handler returns `undefined`.
+		 *   - One value as the single argument if the previous handler return a non-array.
+		 *   - Each argument value deconstructed from the returning array of the previous handler.
+		 *
+		 * @param {String} type The topic to publish.
+		 * @param {...*} [args] Additional params that are passed to the handler function.
+		 * @return {Promise}
+		 */
+		&quot;publish&quot; : from(&quot;emit&quot;),
+
+<span id='core-pubsub-emitter-method-peek'>		/**
+</span>		 * Returns value in handlers MEMORY
+		 * @param {String} type event type to peek at
+		 * @param {*} [value] Value to use _only_ if no memory has been recorder
+		 * @return {*} Value in MEMORY
+		 */
+		&quot;peek&quot;: function (type, value) {
 			var handlers;
 
-			// If event is a plain string, convert to object with props
-			if (OBJECT_TOSTRING.call(event) === TOSTRING_STRING) {
-				// Recreate event
-				event = {};
-				event[RUNNER] = eventRunner = runner;
-				event[TYPE] = eventType;
-			}
-			// If event duck-types an event object we just override or use defaults
-			else if (TYPE in event) {
-				eventRunner = event[RUNNER] = event[RUNNER] || runner;
-				eventType = event[TYPE];
-			}
-			// Otherwise something is wrong
-			else {
-				throw Error(&quot;first argument has to be of type '&quot; + TOSTRING_STRING + &quot;' or have a '&quot; + TYPE + &quot;' property&quot;);
-			}
-
-			// Let `handlers` be `handlers[eventType]`
-			if ((handlers = me[HANDLERS][eventType]) === UNDEFINED) {
-				// Let `handlers` be `me[HANDLERS]`
-				handlers = me[HANDLERS];
-
-				// Create type handlers
-				handlers = handlers[handlers[LENGTH]] = handlers[eventType] = {};
-
-				// Prepare handlers
-				handlers[TYPE] = eventType;
-			}
-
-			// Return result from `eventRunner`
-			return eventRunner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
+			return (handlers = this[HANDLERS][type]) === UNDEFINED || !handlers.hasOwnProperty(MEMORY)
+				? value
+				: handlers[MEMORY];
 		}
-	});
+	}, EXECUTOR, executor));
 });
 </pre>
 </body>

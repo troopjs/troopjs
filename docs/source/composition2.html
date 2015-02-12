@@ -19,70 +19,107 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-compose/factory&quot;,
-	&quot;troopjs-log/logger&quot;
-], function ObjectBaseModule(Factory, logger) {
-	var INSTANCE_COUNTER = 0;
-	var INSTANCE_COUNT = &quot;instanceCount&quot;;
+	&quot;mu-emitter/main&quot;,
+	&quot;../composition&quot;,
+	&quot;../config&quot;,
+	&quot;./executor&quot;,
+	&quot;troopjs-compose/decorator/from&quot;,
+	&quot;when/when&quot;
+], function (Emitter, Composition, config, executor, from) {
+	&quot;use strict&quot;;
 
-<span id='core-composition'>	/**
-</span>	 * Base composition with instance count.
-	 * @class core.composition
-	 * @implement compose.composition
-	 * @mixin log.logger
+<span id='core-emitter-composition'>	/**
+</span>	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
+	 * while behind the regularity it's powered by a highly customizable **event executor** mechanism.
+	 *
+	 * @class core.emitter.composition
+	 * @extend core.composition
 	 */
 
-<span id='core-composition-static-method-create'>	/**
-</span>	 * @method create
-	 * @static
-	 * @inheritable
+	var EXECUTOR = config.emitter.executor;
+	var HANDLERS = config.emitter.handlers;
+
+<span id='core-emitter-composition-property-executor'>	/**
+</span>	 * Event executor
+	 * @private
+	 * @readonly
+	 * @property {core.emitter.executor} executor
+	 */
+
+<span id='core-emitter-composition-property-handlers'>	/**
+</span>	 * Event handlers
+	 * @protected
+	 * @readonly
+	 * @property {Object} handlers Object where the key represents the event type and the value is a list of {@link core.emitter.handler handlers} for that type.
+	 */
+
+<span id='core-emitter-composition-method-constructor'>	/**
+</span>	 * @method constructor
 	 * @inheritdoc
-	 * @return {core.composition} Instance of this class
 	 */
+	return Composition.extend(function () {
+		this[HANDLERS] = {};
+	}, (function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
+		&quot;displayName&quot;: &quot;core/emitter/composition&quot;,
 
-<span id='core-composition-static-method-extend'>	/**
-</span>	 * @method extend
-	 * @static
-	 * @inheritable
-	 * @inheritdoc
-	 * @return {core.composition} The extended subclass
-	 */
-
-<span id='core-composition-method-constructor'>	/**
-</span>	 * Creates a new component instance
-	 * @method constructor
-	 */
-	return Factory(function () {
-		// Update instance count
-		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
-	}, logger, {
-<span id='core-composition-property-instanceCount'>		/**
-</span>		 * Instance counter
-		 * @private
-		 * @readonly
-		 * @property {Number}
+<span id='core-emitter-composition-method-on'>		/**
+</span>		 * Adds a listener for the specified event type.
+		 * @method
+		 * @param {String} type The event type to subscribe to.
+		 * @param {Function|Object} callback The event callback to add. If callback is a function defaults from below will be used:
+		 * @param {Function} callback.callback Callback method.
+		 * @param {Object} [callback.scope=this] Callback scope.
+		 * @param {Number} [callback.limit=0] Callback limit.
+		 * @param {Function} [callback.on=undefined] Will be called once this handler is added to the handlers list.
+		 * @param {core.emitter.handler} [callback.on.handler] The handler that was just added.
+		 * @param {Object} [callback.on.handlers] The list of handlers the handler was added to.
+		 * @param {Function} [callback.off=undefined] Will be called once this handler is removed from the handlers list.
+		 * @param {core.emitter.handler} [callback.off.handler] The handler that was just removed.
+		 * @param {Object} [callback.off.handlers] The list of handlers the handler was removed from.
+		 * @param {*} [data] Handler data
 		 */
-		&quot;instanceCount&quot; : INSTANCE_COUNTER,
+		&quot;on&quot;: from(Emitter),
 
-<span id='core-composition-property-displayName'>		/**
-</span>		 * The hierarchical namespace for this component that indicates it's functionality.
-		 * @protected
-		 * @readonly
-		 * @property {String}
+<span id='core-emitter-composition-method-off'>		/**
+</span>		 * Remove callback(s) from a subscribed event type, if no callback is specified,
+		 * remove all callbacks of this type.
+		 * @method
+		 * @param {String} type The event type subscribed to
+		 * @param {Function|Object} [callback] The event callback to remove. If callback is a function scope will be this, otherwise:
+		 * @param {Function} [callback.callback] Callback method to match.
+		 * @param {Object} [callback.scope=this] Callback scope to match.
 		 */
-		&quot;displayName&quot; : &quot;core/composition&quot;,
+		&quot;off&quot;: from(Emitter),
 
-<span id='core-composition-method-toString'>		/**
-</span>		 * Gives string representation of this component instance.
-		 * @return {String} {@link #displayName}`@`{@link #instanceCount}
-		 * @protected
+<span id='core-emitter-composition-method-one'>		/**
+</span>		 * Adds a listener for the specified event type exactly once.
+		 * @method
+		 * @inheritdoc #on
 		 */
-		&quot;toString&quot; : function _toString() {
-			var me = this;
+		&quot;one&quot;: from(Emitter),
 
-			return me.displayName + &quot;@&quot; + me[INSTANCE_COUNT];
-		}
-	});
+<span id='core-emitter-composition-method-emit'>		/**
+</span>		 * Trigger an event which notifies each of the listeners of their subscribing,
+		 * optionally pass data values to the listeners.
+		 *
+		 *  A sequential runner, is the default runner for this module, in which all handlers are running
+		 *  with the same argument data specified by the {@link #emit} function.
+		 *  Each handler will wait for the completion for the previous one if it returns a promise.
+		 *
+		 * @method
+		 * @param {String|Object} event The event type to emit, or an event object
+		 * @param {String} [event.type] The event type name.
+		 * @param {Function} [event.runner] The runner function that determinate how the handlers are executed, overrides the
+		 * default behaviour of the event emitting.
+		 * @param {...*} [args] Data params that are passed to the listener function.
+		 * @return {*} Result returned from runner.
+		 */
+		&quot;emit&quot;: from(Emitter)
+	}, EXECUTOR, executor));
 });
 </pre>
 </body>

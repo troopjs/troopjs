@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.1+9f387df ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.1+b4b32c9 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.1+9f387df"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.1+b4b32c9"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -389,15 +389,80 @@ define('troopjs-compose/config',[
 	}, module.config());
 });
 
+define('mu-emitter/config',{
+  "handlers": "handlers",
+  "emitter": "emitter",
+  "type": "type",
+  "callback": "callback",
+  "data": "data",
+  "scope": "scope",
+  "executor": "executor",
+  "head": "head",
+  "tail": "tail",
+  "next": "next",
+  "count": "count",
+  "limit": "limit",
+  "on": "on",
+  "off": "off"
+});
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/config',[
 	"module",
 	"troopjs-compose/config",
+	"mu-emitter/config",
 	"mu-merge/main"
-], function (module, config, merge) {
+], function (module, config, emitterConfig, merge) {
 	
+
+	/**
+	 * @class core.config.emitter
+	 * @enum {String}
+	 * @private
+	 */
+	/**
+	 * @property handlers Property name for `handlers`
+	 */
+	/**
+	 * @property emitter Property name for `emitter`
+	 */
+	/**
+	 * @property type Property name for `type`
+	 */
+	/**
+	 * @property callback Property name for `callback`
+	 */
+	/**
+	 * @property data Property name for `data`
+	 */
+	/**
+	 * @property scope Property name for `scope`
+	 */
+	/**
+	 * @property executor Property name for `executor`
+	 */
+	/**
+	 * @property head Property name for `head`
+	 */
+	/**
+	 * @property tail Property name for `tail`
+	 */
+	/**
+	 * @property next Property name for `next`
+	 */
+	/**
+	 * @property count Property name for `count`
+	 */
+	/**
+	 * @property limit Property name for `limit`
+	 */
+	/**
+	 * @property on Property name for `on`
+	 */
+	/**
+	 * @property off Property name for `off`
+	 */
 
 	/**
 	 * @class core.config.phase
@@ -516,7 +581,14 @@ define('troopjs-core/config',[
 		 * @cfg {core.config.phase}
 		 * @protected
 		 */
-		"phase": PHASE
+		"phase": PHASE,
+
+		/**
+		 * Emitter properties
+		 * @cfg {core.config.emitter}
+		 * @protected
+		 */
+		"emitter": emitterConfig
 	}, module.config());
 });
 /**
@@ -785,6 +857,283 @@ define('troopjs-log/null',[
 
 		return me;
 	}).call({});
+});
+define('mu-emitter/handler',[ "./config" ], function (config) {
+  
+
+  var UNDEFINED;
+  var OBJECT_TOSTRING = Object.prototype.toString;
+  var TOSTRING_FUNCTION = "[object Function]";
+  var EMITTER = config.emitter;
+  var TYPE = config.type;
+  var CALLBACK = config.callback;
+  var DATA = config.data;
+  var SCOPE = config.scope;
+  var LIMIT = config.limit;
+  var COUNT = config.count;
+  var ON = config.on;
+  var OFF = config.off;
+
+  function Handler(emitter, type, callback, data) {
+    var me = this;
+
+    me[EMITTER] = emitter;
+    me[TYPE] = type;
+    me[DATA] = data;
+
+    if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+      me[CALLBACK] = callback;
+      me[SCOPE] = emitter;
+    }
+    else if (callback !== UNDEFINED) {
+      me[CALLBACK] = callback[CALLBACK];
+      me[SCOPE] = callback[SCOPE] || emitter;
+
+      if (callback.hasOwnProperty(LIMIT)) {
+        me[LIMIT] = callback[LIMIT];
+        me[COUNT] = 0;
+      }
+      if (callback.hasOwnProperty(ON)) {
+        me[ON] = callback[ON];
+      }
+      if (callback.hasOwnProperty(OFF)) {
+        me[OFF] = callback[OFF];
+      }
+    }
+    else {
+      throw new Error("Unable to use 'callback'");
+    }
+  }
+
+  Handler.prototype.handle = function (args) {
+    // Let `me` be `this`
+    var me = this;
+
+    // Get result from execution of `handler[CALLBACK]`
+    var result = me[CALLBACK].apply(me[SCOPE], args);
+
+    // If there's a `me[LIMIT]` and `++me[COUNT]` is greater or equal to it ...
+    if (me.hasOwnProperty(LIMIT) && ++me[COUNT] >= me[LIMIT]) {
+      // ... `me[EMITTER].off` `me` (note that `me[CALLBACK]` and `me[SCOPE]` are used by `.off`)
+      me[EMITTER].off(me[TYPE], me);
+    }
+
+    return result;
+  };
+
+  return Handler;
+});
+define('mu-emitter/executor',[
+  "./config",
+  "poly/array"
+], function (config) {
+  
+
+  var UNDEFINED;
+  var CALLBACK = config.callback;
+  var SCOPE = config.scope;
+  var HEAD = config.head;
+  var NEXT = config.next;
+
+
+  return function executor(event, handlers, args) {
+    var _handlers = [];
+    var _handlersCount = 0;
+    var _callback = event[CALLBACK];
+    var _scope = event[SCOPE];
+    var handler;
+
+    for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+      if (_callback && handler[CALLBACK] !== _callback) {
+        continue;
+      }
+
+      if (_scope && handler[SCOPE] !== _scope) {
+        continue;
+      }
+
+      _handlers[_handlersCount++] = handler;
+    }
+
+    return _handlers.map(function (_handler) {
+      return _handler.handle(args);
+    });
+  }
+});
+define('mu-emitter/main',[
+  "./config",
+  "./handler",
+  "./executor"
+], function (config, Handler, executor) {
+  
+
+  var UNDEFINED;
+  var ARRAY_SLICE = Array.prototype.slice;
+  var OBJECT_TOSTRING = Object.prototype.toString;
+  var TOSTRING_STRING = "[object String]";
+  var TOSTRING_FUNCTION = "[object Function]";
+
+  var HANDLERS = config.handlers;
+  var EXECUTOR = config.executor;
+  var TYPE = config.type;
+  var CALLBACK = config.callback;
+  var SCOPE = config.scope;
+  var LIMIT = config.limit;
+  var HEAD = config.head;
+  var TAIL = config.tail;
+  var NEXT = config.next;
+  var ON = config.on;
+  var OFF = config.off;
+
+  function Emitter() {
+  }
+
+  Emitter.prototype[EXECUTOR] = executor;
+
+  Emitter.prototype.on = function (type, callback, data) {
+    var me = this;
+    var handlers = me[HANDLERS] || (me[HANDLERS] = {});
+    var handler;
+
+    if (callback === UNDEFINED) {
+      throw new Error("no 'callback' provided");
+    }
+
+    handler = new Handler(me, type, callback, data);
+
+    if (handlers.hasOwnProperty(type)) {
+      handlers = handlers[type];
+
+      handlers[TAIL] = handlers.hasOwnProperty(TAIL)
+        ? handlers[TAIL][NEXT] = handler
+        : handlers[HEAD] = handler;
+    }
+    else {
+      handlers = handlers[type] = {};
+
+      handlers[TYPE] = type;
+      handlers[HEAD] = handlers[TAIL] = handler;
+    }
+
+    if (handler.hasOwnProperty(ON)) {
+      handler[ON].call(me, handler, handlers);
+    }
+  };
+
+  Emitter.prototype.off = function (type, callback) {
+    var me = this;
+    var handlers = me[HANDLERS] || (me[HANDLERS] = {});
+    var handler;
+    var head = UNDEFINED;
+    var tail = UNDEFINED;
+    var _callback;
+    var _scope;
+
+    if (handlers.hasOwnProperty(type)) {
+      handlers = handlers[type];
+
+      if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+        _callback = callback;
+        _scope = me;
+      }
+      else if (callback !== UNDEFINED) {
+        _callback = callback[CALLBACK];
+        _scope = callback[SCOPE];
+      }
+
+      for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+        unlink: {
+          if (_callback && handler[CALLBACK] !== _callback) {
+            break unlink;
+          }
+
+          if (_scope && handler[SCOPE] !== _scope) {
+            break unlink;
+          }
+
+          if (handler.hasOwnProperty(OFF)) {
+            handler[OFF].call(me, handler, handlers);
+          }
+
+          continue;
+        }
+
+        if (head === UNDEFINED) {
+          head = tail = handler;
+        }
+        else {
+          tail = tail[NEXT] = handler;
+        }
+      }
+
+      if (head !== UNDEFINED) {
+        handlers[HEAD] = head;
+      }
+      else {
+        delete handlers[HEAD];
+      }
+
+      if (tail !== UNDEFINED) {
+        handlers[TAIL] = tail;
+
+        delete tail[NEXT];
+      }
+      else {
+        delete handlers[TAIL];
+      }
+    }
+  };
+
+  Emitter.prototype.one = function (type, callback, data) {
+    var me = this;
+    var _callback;
+
+    if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+      _callback = {};
+      _callback[CALLBACK] = callback;
+      _callback[LIMIT] = 1;
+    }
+    else {
+      _callback = callback;
+      _callback[LIMIT] = 1;
+    }
+
+    return me.on(type, _callback, data);
+  };
+
+  Emitter.prototype.emit = function (event) {
+    var me = this;
+    var handlers = me[HANDLERS] || (me[HANDLERS] = {});
+    var _event;
+    var _type;
+    var _executor;
+
+    if (OBJECT_TOSTRING.call(event) === TOSTRING_STRING) {
+      _event = {};
+      _type = _event[TYPE] = event;
+      _executor = me[EXECUTOR];
+    }
+    else if (event.hasOwnProperty(TYPE)) {
+      _event = event;
+      _type = event[TYPE];
+      _executor = event[EXECUTOR] || me[EXECUTOR];
+    }
+    else {
+      throw new Error("Unable to use 'event'");
+    }
+
+
+    if (handlers.hasOwnProperty(_type)) {
+      handlers = handlers[_type];
+    } else {
+      handlers = handlers[_type] = {};
+      handlers[TYPE] = _type;
+    }
+
+    return _executor.call(me, _event, handlers, ARRAY_SLICE.call(arguments, 1));
+  };
+
+  return Emitter;
 });
 (function() {
     
@@ -1867,400 +2216,150 @@ define('troopjs-core/composition',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/event/handler',[],function () {
-
-	/**
-	 * @class core.event.handler
-	 * @private
-	 */
-
-	/**
-	 * Handler emitter
-	 * @property {core.event.emitter} emitter
-	 */
-
-	/**
-	 * Handler type
-	 * @property {String} type
-	 */
-
-	/**
-	 * Handler data
-	 * @property {*} data
-	 */
-
-	/**
-	 * Handler callback
-	 * @property {Function} callback
-	 */
-
-	/**
-	 * Handler context
-	 * @property {core.event.emitter} context
-	 */
-
-	/**
-	 * Handler limit
-	 * @property {Number} limit
-	 */
-
-	/**
-	 * Handler count
-	 * @property {Number} count
-	 */
-
-	/**
-	 * Handler `on` callback
-	 * @property {Function} on
-	 */
-
-	/**
-	 * Handler `off` callback
-	 * @property {Function} off
-	 */
-
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_FUNCTION = "[object Function]";
-	var EMITTER = "emitter";
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var TYPE = "type";
-	var LIMIT = "limit";
-	var COUNT = "count";
-	var DATA = "data";
-	var ON = "on";
-	var OFF = "off";
-
-	/**
-	 * Creates new handler
-	 * @param {core.event.emitter} emitter Emitter that owns this handler
-	 * @param {String} type Type for this handler
-	 * @param {Function} callback Callback for this handler
-	 * @param {*} [data] Data for this handler
-	 * @method constructor
-	 */
-	function Handler(emitter, type, callback, data) {
-		var me = this;
-
-		me[EMITTER] = emitter;
-		me[TYPE] = type;
-		me[DATA] = data;
-
-		if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-			me[CALLBACK] = callback;
-			me[CONTEXT] = emitter;
-		}
-		else {
-			me[CALLBACK] = callback[CALLBACK];
-			me[CONTEXT] = callback[CONTEXT] || emitter;
-
-			if (callback.hasOwnProperty(LIMIT)) {
-				me[LIMIT] = callback[LIMIT];
-				me[COUNT] = 0;
-			}
-			if (callback.hasOwnProperty(ON)) {
-				me[ON] = callback[ON];
-			}
-			if (callback.hasOwnProperty(OFF)) {
-				me[OFF] = callback[OFF];
-			}
-		}
-	}
-
-	/**
-	 * Executes {@link #callback} and does some house keeping.
-	 * @param {Array} args Handler arguments
-	 */
-	Handler.prototype.run = function (args) {
-		// Let `me` be `this`
-		var me = this;
-
-		// Get result from execution of `handler[CALLBACK]`
-		var result = me[CALLBACK].apply(me[CONTEXT], args);
-
-		// If there's a `me[LIMIT]` and `++me[COUNT]` is greater or equal to it ...
-		if (LIMIT in me && ++me[COUNT] >= me[LIMIT]) {
-			// ... `me[EMITTER].off` `me` (note that `me[CALLBACK]` and `me[CONTEXT]` are used by `.off`)
-			me[EMITTER].off(me[TYPE], me);
-		}
-
-		return result;
-	};
-
-	return Handler;
-});
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/event/runner',[ "when/when" ], function (when) {
+define('troopjs-core/emitter/executor',[
+	"../config",
+	"when/when"
+], function (config, when) {
 	
 
 	/**
-	 * @class core.event.runner
+	 * @class core.emitter.executor
 	 * @mixin Function
 	 * @private
 	 * @static
-	 * @alias feature.runner
+	 * @alias feature.executor
 	 */
 
 	var UNDEFINED;
-	var HEAD = "head";
-	var NEXT = "next";
+	var CALLBACK = config.emitter.callback;
+	var SCOPE = config.emitter.scope;
+	var HEAD = config.emitter.head;
+	var NEXT = config.emitter.next;
 
 	/**
-	 * Run event handlers.
+	 * Executes an emission
 	 * @method constructor
-	 * @abstract
 	 * @param {Object} event Event object
-	 * @param {String} event.context Event context
-	 * @param {Function} event.callback Event callback
 	 * @param {Object} handlers List of handlers
-	 * @param {Array} args Initial arguments
+	 * @param {*[]} [args] Handler arguments
 	 * @localdoc
-	 * - Run event handlers asynchronously passing each handler `args`.
-	 * @return {Promise} Promise for `[*]`
+	 * - Executes event handlers asynchronously passing each handler `args`.
+	 *
+	 * @return {*} Array of handler results
 	 */
-	return function sequence(event, handlers, args) {
-		var candidates = [];
-		var candidatesCount = 0;
+	return function (event, handlers, args) {
+		var _handlers = [];
+		var _handlersCount = 0;
+		var callback = event[CALLBACK];
+		var scope = event[SCOPE];
 		var handler;
 
-		// Copy from handlers list to candidates array
 		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-			candidates[candidatesCount++] = handler;
+			if (callback && handler[CALLBACK] !== callback) {
+				continue;
+			}
+
+			if (scope && handler[SCOPE] !== scope) {
+				continue;
+			}
+
+			_handlers[_handlersCount++] = handler;
 		}
 
-		// Reduce `candidates`
-		return when.reduce(candidates, function (results, candidate, index) {
-			// Run `candidate` passing `args`
-			// Pass result to `when` and onwards to store in `results`
-			return when(candidate.run(args), function (result) {
+		return when.reduce(_handlers, function (results, _handler, index) {
+			return when(_handler.handle(args), function (result) {
 				results[index] = result;
 			})
-			// yield `results` for next execution
-			.yield(results);
-		}, candidates);
+				.yield(results);
+		}, _handlers);
 	}
 });
-
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/event/emitter',[
+define('troopjs-core/emitter/composition',[
+	"mu-emitter/main",
 	"../composition",
-	"./handler",
-	"./runner"
-], function (Composition, Handler, runner) {
+	"../config",
+	"./executor",
+	"troopjs-compose/decorator/from",
+	"when/when"
+], function (Emitter, Composition, config, executor, from) {
 	
 
 	/**
 	 * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
-	 * while behind the regularity it's powered by a highly customizable **event runner** mechanism.
+	 * while behind the regularity it's powered by a highly customizable **event executor** mechanism.
 	 *
-	 * @class core.event.emitter
+	 * @class core.emitter.composition
 	 * @extend core.composition
 	 */
 
-	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var TOSTRING_STRING = "[object String]";
-	var TOSTRING_FUNCTION = "[object Function]";
-	var HANDLERS = "handlers";
-	var LENGTH = "length";
-	var TYPE = "type";
-	var RUNNER = "runner";
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var HEAD = "head";
-	var TAIL = "tail";
-	var NEXT = "next";
-	var LIMIT = "limit";
-	var ON = "on";
-	var OFF = "off";
+	var EXECUTOR = config.emitter.executor;
+	var HANDLERS = config.emitter.handlers;
+
+	/**
+	 * Event executor
+	 * @private
+	 * @readonly
+	 * @property {core.emitter.executor} executor
+	 */
+
+	/**
+	 * Event handlers
+	 * @protected
+	 * @readonly
+	 * @property {Object} handlers Object where the key represents the event type and the value is a list of {@link core.emitter.handler handlers} for that type.
+	 */
 
 	/**
 	 * @method constructor
 	 * @inheritdoc
 	 */
 	return Composition.extend(function () {
-		/**
-		 * Handlers attached to this component, addressable either by key or index
-		 * @private
-		 * @readonly
-		 * @property {core.event.handler[]} handlers
-		 */
-		this[HANDLERS] = [];
-	}, {
-		"displayName" : "core/event/emitter",
+		this[HANDLERS] = {};
+	}, (function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
+		"displayName": "core/emitter/composition",
 
 		/**
 		 * Adds a listener for the specified event type.
-		 * @chainable
+		 * @method
 		 * @param {String} type The event type to subscribe to.
 		 * @param {Function|Object} callback The event callback to add. If callback is a function defaults from below will be used:
 		 * @param {Function} callback.callback Callback method.
-		 * @param {Object} [callback.context=this] Callback context.
+		 * @param {Object} [callback.scope=this] Callback scope.
 		 * @param {Number} [callback.limit=0] Callback limit.
 		 * @param {Function} [callback.on=undefined] Will be called once this handler is added to the handlers list.
-		 * @param {core.event.handler} [callback.on.handler] The handler that was just added.
+		 * @param {core.emitter.handler} [callback.on.handler] The handler that was just added.
 		 * @param {Object} [callback.on.handlers] The list of handlers the handler was added to.
 		 * @param {Function} [callback.off=undefined] Will be called once this handler is removed from the handlers list.
-		 * @param {core.event.handler} [callback.off.handler] The handler that was just removed.
+		 * @param {core.emitter.handler} [callback.off.handler] The handler that was just removed.
 		 * @param {Object} [callback.off.handlers] The list of handlers the handler was removed from.
 		 * @param {*} [data] Handler data
 		 */
-		"on" : function (type, callback, data) {
-			var me = this;
-			var handlers;
-			var handler;
-
-			// Get callback from next arg
-			if (callback === UNDEFINED) {
-				throw new Error("no callback provided");
-			}
-
-			// Create new handler
-			handler = new Handler(me, type, callback, data);
-
-			// Have handlers
-			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
-				// Set tail handler
-				handlers[TAIL] = TAIL in handlers
-					// Have tail, update handlers[TAIL][NEXT] to point to handler
-					? handlers[TAIL][NEXT] = handler
-					// Have no tail, update handlers[HEAD] to point to handler
-					: handlers[HEAD] = handler;
-			}
-			// No handlers
-			else {
-				// Get HANDLERS
-				handlers = me[HANDLERS];
-
-				// Create type handlers
-				handlers = handlers[handlers[LENGTH]] = handlers[type] = {};
-
-				// Prepare handlers
-				handlers[TYPE] = type;
-				handlers[HEAD] = handlers[TAIL] = handler;
-			}
-
-			// If we have an `ON` callback ...
-			if (handler.hasOwnProperty(ON)) {
-				// .. call it in the context of `me`
-				handler[ON].call(me, handler, handlers);
-			}
-
-			return me;
-		},
+		"on": from(Emitter),
 
 		/**
 		 * Remove callback(s) from a subscribed event type, if no callback is specified,
 		 * remove all callbacks of this type.
-		 * @chainable
+		 * @method
 		 * @param {String} type The event type subscribed to
-		 * @param {Function|Object} [callback] The event callback to remove. If callback is a function context will be this, otherwise:
+		 * @param {Function|Object} [callback] The event callback to remove. If callback is a function scope will be this, otherwise:
 		 * @param {Function} [callback.callback] Callback method to match.
-		 * @param {Object} [callback.context=this] Callback context to match.
+		 * @param {Object} [callback.scope=this] Callback scope to match.
 		 */
-		"off" : function (type, callback) {
-			var me = this;
-			var _callback;
-			var _context;
-			var handlers;
-			var handler;
-			var head;
-			var tail;
-
-			// Have handlers
-			if ((handlers = me[HANDLERS][type]) !== UNDEFINED) {
-				// Have HEAD in handlers
-				if (HEAD in handlers) {
-					if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-						_callback = callback;
-						_context = me;
-					}
-					else if (callback !== UNDEFINED) {
-						_callback = callback[CALLBACK];
-						_context = callback[CONTEXT];
-					}
-
-					// Iterate handlers
-					for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-						// Should we remove?
-						remove : {
-							// If no context or context does not match we should break
-							if (_context && handler[CONTEXT] !== _context) {
-								break remove;
-							}
-
-							// If no callback or callback does not match we should break
-							if (_callback && handler[CALLBACK] !== _callback) {
-								break remove;
-							}
-
-							// If we have an `OFF` callback ...
-							if (handler.hasOwnProperty(OFF)) {
-								// .. call it in the context of `me`
-								handler[OFF].call(me, handler, handlers);
-							}
-
-							// Remove this handler, just continue
-							continue;
-						}
-
-						// It there's no head - link head -> tail -> handler
-						if (!head) {
-							head = tail = handler;
-						}
-						// Otherwise just link tail -> tail[NEXT] -> handler
-						else {
-							tail = tail[NEXT] = handler;
-						}
-					}
-
-					// If we have both head and tail we should update handlers
-					if (head && tail) {
-						// Set handlers HEAD and TAIL
-						handlers[HEAD] = head;
-						handlers[TAIL] = tail;
-
-						// Make sure to remove NEXT from tail
-						delete tail[NEXT];
-					}
-					// Otherwise we remove the handlers list
-					else {
-						delete handlers[HEAD];
-						delete handlers[TAIL];
-					}
-				}
-			}
-
-			return me;
-		},
+		"off": from(Emitter),
 
 		/**
 		 * Adds a listener for the specified event type exactly once.
-		 * @chainable
+		 * @method
 		 * @inheritdoc #on
 		 */
-		"one": function (type, callback, data) {
-			var me = this;
-			var _callback;
-
-			if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-				_callback = {};
-				_callback[CALLBACK] = callback;
-				_callback[LIMIT] = 1;
-			}
-			else {
-				_callback = callback;
-				_callback[LIMIT] = 1;
-			}
-
-			// Delegate return to `on`
-			return me.on(type, _callback, data);
-		},
+		"one": from(Emitter),
 
 		/**
 		 * Trigger an event which notifies each of the listeners of their subscribing,
@@ -2270,6 +2369,7 @@ define('troopjs-core/event/emitter',[
 		 *  with the same argument data specified by the {@link #emit} function.
 		 *  Each handler will wait for the completion for the previous one if it returns a promise.
 		 *
+		 * @method
 		 * @param {String|Object} event The event type to emit, or an event object
 		 * @param {String} [event.type] The event type name.
 		 * @param {Function} [event.runner] The runner function that determinate how the handlers are executed, overrides the
@@ -2277,104 +2377,68 @@ define('troopjs-core/event/emitter',[
 		 * @param {...*} [args] Data params that are passed to the listener function.
 		 * @return {*} Result returned from runner.
 		 */
-		"emit" : function (event, args) {
-			var me = this;
-			var eventType = event;
-			var eventRunner;
-			var handlers;
-
-			// If event is a plain string, convert to object with props
-			if (OBJECT_TOSTRING.call(event) === TOSTRING_STRING) {
-				// Recreate event
-				event = {};
-				event[RUNNER] = eventRunner = runner;
-				event[TYPE] = eventType;
-			}
-			// If event duck-types an event object we just override or use defaults
-			else if (TYPE in event) {
-				eventRunner = event[RUNNER] = event[RUNNER] || runner;
-				eventType = event[TYPE];
-			}
-			// Otherwise something is wrong
-			else {
-				throw Error("first argument has to be of type '" + TOSTRING_STRING + "' or have a '" + TYPE + "' property");
-			}
-
-			// Let `handlers` be `handlers[eventType]`
-			if ((handlers = me[HANDLERS][eventType]) === UNDEFINED) {
-				// Let `handlers` be `me[HANDLERS]`
-				handlers = me[HANDLERS];
-
-				// Create type handlers
-				handlers = handlers[handlers[LENGTH]] = handlers[eventType] = {};
-
-				// Prepare handlers
-				handlers[TYPE] = eventType;
-			}
-
-			// Return result from `eventRunner`
-			return eventRunner.call(me, event, handlers, ARRAY_SLICE.call(arguments, 1));
-		}
-	});
+		"emit": from(Emitter)
+	}, EXECUTOR, executor));
 });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/runner',[ "poly/array" ], function () {
+define('troopjs-core/component/executor',[
+	"../config",
+	"poly/array"
+], function (config) {
 	
 
 	/**
-	 * @class core.component.runner
+	 * @class core.component.executor
 	 * @mixin Function
 	 * @private
 	 * @static
-	 * @alias feature.runner
+	 * @alias feature.executor
 	 */
 
 	var UNDEFINED;
 	var FALSE = false;
-	var HEAD = "head";
-	var NEXT = "next";
-	var CALLBACK = "callback";
-	var CONTEXT = "context";
+	var HEAD = config.emitter.head;
+	var NEXT = config.emitter.next;
+	var CALLBACK = config.emitter.callback;
+	var SCOPE = config.emitter.scope;
 
 	/**
 	 * @method constructor
-	 * @inheritdoc core.event.runner#constructor
+	 * @inheritdoc core.emitter.executor#constructor
 	 * @localdoc
-	 * - Runs event handlers synchronously passing each handler `args`.
+	 * - Executes event handlers synchronously passing each handler `args`.
 	 * - Anything returned from a handler except `undefined` will be stored as `result`
 	 * - If a handler returns `undefined` the current `result` will be kept
 	 * - If a handler returns `false` no more handlers will be executed.
 	 *
 	 * @return {*} Stored `result`
 	 */
-	return function sequence(event, handlers, args) {
-		var context = event[CONTEXT];
+	return function (event, handlers, args) {
+		var _handlers = [];
+		var _handlersCount = 0;
+		var scope = event[SCOPE];
 		var callback = event[CALLBACK];
-		var candidate;
-		var candidates = [];
-		var candidatesCount = 0;
+		var handler;
 
 		// Iterate handlers
-		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-			if (
-				// Filter `candidate[CONTEXT]` if we have `context`
-				(context !== UNDEFINED && candidate[CONTEXT] !== context) ||
-					// Filter `candidate[CALLBACK]` if we have `callback`
-				(callback !== UNDEFINED && candidate[CALLBACK] !== callback)
-			) {
+		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+			if (callback && handler[CALLBACK] !== callback) {
 				continue;
 			}
 
-			candidates[candidatesCount++] = candidate;
+			if (scope && handler[SCOPE] !== scope) {
+				continue;
+			}
+			_handlers[_handlersCount++] = handler;
 		}
 
 		// Reduce and return
-		return candidates.reduce(function (current, candidate) {
+		return _handlers.reduce(function (current, _handler) {
 			var result = current !== FALSE
-				? candidate.run(args)
+				? _handler.handle(args)
 				: current;
 
 			return result === UNDEFINED
@@ -2388,28 +2452,27 @@ define('troopjs-core/component/runner',[ "poly/array" ], function () {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/registry/emitter',[
-	"../event/emitter",
+	"../emitter/composition",
 	"../config",
-	"../component/runner",
+	"../component/executor",
 	"poly/array",
 	"poly/object"
-], function (Emitter, config, runner) {
+], function (Emitter, config, executor) {
 	
 
 	/**
 	 * A light weight implementation to register key/value pairs by key and index
 	 * @class core.registry.emitter
-	 * @extend core.event.emitter
+	 * @extend core.emitter.composition
 	 */
 
-	var TYPE = "type";
-	var RUNNER = "runner";
 	var LENGTH = "length";
 	var INDEX = "index";
 	var OBJECT_TOSTRING = Object.prototype.toString;
 	var TOSTRING_REGEXP = "[object RegExp]";
 	var SIG_REGISTER = config.signal.register;
 	var SIG_UNREGISTER = config.signal.unregister;
+	var EXECUTOR = config.emitter.executor;
 
 	/**
 	 * Register signal
@@ -2440,7 +2503,11 @@ define('troopjs-core/registry/emitter',[
 		 * @readonly
 		 */
 		this[INDEX] = {};
-	}, {
+	}, (function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
 		"displayName": "core/registry/emitter",
 
 		/**
@@ -2488,7 +2555,6 @@ define('troopjs-core/registry/emitter',[
 		"register": function (key, value) {
 			var me = this;
 			var index = me[INDEX];
-			var event;
 
 			if (index[key] !== value) {
 
@@ -2496,11 +2562,7 @@ define('troopjs-core/registry/emitter',[
 					me.unregister(key);
 				}
 
-				event = {};
-				event[TYPE] = SIG_REGISTER;
-				event[RUNNER] = runner;
-
-				me.emit(event, key, index[key] = value);
+				me.emit(SIG_REGISTER, key, index[key] = value);
 			}
 
 			return value;
@@ -2516,24 +2578,19 @@ define('troopjs-core/registry/emitter',[
 			var me = this;
 			var index = me[INDEX];
 			var value;
-			var event;
 
 			if (index.hasOwnProperty(key)) {
 
 				value = index[key];
 
 				if (delete index[key]) {
-					event = {};
-					event[TYPE] = SIG_UNREGISTER;
-					event[RUNNER] = runner;
-
-					me.emit(event, key, value);
+					me.emit(SIG_UNREGISTER, key, value);
 				}
 			}
 
 			return value;
 		}
-	});
+	}, EXECUTOR, executor));
 });
 
 /**
@@ -2647,45 +2704,43 @@ define('troopjs-core/task/factory',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/emitter',[
-	"../event/emitter",
+	"../emitter/composition",
 	"../config",
 	"./registry",
-	"./runner",
+	"./executor",
 	"../task/factory",
 	"mu-merge/main",
 	"troopjs-compose/decorator/around",
 	"when/when",
 	"poly/array"
-], function (Emitter, config, registry, runner, taskFactory, merge, around, when) {
+], function (Emitter, config, registry, executor, taskFactory, merge, around, when) {
 	
 
 	/**
 	 * Component emitter
 	 * @class core.component.emitter
-	 * @extend core.event.emitter
+	 * @extend core.emitter.composition
 	 * @mixin core.config
 	 * @alias feature.component
 	 */
 
-	var UNDEFINED;
 	var FALSE = false;
 	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var RUNNER = "runner";
-	var HANDLERS = "handlers";
-	var HEAD = "head";
-	var TAIL = "tail";
+	var EXECUTOR = config.emitter.executor;
+	var HANDLERS = config.emitter.handlers;
+	var HEAD = config.emitter.head;
+	var TAIL = config.emitter.tail;
+	var SIG_SETUP = config.signal.setup;
+	var SIG_ADD = config.signal.add;
+	var SIG_REMOVE = config.signal.remove;
+	var SIG_TEARDOWN = config.signal.teardown;
+	var SIG_TASK = config.signal.task;
 	var NAME = "name";
 	var TYPE = "type";
 	var VALUE = "value";
 	var ON = "on";
 	var ONE = "one";
 	var SIG = "sig";
-	var SIG_SETUP = config.signal.setup;
-	var SIG_ADD = config.signal.add;
-	var SIG_REMOVE = config.signal.remove;
-	var SIG_TEARDOWN = config.signal.teardown;
-	var SIG_TASK = config.signal.task;
 	var SIG_PATTERN = new RegExp("^" + SIG + "/(.+)");
 
 	/**
@@ -2828,7 +2883,6 @@ define('troopjs-core/component/emitter',[
 
 	/**
 	 * @method one
-	 * @chainable
 	 * @inheritdoc
 	 * @localdoc Adds support for {@link #event-sig/setup} and {@link #event-sig/add}.
 	 * @fires sig/setup
@@ -2891,14 +2945,15 @@ define('troopjs-core/component/emitter',[
 			// Un-register component
 			registry.unregister(me.toString(), me);
 
-			// Finalize all handlers, in reverse
-			return when.map(me[HANDLERS].reverse(), function (handlers) {
-				return me.off(handlers[TYPE]);
-			});
+			// Finalize all handlers
+			Object
+				.keys(me[HANDLERS])
+				.forEach(function (type) {
+					me.off(type);
+				});
 		},
 
 		/**
-		 * @chainable
 		 * @method
 		 * @inheritdoc
 		 * @localdoc Adds support for {@link #event-sig/setup} and {@link #event-sig/add}.
@@ -2908,50 +2963,52 @@ define('troopjs-core/component/emitter',[
 		"on": around(function (fn) {
 			return function (type, callback, data) {
 				var me = this;
+				var handlers = me[HANDLERS];
 				var event;
-				var handlers;
 				var result;
+				var _handlers;
 
 				// If this type is NOT a signal we don't have to event try
 				if (!SIG_PATTERN.test(type)) {
-					// Initialize the handlers for this type if they don't exist.
-					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
-						handlers = {};
-						handlers[TYPE] = type;
+					// Get or initialize the handlers for this type
+					if (handlers.hasOwnProperty(type)) {
+						_handlers = handlers[type];
+					} else {
+						_handlers = {};
+						_handlers[TYPE] = type;
 					}
 
 					// Initialize event
 					event = {};
-					event[RUNNER] = runner;
+					event[EXECUTOR] = executor;
 
 					// If this is the first handler signal SIG_SETUP
-					if (!(HEAD in handlers)) {
+					if (!_handlers.hasOwnProperty(HEAD)) {
 						event[TYPE] = SIG_SETUP;
-						result = me.emit(event, handlers, type, callback, data);
+						result = me.emit(event, _handlers, type, callback, data);
 					}
 
 					// If we were not interrupted
 					if (result !== FALSE) {
 						// Signal SIG_ADD
 						event[TYPE] = SIG_ADD;
-						result = me.emit(event, handlers, type, callback, data);
+						result = me.emit(event, _handlers, type, callback, data);
 					}
 
-					// If we were not interrupted and `handlers` is not the list for `type` append it
-					if (result !== FALSE && me[HANDLERS][type] !== handlers) {
-						ARRAY_PUSH.call(me[HANDLERS], me[HANDLERS][type] = handlers);
+					// If we were not interrupted and `type` is not in `handlers`
+					if (result !== FALSE && !handlers.hasOwnProperty(type)) {
+						handlers[type] = _handlers;
 					}
 				}
 
-				// If we were not interrupted return result from super.on, otherwise just this
-				return result !== FALSE
-						? fn.call(me, type, callback, data)
-						: me;
+				// If we were not interrupted call super.on
+				if (result !== FALSE) {
+					fn.call(me, type, callback, data);
+				}
 			};
 		}),
 
 		/**
-		 * @chainable
 		 * @method
 		 * @inheritdoc
 		 * @localdoc Adds support for {@link #event-sig/remove} and {@link #event-sig/teardown}.
@@ -2959,43 +3016,46 @@ define('troopjs-core/component/emitter',[
 		 * @fires sig/teardown
 		 */
 		"off": around(function(fn) {
-			return function off(type, callback) {
+			return function (type, callback) {
 				var me = this;
+				var handlers = me[HANDLERS];
 				var event;
-				var handlers;
 				var result;
+				var _handlers;
 
 				if (!SIG_PATTERN.test(type)) {
-					// Initialize the handlers for this type if they don't exist.
-					if ((handlers = me[HANDLERS][type]) === UNDEFINED) {
-						handlers = {};
-						handlers[TYPE] = type;
+					// Get or initialize the handlers for this type
+					if (handlers.hasOwnProperty(type)) {
+						_handlers = handlers[type];
+					} else {
+						_handlers = {};
+						_handlers[TYPE] = type;
 					}
 
 					// Initialize event
 					event = {};
-					event[RUNNER] = runner;
+					event[EXECUTOR] = executor;
 
 					// Signal SIG_REMOVE
 					event[TYPE] = SIG_REMOVE;
-					result = me.emit(event, handlers, type, callback);
+					result = me.emit(event, _handlers, type, callback);
 
 					// If we were not interrupted and this is the last handler signal SIG_TEARDOWN
-					if (result !== FALSE && handlers[HEAD] === handlers[TAIL]) {
+					if (result !== FALSE && _handlers[HEAD] === _handlers[TAIL]) {
 						event[TYPE] = SIG_TEARDOWN;
-						result = me.emit(event, handlers, type, callback);
+						result = me.emit(event, _handlers, type, callback);
 					}
 
-					// If we were not interrupted and `handlers` is not the list for `type` append it
-					if (result !== FALSE && me[HANDLERS][type] !== handlers) {
-						ARRAY_PUSH.call(me[HANDLERS], me[HANDLERS][type] = handlers);
+					// If we were not interrupted and `type` is not in `handlers`
+					if (result !== FALSE && !handlers.hasOwnProperty(type)) {
+						handlers[type] = _handlers;
 					}
 				}
 
-				// If we were not interrupted return result from super.off, otherwise just this
-				return result !== FALSE
-					? fn.call(me, type, callback)
-					: me;
+				// If we were not interrupted call super.off
+				if (result !== FALSE) {
+					fn.call(me, type, callback);
+				}
 			};
 		}),
 
@@ -3018,19 +3078,19 @@ define('troopjs-core/component/emitter',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/runner',[
+define('troopjs-core/pubsub/executor',[
 	"../config",
 	"when/when"
 ], function (config, when) {
 	
 
 	/**
-	 * @class core.pubsub.runner
+	 * @class core.pubsub.executor
 	 * @mixin Function
 	 * @mixin core.config
 	 * @private
 	 * @static
-	 * @alias feature.runner
+	 * @alias feature.executor
 	 */
 
 	var UNDEFINED;
@@ -3039,58 +3099,58 @@ define('troopjs-core/pubsub/runner',[
 	var TOSTRING_ARGUMENTS = "[object Arguments]";
 	var TOSTRING_ARRAY = "[object Array]";
 	var SKIP = config.phase.skip;
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var HEAD = "head";
-	var NEXT = "next";
+	var SCOPE = config.emitter.scope;
+	var CALLBACK = config.emitter.callback;
+	var HEAD = config.emitter.head;
+	var NEXT = config.emitter.next;
 	var PHASE = "phase";
 	var MEMORY = "memory";
 
 	/**
 	 * @method constructor
-	 * @inheritdoc core.event.runner#constructor
+	 * @inheritdoc core.emitter.executor#constructor
 	 * @localdoc
-	 * - Skips handlers who's {@link core.event.handler#context context}.{@link core.component.gadget#property-phase phase} matches {@link core.config.phase#skip}.
+	 * - Skips handlers who's scope.{@link core.component.gadget#property-phase phase} matches {@link core.config.phase#skip}.
 	 * - Executes handlers passing each handler the result from the previous.
 	 * - If a handler returns `undefined` the result from the previous is used.
 	 * - When all handlers are completed the end result is memorized on `handlers`
+	 *
 	 * @return {Promise} Promise for `[*]`
 	 */
-	return function pipeline(event, handlers, args) {
-		var context = event[CONTEXT];
+	return function (event, handlers, args) {
+		var _handlers = [];
+		var _handlersCount = 0;
+		var scope = event[SCOPE];
 		var callback = event[CALLBACK];
-		var candidate;
-		var candidates = [];
-		var candidatesCount = 0;
+		var handler;
 
 		// Iterate handlers
-		for (candidate = handlers[HEAD]; candidate !== UNDEFINED; candidate = candidate[NEXT]) {
-			if (
-				// Filter `candidate[CONTEXT]` if we have `context`
-			(context !== UNDEFINED && candidate[CONTEXT] !== context) ||
-				// Filter `candidate[CALLBACK]` if we have `callback`
-			(callback !== UNDEFINED && candidate[CALLBACK] !== callback)
-			) {
+		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+			if (callback && handler[CALLBACK] !== callback) {
 				continue;
 			}
 
-			candidates[candidatesCount++] = candidate;
+			if (scope && handler[SCOPE] !== scope) {
+				continue;
+			}
+
+			_handlers[_handlersCount++] = handler;
 		}
 
 		return when
-			// Reduce `candidates`
-			.reduce(candidates, function (current, candidate) {
-				// Let `candidate_context` be `candidate[CONTEXT]`
-				var candidate_context = candidate[CONTEXT];
+			// Reduce `_handlers`
+			.reduce(_handlers, function (current, _handler) {
+				// Let `_scope` be `handler[SCOPE]`
+				var _scope = _handler[SCOPE];
 
-				// Return early if `candidate_context[PHASE]` matches a blocked phase
-				if (candidate_context !== UNDEFINED && SKIP.test(candidate_context[PHASE])) {
+				// Return early if `_scope[PHASE]` matches a blocked phase
+				if (_scope !== UNDEFINED && SKIP.test(_scope[PHASE])) {
 					return current;
 				}
 
-				// Run `candidate` passing `args`
+				// Run `handler` passing `args`
 				// Pass to `when` to (potentially) update `result`
-				return when(candidate.run(current), function (result) {
+				return when(_handler.handle(current), function (result) {
 					// If `result` is `UNDEFINED` ...
 					if (result === UNDEFINED) {
 						// ... return `current` ...
@@ -3126,30 +3186,29 @@ define('troopjs-core/pubsub/runner',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/pubsub/emitter',[
-	"../event/emitter",
-	"./runner",
+	"../emitter/composition",
+	"../config",
+	"./executor",
 	"troopjs-compose/decorator/from"
-], function (Emitter, runner, from) {
+], function (Emitter, config, executor, from) {
 	
 
 	/**
-	 * A specialized version of {@link core.event.emitter} for memorized events and {@link core.component.gadget#property-phase phase} protection.
+	 * A specialized version of {@link core.emitter.composition} for memorized events and {@link core.component.gadget#property-phase phase} protection.
 	 *
 	 * ## Memorized emitting
 	 *
-	 * A emitter event will memorize the "current" value of each event. Each runner may have it's own interpretation
+	 * A emitter event will memorize the "current" value of each event. Each executor may have it's own interpretation
 	 * of what "current" means.
 	 *
 	 * @class core.pubsub.emitter
-	 * @extend core.event.emitter
+	 * @extend core.emitter.composition
 	 */
 
 	var UNDEFINED;
-	var ARRAY_SLICE = Array.prototype.slice;
 	var MEMORY = "memory";
-	var HANDLERS = "handlers";
-	var RUNNER = "runner";
-	var TYPE = "type";
+	var HANDLERS = config.emitter.handlers;
+	var EXECUTOR = config.emitter.executor;
 
 	/**
 	 * @method on
@@ -3169,7 +3228,11 @@ define('troopjs-core/pubsub/emitter',[
 	 * @private
 	 */
 
-	return Emitter.extend({
+	return Emitter.extend((function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
 		"displayName": "core/pubsub/emitter",
 
 		/**
@@ -3202,23 +3265,7 @@ define('troopjs-core/pubsub/emitter',[
 		 * @param {...*} [args] Additional params that are passed to the handler function.
 		 * @return {Promise}
 		 */
-		"publish" : function (type) {
-			var me = this;
-
-			// Prepare event object
-			var event = {};
-			event[TYPE] = type;
-			event[RUNNER] = runner;
-
-			// Slice `arguments`
-			var args = ARRAY_SLICE.call(arguments);
-
-			// Modify first `arg`
-			args[0] = event;
-
-			// Delegate the actual emitting to event emitter.
-			return me.emit.apply(me, args);
-		},
+		"publish" : from("emit"),
 
 		/**
 		 * Returns value in handlers MEMORY
@@ -3229,11 +3276,11 @@ define('troopjs-core/pubsub/emitter',[
 		"peek": function (type, value) {
 			var handlers;
 
-			return (handlers = this[HANDLERS][type]) === UNDEFINED || !(MEMORY in handlers)
+			return (handlers = this[HANDLERS][type]) === UNDEFINED || !handlers.hasOwnProperty(MEMORY)
 				? value
 				: handlers[MEMORY];
 		}
-	});
+	}, EXECUTOR, executor));
 });
 
 /**
@@ -3277,10 +3324,11 @@ define('troopjs-core/pubsub/hub',[ "./emitter" ], function (Emitter) {
  */
 define('troopjs-core/component/gadget',[
 	"./emitter",
+	"../config",
 	"../pubsub/hub",
-	"../pubsub/runner",
+	"../pubsub/executor",
 	"when/when"
-],function (Emitter, hub, runner, when) {
+],function (Emitter, config, hub, executor, when) {
 	
 
 	/**
@@ -3324,9 +3372,9 @@ define('troopjs-core/component/gadget',[
 	var UNDEFINED;
 	var NULL = null;
 	var ARRAY_PROTO = Array.prototype;
-	var RUNNER = "runner";
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
+	var EXECUTOR = config.emitter.executor;
+	var SCOPE = config.emitter.scope;
+	var CALLBACK = config.emitter.callback;
 	var ARGS = "args";
 	var NAME = "name";
 	var TYPE = "type";
@@ -3374,8 +3422,8 @@ define('troopjs-core/component/gadget',[
 						// Redefine result
 						result = {};
 						result[TYPE] = special[NAME];
-						result[RUNNER] = runner;
-						result[CONTEXT] = me;
+						result[EXECUTOR] = executor;
+						result[SCOPE] = me;
 						result[CALLBACK] = special[VALUE];
 						result = [ result ].concat(memory);
 					}
@@ -3404,7 +3452,7 @@ define('troopjs-core/component/gadget',[
 			if ((matches = RE.exec(type)) !== NULL) {
 				// Let `_callback` be `{}` and initialize
 				_callback = {};
-				_callback[CONTEXT] = me;
+				_callback[SCOPE] = me;
 				_callback[CALLBACK] = callback;
 
 				// Subscribe to the hub
@@ -3425,7 +3473,7 @@ define('troopjs-core/component/gadget',[
 			if ((matches = RE.exec(type)) !== NULL) {
 				// Let `_callback` be `{}` and initialize
 				_callback = {};
-				_callback[CONTEXT] = me;
+				_callback[SCOPE] = me;
 				_callback[CALLBACK] = callback;
 
 				// Unsubscribe from the hub
@@ -4054,7 +4102,7 @@ define('troopjs-dom/config',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-dom/runner',[
+define('troopjs-dom/executor',[
 	"mu-selector-set/main",
 	"jquery",
 	"poly/array"
@@ -4062,11 +4110,11 @@ define('troopjs-dom/runner',[
 	
 
 	/**
-	 * @class dom.runner
+	 * @class dom.executor
 	 * @mixin Function
 	 * @private
 	 * @static
-	 * @alias feature.runner
+	 * @alias feature.executor
 	 */
 
 	var UNDEFINED;
@@ -4082,15 +4130,15 @@ define('troopjs-dom/runner',[
 
 	/**
 	 * @method constructor
-	 * @inheritdoc core.event.runner#constructor
+	 * @inheritdoc core.emitter.executor#constructor
 	 * @localdoc
 	 * - Executes handlers synchronously passing each handler `args`.
 	 * - If a handler returns `false` no more handlers will be executed.
 	 * - If a handler stops propagation no more handlers will be executed.
+	 *
 	 * @return {*} Result from last handler
 	 */
-	return function sequence(event, handlers, args) {
-
+	return function (event, handlers, args) {
 		var result = UNDEFINED;
 		var direct = handlers.direct;
 		var delegated = handlers.delegated;
@@ -4106,7 +4154,7 @@ define('troopjs-dom/runner',[
 				$event.preventDefault();
 			}
 
-			return handler.run(args);
+			return handler.handle(args);
 		};
 
 		var $event = args[0];
@@ -4235,14 +4283,14 @@ define('troopjs-dom/runner',[
 define('troopjs-dom/component',[
 	"troopjs-core/component/gadget",
 	"./config",
-	"./runner",
+	"./executor",
 	"troopjs-compose/decorator/before",
 	"jquery",
 	"when/when",
 	"mu-selector-set/main",
 	"poly/array",
 	"mu-jquery-destroy/main"
-], function (Gadget, config, runner, before, $, when, SelectorSet) {
+], function (Gadget, config, executor, before, $, when, SelectorSet) {
 	
 
 	/**
@@ -4268,11 +4316,11 @@ define('troopjs-dom/component',[
 	var ARGS = "args";
 	var NAME = "name";
 	var VALUE = "value";
-	var TYPE = "type";
-	var RUNNER = "runner";
-	var CONTEXT = "context";
-	var CALLBACK = "callback";
-	var DATA = "data";
+	var TYPE = config.emitter.type;
+	var EXECUTOR = config.emitter.executor;
+	var SCOPE = config.emitter.scope;
+	var CALLBACK = config.emitter.callback;
+	var DATA = config.emitter.data;
 	var DIRECT = "direct";
 	var DELEGATED = "delegated";
 	var ON = "on";
@@ -4463,8 +4511,8 @@ define('troopjs-dom/component',[
 				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
 					var args = {};
 					args[TYPE] = type;
-					args[RUNNER] = runner;
-					args[CONTEXT] = me;
+					args[EXECUTOR] = executor;
+					args[SCOPE] = me;
 					args = [ args ];
 
 					// Push original arguments on args

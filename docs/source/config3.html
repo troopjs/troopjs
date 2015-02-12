@@ -21,9 +21,58 @@
 define([
 	&quot;module&quot;,
 	&quot;troopjs-compose/config&quot;,
+	&quot;mu-emitter/config&quot;,
 	&quot;mu-merge/main&quot;
-], function (module, config, merge) {
+], function (module, config, emitterConfig, merge) {
 	&quot;use strict&quot;;
+
+<span id='core-config-emitter'>	/**
+</span>	 * @class core.config.emitter
+	 * @enum {String}
+	 * @private
+	 */
+<span id='core-config-emitter-property-handlers'>	/**
+</span>	 * @property handlers Property name for `handlers`
+	 */
+<span id='core-config-emitter-property-emitter'>	/**
+</span>	 * @property emitter Property name for `emitter`
+	 */
+<span id='core-config-emitter-property-type'>	/**
+</span>	 * @property type Property name for `type`
+	 */
+<span id='core-config-emitter-property-callback'>	/**
+</span>	 * @property callback Property name for `callback`
+	 */
+<span id='core-config-emitter-property-data'>	/**
+</span>	 * @property data Property name for `data`
+	 */
+<span id='core-config-emitter-property-scope'>	/**
+</span>	 * @property scope Property name for `scope`
+	 */
+<span id='core-config-emitter-property-executor'>	/**
+</span>	 * @property executor Property name for `executor`
+	 */
+<span id='core-config-emitter-property-head'>	/**
+</span>	 * @property head Property name for `head`
+	 */
+<span id='core-config-emitter-property-tail'>	/**
+</span>	 * @property tail Property name for `tail`
+	 */
+<span id='core-config-emitter-property-next'>	/**
+</span>	 * @property next Property name for `next`
+	 */
+<span id='core-config-emitter-property-count'>	/**
+</span>	 * @property count Property name for `count`
+	 */
+<span id='core-config-emitter-property-limit'>	/**
+</span>	 * @property limit Property name for `limit`
+	 */
+<span id='core-config-emitter-property-on'>	/**
+</span>	 * @property on Property name for `on`
+	 */
+<span id='core-config-emitter-property-off'>	/**
+</span>	 * @property off Property name for `off`
+	 */
 
 <span id='core-config-phase'>	/**
 </span>	 * @class core.config.phase
@@ -142,7 +191,14 @@ define([
 		 * @cfg {core.config.phase}
 		 * @protected
 		 */
-		&quot;phase&quot;: PHASE
+		&quot;phase&quot;: PHASE,
+
+<span id='core-config-cfg-emitter'>		/**
+</span>		 * Emitter properties
+		 * @cfg {core.config.emitter}
+		 * @protected
+		 */
+		&quot;emitter&quot;: emitterConfig
 	}, module.config());
 });</pre>
 </body>
