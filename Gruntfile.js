@@ -60,7 +60,7 @@ define(['troopjs/version'], function (version) {\n\
 				"optimizeCss" : "none",
 				"skipDirOptimize" : true,
 				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:node_modules|scripts|grunt|eslint|jsduck|test|guides|\.(?!gitignore)|package\.json|(?:version|bootstrap|require|buster|Gruntfile)\.js)/,
+				"fileExclusionRegExp": /^(?:node_modules|scripts|grunt|eslint|jsduck|test|guides|\.(?!gitignore)|package\.json|(?:version|require|buster|Gruntfile)\.js)/,
 				"rawText" : {
 					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
 				},
