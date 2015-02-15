@@ -38,6 +38,12 @@
 	"dependencies": {
 		"when": "^3.4",
 		"poly": "^0.6",
-		"jquery": ">=1.8.1 <4"
+		"jquery": ">=1.8.1 <4",
+		"mu-merge": "^0",
+		"mu-emitter": "^0",
+		"mu-getargs": "^0",
+		"mu-unique": "^0",
+		"mu-jquery-destroy": "^0",
+		"mu-selector-set": "^1.1"
 	}
 }
