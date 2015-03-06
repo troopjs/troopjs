@@ -35,13 +35,11 @@ define([
 	 * @localdoc Adds functionality for working with the loom
 	 */
 
+	var ARRAY_SLICE = Array.prototype.slice;
 	var $ELEMENT = &quot;$element&quot;;
 	var SELECTOR_WEAVE = &quot;[&quot; + config.widget.weave + &quot;]&quot;;
 	var SELECTOR_WOVEN = &quot;[&quot; + config.widget.woven + &quot;]&quot;;
-
-	function widget_weave() {
-		return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), arguments);
-	}
+	var FINALIZE = config.phase.finalize;
 
 <span id='widget-component-method-constructor'>	/**
 </span>	 * @method constructor
@@ -56,7 +54,9 @@ define([
 		 * @inheritdoc
 		 * @localdoc Calls {@link #method-weave} to ensure newly rendered html is woven
 		 */
-		&quot;sig/render&quot;: widget_weave,
+		&quot;sig/render&quot;: function ($target) {
+			return weave.apply($target.find(SELECTOR_WEAVE), ARRAY_SLICE.call(arguments, 1));
+		},
 
 <span id='widget-component-handler-dom-destroy'>		/**
 </span>		 * @handler
@@ -64,7 +64,7 @@ define([
 		 * @localdoc Calls {@link #method-unweave} to ensure this element is unwoven
 		 */
 		&quot;dom/destroy&quot; : function () {
-			if (this.phase !== &quot;finalize&quot;) {
+			if (this.phase !== FINALIZE) {
 				unweave.call(this[$ELEMENT]);
 			}
 		},
@@ -73,7 +73,9 @@ define([
 </span>		 * @method
 		 * @inheritdoc widget.weave#constructor
 		 */
-		&quot;weave&quot; : widget_weave,
+		&quot;weave&quot; : function() {
+			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), ARRAY_SLICE.call(arguments));
+		},
 
 <span id='widget-component-method-unweave'>		/**
 </span>		 * @inheritdoc widget.unweave#constructor

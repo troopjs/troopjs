@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.4+df8d17f ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.4+58aab06 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.4+df8d17f"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.4+58aab06"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2890,8 +2890,6 @@ define('troopjs-dom/component',[
 	var ARRAY_PROTO = Array.prototype;
 	var ARRAY_SLICE = ARRAY_PROTO.slice;
 	var ARRAY_PUSH = ARRAY_PROTO.push;
-	var $FN = $.fn;
-	var $GET = $FN.get;
 	var TOSTRING_FUNCTION = "[object Function]";
 	var $ELEMENT = "$element";
 	var PROXY = "proxy";
@@ -2932,11 +2930,53 @@ define('troopjs-dom/component',[
 		}
 	}
 
+	function $render($element, method, args) {
+		var me = this;
+
+		return when(args[0], function (content) {
+			// If `content` is a function ...
+			return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
+				// ... return result of applying `content` with sliced `args`...
+				? content.apply(me, ARRAY_SLICE.call(args, 1))
+				// ... otherwise return `content`
+				: content;
+		})
+			.then(function (content) {
+				// Let `args[0]` be `$(content)`
+				// Let `$content` be `args[0]`
+				var $content = args[0] = $(content);
+
+				// Determine direction of manipulation\
+				switch(method) {
+					case "appendTo":
+					case "prependTo":
+						$content[method]($element);
+						break;
+
+					default:
+						$element[method]($content);
+				}
+
+				// Let `emit_args` be `[ SIG_RENDER ]`
+				var emit_args = [ SIG_RENDER ];
+
+				// Push `args` on `emit_args`
+				ARRAY_PUSH.apply(emit_args, args);
+
+				// Emit `emit_args`
+				// Yield `args`
+				return me.emit
+					.apply(me, emit_args)
+					.yield(args);
+			});
+	}
+
 	/**
 	 * Render signal
 	 * @event sig/render
-	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #text}, {@link #append} and {@link #prepend}
+	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #append}, {@link #appendTo}, {@link #prepend} and {@link #prependTo}
 	 * @since 3.0
+	 * @param {jQuery} $target Element rendered into
 	 * @param {...*} [args] Render arguments
 	 */
 
@@ -2986,6 +3026,7 @@ define('troopjs-dom/component',[
 	 * @method before
 	 * @inheritdoc #html
 	 * @fires sig/render
+	 * @return {Promise} The promise of rendering.
 	 */
 
 	/**
@@ -3003,12 +3044,29 @@ define('troopjs-dom/component',[
 	 */
 
 	/**
+	 * Renders content and appends it to the provided $element
+	 * @method appendTo
+	 * @param {jQuery} $element Target element
+	 * @param {Function|String|Promise} [contentOrPromise] Contents to render or a Promise for contents
+	 * @param {...*} [args] Template arguments
+	 * @fires sig/render
+	 * @return {Promise} The promise of rendering.
+	 */
+
+	/**
 	 * Renders content and prepends it to {@link #$element}
 	 * @method prepend
 	 * @inheritdoc #html
 	 * @fires sig/render
 	 */
 
+
+	/**
+	 * Renders content and prepends it to the provided $element
+	 * @method prependTo
+	 * @inheritdoc #appendTo
+	 * @fires sig/render
+	 */
 	/**
 	 * Creates a new component that attaches to a specified (jQuery) DOM element.
 	 * @method constructor
@@ -3017,189 +3075,188 @@ define('troopjs-dom/component',[
 	 * @throws {Error} If no $element is provided
 	 * @throws {Error} If $element is not of supported type
 	 */
-	return Gadget.extend(function ($element, displayName) {
-		var me = this;
-		var $get;
-		var args;
-
-		// No $element
-		if ($element === UNDEFINED || $element === NULL) {
-			throw new Error("No $element provided");
-		}
-		// Is _not_ a jQuery element
-		else if (!$element.jquery) {
-			// Let `args` be `ARRAY_SLICE.call(arguments)`
-			args = ARRAY_SLICE.call(arguments);
-
-			// Let `$element` be `$($element)`
-			// Let `args[0]` be `$element`
-			args[0] = $element = $($element);
-		}
-		// From a different jQuery instance
-		else if (($get = $element.get) !== $GET) {
-			// Let `args` be `ARRAY_SLICE.call(arguments)`
-			args = ARRAY_SLICE.call(arguments);
-
-			// Let `$element` be `$($get.call($element, 0))`
-			// Let `args[0]` be `$element`
-			args[0] = $element = $($get.call($element, 0));
-		}
-
-		/**
-		 * jQuery element this widget is attached to
-		 * @property {jQuery} $element
-		 * @readonly
-		 */
-		me[$ELEMENT] = $element;
-
-		// Update `me.displayName` if `displayName` was supplied
-		if (displayName !== UNDEFINED) {
-			me.displayName = displayName;
-		}
-
-		// Return potentially modified `args`
-		return args;
-	}, {
-		"displayName" : "dom/component",
-
-		/**
-		 * @handler
-		 * @localdoc Registers event handlers that are declared as DOM specials.
-		 * @inheritdoc
-		 */
-		"sig/initialize" : function () {
+	return Gadget.extend(
+		function ($element, displayName) {
 			var me = this;
+			var $get;
+			var args;
 
-			return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
-				return me.on(special[NAME], special[VALUE], special[ARGS][0]);
-			});
+			// No $element
+			if ($element === UNDEFINED || $element === NULL) {
+				throw new Error("No $element provided");
+			}
+			// Is _not_ a jQuery element
+			else if (!$element.jquery) {
+				// Let `args` be `ARRAY_SLICE.call(arguments)`
+				args = ARRAY_SLICE.call(arguments);
+
+				// Let `$element` be `$($element)`
+				// Let `args[0]` be `$element`
+				args[0] = $element = $($element);
+			}
+			// From a different jQuery instance
+			else if (($get = $element.get) !== $.fn.get) {
+				// Let `args` be `ARRAY_SLICE.call(arguments)`
+				args = ARRAY_SLICE.call(arguments);
+
+				// Let `$element` be `$($get.call($element, 0))`
+				// Let `args[0]` be `$element`
+				args[0] = $element = $($get.call($element, 0));
+			}
+
+			/**
+			 * jQuery element this widget is attached to
+			 * @property {jQuery} $element
+			 * @readonly
+			 */
+			me[$ELEMENT] = $element;
+
+			// Update `me.displayName` if `displayName` was supplied
+			if (displayName !== UNDEFINED) {
+				me.displayName = displayName;
+			}
+
+			// Return potentially modified `args`
+			return args;
 		},
 
-		/**
-		 * @handler
-		 * @localdoc Registers for each type of DOM event a proxy function on the DOM element that
-		 * re-dispatches those events.
-		 * @inheritdoc
-		 */
-		"sig/setup": function (handlers, type) {
-			var me = this;
-			var matches;
+		{
+			"displayName" : "dom/component",
 
-			if ((matches = RE.exec(type)) !== NULL) {
-				// Create delegated and direct event stores
-				handlers[DIRECT] = [];
-				handlers[DELEGATED] = new SelectorSet();
+			/**
+			 * @handler
+			 * @localdoc Registers event handlers that are declared as DOM specials.
+			 * @inheritdoc
+			 */
+			"sig/initialize" : function () {
+				var me = this;
 
-				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
-					var args = {};
-					args[TYPE] = type;
-					args[EXECUTOR] = executor;
-					args[SCOPE] = me;
-					args = [ args ];
-
-					// Push original arguments on args
-					ARRAY_PUSH.apply(args, arguments);
-
-					// Return result of emit
-					return me.emit.apply(me, args);
+				return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
+					return me.on(special[NAME], special[VALUE], special[ARGS][0]);
 				});
-			}
-		},
+			},
 
-		/**
-		 * @handler
-		 * @localdoc Remove for the DOM event handler proxies that are registered on the DOM element.
-		 * @inheritdoc
-		 */
-		"sig/teardown": function (handlers, type) {
-			var me = this;
-			var matches;
+			/**
+			 * @handler
+			 * @localdoc Registers for each type of DOM event a proxy function on the DOM element that
+			 * re-dispatches those events.
+			 * @inheritdoc
+			 */
+			"sig/setup": function (handlers, type) {
+				var me = this;
+				var matches;
 
-			if ((matches = RE.exec(type)) !== NULL) {
-				// $element.off handlers[PROXY]
-				me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
-			}
-		},
+				if ((matches = RE.exec(type)) !== NULL) {
+					// Create delegated and direct event stores
+					handlers[DIRECT] = [];
+					handlers[DELEGATED] = new SelectorSet();
 
-		/**
-		 * @method
-		 * @localdoc Registers emitter `on` and `off` callbacks
-		 * @inheritdoc
-		 */
-		"on": before(function (type, callback, data) {
-			var _callback = callback;
+					// $element.on handlers[PROXY]
+					me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
+						var args = {};
+						args[TYPE] = type;
+						args[EXECUTOR] = executor;
+						args[SCOPE] = me;
+						args = [ args ];
 
-			// Check if this is a DOM type
-			if (RE.test(type)) {
-				// If `callback` is a function ...
-				if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
-					// Create `_callback` object
-					_callback = {};
-					_callback[CALLBACK] = callback;
+						// Push original arguments on args
+						ARRAY_PUSH.apply(args, arguments);
+
+						// Return result of emit
+						return me.emit.apply(me, args);
+					});
+				}
+			},
+
+			/**
+			 * @handler
+			 * @localdoc Remove for the DOM event handler proxies that are registered on the DOM element.
+			 * @inheritdoc
+			 */
+			"sig/teardown": function (handlers, type) {
+				var me = this;
+				var matches;
+
+				if ((matches = RE.exec(type)) !== NULL) {
+					// $element.off handlers[PROXY]
+					me[$ELEMENT].off(matches[1], NULL, handlers[PROXY]);
+				}
+			},
+
+			/**
+			 * @method
+			 * @localdoc Registers emitter `on` and `off` callbacks
+			 * @inheritdoc
+			 */
+			"on": before(function (type, callback, data) {
+				var _callback = callback;
+
+				// Check if this is a DOM type
+				if (RE.test(type)) {
+					// If `callback` is a function ...
+					if (OBJECT_TOSTRING.call(callback) === TOSTRING_FUNCTION) {
+						// Create `_callback` object
+						_callback = {};
+						_callback[CALLBACK] = callback;
+					}
+
+					// Set `ON` and `OFF` callbacks
+					_callback[ON] = data !== UNDEFINED
+						? on_delegated
+						: on_direct;
+					_callback[OFF] = data !== UNDEFINED
+						? off_delegated
+						: off_direct;
 				}
 
-				// Set `ON` and `OFF` callbacks
-				_callback[ON] = data !== UNDEFINED
-					? on_delegated
-					: on_direct;
-				_callback[OFF] = data !== UNDEFINED
-					? off_delegated
-					: off_direct;
-			}
-
-			// Mutate return args to next method
-			return [ type, _callback, data ];
-		})
-	}, [ "html", "text", "before", "after", "append", "prepend" ].reduce(function (spec, method) {
-		// Let `$fn` be `$FN[method]`
-		var $fn = $FN[method];
-
-		// Create `spec[method]`
-		spec[method] = function (contentOrPromise) {
-			var me = this;
-
-			// If `arguments.length` is `0` just return `$fn.call(...)`
-			if (arguments.length === 0) {
-				return $fn.call(me[$ELEMENT]);
-			}
-
-			// Slice `arguments` to `args`
-			var args = ARRAY_SLICE.call(arguments, 0);
-
-			return when(contentOrPromise, function (content) {
-				// If `content` is a function ...
-				return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
-					// ... return result of applying `content` with sliced `args`...
-					? content.apply(me, ARRAY_SLICE.call(args, 1))
-					// ... otherwise return `content`
-					: content;
+				// Mutate return args to next method
+				return [ type, _callback, data ];
 			})
-				.then(function (content) {
-					// Let `args[0]` be `$(content)`
-					// Let `$content` be `args[0]`
-					var $content = args[0] = $(content);
+		},
 
-					// Let `emit_args` be `[ SIG_RENDER ]`
-					var emit_args = [ SIG_RENDER ];
+		// Create spec for render methods targeting `me[$ELEMENT]` that can be executed without args
+		[ "html", "text" ].reduce(function (spec, method) {
+			// Create `spec[method]`
+			spec[method] = function () {
+				var me = this;
+				var $element = me[$ELEMENT];
 
-					// Push `args` on `emit_args`
-					ARRAY_PUSH.apply(emit_args, args);
+				// If `arguments.length` is `0` ...
+				return arguments.length === 0
+					// ... call `$element[method]` ...
+					? $element[method]()
+					// ... otherwise call `$render`
+					: $render.call(me, $element, method, ARRAY_SLICE.call(arguments, 0));
+			};
 
-					// Call `$fn` with `$content`
-					$fn.call(me[$ELEMENT], $content);
+			// Return spec for next iteration
+			return spec;
+		}, {}),
 
-					// Emit `emit_args`
-					// Yield `args`
-					return me.emit
-						.apply(me, emit_args)
-						.yield(args);
-				});
-		};
+		// Create spec for render methods targeting `me[$ELEMENT]`
+		[ "before", "after", "append", "prepend" ].reduce(function (spec, method) {
+			// Create `spec[method]`
+			spec[method] = function () {
+				var me = this;
 
-		// Return spec for next iteration
-		return spec;
-	}, {}));
+				return $render.call(me, me[$ELEMENT], method, ARRAY_SLICE.call(arguments, 0));
+			};
+
+			// Return spec for next iteration
+			return spec;
+		}, {}),
+
+		// Create spec for render methods targeting provided `$element`
+		[ "appendTo", "prependTo" ].reduce(function (spec, method) {
+			// Create `spec[method]`
+			spec[method] = function ($element) {
+				return $render.call(this, $element, method, ARRAY_SLICE.call(arguments, 1));
+			};
+
+			// Return spec for next iteration
+			return spec;
+		}, {})
+	);
 });
 
 define(['troopjs/version'], function (version) {
