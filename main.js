@@ -1947,9 +1947,8 @@ define('troopjs-core/component/emitter',[
 	"../task/factory",
 	"mu-merge/main",
 	"troopjs-compose/decorator/around",
-	"when/when",
 	"poly/array"
-], function (Emitter, config, registry, executor, taskFactory, merge, around, when) {
+], function (Emitter, config, registry, executor, taskFactory, merge, around) {
 	
 
 	/**
@@ -1961,7 +1960,6 @@ define('troopjs-core/component/emitter',[
 	 */
 
 	var FALSE = false;
-	var ARRAY_PROTO = Array.prototype;
 	var EXECUTOR = config.emitter.executor;
 	var HANDLERS = config.emitter.handlers;
 	var HEAD = config.emitter.head;
@@ -2131,12 +2129,14 @@ define('troopjs-core/component/emitter',[
 	 */
 	return Emitter.extend(function Component() {
 		var me = this;
-		var specials = me.constructor.specials[SIG] || ARRAY_PROTO;
+		var specials = me.constructor.specials;
 
-		// Iterate specials
-		specials.forEach(function (special) {
-			me.on(special[NAME], special[VALUE]);
-		});
+		// Iterate SIG specials
+		if (specials.hasOwnProperty(SIG)) {
+			specials[SIG].forEach(function (special) {
+				me.on(special[NAME], special[VALUE]);
+			});
+		}
 	}, {
 		"displayName" : "core/component/base",
 
@@ -2155,17 +2155,18 @@ define('troopjs-core/component/emitter',[
 			registry.register(me.toString(), me);
 
 			// Initialize ON specials
-			var specials_on = when.map(specials[ON] || ARRAY_PROTO, function (special) {
-				return me.on(special[TYPE], special[VALUE]);
-			});
+			if (specials.hasOwnProperty(ON)) {
+				specials[ON].forEach(function (special) {
+					me.on(special[TYPE], special[VALUE]);
+				});
+			}
 
 			// Initialize ONE specials
-			var specials_one = when.map(specials[ONE] || ARRAY_PROTO, function (special) {
-				return me.one(special[TYPE], special[VALUE]);
-			});
-
-			// Join and return
-			return when.join(specials_on, specials_one);
+			if (specials.hasOwnProperty(ONE)) {
+				specials[ONE].forEach(function (special) {
+					me.one(special[TYPE], special[VALUE]);
+				});
+			}
 		},
 
 		/**
@@ -2632,10 +2633,13 @@ define('troopjs-core/component/gadget',[
 		 */
 		"sig/initialize" : function () {
 			var me = this;
+			var specials = me.constructor.specials;
 
-			return when.map(me.constructor.specials[HUB] || ARRAY_PROTO, function (special) {
-				return me.on(special[NAME], special[VALUE]);
-			});
+			if (specials.hasOwnProperty(HUB)) {
+				specials[HUB].forEach(function (special) {
+					me.on(special[NAME], special[VALUE]);
+				});
+			}
 		},
 
 		/**
@@ -2892,6 +2896,7 @@ define('troopjs-dom/component',[
 	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var TOSTRING_FUNCTION = "[object Function]";
 	var $ELEMENT = "$element";
+	var LENGTH = "length";
 	var PROXY = "proxy";
 	var DOM = "dom";
 	var ARGS = "args";
@@ -2974,7 +2979,7 @@ define('troopjs-dom/component',[
 	/**
 	 * Render signal
 	 * @event sig/render
-	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #append}, {@link #appendTo}, {@link #prepend} and {@link #prependTo}
+	 * @localdoc Triggered after {@link #before}, {@link #after}, {@link #html}, {@link #text}, {@link #append}, {@link #appendTo}, {@link #prepend} and {@link #prependTo}
 	 * @since 3.0
 	 * @param {jQuery} $target Element rendered into
 	 * @param {...*} [args] Render arguments
@@ -3078,27 +3083,28 @@ define('troopjs-dom/component',[
 	return Gadget.extend(
 		function ($element, displayName) {
 			var me = this;
+			var length = arguments[LENGTH];
+			var args = new Array(length);
 			var $get;
-			var args;
 
 			// No $element
 			if ($element === UNDEFINED || $element === NULL) {
 				throw new Error("No $element provided");
 			}
-			// Is _not_ a jQuery element
-			else if (!$element.jquery) {
-				// Let `args` be `ARRAY_SLICE.call(arguments)`
-				args = ARRAY_SLICE.call(arguments);
 
+			// Let `args` be `ARRAY_SLICE.call(arguments)` without deop
+			while (length-- > 0) {
+				args[length] = arguments[length];
+			}
+
+			// Is _not_ a jQuery element
+			if (!$element.jquery) {
 				// Let `$element` be `$($element)`
 				// Let `args[0]` be `$element`
 				args[0] = $element = $($element);
 			}
 			// From a different jQuery instance
 			else if (($get = $element.get) !== $.fn.get) {
-				// Let `args` be `ARRAY_SLICE.call(arguments)`
-				args = ARRAY_SLICE.call(arguments);
-
 				// Let `$element` be `$($get.call($element, 0))`
 				// Let `args[0]` be `$element`
 				args[0] = $element = $($get.call($element, 0));
@@ -3130,10 +3136,13 @@ define('troopjs-dom/component',[
 			 */
 			"sig/initialize" : function () {
 				var me = this;
+				var specials = me.constructor.specials;
 
-				return when.map(me.constructor.specials[DOM] || ARRAY_PROTO, function (special) {
-					return me.on(special[NAME], special[VALUE], special[ARGS][0]);
-				});
+				if (specials.hasOwnProperty(DOM)) {
+					specials[DOM].forEach(function (special) {
+						me.on(special[NAME], special[VALUE], special[ARGS][0]);
+					});
+				}
 			},
 
 			/**
@@ -3153,14 +3162,16 @@ define('troopjs-dom/component',[
 
 					// $element.on handlers[PROXY]
 					me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function ($event) {
-						var args = {};
-						args[TYPE] = type;
-						args[EXECUTOR] = executor;
-						args[SCOPE] = me;
-						args = [ args ];
+						var length = arguments[LENGTH];
+						var args = new Array(length + 1);
+						var _args = args[0] = {};
+						_args[TYPE] = type;
+						_args[EXECUTOR] = executor;
+						_args[SCOPE] = me;
 
-						// Push original arguments on args
-						ARRAY_PUSH.apply(args, arguments);
+						while (length > 0) {
+							args[length] = arguments[--length];
+						}
 
 						// Return result of emit
 						return me.emit.apply(me, args);
@@ -3220,13 +3231,29 @@ define('troopjs-dom/component',[
 			spec[method] = function () {
 				var me = this;
 				var $element = me[$ELEMENT];
+				var length = arguments[LENGTH];
+				var args;
+				var result;
 
-				// If `arguments.length` is `0` ...
-				return arguments.length === 0
-					// ... call `$element[method]` ...
-					? $element[method]()
-					// ... otherwise call `$render`
-					: $render.call(me, $element, method, ARRAY_SLICE.call(arguments, 0));
+				// If there were no arguments ...
+				if (length === 0) {
+					// ... call `$element[method]` without arguments ...
+					result = $element[method]();
+				}
+				// ... otherwise ...
+				else {
+					// Create `args`
+					args = new Array(length);
+
+					// Let `args` be `ARRAY_SLICE.call(arguments)` without deop
+					while (length-- > 0) {
+						args[length] = arguments[length];
+					}
+
+					result = $render.call(me, $element, method, args);
+				}
+
+				return result;
 			};
 
 			// Return spec for next iteration
@@ -3238,8 +3265,15 @@ define('troopjs-dom/component',[
 			// Create `spec[method]`
 			spec[method] = function () {
 				var me = this;
+				var length = arguments[LENGTH];
+				var args = new Array(length);
 
-				return $render.call(me, me[$ELEMENT], method, ARRAY_SLICE.call(arguments, 0));
+				// Let `args` be `ARRAY_SLICE.call(arguments)` without deop
+				while (length-- > 0) {
+					args[length] = arguments[length];
+				}
+
+				return $render.call(me, me[$ELEMENT], method, args);
 			};
 
 			// Return spec for next iteration
@@ -3250,7 +3284,15 @@ define('troopjs-dom/component',[
 		[ "appendTo", "prependTo" ].reduce(function (spec, method) {
 			// Create `spec[method]`
 			spec[method] = function ($element) {
-				return $render.call(this, $element, method, ARRAY_SLICE.call(arguments, 1));
+				var length = arguments[LENGTH];
+				var args = new Array(length - 1);
+
+				// Let `args` be `ARRAY_SLICE.call(arguments, 1)` without deop
+				while (length-- > 1) {
+					args[length - 1] = arguments[length];
+				}
+
+				return $render.call(this, $element, method, args);
 			};
 
 			// Return spec for next iteration
