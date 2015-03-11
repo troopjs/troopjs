@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.4+58aab06 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.4+59e0063 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.4+58aab06"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.4+59e0063"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2891,9 +2891,6 @@ define('troopjs-dom/component',[
 	var UNDEFINED;
 	var NULL = null;
 	var OBJECT_TOSTRING = Object.prototype.toString;
-	var ARRAY_PROTO = Array.prototype;
-	var ARRAY_SLICE = ARRAY_PROTO.slice;
-	var ARRAY_PUSH = ARRAY_PROTO.push;
 	var TOSTRING_FUNCTION = "[object Function]";
 	var $ELEMENT = "$element";
 	var LENGTH = "length";
@@ -2937,43 +2934,62 @@ define('troopjs-dom/component',[
 
 	function $render($element, method, args) {
 		var me = this;
+		var length = args[LENGTH];
 
 		return when(args[0], function (content) {
-			// If `content` is a function ...
-			return (OBJECT_TOSTRING.call(content) === TOSTRING_FUNCTION)
-				// ... return result of applying `content` with sliced `args`...
-				? content.apply(me, ARRAY_SLICE.call(args, 1))
-				// ... otherwise return `content`
-				: content;
+			var _length;
+			var _args;
+
+			// If `content` is a string we can return fast
+			if (OBJECT_TOSTRING.call(content) !== TOSTRING_FUNCTION) {
+				return content;
+			}
+
+			// Initialize `_length` and `_args`
+			_length = length;
+			_args = new Array(_length - 1);
+
+			// Copy `args` to `_args`
+			while (_length-- > 1) {
+				_args[_length - 1] = args[_length];
+			}
+
+			// Return result of applying `content` on `me` with `_args`
+			return content.apply(me, _args);
 		})
-			.then(function (content) {
-				// Let `args[0]` be `$(content)`
-				// Let `$content` be `args[0]`
-				var $content = args[0] = $(content);
+		.then(function (content) {
+			// Let `args[0]` be `$(content)`
+			// Let `$content` be `args[0]`
+			var $content = args[0] = $(content);
+			// Initialize `_length` and `_args`
+			var _length = length;
+			var _args = new Array(_length + 1);
 
-				// Determine direction of manipulation\
-				switch(method) {
-					case "appendTo":
-					case "prependTo":
-						$content[method]($element);
-						break;
+			// Let `_args[0]` be `SIG_RENDER`
+			_args[0] = SIG_RENDER;
 
-					default:
-						$element[method]($content);
-				}
+			// Copy `args` to `_args`
+			while (_length-- > 0) {
+				_args[_length + 1] = args[_length];
+			}
 
-				// Let `emit_args` be `[ SIG_RENDER ]`
-				var emit_args = [ SIG_RENDER ];
+			// Determine direction of manipulation\
+			switch(method) {
+				case "appendTo":
+				case "prependTo":
+					$content[method]($element);
+					break;
 
-				// Push `args` on `emit_args`
-				ARRAY_PUSH.apply(emit_args, args);
+				default:
+					$element[method]($content);
+			}
 
-				// Emit `emit_args`
-				// Yield `args`
-				return me.emit
-					.apply(me, emit_args)
-					.yield(args);
-			});
+			// Emit `_args`
+			// Yield `args`
+			return me.emit
+				.apply(me, _args)
+				.yield(args);
+		});
 	}
 
 	/**
