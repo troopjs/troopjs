@@ -7,10 +7,6 @@
         "classes": [ "compose.*" ]
       },
       {
-        "name": "troopjs-log",
-        "classes": [ "log.*" ]
-      },
-      {
         "name": "troopjs-core",
         "classes": [ "core.*" ]
       },
