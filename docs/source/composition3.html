@@ -18,10 +18,7 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([
-	&quot;troopjs-compose/factory&quot;,
-	&quot;troopjs-log/logger&quot;
-], function ObjectBaseModule(Factory, logger) {
+define([ &quot;troopjs-compose/factory&quot; ], function (Factory) {
 	var INSTANCE_COUNTER = 0;
 	var INSTANCE_COUNT = &quot;instanceCount&quot;;
 
@@ -29,7 +26,13 @@ define([
 </span>	 * Base composition with instance count.
 	 * @class core.composition
 	 * @implement compose.composition
-	 * @mixin log.logger
+	 */
+
+<span id='core-composition-property-instanceCount'>	/**
+</span>	 * Instance counter
+	 * @private
+	 * @readonly
+	 * @property {Number} instanceCount
 	 */
 
 <span id='core-composition-static-method-create'>	/**
@@ -53,17 +56,8 @@ define([
 	 * @method constructor
 	 */
 	return Factory(function () {
-		// Update instance count
 		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
-	}, logger, {
-<span id='core-composition-property-instanceCount'>		/**
-</span>		 * Instance counter
-		 * @private
-		 * @readonly
-		 * @property {Number}
-		 */
-		&quot;instanceCount&quot; : INSTANCE_COUNTER,
-
+	}, {
 <span id='core-composition-property-displayName'>		/**
 </span>		 * The hierarchical namespace for this component that indicates it's functionality.
 		 * @protected
@@ -77,7 +71,7 @@ define([
 		 * @return {String} {@link #displayName}`@`{@link #instanceCount}
 		 * @protected
 		 */
-		&quot;toString&quot; : function _toString() {
+		&quot;toString&quot; : function () {
 			var me = this;
 
 			return me.displayName + &quot;@&quot; + me[INSTANCE_COUNT];

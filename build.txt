@@ -14,11 +14,7 @@ bower_components/troopjs-core/component/signal/initialize.js
 bower_components/troopjs-core/component/signal/start.js
 bower_components/troopjs-core/component/signal/stop.js
 bower_components/troopjs-core/component/signal/finalize.js
-bower_components/troopjs-log/methods.js
-bower_components/troopjs-log/null.js
 bower_components/troopjs-compose/factory.js
-bower_components/troopjs-log/console.js
-bower_components/troopjs-log/logger.js
 bower_components/troopjs-core/composition.js
 bower_components/troopjs-core/emitter/executor.js
 bower_components/troopjs-core/emitter/composition.js
