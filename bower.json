@@ -1,6 +1,6 @@
 {
 	"name": "troopjs",
-	"version": "3.0.0-rc.4",
+	"version": "3.0.0-rc",
 	"homepage": "https://troopjs.com",
 	"repository": {
 		"type": "git",
@@ -38,15 +38,16 @@
 	],
 	"dependencies": {
 		"troopjs-compose": "4.0.1",
-		"troopjs-core": "5.2.0",
-		"troopjs-dom": "7.3.2"
+		"troopjs-core": "6.0.0",
+		"troopjs-hub": "1.0.0",
+		"troopjs-dom": "8.0.0"
 	},
 	"devDependencies": {
-		"troopjs-ajax": "54f840e082e55565bb9ebbf4ec26c24504f0b0fd",
-		"troopjs-widget": "80526d18ff1fddea1e6cdcd5026782d79e95b2e8",
-		"troopjs-pubsub": "f5365d7c85482080d214944d2e5b0fff99482afb",
-		"troopjs-l10n": "db9f9dd89c5d4106ac5dadc9769d7f2e1835066e",
-		"troopjs-route-hash": "7eabecfe6682c355661ee2658e4df30d3edf11de",
+		"troopjs-ajax": "57d2db83df754eb2ab3f123502ba772b4b49d7bd",
+		"troopjs-widget": "119521a98026275d2a50428309d4e600b0ebdcc1",
+		"troopjs-hub-proxy": "4572dcf65a12f863ab08a6b56dc1c75f9250cf87",
+		"troopjs-l10n": "98cb2975c6c9336be54da6cca060d70c6bd1028f",
+		"troopjs-route-hash": "79e9c27f86e3c11bda7f26315ac2cc9519e59584",
 		"requirejs": "^2.1"
 	}
 }

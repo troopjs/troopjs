@@ -10,6 +10,7 @@ define([
 	"troopjs-compose/decorator/from",
 	"troopjs-core/component/signal/start",
 	"troopjs-core/component/signal/finalize",
+	"troopjs-hub/component",
 	"troopjs-dom/component"
 ], function (version) {
 	return version;

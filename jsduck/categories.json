@@ -11,6 +11,13 @@
         "classes": [ "core.*" ]
       },
       {
+        "name": "troopjs-hub",
+        "classes": [
+          "hub.emitter",
+          "hub.component"
+        ]
+      },
+      {
         "name": "troopjs-dom",
         "classes": [ "dom.*" ]
       }
@@ -24,8 +31,8 @@
         "classes": [ "ajax.*" ]
       },
       {
-        "name": "troopjs-pubsub",
-        "classes": [ "pubsub.*" ]
+        "name": "troopjs-hub-proxy",
+        "classes": [ "hub.proxy.*" ]
       },
       {
         "name": "troopjs-widget",
