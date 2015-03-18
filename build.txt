@@ -24,10 +24,10 @@ bower_components/troopjs-core/component/registry.js
 bower_components/troopjs-core/task/registry.js
 bower_components/troopjs-core/task/factory.js
 bower_components/troopjs-core/component/emitter.js
-bower_components/troopjs-core/pubsub/executor.js
-bower_components/troopjs-core/pubsub/emitter.js
-bower_components/troopjs-core/pubsub/hub.js
-bower_components/troopjs-core/component/gadget.js
+bower_components/troopjs-hub/config.js
+bower_components/troopjs-hub/executor.js
+bower_components/troopjs-hub/emitter.js
+bower_components/troopjs-hub/component.js
 bower_components/troopjs-dom/config.js
 bower_components/troopjs-dom/executor.js
 bower_components/troopjs-dom/component.js

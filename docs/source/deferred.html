@@ -20,16 +20,16 @@
  */
 define([
 	&quot;troopjs-core/component/emitter&quot;,
-	&quot;troopjs-core/pubsub/hub&quot;,
+	&quot;troopjs-hub/emitter&quot;,
 	&quot;when/when&quot;,
 	&quot;poly/array&quot;,
 	&quot;poly/object&quot;
 ], function (Emitter, local, when) {
 	&quot;use strict&quot;;
 
-<span id='pubsub-proxy-deferred'>	/**
+<span id='hub-proxy-deferred'>	/**
 </span>	 * Proxies to hub where the last argument is a `deferred`
-	 * @class pubsub.proxy.deferred
+	 * @class hub.proxy.deferred
 	 * @extend core.component.emitter
 	 */
 
@@ -64,7 +64,7 @@ define([
 		}
 	}
 
-<span id='pubsub-proxy-deferred-method-constructor'>	/**
+<span id='hub-proxy-deferred-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @param {...Object} routes Routes
 	 */
@@ -73,7 +73,7 @@ define([
 	}, {
 		&quot;displayName&quot; : &quot;pubsub/proxy/deferred&quot;,
 
-<span id='pubsub-proxy-deferred-handler-sig-initialize'>		/**
+<span id='hub-proxy-deferred-handler-sig-initialize'>		/**
 </span>		 * @inheritdoc
 		 * @localdoc Initializes proxy topics
 		 * @handler
@@ -149,7 +149,7 @@ define([
 						}
 
 						// Publish with args
-						remote.publish.apply(remote, args);
+						remote.emit.apply(remote, args);
 
 						// Return promise
 						return deferred
@@ -162,7 +162,7 @@ define([
 					_callback[CALLBACK] = callback;
 
 					// Subscribe from local
-					local.subscribe(source, _callback);
+					local.on(source, _callback);
 				});
 
 				// Iterate subscribe keys
@@ -210,7 +210,7 @@ define([
 						}
 
 						// Publish on local and store result
-						result = local.publish.apply(local, args);
+						result = local.emit.apply(local, args);
 
 						// If we have a deferred we should chain it to result
 						if (deferred) {
@@ -228,12 +228,12 @@ define([
 
 					// Subscribe from remote, notice that since we're providing `memory` there _is_ a chance that
 					// we'll get a callback before sig/start
-					remote.subscribe(source, context, memory, callback);
+					remote.on(source, context, memory, callback);
 				});
 			});
 		},
 
-<span id='pubsub-proxy-deferred-handler-sig-finalize'>		/**
+<span id='hub-proxy-deferred-handler-sig-finalize'>		/**
 </span>		 * @inheritdoc
 		 * @localdoc Finalizes proxy topics
 		 * @handler
@@ -254,7 +254,7 @@ define([
 
 				// Iterate publish keys and unsubscribe from local
 				OBJECT_KEYS(publish).forEach(function (source) {
-					local.unsubscribe(source, publish[source]);
+					local.off(source, publish[source]);
 				});
 
 				// Iterate subscribe keys and unsubscribe from remote
@@ -262,7 +262,7 @@ define([
 					var _callback = subscribe[source];
 
 					// Un-subscribe from remote hub
-					remote.unsubscribe(source, _callback[CONTEXT], _callback[CALLBACK]);
+					remote.off(source, _callback[CONTEXT], _callback[CALLBACK]);
 				});
 			});
 		}

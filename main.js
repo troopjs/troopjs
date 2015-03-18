@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc.4+fec23ea ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+01ad84b ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc.4+fec23ea"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+01ad84b"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2024,16 +2024,54 @@ define('troopjs-core/component/emitter',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/executor',[
-	"../config",
+define('troopjs-hub/config',[
+	"troopjs-core/config",
+	"module",
+	"mu-merge/main"
+], function (config, module, merge) {
+	
+
+	/**
+	 * @class hub.config.emitter
+	 * @extends core.config.emitter
+	 * @private
+	 */
+	var EMITTER = {
+		/**
+		 * Property name for `memory`
+		 */
+		"memory": "memory"
+	};
+
+	/**
+	 * HUB component configuration
+	 * @class hub.config
+	 * @extends core.config
+	 * @private
+	 * @alias feature.config
+	 */
+
+	return merge.call({}, config, {
+		 /**
+		 * @cfg {hub.config.emitter}
+		 * @inheritdoc
+		 * @protected
+		 */
+		"emitter": EMITTER
+	}, module.config());
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
+define('troopjs-hub/executor',[
+	"./config",
 	"when/when"
 ], function (config, when) {
 	
 
 	/**
-	 * @class core.pubsub.executor
+	 * @class hub.executor
 	 * @mixin Function
-	 * @mixin core.config
 	 * @private
 	 * @static
 	 * @alias feature.executor
@@ -2049,14 +2087,14 @@ define('troopjs-core/pubsub/executor',[
 	var CALLBACK = config.emitter.callback;
 	var HEAD = config.emitter.head;
 	var NEXT = config.emitter.next;
+	var MEMORY = config.emitter.memory;
 	var PHASE = "phase";
-	var MEMORY = "memory";
 
 	/**
 	 * @method constructor
 	 * @inheritdoc core.emitter.executor#constructor
 	 * @localdoc
-	 * - Skips handlers who's scope.{@link core.component.gadget#property-phase phase} matches {@link core.config.phase#skip}.
+	 * - Skips handlers who's scope.{@link core.component.emitter#property-phase phase} matches {@link core.config.phase#skip}.
 	 * - Executes handlers passing each handler the result from the previous.
 	 * - If a handler returns `undefined` the result from the previous is used.
 	 * - When all handlers are completed the end result is memorized on `handlers`
@@ -2131,115 +2169,25 @@ define('troopjs-core/pubsub/executor',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/pubsub/emitter',[
-	"../emitter/composition",
-	"../config",
-	"./executor",
-	"troopjs-compose/decorator/from"
-], function (Emitter, config, executor, from) {
+define('troopjs-hub/emitter',[
+	"troopjs-core/emitter/composition",
+	"./config",
+	"./executor"
+], function (Emitter, config, executor) {
 	
 
 	/**
-	 * A specialized version of {@link core.emitter.composition} for memorized events and {@link core.component.gadget#property-phase phase} protection.
+	 * A static version of {@link core.emitter.composition} with memorization.
 	 *
 	 * ## Memorized emitting
 	 *
 	 * A emitter event will memorize the "current" value of each event. Each executor may have it's own interpretation
 	 * of what "current" means.
 	 *
-	 * @class core.pubsub.emitter
+	 * @class hub.emitter
 	 * @extend core.emitter.composition
-	 */
-
-	var UNDEFINED;
-	var MEMORY = "memory";
-	var HANDLERS = config.emitter.handlers;
-	var EXECUTOR = config.emitter.executor;
-
-	/**
-	 * @method on
+	 * @mixin hub.config
 	 * @inheritdoc
-	 * @private
-	 */
-
-	/**
-	 * @method off
-	 * @inheritdoc
-	 * @private
-	 */
-
-	/**
-	 * @method emit
-	 * @inheritdoc
-	 * @private
-	 */
-
-	return Emitter.extend((function (key, value) {
-		var me = this;
-		me[key] = value;
-		return me;
-	}).call({
-		"displayName": "core/pubsub/emitter",
-
-		/**
-		 * Listen to an event that are emitted publicly.
-		 * @chainable
-		 * @inheritdoc #on
-		 * @method
-		 */
-		"subscribe" : from("on"),
-
-		/**
-		 * Remove a public event listener.
-		 * @chainable
-		 * @inheritdoc #off
-		 * @method
-		 */
-		"unsubscribe" : from("off"),
-
-		/**
-		 * Emit a public event that can be subscribed by other components.
-		 *
-		 * Handlers are run in a pipeline, in which each handler will receive muted
-		 * data params depending on the return value of the previous handler:
-		 *
-		 *   - The original data params from {@link #publish} if this is the first handler, or the previous handler returns `undefined`.
-		 *   - One value as the single argument if the previous handler return a non-array.
-		 *   - Each argument value deconstructed from the returning array of the previous handler.
-		 *
-		 * @param {String} type The topic to publish.
-		 * @param {...*} [args] Additional params that are passed to the handler function.
-		 * @return {Promise}
-		 */
-		"publish" : from("emit"),
-
-		/**
-		 * Returns value in handlers MEMORY
-		 * @param {String} type event type to peek at
-		 * @param {*} [value] Value to use _only_ if no memory has been recorder
-		 * @return {*} Value in MEMORY
-		 */
-		"peek": function (type, value) {
-			var handlers;
-
-			return (handlers = this[HANDLERS][type]) === UNDEFINED || !handlers.hasOwnProperty(MEMORY)
-				? value
-				: handlers[MEMORY];
-		}
-	}, EXECUTOR, executor));
-});
-
-/**
- * @license MIT http://troopjs.mit-license.org/
- */
-define('troopjs-core/pubsub/hub',[ "./emitter" ], function (Emitter) {
-	
-
-	/**
-	 * @class core.pubsub.hub
-	 * @extend core.pubsub.emitter
-	 * @inheritdoc
-	 * @localdoc This is the singleton instance of the {@link core.pubsub.emitter hub emitter}
 	 * @singleton
 	 */
 
@@ -2260,58 +2208,51 @@ define('troopjs-core/pubsub/hub',[ "./emitter" ], function (Emitter) {
 	 * @hide
 	 */
 
-	return Emitter.create({
-		"displayName": "core/pubsub/hub"
-	});
+	var UNDEFINED;
+	var MEMORY = config.emitter.memory;
+	var HANDLERS = config.emitter.handlers;
+	var EXECUTOR = config.emitter.executor;
+
+	return Emitter.create((function (key, value) {
+		var me = this;
+		me[key] = value;
+		return me;
+	}).call({
+		"displayName": "hub/emitter",
+
+		/**
+		 * Returns value in handlers MEMORY
+		 * @param {String} type event type to peek at
+		 * @param {*} [value] Value to use _only_ if no memory has been recorder
+		 * @return {*} Value in MEMORY
+		 */
+		"peek": function (type, value) {
+			var handlers;
+
+			return (handlers = this[HANDLERS][type]) === UNDEFINED || !handlers.hasOwnProperty(MEMORY)
+				? value
+				: handlers[MEMORY];
+		}
+	}, EXECUTOR, executor));
 });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/gadget',[
+define('troopjs-hub/component',[
+	"troopjs-core/component/emitter",
+	"./config",
 	"./emitter",
-	"../config",
-	"../pubsub/hub",
-	"../pubsub/executor",
+	"./executor",
 	"when/when"
-],function (Emitter, config, hub, executor, when) {
+],function (Emitter, config, emitter, executor, when) {
 	
 
 	/**
-	 * Component that provides signal and hub features.
-	 *
-	 * 	var one = Gadget.create({
-	 * 		"hub/kick/start": function(foo) {
-	 * 			// handle kick start
-	 * 		},
-	 *
-	 * 		"hub/piss/off": function() {
-	 * 			// handle piss off
-	 * 		},
-	 *
-	 * 		"sig/task": function() {
-	 * 			// handle "bar" task.
-	 * 		},
-	 *
-	 * 		"hub/task": function() {
-	 * 			// handle both "foo" and "bar".
-	 * 		}
-	 * 	});
-	 *
-	 * 	var other = Gadget.create();
-	 *
-	 * 	other.publish("kick/start","foo");
-	 * 	other.publish("piss/off");
-	 * 	other.task("foo", function() {
-	 * 		// some dirty lift.
-	 * 	});
-	 * 	one.task("bar", function() {
-	 * 		// some dirty lift.
-	 * 	});
-	 *
-	 * @class core.component.gadget
+	 * Component that provides hub features.
+	 * @class hub.component
 	 * @extend core.component.emitter
-	 * @localdoc Adds convenience methods and specials to interact with the hub
+	 * @mixin hub.config
 	 * @alias feature.component
 	 */
 
@@ -2333,7 +2274,7 @@ define('troopjs-core/component/gadget',[
 	 * @inheritdoc
 	 */
 	return Emitter.extend({
-		"displayName" : "core/component/gadget",
+		"displayName" : "hub/component",
 
 		/**
 		 * @inheritdoc
@@ -2367,7 +2308,7 @@ define('troopjs-core/component/gadget',[
 					var memory;
 					var result;
 
-					if (special[ARGS][0] === true && (memory = hub.peek(special[TYPE], empty)) !== empty) {
+					if (special[ARGS][0] === true && (memory = emitter.peek(special[TYPE], empty)) !== empty) {
 						// Redefine result
 						result = {};
 						result[TYPE] = special[NAME];
@@ -2390,7 +2331,7 @@ define('troopjs-core/component/gadget',[
 
 		/**
 		 * @inheritdoc
-		 * @localdoc Registers subscription on the {@link core.pubsub.hub hub} for matching callbacks
+		 * @localdoc Registers subscription on the {@link hub.emitter hub emitter} for matching callbacks
 		 * @handler
 		 */
 		"sig/add": function (handlers, type, callback) {
@@ -2405,13 +2346,13 @@ define('troopjs-core/component/gadget',[
 				_callback[CALLBACK] = callback;
 
 				// Subscribe to the hub
-				hub.subscribe(matches[1], _callback);
+				emitter.on(matches[1], _callback);
 			}
 		},
 
 		/**
 		 * @inheritdoc
-		 * @localdoc Removes remote subscription from the {@link core.pubsub.hub hub} that was previously registered in {@link #handler-sig/add}
+		 * @localdoc Removes remote subscription from the {@link hub.emitter hub emitter} that was previously registered in {@link #handler-sig/add}
 		 * @handler
 		 */
 		"sig/remove": function (handlers, type, callback) {
@@ -2426,7 +2367,7 @@ define('troopjs-core/component/gadget',[
 				_callback[CALLBACK] = callback;
 
 				// Unsubscribe from the hub
-				hub.unsubscribe(matches[1], _callback);
+				emitter.off(matches[1], _callback);
 			}
 		}
 	});
@@ -2577,7 +2518,7 @@ define('troopjs-dom/executor',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-dom/component',[
-	"troopjs-core/component/gadget",
+	"troopjs-core/component/emitter",
 	"./config",
 	"./executor",
 	"troopjs-compose/decorator/before",
@@ -2586,13 +2527,13 @@ define('troopjs-dom/component',[
 	"mu-selector-set/main",
 	"poly/array",
 	"mu-jquery-destroy/main"
-], function (Gadget, config, executor, before, $, when, SelectorSet) {
+], function (Component, config, executor, before, $, when, SelectorSet) {
 	
 
 	/**
 	 * Component that manages all DOM manipulation and integration.
 	 * @class dom.component
-	 * @extend core.component.gadget
+	 * @extend core.component.emitter
 	 * @mixin dom.config
 	 * @alias feature.component
 	 */
@@ -2663,8 +2604,8 @@ define('troopjs-dom/component',[
 				_args[_length - 1] = args[_length];
 			}
 
-			// Return result of applying `content` on `me` with `_args`
-			return content.apply(me, _args);
+			// Return result of applying `content` on `$element` with `_args`
+			return content.apply($element, _args);
 		})
 		.then(function (content) {
 			// Let `args[0]` be `$(content)`
@@ -2805,7 +2746,7 @@ define('troopjs-dom/component',[
 	 * @throws {Error} If no $element is provided
 	 * @throws {Error} If $element is not of supported type
 	 */
-	return Gadget.extend(
+	return Component.extend(
 		function ($element, displayName) {
 			var me = this;
 			var length = arguments[LENGTH];

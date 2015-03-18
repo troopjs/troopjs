@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='global-property-'>/**
+</span> * @license MIT http://troopjs.mit-license.org/
+ */
+define([
+	&quot;troopjs-dom/component&quot;,
+	&quot;./config&quot;,
+	&quot;./weave&quot;,
+	&quot;./unweave&quot;,
+	&quot;./woven&quot;
+], function (Component, config, weave, unweave, woven) {
+	&quot;use strict&quot;;
+
+<span id='widget-component'>	/**
+</span>	 * @class widget.component
+	 * @extend dom.component
+	 * @alias feature.component
+	 * @mixin widget.config
+	 * @localdoc Adds functionality for working with the loom
+	 */
+
+	var ARRAY_SLICE = Array.prototype.slice;
+	var $ELEMENT = &quot;$element&quot;;
+	var SELECTOR_WEAVE = &quot;[&quot; + config.widget.weave + &quot;]&quot;;
+	var SELECTOR_WOVEN = &quot;[&quot; + config.widget.woven + &quot;]&quot;;
+	var FINALIZE = config.phase.finalize;
+
+<span id='widget-component-method-constructor'>	/**
+</span>	 * @method constructor
+	 * @inheritdoc
+	 */
+	return Component.extend({
+		&quot;displayName&quot; : &quot;widget/component&quot;,
+
+<span id='widget-component-handler-sig-render'>		/**
+</span>		 * Handles component render
+		 * @handler
+		 * @inheritdoc
+		 * @localdoc Calls {@link #method-weave} to ensure newly rendered html is woven
+		 */
+		&quot;sig/render&quot;: function ($target) {
+			return weave.apply($target.find(SELECTOR_WEAVE).addBack(SELECTOR_WEAVE), ARRAY_SLICE.call(arguments, 1));
+		},
+
+<span id='widget-component-handler-dom-destroy'>		/**
+</span>		 * @handler
+		 * @inheritdoc
+		 * @localdoc Calls {@link #method-unweave} to ensure this element is unwoven
+		 */
+		&quot;dom/destroy&quot; : function () {
+			if (this.phase !== FINALIZE) {
+				unweave.call(this[$ELEMENT]);
+			}
+		},
+
+<span id='widget-component-method-weave'>		/**
+</span>		 * @method
+		 * @inheritdoc widget.weave#constructor
+		 */
+		&quot;weave&quot; : function() {
+			return weave.apply(this[$ELEMENT].find(SELECTOR_WEAVE), ARRAY_SLICE.call(arguments));
+		},
+
+<span id='widget-component-method-unweave'>		/**
+</span>		 * @inheritdoc widget.unweave#constructor
+		 */
+		&quot;unweave&quot; : function () {
+			return unweave.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
+		},
+
+<span id='widget-component-method-woven'>		/**
+</span>		 * @inheritdoc widget.woven#constructor
+		 */
+		&quot;woven&quot; : function () {
+			return woven.apply(this[$ELEMENT].find(SELECTOR_WOVEN), arguments);
+		}
+	});
+});
+</pre>
+</body>
+</html>

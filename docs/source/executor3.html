@@ -19,107 +19,102 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../config&quot;,
-	&quot;when/when&quot;
-], function (config, when) {
+	&quot;mu-selector-set/main&quot;,
+	&quot;jquery&quot;,
+	&quot;poly/array&quot;
+], function (SelectorSet, $) {
 	&quot;use strict&quot;;
 
-<span id='core-pubsub-executor'>	/**
-</span>	 * @class core.pubsub.executor
+<span id='dom-executor'>	/**
+</span>	 * @class dom.executor
 	 * @mixin Function
-	 * @mixin core.config
 	 * @private
 	 * @static
 	 * @alias feature.executor
 	 */
 
 	var UNDEFINED;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var TOSTRING_ARGUMENTS = &quot;[object Arguments]&quot;;
-	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
-	var SKIP = config.phase.skip;
-	var SCOPE = config.emitter.scope;
-	var CALLBACK = config.emitter.callback;
-	var HEAD = config.emitter.head;
-	var NEXT = config.emitter.next;
-	var PHASE = &quot;phase&quot;;
-	var MEMORY = &quot;memory&quot;;
+	var FALSE = false;
+	var LEFT_BUTTON = 0;
 
-<span id='core-pubsub-executor-method-constructor'>	/**
+	function map (match) {
+		return match[1];
+	}
+
+	// Use `$.find.matchesSelector` for wider browser support
+	SelectorSet.prototype.matchesSelector = $.find.matchesSelector;
+
+<span id='dom-executor-method-constructor'>	/**
 </span>	 * @method constructor
 	 * @inheritdoc core.emitter.executor#constructor
 	 * @localdoc
-	 * - Skips handlers who's scope.{@link core.component.gadget#property-phase phase} matches {@link core.config.phase#skip}.
-	 * - Executes handlers passing each handler the result from the previous.
-	 * - If a handler returns `undefined` the result from the previous is used.
-	 * - When all handlers are completed the end result is memorized on `handlers`
+	 * - Executes handlers synchronously passing each handler `args`.
+	 * - If a handler returns `false` no more handlers will be executed.
+	 * - If a handler stops propagation no more handlers will be executed.
 	 *
-	 * @return {Promise} Promise for `[*]`
+	 * @return {*} Result from last handler
 	 */
 	return function (event, handlers, args) {
-		var _handlers = [];
-		var _handlersCount = 0;
-		var scope = event[SCOPE];
-		var callback = event[CALLBACK];
-		var handler;
-
-		// Iterate handlers
-		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-			if (callback &amp;&amp; handler[CALLBACK] !== callback) {
-				continue;
+		var result = UNDEFINED;
+		var direct = handlers.direct;
+		var delegated = handlers.delegated;
+		var reduce = function (result, handler) {
+			// If immediate propagation is stopped we should just return last result
+			if ($event.isImmediatePropagationStopped()) {
+				return result;
 			}
 
-			if (scope &amp;&amp; handler[SCOPE] !== scope) {
-				continue;
+			// If the previous handler return false we should stopPropagation and preventDefault
+			if (result === FALSE) {
+				$event.stopPropagation();
+				$event.preventDefault();
 			}
 
-			_handlers[_handlersCount++] = handler;
+			return handler.handle(args);
+		};
+
+		var $event = args[0];
+		var $delegate = $event.delegateTarget;
+		var $target = $event.target;
+		var $document = $target.ownerDocument;
+		var $notClick = $event.type !== &quot;click&quot;;
+
+		// Bubble the event up the dom if
+		// ... this is not a black-holed element (jQuery #13180)
+		// ... and this is the left button or it's a not a click event (jQuery #3861)
+		var $bubble = $target.nodeType !== UNDEFINED &amp;&amp; ($event.button === LEFT_BUTTON || $notClick);
+
+		// Loop ...
+		do {
+			// Don't process clicks on disabled elements (jQuery #6911, #8165, #11382, #11764)
+			if ($target.disabled !== true || $notClick) {
+				// Run delegated handlers which match this element
+				result = delegated
+					.matches($event.currentTarget = $target)
+					.map(map)
+					.reduce(reduce, result);
+			}
+
+			// Bubble if ...
+			$bubble = $bubble
+				// ... we were not told to stop propagation
+				&amp;&amp; !$event.isPropagationStopped()
+				// ... we are not at the delegate element
+				&amp;&amp; $target !== $delegate
+				// ... we have a parent node
+				&amp;&amp; ($target = $target.parentNode) !== null
+				// ... the new target is not the document
+				&amp;&amp; $target !== $document;
+		}
+		// ... while we are still bubbling
+		while ($bubble);
+
+		// Run all the direct (non-delegated) handlers of the root element
+		if (result !== FALSE) {
+			result = direct.reduce(reduce, result);
 		}
 
-		return when
-			// Reduce `_handlers`
-			.reduce(_handlers, function (current, _handler) {
-				// Let `_scope` be `handler[SCOPE]`
-				var _scope = _handler[SCOPE];
-
-				// Return early if `_scope[PHASE]` matches a blocked phase
-				if (_scope !== UNDEFINED &amp;&amp; SKIP.test(_scope[PHASE])) {
-					return current;
-				}
-
-				// Run `handler` passing `args`
-				// Pass to `when` to (potentially) update `result`
-				return when(_handler.handle(current), function (result) {
-					// If `result` is `UNDEFINED` ...
-					if (result === UNDEFINED) {
-						// ... return `current` ...
-						return current;
-					}
-
-					// Detect `result` type
-					switch (OBJECT_TOSTRING.call(result)) {
-						// `arguments` should be converted to an array
-						case TOSTRING_ARGUMENTS:
-							return ARRAY_SLICE.call(result);
-							break;
-
-						// `array` can be passed as-is
-						case TOSTRING_ARRAY:
-							return result;
-							break;
-
-						// everything else should be wrapped in an array
-						default:
-							return [ result ];
-					}
-				});
-			}, args)
-			// Memorize
-			.tap(function (result) {
-				// Store `result` in `handlers[MEMORY]`
-				handlers[MEMORY] = result;
-			});
+		return result;
 	}
 });</pre>
 </body>

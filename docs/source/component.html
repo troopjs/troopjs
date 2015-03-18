@@ -19,7 +19,7 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/gadget&quot;,
+	&quot;troopjs-core/component/emitter&quot;,
 	&quot;./config&quot;,
 	&quot;./executor&quot;,
 	&quot;troopjs-compose/decorator/before&quot;,
@@ -28,13 +28,13 @@ define([
 	&quot;mu-selector-set/main&quot;,
 	&quot;poly/array&quot;,
 	&quot;mu-jquery-destroy/main&quot;
-], function (Gadget, config, executor, before, $, when, SelectorSet) {
+], function (Component, config, executor, before, $, when, SelectorSet) {
 	&quot;use strict&quot;;
 
 <span id='dom-component'>	/**
 </span>	 * Component that manages all DOM manipulation and integration.
 	 * @class dom.component
-	 * @extend core.component.gadget
+	 * @extend core.component.emitter
 	 * @mixin dom.config
 	 * @alias feature.component
 	 */
@@ -105,8 +105,8 @@ define([
 				_args[_length - 1] = args[_length];
 			}
 
-			// Return result of applying `content` on `me` with `_args`
-			return content.apply(me, _args);
+			// Return result of applying `content` on `$element` with `_args`
+			return content.apply($element, _args);
 		})
 		.then(function (content) {
 			// Let `args[0]` be `$(content)`
@@ -247,7 +247,7 @@ define([
 	 * @throws {Error} If no $element is provided
 	 * @throws {Error} If $element is not of supported type
 	 */
-	return Gadget.extend(
+	return Component.extend(
 		function ($element, displayName) {
 			var me = this;
 			var length = arguments[LENGTH];

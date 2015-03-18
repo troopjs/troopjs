@@ -18,37 +18,16 @@
   <pre class="prettyprint lang-js"><span id='global-property-'>/**
 </span> * @license MIT http://troopjs.mit-license.org/
  */
-define([ &quot;./emitter&quot; ], function (Emitter) {
-	&quot;use strict&quot;;
-
-<span id='core-pubsub-hub'>	/**
-</span>	 * @class core.pubsub.hub
-	 * @extend core.pubsub.emitter
-	 * @inheritdoc
-	 * @localdoc This is the singleton instance of the {@link core.pubsub.emitter hub emitter}
-	 * @singleton
-	 */
-
-<span id='core-pubsub-hub-static-method-create'>	/**
-</span>	 * @method create
-	 * @static
-	 * @hide
-	 */
-
-<span id='core-pubsub-hub-static-method-extend'>	/**
-</span>	 * @method extend
-	 * @static
-	 * @hide
-	 */
-
-<span id='core-pubsub-hub-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @hide
-	 */
-
-	return Emitter.create({
-		&quot;displayName&quot;: &quot;core/pubsub/hub&quot;
-	});
+define([
+	&quot;./version&quot;,
+	&quot;./weave&quot;,
+	&quot;./unweave&quot;,
+	&quot;./woven&quot;,
+	&quot;./component&quot;,
+	&quot;./application&quot;,
+	&quot;./plugin&quot;
+], function (version) {
+	return version;
 });
 </pre>
 </body>

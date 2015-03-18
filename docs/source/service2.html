@@ -19,9 +19,9 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/gadget&quot;,
-	&quot;troopjs-core/pubsub/hub&quot;
-], function (Gadget, hub) {
+	&quot;troopjs-hub/component&quot;,
+	&quot;troopjs-hub/emitter&quot;
+], function (Component, hub) {
 	&quot;use strict&quot;;
 
 	var UNDEFINED;
@@ -31,7 +31,7 @@ define([
 <span id='l10n-service'>	/**
 </span>	 * Provides localization as a service
 	 * @class l10n.service
-	 * @extend core.component.gadget
+	 * @extend hub.component
 	 * @alias service.l10n
 	 */
 
@@ -74,7 +74,7 @@ define([
 <span id='l10n-service-method-constructor'>	/**
 </span>	 * @method constructor
 	 */
-	return Gadget.extend(function () {
+	return Component.extend(function () {
 		this[DICTIONARY] = {};
 	}, {
 		&quot;displayName&quot;: &quot;l10n/service&quot;,
@@ -86,7 +86,7 @@ define([
 		 * @fires hub/l10n/start
 		 */
 		&quot;sig/start&quot;: function () {
-			return hub.publish(&quot;l10n/start&quot;);
+			return hub.emit(&quot;l10n/start&quot;);
 		},
 
 <span id='l10n-service-handler-sig-stop'>		/**
@@ -96,7 +96,7 @@ define([
 		 * @fires hub/l10n/stop
 		 */
 		&quot;sig/stop&quot;: function () {
-			return hub.publish(&quot;l10n/stop&quot;);
+			return hub.emit(&quot;l10n/stop&quot;);
 		},
 
 <span id='l10n-service-handler-hub-l10n-get'>		/**
@@ -117,11 +117,11 @@ define([
 				}
 				else {
 					hub
-						.publish(&quot;l10n/fetch&quot;, key, UNDEFINED)
+						.emit(&quot;l10n/fetch&quot;, key, UNDEFINED)
 						.spread(function (_key, _value) {
 							return _value === UNDEFINED
 								? [ key, value ]
-								: hub.publish(&quot;l10n/put&quot;, _key, _value);
+								: hub.emit(&quot;l10n/put&quot;, _key, _value);
 						})
 						.then(resolve, reject);
 				}
@@ -137,7 +137,7 @@ define([
 		 */
 		&quot;hub/l10n/put&quot;: function (key, value) {
 			return hub
-				.publish(&quot;l10n/update&quot;, key, this[DICTIONARY][key] = value)
+				.emit(&quot;l10n/update&quot;, key, this[DICTIONARY][key] = value)
 				.yield([ key, value ]);
 		}
 	});

@@ -19,17 +19,17 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
+  &quot;troopjs-hub/component&quot;,
 	&quot;./config&quot;,
-	&quot;troopjs-core/component/gadget&quot;,
 	&quot;jquery&quot;,
 	&quot;mu-merge/main&quot;
-], function (config, Gadget, $, merge) {
+], function (Emitter, config, $, merge) {
 	&quot;use strict&quot;;
 
 <span id='ajax-service'>	/**
 </span>	 * Provides ajax as a service
 	 * @class ajax.service
-	 * @extend core.component.gadget
+	 * @extend hub.component
 	 * @mixin ajax.config
 	 * @alias service.ajax
 	 */
@@ -39,7 +39,7 @@ define([
 <span id='ajax-service-method-constructor'>	/**
 </span>	 * @method constructor
 	 */
-	return Gadget.extend({
+	return Emitter.extend({
 		&quot;displayName&quot; : &quot;ajax/service&quot;,
 
 <span id='ajax-service-event-hub-ajax'>		/**
