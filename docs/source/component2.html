@@ -37,10 +37,13 @@ define([
 
 	var UNDEFINED;
 	var NULL = null;
-	var ARRAY_PROTO = Array.prototype;
+	var HANDLERS = config.emitter.handlers;
 	var EXECUTOR = config.emitter.executor;
+	var HEAD = config.emitter.head;
+	var NEXT = config.emitter.next;
 	var SCOPE = config.emitter.scope;
 	var CALLBACK = config.emitter.callback;
+	var DATA = config.emitter.data;
 	var ARGS = &quot;args&quot;;
 	var NAME = &quot;name&quot;;
 	var TYPE = &quot;type&quot;;
@@ -66,7 +69,7 @@ define([
 
 			if (specials.hasOwnProperty(HUB)) {
 				specials[HUB].forEach(function (special) {
-					me.on(special[NAME], special[VALUE]);
+					me.on(special[NAME], special[VALUE], special[ARGS][0]);
 				});
 			}
 		},
@@ -79,33 +82,47 @@ define([
 		&quot;sig/start&quot; : function () {
 			var me = this;
 			var empty = {};
-			var specials = me.constructor.specials[HUB] || ARRAY_PROTO;
+			var handlers = me[HANDLERS];
 
-			// Calculate specials
-			specials = specials
-				.map(function (special) {
+			return when.all(Object
+				// Get keys
+				.keys(handlers)
+				// Map to promises
+				.map(function (type) {
+					var matches;
 					var memory;
-					var result;
+					var handler;
+					var _callback;
+					var _handlers;
+					var _handlersLength;
 
-					if (special[ARGS][0] === true &amp;&amp; (memory = emitter.peek(special[TYPE], empty)) !== empty) {
-						// Redefine result
-						result = {};
-						result[TYPE] = special[NAME];
-						result[EXECUTOR] = executor;
-						result[SCOPE] = me;
-						result[CALLBACK] = special[VALUE];
-						result = [ result ].concat(memory);
+					// If `type` matches `RE` and the emitter has non `empty` memory ...
+					if ((matches = RE.exec(type)) !== NULL &amp;&amp; (memory = emitter.peek(matches[1], empty)) !== empty) {
+						_handlers = [];
+						_handlersLength = 0;
+
+						// ... loop `handlers[type]` list ...
+						for (handler = handlers[type][HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+							// ... if `handler` requested memorization ...
+							if (handler[DATA] === true) {
+								// ... initialize `_callback` from `handler` ...
+								_callback = {};
+								_callback[EXECUTOR] = executor;
+								_callback[TYPE] = handler[TYPE];
+								_callback[SCOPE] = handler[SCOPE];
+								_callback[CALLBACK] = handler[CALLBACK];
+
+								// ... store emit with memory on `_handlers`
+								_handlers[_handlersLength++] = me.emit.apply(me, [ _callback ].concat(memory));
+							}
+						}
+
+						// convert `_handlers` to a promise
+						_handlers = when.all(_handlers);
 					}
 
-					return result;
-				})
-				.filter(function (special) {
-					return special !== UNDEFINED;
-				});
-
-			return when.map(specials, function (special) {
-				return me.emit.apply(me, special);
-			});
+					return _handlers;
+				}));
 		},
 
 <span id='hub-component-handler-sig-add'>		/**
