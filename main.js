@@ -4,16 +4,16 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+427b650 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+4270ed8 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+427b650"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+4270ed8"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-compose/decorator',[ "poly/object" ], function () {
+define('troopjs-compose/decorator',[],function () {
 	
 
 	/**
@@ -721,9 +721,7 @@ define('troopjs-compose/factory',[
 	"./config",
 	"./decorator",
 	"mu-unique/main",
-	"mu-getargs/main",
-	"poly/object",
-	"poly/function"
+	"mu-getargs/main"
 ], function (config, Decorator, unique, getargs) {
 	
 
@@ -1329,10 +1327,7 @@ define('troopjs-core/emitter/composition',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define('troopjs-core/component/executor',[
-	"../config",
-	"poly/array"
-], function (config) {
+define('troopjs-core/component/executor',[ "../config" ], function (config) {
 	
 
 	/**
@@ -1399,9 +1394,7 @@ define('troopjs-core/component/executor',[
 define('troopjs-core/registry/emitter',[
 	"../emitter/composition",
 	"../config",
-	"../component/executor",
-	"poly/array",
-	"poly/object"
+	"../component/executor"
 ], function (Emitter, config, executor) {
 	
 
@@ -1655,8 +1648,7 @@ define('troopjs-core/component/emitter',[
 	"./executor",
 	"../task/factory",
 	"mu-merge/main",
-	"troopjs-compose/decorator/around",
-	"poly/array"
+	"troopjs-compose/decorator/around"
 ], function (Emitter, config, registry, executor, taskFactory, merge, around) {
 	
 
@@ -2434,8 +2426,7 @@ define('troopjs-dom/config',[
  */
 define('troopjs-dom/executor',[
 	"mu-selector-set/main",
-	"jquery",
-	"poly/array"
+	"jquery"
 ], function (SelectorSet, $) {
 	
 
@@ -2542,7 +2533,6 @@ define('troopjs-dom/component',[
 	"jquery",
 	"when/when",
 	"mu-selector-set/main",
-	"poly/array",
 	"mu-jquery-destroy/main"
 ], function (Component, config, executor, before, $, when, SelectorSet) {
 	
