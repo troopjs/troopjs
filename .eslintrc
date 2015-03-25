@@ -1,30 +1,44 @@
 {
-	"env": {
-		"browser": true,
-		"amd": true
-	},
+  "env": {
+      "browser": true,
+      "amd": true
+  },
 
-	"globals": {
-	},
+  "rules": {
+    "comma-dangle": [ 2, "never" ],
+    "no-cond-assign": [ 2, "except-parens" ],
+    "new-cap": [ 2, "newIsCap" ],
+    "no-console": 2,
+    "no-extra-parens": 2,
+    "no-reserved-keys": 2,
+    "block-scoped-var": 2,
+    "default-case": 2,
+    "guard-for-in": 2,
+    "no-eq-null": 2,
+    "no-floating-decimal": 2,
+    "no-self-compare": 2,
+    "no-throw-literal": 2,
+    "radix": 2,
+    "strict": [ 2, "function" ],
+    "no-catch-shadow": 2,
+    "no-undefined": 2,
+    "no-use-before-define": [ 2, "nofunc" ],
 
-	/*
-		Tuning lint rules:
-		https://github.com/eslint/eslint/tree/master/docs/rules
-		https://github.com/eslint/eslint/blob/master/conf/eslint.json
-	*/
-	"rules": {
-		"eqeqeq": 2,
-		"block-scoped-var": 2,
-		"guard-for-in": 2,
-		"no-else-return": 2,
-		"default-case": 2,
-		"wrap-iife": 2,
-		"camelcase": 0,
-		"strict": 0,
-		"dot-notation": 0,
-		"no-cond-assign": 0,
-		"no-empty-label": 0,
-		"no-fallthrough": 0,
-		"no-labels": 0
-	}
+    "indent": [ 2, 2 ],
+    "brace-style": [ 2 , "stroustrup", { "allowSingleLine": true } ],
+    "camelcase": 0,
+    "comma-style": [ 2, "last" ],
+    "consistent-this": [ 2, "me" ],
+    "no-lonely-if": 2,
+    "no-underscore-dangle": 0,
+    "quote-props": 2,
+    "quotes": [ 2, "double" ],
+    "space-after-keywords": 2,
+    "space-before-blocks": 2,
+    "space-before-function-parentheses":  2,
+    "space-in-brackets": [ 2, "always",  { "propertyName": false } ],
+    "space-in-parens": 2,
+    "space-unary-ops": 2,
+    "spaced-line-comment": 2
+  }
 }

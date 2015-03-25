@@ -2,38 +2,37 @@
  * @license MIT http://troopjs.mit-license.org/
  */
 /*globals module:false*/
-module.exports = function(grunt) {
-	"use strict";
+/*eslint no-multi-str:0*/
+module.exports = function (grunt) {
+  "use strict";
 
-	var semver = require("semver");
-	var path = require("path");
-	var _ = require("lodash");
+  var semver = require("semver");
 
-	/**
-	 * Formats a semver
-	 * @private
-	 * @param {semver} version
-	 * @return {string} Formatted semver
-	 */
-	function format(version) {
-		var build = version.build;
-		var result = version.format();
+  /**
+   * Formats a semver
+   * @private
+   * @param {semver} version
+   * @return {string} Formatted semver
+   */
+  function format (version) {
+    var build = version.build;
+    var result = version.format();
 
-		if (build && build.length) {
-			result += "+" + build.join(".");
-		}
+    if (build && build.length) {
+      result += "+" + build.join(".");
+    }
 
-		return result;
-	}
+    return result;
+  }
 
-	// Configure grunt
-	grunt.initConfig({
-		"pkg": grunt.file.readJSON("bower.json"),
+  // Configure grunt
+  grunt.initConfig({
+    "pkg": grunt.file.readJSON("bower.json"),
 
-		"build": {
-			"src": ".",
-			"dist": "dist",
-			"header": "\
+    "build": {
+      "src": ".",
+      "dist": "dist",
+      "header": "\
 /*!\n\
  *   ____ .     ____  ____  ____    ____.\n\
  *   \\   (/_\\___\\  (__\\  (__\\  (\\___\\  (/\n\
@@ -45,116 +44,115 @@ module.exports = function(grunt) {
  * @license <%= pkg.license %> © <%= _.pluck(pkg.authors, 'name').join(', ') %>\n\
  */\n",
 
-		"footer": "\
+    "footer": "\
 define(['troopjs/version'], function (version) {\n\
-	return version;\n\
+  return version;\n\
 });"
-		},
+    },
 
-		"requirejs" : {
-			"options" : {
-				"mainConfigFile": "require.js",
-				"appDir" : "<%= build.src %>",
-				"dir" : "<%= build.dist %>",
-				"optimize" : "none",
-				"optimizeCss" : "none",
-				"skipDirOptimize" : true,
-				"keepBuildDir" : true,
-				"fileExclusionRegExp": /^(?:node_modules|scripts|grunt|eslint|jsduck|test|guides|\.(?!gitignore)|package\.json|(?:version|require|buster|Gruntfile)\.js)/,
-				"rawText" : {
-					"troopjs/version" : "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
-				},
-				"wrap": {
-					"start": "<%= build.header %>",
-					"end": "<%= build.footer %>"
-				}
-			},
+    "requirejs": {
+      "options": {
+        "mainConfigFile": "require.js",
+        "appDir": "<%= build.src %>",
+        "dir": "<%= build.dist %>",
+        "optimize": "none",
+        "optimizeCss": "none",
+        "skipDirOptimize": true,
+        "keepBuildDir": true,
+        "fileExclusionRegExp": /^(?:node_modules|scripts|grunt|eslint|jsduck|test|guides|\.(?!gitignore)|package\.json|(?:version|require|buster|Gruntfile)\.js)/,
+        "rawText": {
+          "troopjs/version": "define([], { 'toString': function () { return <%= JSON.stringify(pkg.version) %>; } });\n"
+        },
+        "wrap": {
+          "start": "<%= build.header %>",
+          "end": "<%= build.footer %>"
+        }
+      },
 
-			"bundle" : {
-				"options" : {
-					"modules" : [{
-						"name": "troopjs/main",
-						"exclude": [
-							"jquery",
-							"when/when",
-							"mu-error/factory",
-							"mu-emitter/main",
-							"mu-getargs/main",
-							"mu-jquery-destroy/main",
-							"mu-merge/main",
-							"mu-selector-set/main",
-							"mu-unique/main"
-						],
-						"excludeShallow": [
-							"troopjs/main"
-						]
-					}]
-				}
-			}
-		},
+      "bundle": {
+        "options": {
+          "modules": [ {
+            "name": "troopjs/main",
+            "exclude": [
+              "jquery",
+              "when/when",
+              "mu-error/factory",
+              "mu-emitter/main",
+              "mu-getargs/main",
+              "mu-jquery-destroy/main",
+              "mu-merge/main",
+              "mu-selector-set/main",
+              "mu-unique/main"
+            ],
+            "excludeShallow": [
+              "troopjs/main"
+            ]
+          } ]
+        }
+      }
+    },
 
-		eslint: {
-			options: {
-				// custom eslint rules configuration.
-				config: ".eslintrc",
-				rulesdir: [ "eslint" ]
-			},
-			// including all source files.
-			target: grunt.file.expand([
-				"bower_components/troopjs-*/**/*.js",
-				"!bower_components/troopjs-*/{test,bower_components}/**"
-			])
-		},
+    "eslint": {
+      "options": {
+        // custom eslint rules configuration.
+        "config": ".eslintrc"
+      },
+      // including all source files.
+      "target": grunt.file.expand([
+        "bower_components/troopjs-*/**/*.js",
+        "!bower_components/troopjs-*/{bower_components,node_modules}/**"
+      ])
+    },
 
-		"clean" : {
-			"dist" : [ "<%= build.dist %>" ]
-		},
+    "clean": {
+      "dist": [ "<%= build.dist %>" ]
+    },
 
-		"uglify" : {
-			"options" : {
-				"report": "min",
-				"preserveComments" : function (node, comment) {
-					return /^!/.test(comment.value);
-				}
-			},
-			"bundle" : {
-				"files" : [{
-					"expand" : true,
-					"dest" : "<%= build.dist %>",
-					"cwd" : "<%= build.dist %>",
-					"src" : [ "main.js" ],
-					"ext" : ".min.js"
-				}]
-			}
-		},
+    "uglify": {
+      "options": {
+        "report": "min",
+        "preserveComments": function (node, comment) {
+          return /^!/.test(comment.value);
+        }
+      },
+      "bundle": {
+        "files": [ {
+          "expand": true,
+          "dest": "<%= build.dist %>",
+          "cwd": "<%= build.dist %>",
+          "src": [ "main.js" ],
+          "ext": ".min.js"
+        } ]
+      }
+    },
 
-		"git-describe" : {
-			"bundle" : {}
-		},
+    "git-describe": {
+      "bundle": {}
+    },
 
-		"buster" : {
-			"bundle" : {}
-		},
+    "buster": {
+      "bundle": {}
+    },
 
-		"jsduck" : {
-			"config_file" : "jsduck.json"
-		}
-	});
+    "jsduck": {
+      "config_file": "jsduck.json"
+    }
+  });
 
-	grunt.event.on("git-describe", function (git_version) {
-		grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + git_version.object)));
-	});
+  grunt.event.on("git-describe", function (gitVersion) {
+    grunt.config("pkg.version", format(semver(semver.clean(grunt.config("pkg.version")) + "+" + gitVersion.object)));
+  });
 
-	// Load all grunt tasks from package.json
-	require("load-grunt-tasks")(grunt);
+  // Load all grunt tasks from package.json
+  require("load-grunt-tasks")(grunt);
 
-	// Load all local grunt tasks
-	grunt.loadTasks("grunt");
+  // Load all local grunt tasks
+  grunt.loadTasks("grunt");
 
-	// Define tasks
-	grunt.registerTask("compile", [ "git-describe", "requirejs" ]);
-	grunt.registerTask("compress", [ "uglify" ]);
-	grunt.registerTask("test", [ "buster" ]);
-	grunt.registerTask("docs", [ "jsduck" ]);
-	grunt.registerTask("default", [ "compile", "compress", "docs" ]);
+  // Define tasks
+  grunt.registerTask("compile", [ "git-describe", "requirejs" ]);
+  grunt.registerTask("compress", [ "uglify" ]);
+  grunt.registerTask("test", [ "eslint", "buster" ]);
+  grunt.registerTask("docs", [ "jsduck" ]);
+  grunt.registerTask("default", [ "compile", "compress", "docs" ]);
 };

@@ -1,8 +1,12 @@
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
-define({
-	"toString": function () {
-		return "*";
-	}
+define(function () {
+  "use strict";
+
+  return {
+    "toString": function () {
+      return "*";
+    }
+  };
 });
