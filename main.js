@@ -4,11 +4,11 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+4270ed8 ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+46c5c83 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+4270ed8"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+46c5c83"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2525,16 +2525,32 @@ define('troopjs-dom/executor',[
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
+define('troopjs-dom/error',[ "mu-error/factory" ], function (Factory) {
+	
+
+	/**
+	 * DOM error
+	 * @class dom.error
+	 * @extend Error
+	 * @alias feature.error
+	 */
+
+	return Factory("DOMError");
+});
+/**
+ * @license MIT http://troopjs.mit-license.org/
+ */
 define('troopjs-dom/component',[
 	"troopjs-core/component/emitter",
 	"./config",
 	"./executor",
+  "./error",
 	"troopjs-compose/decorator/before",
 	"jquery",
 	"when/when",
 	"mu-selector-set/main",
 	"mu-jquery-destroy/main"
-], function (Component, config, executor, before, $, when, SelectorSet) {
+], function (Component, config, executor, DOMError, before, $, when, SelectorSet) {
 	
 
 	/**
@@ -2750,8 +2766,7 @@ define('troopjs-dom/component',[
 	 * @method constructor
 	 * @param {jQuery|HTMLElement} $element The element that this component should be attached to
 	 * @param {String} [displayName] A friendly name for this component
-	 * @throws {Error} If no $element is provided
-	 * @throws {Error} If $element is not of supported type
+	 * @throws {dom.error} If no $element is provided
 	 */
 	return Component.extend(
 		function ($element, displayName) {
@@ -2762,7 +2777,7 @@ define('troopjs-dom/component',[
 
 			// No $element
 			if ($element === UNDEFINED || $element === NULL) {
-				throw new Error("No $element provided");
+				throw new DOMError("No '$element' provided");
 			}
 
 			// Let `args` be `ARRAY_SLICE.call(arguments)` without deop

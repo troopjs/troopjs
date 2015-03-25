@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/troopjs/troopjs.png?label=ready&title=Ready)](https://waffle.io/troopjs/troopjs)
 [![Build Status](https://secure.travis-ci.org/troopjs/troopjs.png)](https://travis-ci.org/troopjs/troopjs)
 
 # Troop JS

@@ -30,4 +30,5 @@ bower_components/troopjs-hub/emitter.js
 bower_components/troopjs-hub/component.js
 bower_components/troopjs-dom/config.js
 bower_components/troopjs-dom/executor.js
+bower_components/troopjs-dom/error.js
 bower_components/troopjs-dom/component.js

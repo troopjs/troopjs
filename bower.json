@@ -38,8 +38,9 @@
 	"dependencies": {
 		"when": "^3.4",
 		"jquery": ">=1.8.1 <4",
+		"mu-error": "^0",
 		"mu-merge": "^0.0.2",
-		"mu-emitter": "^0.0.8",
+		"mu-emitter": "^0.0.9",
 		"mu-getargs": "^0",
 		"mu-unique": "^0",
 		"mu-jquery-destroy": "^0",
