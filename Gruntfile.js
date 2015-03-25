@@ -77,6 +77,7 @@ define(['troopjs/version'], function (version) {\n\
 						"exclude": [
 							"jquery",
 							"when/when",
+							"mu-error/factory",
 							"mu-emitter/main",
 							"mu-getargs/main",
 							"mu-jquery-destroy/main",

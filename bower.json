@@ -38,12 +38,12 @@
 	],
 	"dependencies": {
 		"troopjs-compose": "4.0.2",
-		"troopjs-core": "6.0.1",
+		"troopjs-core": "6.0.2",
 		"troopjs-hub": "1.0.2",
-		"troopjs-dom": "8.0.1"
+		"troopjs-dom": "8.0.2"
 	},
 	"devDependencies": {
-		"troopjs-ajax": "d34e3af868c996bb6b9995d118a68d9a972dcf12",
+		"troopjs-ajax": "bfb7f137ae121759dc9051899dee585ff49f694e",
 		"troopjs-widget": "e3109c393716f9cd2e05f75915db6b959974dc29",
 		"troopjs-hub-proxy": "f5e1413e61ded4bec56f598e2b22ff64a5120195",
 		"troopjs-l10n": "f6192e912d486418882576e338392466b6d33844",
