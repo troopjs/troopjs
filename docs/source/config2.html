@@ -19,50 +19,50 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;module&quot;,
-	&quot;mu-merge/main&quot;
+  &quot;module&quot;,
+  &quot;mu-merge/main&quot;
 ], function (module, merge) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='compose-config-pragma'>	/**
-</span>	 * Pragma interface.
-	 * @class compose.config.pragma
-	 * @interface
-	 * @private
-	 */
-<span id='compose-config-pragma-property-pattern'>	/**
-</span>	 * @property {RegExp} pattern Matching pattern
-	 */
-<span id='compose-config-pragma-property-replace'>	/**
-</span>	 * @property {String|Function} replace Replacement String or function
-	 */
+<span id='compose-config-pragma'>  /**
+</span>   * Pragma interface.
+   * @class compose.config.pragma
+   * @interface
+   * @private
+   */
+<span id='compose-config-pragma-property-pattern'>  /**
+</span>   * @property {RegExp} pattern Matching pattern
+   */
+<span id='compose-config-pragma-property-replace'>  /**
+</span>   * @property {String|Function} replace Replacement String or function
+   */
 
-<span id='compose-config'>	/**
-</span>	 * Provides configuration for the {@link compose.factory}
-	 * @class compose.config
-	 * @private
-	 * @alias feature.config
-	 */
+<span id='compose-config'>  /**
+</span>   * Provides configuration for the {@link compose.factory}
+   * @class compose.config
+   * @private
+   * @alias feature.config
+   */
 
-	return merge.call({
-<span id='compose-config-cfg-pragmas'>		/**
-</span>		 * @cfg {compose.config.pragma[]}
-		 * Pragmas used to rewrite methods before processing
-		 * @protected
-		 */
-		&quot;pragmas&quot;: [],
+  return merge.call({
+<span id='compose-config-cfg-pragmas'>    /**
+</span>     * @cfg {compose.config.pragma[]}
+     * Pragmas used to rewrite methods before processing
+     * @protected
+     */
+    &quot;pragmas&quot;: [],
 
 
-<span id='compose-config-cfg-specials'>		/**
-</span>		 * @cfg {RegExp}
-		 * Regular Expression used parse 'specials'.
-		 * ````
-		 * &lt;special&gt;/&lt;type&gt;[(&lt;arguments&gt;)]
-		 * ````
-		 * @protected
-		 */
-		&quot;specials&quot;: /^([^\/]+)\/(.+?)(?:\((.*)\))?$/
-	}, module.config());
+<span id='compose-config-cfg-specials'>    /**
+</span>     * @cfg {RegExp}
+     * Regular Expression used parse 'specials'.
+     * ````
+     * &lt;special&gt;/&lt;type&gt;[(&lt;arguments&gt;)]
+     * ````
+     * @protected
+     */
+    &quot;specials&quot;: /^([^\/]+)\/(.+?)(?:\((.*)\))?$/
+  }, module.config());
 });
 </pre>
 </body>

@@ -19,65 +19,65 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./config&quot;,
-	&quot;when/when&quot;,
-	&quot;jquery&quot;
+  &quot;./config&quot;,
+  &quot;when/when&quot;,
+  &quot;jquery&quot;
 ], function (config, when, $) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='widget-woven'>	/**
-</span>	 * @class widget.woven
-	 * @mixin widget.config
-	 * @mixin Function
-	 * @static
-	 */
+<span id='widget-woven'>  /**
+</span>   * @class widget.woven
+   * @mixin widget.config
+   * @mixin Function
+   * @static
+   */
 
-	var NULL = null;
-	var ARRAY_MAP = Array.prototype.map;
-	var LENGTH = &quot;length&quot;;
-	var $WEFT = config.widget.$weft;
-	var RE_ANY = /.*/;
-	var RE_WIDGET = /([\w\/\.\-]+)(?:@(\d+))?/;
+  var NULL = null;
+  var ARRAY_MAP = Array.prototype.map;
+  var LENGTH = &quot;length&quot;;
+  var $WEFT = config.widget.$weft;
+  var RE_ANY = /.*/;
+  var RE_WIDGET = /([\w\/\.\-]+)(?:@(\d+))?/;
 
-<span id='widget-woven-method-constructor'>	/**
-</span>	 * Retrieve all or specific {@link widget.component widget} instances living on this element, that are
-	 * created by {@link widget.weave}.
-	 *
-	 * It also lives as a jquery plugin as {@link $#method-woven}.
-	 * @method constructor
-	 * @param {...String} [selector] One or more widget selectors to narrow down the returned ones.
-	 *
-	 *   * (empty string) retrieves all woven widgets
-	 *   * `module/name` retrieves widgets matching module name
-	 *   * `module/name@instance` retrieves widgets matching both module name and instance id
-	 * @return {Promise} Promise to the completion of retrieving the woven widgets array.
-	 */
-	return function woven() {
-		var woven_re = arguments[LENGTH] &gt; 0
-			? new RegExp(
-				ARRAY_MAP
-					.call(arguments, function (arg) {
-						var matches;
+<span id='widget-woven-method-constructor'>  /**
+</span>   * Retrieve all or specific {@link widget.component widget} instances living on this element, that are
+   * created by {@link widget.weave}.
+   *
+   * It also lives as a jquery plugin as {@link $#method-woven}.
+   * @method constructor
+   * @param {...String} [selector] One or more widget selectors to narrow down the returned ones.
+   *
+   *   * (empty string) retrieves all woven widgets
+   *   * `module/name` retrieves widgets matching module name
+   *   * `module/name@instance` retrieves widgets matching both module name and instance id
+   * @return {Promise} Promise to the completion of retrieving the woven widgets array.
+   */
+  return function () {
+    var woven_re = arguments[LENGTH] &gt; 0
+      ? new RegExp(
+        ARRAY_MAP
+          .call(arguments, function (arg) {
+            var matches;
 
-						// matches[1] : widget name - &quot;widget/name&quot;
-						// matches[2] : widget instance id - &quot;123&quot;
-						return ((matches = RE_WIDGET.exec(arg)) !== NULL)
-							? &quot;^&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;$&quot;
-							: NULL;
-					})
-					.filter(function (arg) {
-						return arg !== NULL
-					})
-					.join(&quot;|&quot;)
-			)
-			: RE_ANY;
+            // matches[1] : widget name - &quot;widget/name&quot;
+            // matches[2] : widget instance id - &quot;123&quot;
+            return (matches = RE_WIDGET.exec(arg)) !== NULL
+              ? &quot;^&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;$&quot;
+              : NULL;
+          })
+          .filter(function (arg) {
+            return arg !== NULL;
+          })
+          .join(&quot;|&quot;)
+      )
+      : RE_ANY;
 
-		return when.all(ARRAY_MAP.call(this, function (element) {
-			return when.filter($.data(element, $WEFT) || false, function (widget) {
-				return woven_re.test(widget);
-			});
-		}));
-	};
+    return when.all(ARRAY_MAP.call(this, function (element) {
+      return when.filter($.data(element, $WEFT) || false, function (widget) {
+        return woven_re.test(widget);
+      });
+    }));
+  };
 });
 </pre>
 </body>

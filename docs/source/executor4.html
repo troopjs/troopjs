@@ -19,107 +19,106 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./config&quot;,
-	&quot;when/when&quot;
+  &quot;./config&quot;,
+  &quot;when/when&quot;
 ], function (config, when) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='hub-executor'>	/**
-</span>	 * @class hub.executor
-	 * @mixin Function
-	 * @private
-	 * @static
-	 * @alias feature.executor
-	 */
+<span id='hub-executor'>  /**
+</span>   * @class hub.executor
+   * @mixin Function
+   * @private
+   * @static
+   * @alias feature.executor
+   */
 
-	var UNDEFINED;
-	var OBJECT_TOSTRING = Object.prototype.toString;
-	var ARRAY_SLICE = Array.prototype.slice;
-	var TOSTRING_ARGUMENTS = &quot;[object Arguments]&quot;;
-	var TOSTRING_ARRAY = &quot;[object Array]&quot;;
-	var SKIP = config.phase.skip;
-	var SCOPE = config.emitter.scope;
-	var CALLBACK = config.emitter.callback;
-	var HEAD = config.emitter.head;
-	var NEXT = config.emitter.next;
-	var MEMORY = config.emitter.memory;
-	var PHASE = &quot;phase&quot;;
+  var UNDEFINED;
+  var OBJECT_TOSTRING = Object.prototype.toString;
+  var ARRAY_SLICE = Array.prototype.slice;
+  var TOSTRING_ARGUMENTS = &quot;[object Arguments]&quot;;
+  var TOSTRING_ARRAY = &quot;[object Array]&quot;;
+  var SKIP = config.phase.skip;
+  var SCOPE = config.emitter.scope;
+  var CALLBACK = config.emitter.callback;
+  var HEAD = config.emitter.head;
+  var NEXT = config.emitter.next;
+  var MEMORY = config.emitter.memory;
+  var PHASE = &quot;phase&quot;;
 
-<span id='hub-executor-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @inheritdoc core.emitter.executor#constructor
-	 * @localdoc
-	 * - Skips handlers who's scope.{@link core.component.emitter#property-phase phase} matches {@link core.config.phase#skip}.
-	 * - Executes handlers passing each handler the result from the previous.
-	 * - If a handler returns `undefined` the result from the previous is used.
-	 * - When all handlers are completed the end result is memorized on `handlers`
-	 *
-	 * @return {Promise} Promise for `[*]`
-	 */
-	return function (event, handlers, args) {
-		var _handlers = [];
-		var _handlersCount = 0;
-		var scope = event[SCOPE];
-		var callback = event[CALLBACK];
-		var handler;
+<span id='hub-executor-method-constructor'>  /**
+</span>   * @method constructor
+   * @inheritdoc core.emitter.executor#constructor
+   * @localdoc
+   * - Skips handlers who's scope.{@link core.component.emitter#property-phase phase} matches {@link core.config.phase#skip}.
+   * - Executes handlers passing each handler the result from the previous.
+   * - If a handler returns `undefined` the result from the previous is used.
+   * - When all handlers are completed the end result is memorized on `handlers`
+   *
+   * @return {Promise} Promise for `[*]`
+   */
+  return function (event, handlers, args) {
+    var _handlers = [];
+    var _handlersCount = 0;
+    var scope = event[SCOPE];
+    var callback = event[CALLBACK];
+    var handler;
 
-		// Iterate handlers
-		for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-			if (callback &amp;&amp; handler[CALLBACK] !== callback) {
-				continue;
-			}
+    // Iterate handlers
+    for (handler = handlers[HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
+      if (callback &amp;&amp; handler[CALLBACK] !== callback) {
+        continue;
+      }
 
-			if (scope &amp;&amp; handler[SCOPE] !== scope) {
-				continue;
-			}
+      if (scope &amp;&amp; handler[SCOPE] !== scope) {
+        continue;
+      }
 
-			_handlers[_handlersCount++] = handler;
-		}
+      _handlers[_handlersCount++] = handler;
+    }
 
-		return when
-			// Reduce `_handlers`
-			.reduce(_handlers, function (current, _handler) {
-				// Let `_scope` be `handler[SCOPE]`
-				var _scope = _handler[SCOPE];
+    return when
+      // Reduce `_handlers`
+      .reduce(_handlers, function (current, _handler) {
+        // Let `_scope` be `handler[SCOPE]`
+        var _scope = _handler[SCOPE];
 
-				// Return early if `_scope[PHASE]` matches a blocked phase
-				if (_scope !== UNDEFINED &amp;&amp; SKIP.test(_scope[PHASE])) {
-					return current;
-				}
+        // Return early if `_scope` has `PHASE` _and_ `_scope[PHASE]` is `UNDEFINED` or matches a skipped phase
+        if (_scope.hasOwnProperty(PHASE) &amp;&amp; (_scope[PHASE] === UNDEFINED || SKIP.test(_scope[PHASE]))) {
+          return current;
+        }
 
-				// Run `handler` passing `args`
-				// Pass to `when` to (potentially) update `result`
-				return when(_handler.handle(current), function (result) {
-					// If `result` is `UNDEFINED` ...
-					if (result === UNDEFINED) {
-						// ... return `current` ...
-						return current;
-					}
+        // Run `handler` passing `args`
+        // Pass to `when` to (potentially) update `result`
+        return when(_handler.handle(current), function (result) {
+          // If `result` is `UNDEFINED` ...
+          if (result === UNDEFINED) {
+            // ... return `current` ...
+            return current;
+          }
 
-					// Detect `result` type
-					switch (OBJECT_TOSTRING.call(result)) {
-						// `arguments` should be converted to an array
-						case TOSTRING_ARGUMENTS:
-							return ARRAY_SLICE.call(result);
-							break;
+          // Detect `result` type
+          switch (OBJECT_TOSTRING.call(result)) {
+            // `arguments` should be converted to an array
+            case TOSTRING_ARGUMENTS:
+              return ARRAY_SLICE.call(result);
 
-						// `array` can be passed as-is
-						case TOSTRING_ARRAY:
-							return result;
-							break;
+            // `array` can be passed as-is
+            case TOSTRING_ARRAY:
+              return result;
 
-						// everything else should be wrapped in an array
-						default:
-							return [ result ];
-					}
-				});
-			}, args)
-			// Memorize
-			.tap(function (result) {
-				// Store `result` in `handlers[MEMORY]`
-				handlers[MEMORY] = result;
-			});
-	}
-});</pre>
+            // everything else should be wrapped in an array
+            default:
+              return [ result ];
+          }
+        });
+      }, args)
+      // Memorize
+      .tap(function (result) {
+        // Store `result` in `handlers[MEMORY]`
+        handlers[MEMORY] = result;
+      });
+  };
+});
+</pre>
 </body>
 </html>

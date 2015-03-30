@@ -19,40 +19,41 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/config&quot;,
-	&quot;module&quot;,
-	&quot;mu-merge/main&quot;
+  &quot;troopjs-core/config&quot;,
+  &quot;module&quot;,
+  &quot;mu-merge/main&quot;
 ], function (config, module, merge) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='hub-config-emitter'>	/**
-</span>	 * @class hub.config.emitter
-	 * @extends core.config.emitter
-	 * @private
-	 */
-	var EMITTER = {
-<span id='hub-config-emitter-property-memory'>		/**
-</span>		 * Property name for `memory`
-		 */
-		&quot;memory&quot;: &quot;memory&quot;
-	};
+<span id='hub-config-emitter'>  /**
+</span>   * @class hub.config.emitter
+   * @extends core.config.emitter
+   * @private
+   */
+  var EMITTER = {
+<span id='hub-config-emitter-property-memory'>    /**
+</span>     * Property name for `memory`
+     */
+    &quot;memory&quot;: &quot;memory&quot;
+  };
 
-<span id='hub-config'>	/**
-</span>	 * HUB component configuration
-	 * @class hub.config
-	 * @extends core.config
-	 * @private
-	 * @alias feature.config
-	 */
+<span id='hub-config'>  /**
+</span>   * HUB component configuration
+   * @class hub.config
+   * @extends core.config
+   * @private
+   * @alias feature.config
+   */
 
-	return merge.call({}, config, {
-<span id='hub-config-cfg-emitter'>		 /**
-</span>		 * @cfg {hub.config.emitter}
-		 * @inheritdoc
-		 * @protected
-		 */
-		&quot;emitter&quot;: EMITTER
-	}, module.config());
-});</pre>
+  return merge.call({}, config, {
+<span id='hub-config-cfg-emitter'>     /**
+</span>     * @cfg {hub.config.emitter}
+     * @inheritdoc
+     * @protected
+     */
+    &quot;emitter&quot;: EMITTER
+  }, module.config());
+});
+</pre>
 </body>
 </html>

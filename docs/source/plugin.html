@@ -19,100 +19,100 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;jquery&quot;,
-	&quot;when/when&quot;,
-	&quot;./config&quot;,
-	&quot;./weave&quot;,
-	&quot;./unweave&quot;,
-	&quot;./woven&quot;
+  &quot;jquery&quot;,
+  &quot;when/when&quot;,
+  &quot;./config&quot;,
+  &quot;./weave&quot;,
+  &quot;./unweave&quot;,
+  &quot;./woven&quot;
 ], function ($, when, config, weave, unweave, woven) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='widget-plugin'>	/**
-</span>	 * Extends {@link jQuery} with:
-	 *
-	 *  - {@link $#property-woven} property
-	 *  - {@link $#method-weave}, {@link $#method-unweave} and {@link $#method-woven} methods
-	 *
-	 * @class widget.plugin
-	 * @static
-	 * @alias plugin.jquery
-	 */
+<span id='widget-plugin'>  /**
+</span>   * Extends {@link jQuery} with:
+   *
+   *  - {@link $#property-woven} property
+   *  - {@link $#method-weave}, {@link $#method-unweave} and {@link $#method-woven} methods
+   *
+   * @class widget.plugin
+   * @static
+   * @alias plugin.jquery
+   */
 
-	var UNDEFINED;
-	var $FN = $.fn;
-	var $EXPR = $.expr;
-	var WEAVE = &quot;weave&quot;;
-	var UNWEAVE = &quot;unweave&quot;;
-	var WOVEN = &quot;woven&quot;;
-	var ATTR_WOVEN = config.widget.woven;
+  var UNDEFINED;
+  var $FN = $.fn;
+  var $EXPR = $.expr;
+  var WEAVE = &quot;weave&quot;;
+  var UNWEAVE = &quot;unweave&quot;;
+  var WOVEN = &quot;woven&quot;;
+  var ATTR_WOVEN = config.widget.woven;
 
-<span id='global-method-hasDataWovenAttr'>	/**
-</span>	 * Tests if element has a data-woven attribute
-	 * @param element to test
-	 * @return {boolean}
-	 * @ignore
-	 */
-	function hasDataWovenAttr(element) {
-		return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
-	}
+<span id='global-method-hasDataWovenAttr'>  /**
+</span>   * Tests if element has a data-woven attribute
+   * @param element to test
+   * @return {boolean}
+   * @ignore
+   */
+  function hasDataWovenAttr (element) {
+    return $(element).attr(ATTR_WOVEN) !== UNDEFINED;
+  }
 
-<span id='$'>	/**
-</span>	 * @class $
-	 */
+<span id='$'>  /**
+</span>   * @class $
+   */
 
-<span id='$-property-woven'>	/**
-</span>	 * jQuery `:woven` expression
-	 * @property woven
-	 */
-	$EXPR[&quot;:&quot;][WOVEN] = $EXPR.createPseudo(function (widgets) {
-		// If we don't have widgets to test, quick return optimized expression
-		if (widgets === UNDEFINED) {
-			return hasDataWovenAttr;
-		}
+<span id='$-property-woven'>  /**
+</span>   * jQuery `:woven` expression
+   * @property woven
+   */
+  $EXPR[&quot;:&quot;][WOVEN] = $EXPR.createPseudo(function (widgets) {
+    // If we don't have widgets to test, quick return optimized expression
+    if (widgets === UNDEFINED) {
+      return hasDataWovenAttr;
+    }
 
-		// Scope `woven_re` locally since we use the `g` flag
-		var woven_re = /[\s,]*([\w\d_\/\.\-]+)(?:@(\d+))?/g;
-		var woven_res = [];
-		var woven_res_length = 0;
-		var matches;
+    // Scope `woven_re` locally since we use the `g` flag
+    var woven_re = /[\s,]*([\w\d_\/\.\-]+)(?:@(\d+))?/g;
+    var woven_res = [];
+    var woven_res_length = 0;
+    var matches;
 
-		// Iterate `widgets` (while woven_re matches)
-		// matches[1] : widget name - &quot;widget/name&quot;
-		// matches[2] : widget instance id - &quot;123&quot;
-		while ((matches = woven_re.exec(widgets)) !== null) {
-			woven_res[woven_res_length++] = &quot;(?:^|[\\s,]+)&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;($|[\\s,]+)&quot;;
-		}
+    // Iterate `widgets` (while woven_re matches)
+    // matches[1] : widget name - &quot;widget/name&quot;
+    // matches[2] : widget instance id - &quot;123&quot;
+    while ((matches = woven_re.exec(widgets)) !== null) {
+      woven_res[woven_res_length++] = &quot;(?:^|[\\s,]+)&quot; + matches[1] + &quot;@&quot; + (matches[2] || &quot;\\d+&quot;) + &quot;($|[\\s,]+)&quot;;
+    }
 
-		// Redefine `woven_re` as a combined regexp
-		woven_re = new RegExp(woven_res.join(&quot;|&quot;));
+    // Redefine `woven_re` as a combined regexp
+    woven_re = new RegExp(woven_res.join(&quot;|&quot;));
 
-		// Return expression
-		return function (element) {
-			var attr_woven = $.attr(element, ATTR_WOVEN);
+    // Return expression
+    return function (element) {
+      var attr_woven = $.attr(element, ATTR_WOVEN);
 
-			// Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
-			return attr_woven !== UNDEFINED &amp;&amp; woven_re.test(attr_woven);
-		};
-	});
+      // Check that attr_woven is not UNDEFINED, and that widgets test against a processed attr_woven
+      return attr_woven !== UNDEFINED &amp;&amp; woven_re.test(attr_woven);
+    };
+  });
 
-<span id='$-method-weave'>	/**
-</span>	 * @method weave
-	 * @inheritdoc widget.weave#constructor
-	 */
-	$FN[WEAVE] = weave;
+<span id='$-method-weave'>  /**
+</span>   * @method weave
+   * @inheritdoc widget.weave#constructor
+   */
+  $FN[WEAVE] = weave;
 
-<span id='$-method-unweave'>	/**
-</span>	 * @method unweave
-	 * @inheritdoc widget.unweave#constructor
-	 */
-	$FN[UNWEAVE] = unweave;
+<span id='$-method-unweave'>  /**
+</span>   * @method unweave
+   * @inheritdoc widget.unweave#constructor
+   */
+  $FN[UNWEAVE] = unweave;
 
-<span id='$-method-woven'>	/**
-</span>	 * @method woven
-	 * @inheritdoc widget.woven#constructor
-	 */
-	$FN[WOVEN] = woven;
+<span id='$-method-woven'>  /**
+</span>   * @method woven
+   * @inheritdoc widget.woven#constructor
+   */
+  $FN[WOVEN] = woven;
 });
 </pre>
 </body>

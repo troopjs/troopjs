@@ -16,31 +16,30 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">/*globals module:false*/
+/*eslint strict:0*/
 module.exports[&quot;troopjs-core&quot;] = {
-	&quot;autoRun&quot;: false,
+  &quot;autoRun&quot;: false,
 
-	&quot;environment&quot;: &quot;browser&quot;,
+  &quot;environment&quot;: &quot;browser&quot;,
 
-	&quot;libs&quot;: [
-			&quot;bower_components/requirejs/require.js&quot;,
-			&quot;require.js&quot;
-	],
+  &quot;libs&quot;: [
+      &quot;bower_components/requirejs/require.js&quot;,
+      &quot;require.js&quot;
+  ],
 
-	&quot;resources&quot;: [
-		&quot;**/*.js&quot;
-	],
+  &quot;resources&quot;: [ &quot;**/*.js&quot; ],
 
-	&quot;extensions&quot;: [ require(&quot;buster-amd&quot;) ],
+  &quot;extensions&quot;: [ require(&quot;buster-amd&quot;) ],
 
-	&quot;buster-amd&quot;: {
-		&quot;pathMapper&quot;: function (path) {
-			return path.replace(/\.js$/, &quot;&quot;).replace(/^\//, &quot;../&quot;);
-		}
-	},
+  &quot;buster-amd&quot;: {
+    &quot;pathMapper&quot;: function (path) {
+      return path.replace(/\.js$/, &quot;&quot;).replace(/^\//, &quot;../&quot;);
+    }
+  },
 
-	&quot;tests&quot;: [
-		&quot;test/**/*-test.js&quot;
-	]
+  &quot;tests&quot;: [
+    &quot;test/**/*-test.js&quot;
+  ]
 };
 </pre>
 </body>

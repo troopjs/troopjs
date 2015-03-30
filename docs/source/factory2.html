@@ -19,42 +19,43 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./registry&quot;,
-	&quot;when/when&quot;
+  &quot;./registry&quot;,
+  &quot;when/when&quot;
 ], function (registry, when) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='core-task-factory'>	/**
-</span>	 * @class core.task.factory
-	 * @mixin Function
-	 * @static
-	 */
+<span id='core-task-factory'>  /**
+</span>   * @class core.task.factory
+   * @mixin Function
+   * @static
+   */
 
-	var TASK_COUNTER = 0;
+  var TASK_COUNTER = 0;
 
-<span id='core-task-factory-method-constructor'>	/**
-</span>	 * Creates and registers a task
-	 * @method constructor
-	 * @param {Promise|Function} promiseOrResolver The task resolver.
-	 * @param {String} [name=task] Task name
-	 * @return {Promise}
-	 */
-	return function (promiseOrResolver, name) {
-		// Get promise
-		var promise = when.isPromiseLike(promiseOrResolver)
-			? when(promiseOrResolver)
-			: when.promise(promiseOrResolver);
+<span id='core-task-factory-method-constructor'>  /**
+</span>   * Creates and registers a task
+   * @method constructor
+   * @param {Promise|Function} promiseOrResolver The task resolver.
+   * @param {String} [name=task] Task name
+   * @return {Promise}
+   */
+  return function (promiseOrResolver, name) {
+    // Get promise
+    var promise = when.isPromiseLike(promiseOrResolver)
+      ? when(promiseOrResolver)
+      : when.promise(promiseOrResolver);
 
-		// Create key
-		var key = (name || &quot;task&quot;) + &quot;@&quot; + ++TASK_COUNTER;
+    // Create key
+    var key = (name || &quot;task&quot;) + &quot;@&quot; + ++TASK_COUNTER;
 
-		// Ensure un-registration
-		// Register task
-		// Return
-		return registry.register(key, promise.ensure(function () {
-			registry.unregister(key);
-		}));
-	};
-});</pre>
+    // Ensure un-registration
+    // Register task
+    // Return
+    return registry.register(key, promise.ensure(function () {
+      registry.unregister(key);
+    }));
+  };
+});
+</pre>
 </body>
 </html>

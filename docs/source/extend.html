@@ -19,46 +19,46 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;../decorator&quot;,
-	&quot;mu-merge/main&quot;
+  &quot;../decorator&quot;,
+  &quot;mu-merge/main&quot;
 ], function (Decorator, merge) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='compose-decorator-extend'>	/**
-</span>	 * @class compose.decorator.extend
-	 * @static
-	 * @alias feature.decorator
-	 */
+<span id='compose-decorator-extend'>  /**
+</span>   * @class compose.decorator.extend
+   * @static
+   * @alias feature.decorator
+   */
 
-	var UNDEFINED;
-	var VALUE = &quot;value&quot;;
-	var ARRAY_CONCAT = Array.prototype.concat;
+  var UNDEFINED;
+  var VALUE = &quot;value&quot;;
+  var ARRAY_CONCAT = Array.prototype.concat;
 
-<span id='compose-decorator-extend-method-constructor'>	/**
-</span>	 * Create a decorator that is to augment an existing Object property.
-	 * @method constructor
-	 * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
-	 * @return {compose.decorator}
-	 */
-	return function extend(ext) {
-		var args = arguments;
+<span id='compose-decorator-extend-method-constructor'>  /**
+</span>   * Create a decorator that is to augment an existing Object property.
+   * @method constructor
+   * @param {Function|Object...} ext One or more objects to merge into this property, or a function that returns a new object to be used.
+   * @return {compose.decorator}
+   */
+  return function (ext) {
+    var args = arguments;
 
-		return new Decorator(function (descriptor, name, descriptors) {
-			var previous = descriptors[name][VALUE];
-			var val;
+    return new Decorator(function (descriptor, name, descriptors) {
+      var previous = descriptors[name][VALUE];
+      var val;
 
-			if (typeof ext === &quot;function&quot;) {
-				val = ext(previous);
-			}
-			else if (previous !== UNDEFINED) {
-				val = merge.apply({}, ARRAY_CONCAT.apply([ previous ], args));
-			}
+      if (typeof ext === &quot;function&quot;) {
+        val = ext(previous);
+      }
+      else if (previous !== UNDEFINED) {
+        val = merge.apply({}, ARRAY_CONCAT.apply([ previous ], args));
+      }
 
-			descriptor[VALUE] = val;
+      descriptor[VALUE] = val;
 
-			return descriptor;
-		});
-	}
+      return descriptor;
+    });
+  };
 });
 </pre>
 </body>

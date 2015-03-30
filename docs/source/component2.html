@@ -19,154 +19,149 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-core/component/emitter&quot;,
-	&quot;./config&quot;,
-	&quot;./emitter&quot;,
-	&quot;./executor&quot;,
-	&quot;when/when&quot;
-],function (Emitter, config, emitter, executor, when) {
-	&quot;use strict&quot;;
+  &quot;troopjs-core/component/emitter&quot;,
+  &quot;./config&quot;,
+  &quot;./emitter&quot;,
+  &quot;when/when&quot;
+], function (Emitter, config, emitter, when) {
+  &quot;use strict&quot;;
 
-<span id='hub-component'>	/**
-</span>	 * Component that provides hub features.
-	 * @class hub.component
-	 * @extend core.component.emitter
-	 * @mixin hub.config
-	 * @alias feature.component
-	 */
+<span id='hub-component'>  /**
+</span>   * Component that provides hub features.
+   * @class hub.component
+   * @extend core.component.emitter
+   * @mixin hub.config
+   * @alias feature.component
+   */
 
-	var UNDEFINED;
-	var NULL = null;
-	var HANDLERS = config.emitter.handlers;
-	var EXECUTOR = config.emitter.executor;
-	var HEAD = config.emitter.head;
-	var NEXT = config.emitter.next;
-	var SCOPE = config.emitter.scope;
-	var CALLBACK = config.emitter.callback;
-	var DATA = config.emitter.data;
-	var ARGS = &quot;args&quot;;
-	var NAME = &quot;name&quot;;
-	var TYPE = &quot;type&quot;;
-	var VALUE = &quot;value&quot;;
-	var HUB = &quot;hub&quot;;
-	var RE = new RegExp(&quot;^&quot; + HUB + &quot;/(.+)&quot;);
+  var UNDEFINED;
+  var NULL = null;
+  var TRUE = true;
+  var DATA = config.emitter.data;
+  var ARGS = &quot;args&quot;;
+  var NAME = &quot;name&quot;;
+  var TYPE = &quot;type&quot;;
+  var VALUE = &quot;value&quot;;
+  var HUB = &quot;hub&quot;;
+  var RE = new RegExp(&quot;^&quot; + HUB + &quot;/(.+)&quot;);
 
-<span id='hub-component-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @inheritdoc
-	 */
-	return Emitter.extend({
-		&quot;displayName&quot; : &quot;hub/component&quot;,
+<span id='hub-component-handler-sig-start'>  /**
+</span>   * @handler sig/start
+   * @localdoc Triggers memorized values on HUB specials
+   * @inheritdoc
+   */
 
-<span id='hub-component-handler-sig-initialize'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Registers event handlers declared HUB specials
-		 * @handler
-		 */
-		&quot;sig/initialize&quot; : function () {
-			var me = this;
-			var specials = me.constructor.specials;
+<span id='hub-component-handler-sig-added'>  /**
+</span>   * @handler sig/added
+   * @localdoc Registers subscription on the {@link hub.emitter hub emitter} for matching callbacks
+   * @inheritdoc #event-sig/added
+   */
 
-			if (specials.hasOwnProperty(HUB)) {
-				specials[HUB].forEach(function (special) {
-					me.on(special[NAME], special[VALUE], special[ARGS][0]);
-				});
-			}
-		},
+<span id='hub-component-handler-sig-removed'>  /**
+</span>   * @handler sig/removed
+   * @localdoc Removes remote subscription from the {@link hub.emitter hub emitter} that was previously registered in {@link #handler-sig/added}
+   * @inheritdoc #event-sig/removed
+   */
 
-<span id='hub-component-handler-sig-start'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Triggers memorized values on HUB specials
-		 * @handler
-		 */
-		&quot;sig/start&quot; : function () {
-			var me = this;
-			var empty = {};
-			var handlers = me[HANDLERS];
+<span id='hub-component-method-constructor'>  /**
+</span>   * @method constructor
+   * @inheritdoc
+   */
+  return Emitter.extend(function () {
+    var me = this;
+    var memorized = [];
 
-			return when.all(Object
-				// Get keys
-				.keys(handlers)
-				// Map to promises
-				.map(function (type) {
-					var matches;
-					var memory;
-					var handler;
-					var _callback;
-					var _handlers;
-					var _handlersLength;
+    // Intercept added handlers
+    me.on(&quot;sig/added&quot;, function (handlers, handler) {
+      var _empty = {};
+      var _matches;
+      var _type;
+      var _memory;
 
-					// If `type` matches `RE` and the emitter has non `empty` memory ...
-					if ((matches = RE.exec(type)) !== NULL &amp;&amp; (memory = emitter.peek(matches[1], empty)) !== empty) {
-						_handlers = [];
-						_handlersLength = 0;
+      // If we've added a HUB handler ...
+      if ((_matches = RE.exec(handler[TYPE])) !== NULL) {
+        // Let `_type` be `_matches[1]`
+        _type = _matches[1];
 
-						// ... loop `handlers[type]` list ...
-						for (handler = handlers[type][HEAD]; handler !== UNDEFINED; handler = handler[NEXT]) {
-							// ... if `handler` requested memorization ...
-							if (handler[DATA] === true) {
-								// ... initialize `_callback` from `handler` ...
-								_callback = {};
-								_callback[EXECUTOR] = executor;
-								_callback[TYPE] = handler[TYPE];
-								_callback[SCOPE] = handler[SCOPE];
-								_callback[CALLBACK] = handler[CALLBACK];
+        // Let `handler[HUB]` be `_type`
+        handler[HUB] = _type;
 
-								// ... store emit with memory on `_handlers`
-								_handlers[_handlersLength++] = me.emit.apply(me, [ _callback ].concat(memory));
-							}
-						}
+        // Subscribe to the hub
+        emitter.on(_type, handler);
 
-						// convert `_handlers` to a promise
-						_handlers = when.all(_handlers);
-					}
+        // If re-emit was requested ...
+        if (handler[DATA] === TRUE) {
+          // If memorization is &quot;open&quot;
+          if (memorized !== UNDEFINED) {
+            memorized.push(handler);
+          }
+          // .. otherwise try to `emit` if `emitter` memory for `_type` is not `_empty`
+          else if ((_memory = emitter.peek(_type, _empty)) !== _empty) {
+            me.emit.apply(me, [ handler ].concat(_memory));
+          }
+        }
+      }
+    });
 
-					return _handlers;
-				}));
-		},
+    // Intercept removed handlers
+    me.on(&quot;sig/removed&quot;, function (handlers, handler) {
+      var _matches;
 
-<span id='hub-component-handler-sig-add'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Registers subscription on the {@link hub.emitter hub emitter} for matching callbacks
-		 * @handler
-		 */
-		&quot;sig/add&quot;: function (handlers, type, callback) {
-			var me = this;
-			var matches;
-			var _callback;
+      // If we've removed a HUB callback ...
+      if ((_matches = RE.exec(handler[TYPE])) !== NULL) {
 
-			if ((matches = RE.exec(type)) !== NULL) {
-				// Let `_callback` be `{}` and initialize
-				_callback = {};
-				_callback[SCOPE] = me;
-				_callback[CALLBACK] = callback;
+        // Unsubscribe from the hub
+        emitter.off(_matches[1], handler);
 
-				// Subscribe to the hub
-				emitter.on(matches[1], _callback);
-			}
-		},
+        // If re-emit was requested and there are `memorized` callbacks ...
+        if (handler[DATA] === TRUE &amp;&amp; memorized !== UNDEFINED) {
+          // TODO in place filtering for performance
+          // Filter matching `_handler`
+          memorized = memorized.filter(function (_handler) {
+            return _handler !== handler;
+          });
+        }
+      }
+    });
 
-<span id='hub-component-handler-sig-remove'>		/**
-</span>		 * @inheritdoc
-		 * @localdoc Removes remote subscription from the {@link hub.emitter hub emitter} that was previously registered in {@link #handler-sig/add}
-		 * @handler
-		 */
-		&quot;sig/remove&quot;: function (handlers, type, callback) {
-			var me = this;
-			var matches;
-			var _callback;
+    // Intercept component start
+    me.on(&quot;sig/start&quot;, function () {
+      return when
+        // Map `memorized` ...
+        .map(memorized, function (_handler) {
+          var _memory;
+          var _empty = {};
 
-			if ((matches = RE.exec(type)) !== NULL) {
-				// Let `_callback` be `{}` and initialize
-				_callback = {};
-				_callback[SCOPE] = me;
-				_callback[CALLBACK] = callback;
+          // If `emitter` memory for `_handler[HUB]` is not `_empty` re-emit ...
+          return (_memory = emitter.peek(_handler[HUB], _empty)) !== _empty
+            ? me.emit.apply(me, [ _handler ].concat(_memory))
+            : UNDEFINED;
+        })
+        // ... and reset to `UNDEFINED`
+        .tap(function () {
+          memorized = UNDEFINED;
+        });
+    });
 
-				// Unsubscribe from the hub
-				emitter.off(matches[1], _callback);
-			}
-		}
-	});
+  }, {
+    &quot;displayName&quot;: &quot;hub/component&quot;,
+
+<span id='hub-component-handler-sig-initialize'>    /**
+</span>     * @inheritdoc
+     * @localdoc Registers event handlers declared HUB specials
+     * @handler
+     */
+    &quot;sig/initialize&quot;: function () {
+      var me = this;
+      var specials = me.constructor.specials;
+
+      if (specials.hasOwnProperty(HUB)) {
+        specials[HUB].forEach(function (special) {
+          me.on(special[NAME], special[VALUE], special[ARGS][0]);
+        });
+      }
+    }
+  });
 });
 </pre>
 </body>

@@ -19,64 +19,66 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([ &quot;troopjs-compose/factory&quot; ], function (Factory) {
-	var INSTANCE_COUNTER = 0;
-	var INSTANCE_COUNT = &quot;instanceCount&quot;;
+  &quot;use strict&quot;;
 
-<span id='core-composition'>	/**
-</span>	 * Base composition with instance count.
-	 * @class core.composition
-	 * @implement compose.composition
-	 */
+  var INSTANCE_COUNTER = 0;
+  var INSTANCE_COUNT = &quot;instanceCount&quot;;
 
-<span id='core-composition-property-instanceCount'>	/**
-</span>	 * Instance counter
-	 * @private
-	 * @readonly
-	 * @property {Number} instanceCount
-	 */
+<span id='core-composition'>  /**
+</span>   * Base composition with instance count.
+   * @class core.composition
+   * @implement compose.composition
+   */
 
-<span id='core-composition-static-method-create'>	/**
-</span>	 * @method create
-	 * @static
-	 * @inheritable
-	 * @inheritdoc
-	 * @return {core.composition} Instance of this class
-	 */
+<span id='core-composition-property-instanceCount'>  /**
+</span>   * Instance counter
+   * @private
+   * @readonly
+   * @property {Number} instanceCount
+   */
 
-<span id='core-composition-static-method-extend'>	/**
-</span>	 * @method extend
-	 * @static
-	 * @inheritable
-	 * @inheritdoc
-	 * @return {core.composition} The extended subclass
-	 */
+<span id='core-composition-static-method-create'>  /**
+</span>   * @method create
+   * @static
+   * @inheritable
+   * @inheritdoc
+   * @return {core.composition} Instance of this class
+   */
 
-<span id='core-composition-method-constructor'>	/**
-</span>	 * Creates a new component instance
-	 * @method constructor
-	 */
-	return Factory(function () {
-		this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
-	}, {
-<span id='core-composition-property-displayName'>		/**
-</span>		 * The hierarchical namespace for this component that indicates it's functionality.
-		 * @protected
-		 * @readonly
-		 * @property {String}
-		 */
-		&quot;displayName&quot; : &quot;core/composition&quot;,
+<span id='core-composition-static-method-extend'>  /**
+</span>   * @method extend
+   * @static
+   * @inheritable
+   * @inheritdoc
+   * @return {core.composition} The extended subclass
+   */
 
-<span id='core-composition-method-toString'>		/**
-</span>		 * Gives string representation of this component instance.
-		 * @return {String} {@link #displayName}`@`{@link #instanceCount}
-		 * @protected
-		 */
-		&quot;toString&quot; : function () {
-			var me = this;
+<span id='core-composition-method-constructor'>  /**
+</span>   * Creates a new component instance
+   * @method constructor
+   */
+  return Factory(function () {
+    this[INSTANCE_COUNT] = ++INSTANCE_COUNTER;
+  }, {
+<span id='core-composition-property-displayName'>    /**
+</span>     * The hierarchical namespace for this component that indicates it's functionality.
+     * @protected
+     * @readonly
+     * @property {String}
+     */
+    &quot;displayName&quot;: &quot;core/composition&quot;,
 
-			return me.displayName + &quot;@&quot; + me[INSTANCE_COUNT];
-		}
-	});
+<span id='core-composition-method-toString'>    /**
+</span>     * Gives string representation of this component instance.
+     * @return {String} {@link #displayName}`@`{@link #instanceCount}
+     * @protected
+     */
+    &quot;toString&quot;: function () {
+      var me = this;
+
+      return me.displayName + &quot;@&quot; + me[INSTANCE_COUNT];
+    }
+  });
 });
 </pre>
 </body>

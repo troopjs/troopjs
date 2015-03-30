@@ -19,128 +19,129 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-hub/component&quot;,
-	&quot;troopjs-hub/emitter&quot;
+  &quot;troopjs-hub/component&quot;,
+  &quot;troopjs-hub/emitter&quot;
 ], function (Component, hub) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-	var UNDEFINED;
-	var DICTIONARY = &quot;dictionary&quot;;
+  var UNDEFINED;
+  var DICTIONARY = &quot;dictionary&quot;;
 
 
-<span id='l10n-service'>	/**
-</span>	 * Provides localization as a service
-	 * @class l10n.service
-	 * @extend hub.component
-	 * @alias service.l10n
-	 */
+<span id='l10n-service'>  /**
+</span>   * Provides localization as a service
+   * @class l10n.service
+   * @extend hub.component
+   * @alias service.l10n
+   */
 
-<span id='l10n-service-event-hub-l10n-start'>	/**
-</span>	 * Localization start event
-	 * @event hub/l10n/start
-	 */
+<span id='l10n-service-event-hub-l10n-start'>  /**
+</span>   * Localization start event
+   * @event hub/l10n/start
+   */
 
-<span id='l10n-service-event-hub-l10n-stop'>	/**
-</span>	 * Localization stop event
-	 * @event hub/l10n/stop
-	 */
+<span id='l10n-service-event-hub-l10n-stop'>  /**
+</span>   * Localization stop event
+   * @event hub/l10n/stop
+   */
 
-<span id='l10n-service-event-hub-l10n-get'>	/**
-</span>	 * Localization GET event
-	 * @event hub/l10n/get
-	 * @param {String} key Localization key
-	 * @param {String} [value] Default value
-	 */
+<span id='l10n-service-event-hub-l10n-get'>  /**
+</span>   * Localization GET event
+   * @event hub/l10n/get
+   * @param {String} key Localization key
+   * @param {String} [value] Default value
+   */
 
-<span id='l10n-service-event-hub-l10n-fetch'>	/**
-</span>	 * Localization FETCH event
-	 * @event hub/l10n/fetch
-	 * @inheritdoc #event-hub/l10n/get
-	 */
+<span id='l10n-service-event-hub-l10n-fetch'>  /**
+</span>   * Localization FETCH event
+   * @event hub/l10n/fetch
+   * @inheritdoc #event-hub/l10n/get
+   */
 
-<span id='l10n-service-event-hub-l10n-put'>	/**
-</span>	 * Localization PUT event
-	 * @event hub/l10n/put
-	 * @param {String} key Localization key
-	 * @param {String} value Localization value
-	 */
+<span id='l10n-service-event-hub-l10n-put'>  /**
+</span>   * Localization PUT event
+   * @event hub/l10n/put
+   * @param {String} key Localization key
+   * @param {String} value Localization value
+   */
 
-<span id='l10n-service-event-hub-l10n-update'>	/**
-</span>	 * Localization UPDATE event
-	 * @event hub/l10n/update
-	 * @inheritdoc #event-hub/l10n/put
-	 */
+<span id='l10n-service-event-hub-l10n-update'>  /**
+</span>   * Localization UPDATE event
+   * @event hub/l10n/update
+   * @inheritdoc #event-hub/l10n/put
+   */
 
-<span id='l10n-service-method-constructor'>	/**
-</span>	 * @method constructor
-	 */
-	return Component.extend(function () {
-		this[DICTIONARY] = {};
-	}, {
-		&quot;displayName&quot;: &quot;l10n/service&quot;,
+<span id='l10n-service-method-constructor'>  /**
+</span>   * @method constructor
+   */
+  return Component.extend(function () {
+    this[DICTIONARY] = {};
+  }, {
+    &quot;displayName&quot;: &quot;l10n/service&quot;,
 
-<span id='l10n-service-handler-sig-start'>		/**
-</span>		 * @handler
-		 * @localdoc Notifies interested parties about the service start
-		 * @inheritdoc
-		 * @fires hub/l10n/start
-		 */
-		&quot;sig/start&quot;: function () {
-			return hub.emit(&quot;l10n/start&quot;);
-		},
+<span id='l10n-service-handler-sig-start'>    /**
+</span>     * @handler
+     * @localdoc Notifies interested parties about the service start
+     * @inheritdoc
+     * @fires hub/l10n/start
+     */
+    &quot;sig/start&quot;: function () {
+      return hub.emit(&quot;l10n/start&quot;);
+    },
 
-<span id='l10n-service-handler-sig-stop'>		/**
-</span>		 * @handler
-		 * @localdoc Notifies interested parties about the service stop
-		 * @inheritdoc
-		 * @fires hub/l10n/stop
-		 */
-		&quot;sig/stop&quot;: function () {
-			return hub.emit(&quot;l10n/stop&quot;);
-		},
+<span id='l10n-service-handler-sig-stop'>    /**
+</span>     * @handler
+     * @localdoc Notifies interested parties about the service stop
+     * @inheritdoc
+     * @fires hub/l10n/stop
+     */
+    &quot;sig/stop&quot;: function () {
+      return hub.emit(&quot;l10n/stop&quot;);
+    },
 
-<span id='l10n-service-handler-hub-l10n-get'>		/**
-</span>		 * Gets localization
-		 * @handler
-		 * @inheritdoc #event-hub/l10n/get
-		 * @fires hub/l10n/fetch
-		 * @fires hub/l10n/put
-		 * @return {Array}
-		 */
-		&quot;hub/l10n/get&quot;: function (key, value) {
-			var me = this;
-			var dictionary = me[DICTIONARY];
+<span id='l10n-service-handler-hub-l10n-get'>    /**
+</span>     * Gets localization
+     * @handler
+     * @inheritdoc #event-hub/l10n/get
+     * @fires hub/l10n/fetch
+     * @fires hub/l10n/put
+     * @return {Array}
+     */
+    &quot;hub/l10n/get&quot;: function (key, value) {
+      var me = this;
+      var dictionary = me[DICTIONARY];
 
-			return me.task(function (resolve, reject) {
-				if (dictionary.hasOwnProperty(key)) {
-					resolve([ key, dictionary[key] ]);
-				}
-				else {
-					hub
-						.emit(&quot;l10n/fetch&quot;, key, UNDEFINED)
-						.spread(function (_key, _value) {
-							return _value === UNDEFINED
-								? [ key, value ]
-								: hub.emit(&quot;l10n/put&quot;, _key, _value);
-						})
-						.then(resolve, reject);
-				}
-			});
-		},
+      return me.task(function (resolve, reject) {
+        if (dictionary.hasOwnProperty(key)) {
+          resolve([ key, dictionary[key] ]);
+        }
+        else {
+          hub
+            .emit(&quot;l10n/fetch&quot;, key, UNDEFINED)
+            .spread(function (_key, _value) {
+              return _value === UNDEFINED
+                ? [ key, value ]
+                : hub.emit(&quot;l10n/put&quot;, _key, _value);
+            })
+            .then(resolve, reject);
+        }
+      });
+    },
 
-<span id='l10n-service-handler-hub-l10n-put'>		/**
-</span>		 * Puts localization
-		 * @handler
-		 * @inheritdoc #event-hub/l10n/put
-		 * @fires hub/l10n/update
-		 * @return {Array}
-		 */
-		&quot;hub/l10n/put&quot;: function (key, value) {
-			return hub
-				.emit(&quot;l10n/update&quot;, key, this[DICTIONARY][key] = value)
-				.yield([ key, value ]);
-		}
-	});
-});</pre>
+<span id='l10n-service-handler-hub-l10n-put'>    /**
+</span>     * Puts localization
+     * @handler
+     * @inheritdoc #event-hub/l10n/put
+     * @fires hub/l10n/update
+     * @return {Array}
+     */
+    &quot;hub/l10n/put&quot;: function (key, value) {
+      return hub
+        .emit(&quot;l10n/update&quot;, key, this[DICTIONARY][key] = value)
+        .yield([ key, value ]);
+    }
+  });
+});
+</pre>
 </body>
 </html>

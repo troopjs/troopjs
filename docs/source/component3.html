@@ -19,134 +19,134 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;troopjs-compose/factory&quot;,
-	&quot;troopjs-dom/component&quot;,
-	&quot;troopjs-hub/component&quot;,
-	&quot;troopjs-hub/emitter&quot;,
-	&quot;mu-jquery-hashchange/jquery.hashchange&quot;
+  &quot;troopjs-compose/factory&quot;,
+  &quot;troopjs-dom/component&quot;,
+  &quot;troopjs-hub/component&quot;,
+  &quot;troopjs-hub/emitter&quot;,
+  &quot;mu-jquery-hashchange/jquery.hashchange&quot;
 ], function (Factory, DOMComponent, HUBComponent, hub) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='route-hash-component'>	/**
-</span>	 * Component that attaches to the window object in order to handle `window.location.hash` changes.
-	 * @class route.hash.component
-	 * @extend dom.component
-	 * @alias hash.component
-	 */
+<span id='route-hash-component'>  /**
+</span>   * Component that attaches to the window object in order to handle `window.location.hash` changes.
+   * @class route.hash.component
+   * @extend dom.component
+   * @alias hash.component
+   */
 
-	var $ELEMENT = &quot;$element&quot;;
-	var HASH = &quot;_hash&quot;;
-	var RE = /^#/;
+  var $ELEMENT = &quot;$element&quot;;
+  var HASH = &quot;_hash&quot;;
+  var RE = /^#/;
 
-<span id='route-hash-component-event-hub-hash-change'>	/**
-</span>	 * Hash change event (global)
-	 * @localdoc Triggered when a {@link #$element} with {@link route.hash.component} attached to it changes its hash
-	 * @event hub/hash/change
-	 * @param {String} hash The new hash
-	 */
+<span id='route-hash-component-event-hub-hash-change'>  /**
+</span>   * Hash change event (global)
+   * @localdoc Triggered when a {@link #$element} with {@link route.hash.component} attached to it changes its hash
+   * @event hub/hash/change
+   * @param {String} hash The new hash
+   */
 
-<span id='route-hash-component-event-dom-hashchange'>	/**
-</span>	 * Hash change event (local)
-	 * @localdoc Triggered when the attached {@link #$element} hash is changed
-	 * @event dom/hashchange
-	 * @preventable
-	 * @param {Object} $event {@link jQuery} event
-	 * @param {String} hash The new hash
-	 */
+<span id='route-hash-component-event-dom-hashchange'>  /**
+</span>   * Hash change event (local)
+   * @localdoc Triggered when the attached {@link #$element} hash is changed
+   * @event dom/hashchange
+   * @preventable
+   * @param {Object} $event {@link jQuery} event
+   * @param {String} hash The new hash
+   */
 
-<span id='route-hash-component-event-hub-hash-set'>	/**
-</span>	 * Hash set event (global)
-	 * @localdoc Triggered when a component wants to change the hash of an {@link #$element}'s with {@link route.hash.component} attached to it
-	 * @event hub/hash/set
-	 * @param {String} hash The new hash
-	 * @param {Boolean} [silent=false] Change the hash silently without triggering {@link route.hash.component#event-hub/hash/change} event.
-	 */
+<span id='route-hash-component-event-hub-hash-set'>  /**
+</span>   * Hash set event (global)
+   * @localdoc Triggered when a component wants to change the hash of an {@link #$element}'s with {@link route.hash.component} attached to it
+   * @event hub/hash/set
+   * @param {String} hash The new hash
+   * @param {Boolean} [silent=false] Change the hash silently without triggering {@link route.hash.component#event-hub/hash/change} event.
+   */
 
-<span id='route-hash-component-event-dom-hashset'>	/**
-</span>	 * Hash set event (local)
-	 * @localdoc Triggered when a component wants to change the attached {@link #$element} hash
-	 * @event dom/hashset
-	 * @preventable
-	 * @param {Object} $event {@link jQuery} event
-	 * @param {String} hash The new hash
-	 * @param {Boolean} [silent=false] Change the hash silently without triggering {@link route.hash.component#event-dom/hashchange} event.
-	 */
+<span id='route-hash-component-event-dom-hashset'>  /**
+</span>   * Hash set event (local)
+   * @localdoc Triggered when a component wants to change the attached {@link #$element} hash
+   * @event dom/hashset
+   * @preventable
+   * @param {Object} $event {@link jQuery} event
+   * @param {String} hash The new hash
+   * @param {Boolean} [silent=false] Change the hash silently without triggering {@link route.hash.component#event-dom/hashchange} event.
+   */
 
-<span id='route-hash-component-event-hub-route-change'>	/**
-</span>	 * Fires whenever the browser route has changed
-	 * @event hub/route/change
-	 * @preventable
-	 * @param {String} hash The new hash
-	 */
+<span id='route-hash-component-event-hub-route-change'>  /**
+</span>   * Fires whenever the browser route has changed
+   * @event hub/route/change
+   * @preventable
+   * @param {String} hash The new hash
+   */
 
-<span id='route-hash-component-handler-hub-hash-change'>	/**
-</span>	 * Hash change handler (global)
-	 * @inheritdoc #event-hub/hash/change
-	 * @handler hub/hash/change
-	 * @template
-	 * @return {Promise}
-	 */
+<span id='route-hash-component-handler-hub-hash-change'>  /**
+</span>   * Hash change handler (global)
+   * @inheritdoc #event-hub/hash/change
+   * @handler hub/hash/change
+   * @template
+   * @return {Promise}
+   */
 
-	return Factory(HUBComponent, DOMComponent, {
-		&quot;displayName&quot; : &quot;route/hash/component&quot;,
+  return Factory(HUBComponent, DOMComponent, {
+    &quot;displayName&quot;: &quot;route/hash/component&quot;,
 
-<span id='route-hash-component-handler-sig-start'>		/**
-</span>		 * @inheritdoc
-		 * @handler
-		 */
-		&quot;sig/start&quot; : function () {
-			this[$ELEMENT].trigger(&quot;hashchange&quot;);
-		},
+<span id='route-hash-component-handler-sig-start'>    /**
+</span>     * @inheritdoc
+     * @handler
+     */
+    &quot;sig/start&quot;: function () {
+      this[$ELEMENT].trigger(&quot;hashchange&quot;);
+    },
 
-<span id='route-hash-component-handler-dom-hashchange'>		/**
-</span>		 * Hash change handler (local)
-		 * @handler
-		 * @inheritdoc #event-dom/hashchange
-		 * @localdoc Handles changing hash of the attached {@link #$element}
-		 * @param {Object} $event {@link jQuery} event
-		 * @fires hub/route/change
-		 */
-		&quot;dom/hashchange&quot;: function ($event) {
-			var me = this;
-			var hash = me[$ELEMENT].get(0).location.hash.replace(RE, &quot;&quot;);
+<span id='route-hash-component-handler-dom-hashchange'>    /**
+</span>     * Hash change handler (local)
+     * @handler
+     * @inheritdoc #event-dom/hashchange
+     * @localdoc Handles changing hash of the attached {@link #$element}
+     * @param {Object} $event {@link jQuery} event
+     * @fires hub/route/change
+     */
+    &quot;dom/hashchange&quot;: function ($event) {
+      var me = this;
+      var hash = me[$ELEMENT].get(0).location.hash.replace(RE, &quot;&quot;);
 
-			// Did anything change?
-			if (hash !== me[HASH]) {
-				// Store and publish new hash
-				hub.emit(&quot;route/change&quot;, me[HASH] = hash);
-			}
-			else {
-				// Prevent further hashchange handlers from receiving this
-				$event.stopImmediatePropagation();
-			}
-		},
+      // Did anything change?
+      if (hash !== me[HASH]) {
+        // Store and publish new hash
+        hub.emit(&quot;route/change&quot;, me[HASH] = hash);
+      }
+      else {
+        // Prevent further hashchange handlers from receiving this
+        $event.stopImmediatePropagation();
+      }
+    },
 
-<span id='route-hash-component-handler-dom-hashset'>		/**
-</span>		 * Hash set handler (local)
-		 * @inheritdoc #event-dom/hashset
-		 * @localdoc Handles setting hash of the attached {@link #$element}
-		 * @handler
-		 */
-		&quot;dom/hashset&quot;: function ($event, hash, silent) {
-			hub.emit(&quot;route/set&quot;, hash, null, silent);
-		},
+<span id='route-hash-component-handler-dom-hashset'>    /**
+</span>     * Hash set handler (local)
+     * @inheritdoc #event-dom/hashset
+     * @localdoc Handles setting hash of the attached {@link #$element}
+     * @handler
+     */
+    &quot;dom/hashset&quot;: function ($event, hash, silent) {
+      hub.emit(&quot;route/set&quot;, hash, null, silent);
+    },
 
-<span id='route-hash-component-handler-hub-route-set'>		/**
-</span>		 * Route set handler (global), implicitly translates to {@link #event-dom/hashset} by setting the {@link #$element} hash
-		 * @handler hub/route/set
-		 * @return {Promise}
-		 */
-		&quot;hub/route/set&quot;: function (path, data, silent) {
-			var me = this;
+<span id='route-hash-component-handler-hub-route-set'>    /**
+</span>     * Route set handler (global), implicitly translates to {@link #event-dom/hashset} by setting the {@link #$element} hash
+     * @handler hub/route/set
+     * @return {Promise}
+     */
+    &quot;hub/route/set&quot;: function (path, data, silent) {
+      var me = this;
 
-			// If we are silent we update the local me[HASH] to prevent change detection
-			if (silent === true) {
-				me[HASH] = path;
-			}
+      // If we are silent we update the local me[HASH] to prevent change detection
+      if (silent === true) {
+        me[HASH] = path;
+      }
 
-			me[$ELEMENT].get(0).location.hash = path;
-		}
-	});
+      me[$ELEMENT].get(0).location.hash = path;
+    }
+  });
 });
 </pre>
 </body>

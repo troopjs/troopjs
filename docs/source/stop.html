@@ -19,59 +19,63 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;./start&quot;,
-	&quot;../../config&quot;,
-	&quot;when/when&quot;
+  &quot;./start&quot;,
+  &quot;../../config&quot;,
+  &quot;when/when&quot;
 ], function (start, config, when) {
-	var ARRAY_PUSH = Array.prototype.push;
-	var PHASE = &quot;phase&quot;;
-	var STARTED = config.phase.started;
-	var STOP = config.phase.stop;
-	var STOPPED = config.phase.stopped;
-	var SIG_STOP = config.signal.stop;
+  &quot;use strict&quot;;
 
-<span id='core-component-signal-stop'>	/**
-</span>	 * @class core.component.signal.stop
-	 * @implement core.component.signal
-	 * @mixin core.config
-	 * @static
-	 * @alias feature.signal
-	 * @private
-	 */
+  var ARRAY_PUSH = Array.prototype.push;
+  var PHASE = &quot;phase&quot;;
+  var STARTED = config.phase.started;
+  var STOP = config.phase.stop;
+  var STOPPED = config.phase.stopped;
+  var SIG_STOP = config.signal.stop;
 
-<span id='core-component-signal-stop-method-constructor'>	/**
-</span>	 * @method constructor
-	 * @inheritdoc
-	 * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `stopped`
-	 */
+<span id='core-component-signal-stop'>  /**
+</span>   * @class core.component.signal.stop
+   * @implement core.component.signal
+   * @mixin core.config
+   * @static
+   * @alias feature.signal
+   * @private
+   */
 
-	return function () {
-		var me = this;
-		var args = arguments;
+<span id='core-component-signal-stop-method-constructor'>  /**
+</span>   * @method constructor
+   * @inheritdoc
+   * @localdoc Transitions the component {@link core.component.emitter#property-phase} to `stopped`
+   */
 
-		return when(start.apply(me, args), function (phase) {
-			var _args;
+  return function () {
+    var me = this;
+    var args = arguments;
 
-			if (phase === STARTED) {
-				// Let `me[PHASE]` be `&quot;stop&quot;`
-				me[PHASE] = STOP;
+    return when(start.apply(me, args), function (phase) {
+      var _args;
 
-				// Let `_args` be `[ SIG_STOP ]`
-				// Push `args` on `_args`
-				ARRAY_PUSH.apply(_args = [ SIG_STOP ], args);
+      if (phase === STARTED) {
+        // Let `me[PHASE]` be `&quot;stop&quot;`
+        me[PHASE] = STOP;
 
-				return me
-					.emit.apply(me, _args)
-					.then(function () {
-						// Let `me[PHASE]` be `STOPPED`
-						return me[PHASE] = STOPPED;
-					});
-			}
-			else {
-				return phase;
-			}
-		});
-	}
-});</pre>
+        // Let `_args` be `[ SIG_STOP ]`
+        // Push `args` on `_args`
+        ARRAY_PUSH.apply(_args = [ SIG_STOP ], args);
+
+        return me
+          .emit.apply(me, _args)
+          .then(function () {
+            /*eslint no-return-assign:0*/
+            // Let `me[PHASE]` be `STOPPED`
+            return me[PHASE] = STOPPED;
+          });
+      }
+      else {
+        return phase;
+      }
+    });
+  };
+});
+</pre>
 </body>
 </html>

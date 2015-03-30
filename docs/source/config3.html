@@ -19,187 +19,196 @@
 </span> * @license MIT http://troopjs.mit-license.org/
  */
 define([
-	&quot;module&quot;,
-	&quot;troopjs-compose/config&quot;,
-	&quot;mu-emitter/config&quot;,
-	&quot;mu-merge/main&quot;
+  &quot;module&quot;,
+  &quot;troopjs-compose/config&quot;,
+  &quot;mu-emitter/config&quot;,
+  &quot;mu-merge/main&quot;
 ], function (module, config, emitterConfig, merge) {
-	&quot;use strict&quot;;
+  &quot;use strict&quot;;
 
-<span id='core-config-emitter'>	/**
-</span>	 * @class core.config.emitter
-	 * @enum {String}
-	 * @private
-	 */
-<span id='core-config-emitter-property-handlers'>	/**
-</span>	 * @property handlers Property name for `handlers`
-	 */
-<span id='core-config-emitter-property-emitter'>	/**
-</span>	 * @property emitter Property name for `emitter`
-	 */
-<span id='core-config-emitter-property-type'>	/**
-</span>	 * @property type Property name for `type`
-	 */
-<span id='core-config-emitter-property-callback'>	/**
-</span>	 * @property callback Property name for `callback`
-	 */
-<span id='core-config-emitter-property-data'>	/**
-</span>	 * @property data Property name for `data`
-	 */
-<span id='core-config-emitter-property-scope'>	/**
-</span>	 * @property scope Property name for `scope`
-	 */
-<span id='core-config-emitter-property-executor'>	/**
-</span>	 * @property executor Property name for `executor`
-	 */
-<span id='core-config-emitter-property-head'>	/**
-</span>	 * @property head Property name for `head`
-	 */
-<span id='core-config-emitter-property-tail'>	/**
-</span>	 * @property tail Property name for `tail`
-	 */
-<span id='core-config-emitter-property-next'>	/**
-</span>	 * @property next Property name for `next`
-	 */
-<span id='core-config-emitter-property-count'>	/**
-</span>	 * @property count Property name for `count`
-	 */
-<span id='core-config-emitter-property-limit'>	/**
-</span>	 * @property limit Property name for `limit`
-	 */
-<span id='core-config-emitter-property-on'>	/**
-</span>	 * @property on Property name for `on`
-	 */
-<span id='core-config-emitter-property-off'>	/**
-</span>	 * @property off Property name for `off`
-	 */
+<span id='core-config-emitter'>  /**
+</span>   * @class core.config.emitter
+   * @enum {String}
+   * @private
+   */
+<span id='core-config-emitter-property-handlers'>  /**
+</span>   * @property handlers Property name for `handlers`
+   */
+<span id='core-config-emitter-property-emitter'>  /**
+</span>   * @property emitter Property name for `emitter`
+   */
+<span id='core-config-emitter-property-type'>  /**
+</span>   * @property type Property name for `type`
+   */
+<span id='core-config-emitter-property-callback'>  /**
+</span>   * @property callback Property name for `callback`
+   */
+<span id='core-config-emitter-property-data'>  /**
+</span>   * @property data Property name for `data`
+   */
+<span id='core-config-emitter-property-scope'>  /**
+</span>   * @property scope Property name for `scope`
+   */
+<span id='core-config-emitter-property-executor'>  /**
+</span>   * @property executor Property name for `executor`
+   */
+<span id='core-config-emitter-property-head'>  /**
+</span>   * @property head Property name for `head`
+   */
+<span id='core-config-emitter-property-tail'>  /**
+</span>   * @property tail Property name for `tail`
+   */
+<span id='core-config-emitter-property-next'>  /**
+</span>   * @property next Property name for `next`
+   */
+<span id='core-config-emitter-property-count'>  /**
+</span>   * @property count Property name for `count`
+   */
+<span id='core-config-emitter-property-limit'>  /**
+</span>   * @property limit Property name for `limit`
+   */
+<span id='core-config-emitter-property-on'>  /**
+</span>   * @property on Property name for `on`
+   */
+<span id='core-config-emitter-property-off'>  /**
+</span>   * @property off Property name for `off`
+   */
 
-<span id='core-config-phase'>	/**
-</span>	 * @class core.config.phase
-	 * @enum
-	 * @private
-	 */
-	var PHASE = {
-<span id='core-config-phase-property-skip'>		/**
-</span>		 * Protected phases
-		 */
-		&quot;skip&quot;: /^(?:initi|fin)alized?$/,
-<span id='core-config-phase-property-initialize'>		/**
-</span>		 * Phase while component is initializing.
-		 */
-		&quot;initialize&quot;: &quot;initialize&quot;,
-<span id='core-config-phase-property-initialized'>		/**
-</span>		 * Phase when component is initialized.
-		 */
-		&quot;initialized&quot;: &quot;initialized&quot;,
-<span id='core-config-phase-property-start'>		/**
-</span>		 * Phase while component is starting.
-		 */
-		&quot;start&quot;: &quot;start&quot;,
-<span id='core-config-phase-property-started'>		/**
-</span>		 * Phase when component is started.
-		 */
-		&quot;started&quot;: &quot;started&quot;,
-<span id='core-config-phase-property-stop'>		/**
-</span>		 * Phase while component is stopping.
-		 */
-		&quot;stop&quot;: &quot;stop&quot;,
-<span id='core-config-phase-property-stopped'>		/**
-</span>		 * Phase when component is stopped.
-		 */
-		&quot;stopped&quot;: &quot;stopped&quot;,
-<span id='core-config-phase-property-finalize'>		/**
-</span>		 * Phase while component is finalizing.
-		 */
-		&quot;finalize&quot;: &quot;finalize&quot;,
-<span id='core-config-phase-property-finalized'>		/**
-</span>		 * Phase when component is finalized.
-		 */
-		&quot;finalized&quot;: &quot;finalized&quot;
-	};
+<span id='core-config-phase'>  /**
+</span>   * @class core.config.phase
+   * @enum
+   * @private
+   */
+  var PHASE = {
+<span id='core-config-phase-property-skip'>    /**
+</span>     * Protected phases
+     */
+    &quot;skip&quot;: /^(?:initi|fin)alized?$/,
+<span id='core-config-phase-property-initialize'>    /**
+</span>     * Phase while component is initializing.
+     */
+    &quot;initialize&quot;: &quot;initialize&quot;,
+<span id='core-config-phase-property-initialized'>    /**
+</span>     * Phase when component is initialized.
+     */
+    &quot;initialized&quot;: &quot;initialized&quot;,
+<span id='core-config-phase-property-start'>    /**
+</span>     * Phase while component is starting.
+     */
+    &quot;start&quot;: &quot;start&quot;,
+<span id='core-config-phase-property-started'>    /**
+</span>     * Phase when component is started.
+     */
+    &quot;started&quot;: &quot;started&quot;,
+<span id='core-config-phase-property-stop'>    /**
+</span>     * Phase while component is stopping.
+     */
+    &quot;stop&quot;: &quot;stop&quot;,
+<span id='core-config-phase-property-stopped'>    /**
+</span>     * Phase when component is stopped.
+     */
+    &quot;stopped&quot;: &quot;stopped&quot;,
+<span id='core-config-phase-property-finalize'>    /**
+</span>     * Phase while component is finalizing.
+     */
+    &quot;finalize&quot;: &quot;finalize&quot;,
+<span id='core-config-phase-property-finalized'>    /**
+</span>     * Phase when component is finalized.
+     */
+    &quot;finalized&quot;: &quot;finalized&quot;
+  };
 
-<span id='core-config-signal'>	/**
-</span>	 * @class core.config.signal
-	 * @enum {String}
-	 * @private
-	 */
-	var SIGNAL = {
-<span id='core-config-signal-property-setup'>		/**
-</span>		 * Signal emitted first time an event handler is added.
-		 */
-		&quot;setup&quot;: &quot;sig/setup&quot;,
-<span id='core-config-signal-property-add'>		/**
-</span>		 * Signal emitted each time an event handler is added.
-		 */
-		&quot;add&quot;: &quot;sig/add&quot;,
-<span id='core-config-signal-property-remove'>		/**
-</span>		 * Signal emitted each time an event handler is removed.
-		 */
-		&quot;remove&quot;: &quot;sig/remove&quot;,
-<span id='core-config-signal-property-teardown'>		/**
-</span>		 * Signal emitted last time an event handler is removed.
-		 */
-		&quot;teardown&quot;: &quot;sig/teardown&quot;,
-<span id='core-config-signal-property-initialize'>		/**
-</span>		 * Signal emitted when component initializes.
-		 */
-		&quot;initialize&quot;: &quot;sig/initialize&quot;,
-<span id='core-config-signal-property-start'>		/**
-</span>		 * Signal emitted when component starts.
-		 */
-		&quot;start&quot;: &quot;sig/start&quot;,
-<span id='core-config-signal-property-stop'>		/**
-</span>		 * Signal emitted when component stops.
-		 */
-		&quot;stop&quot;: &quot;sig/stop&quot;,
-<span id='core-config-signal-property-finalize'>		/**
-</span>		 * Signal emitted when component finalizes.
-		 */
-		&quot;finalize&quot;: &quot;sig/finalize&quot;,
-<span id='core-config-signal-property-register'>		/**
-</span>		 * Signal emitted during registration.
-		 */
-		&quot;register&quot;: &quot;sig/register&quot;,
-<span id='core-config-signal-property-unregister'>		/**
-</span>		 * Signal emitted during un-registeration.
-		 */
-		&quot;unregister&quot;: &quot;sig/unregister&quot;,
-<span id='core-config-signal-property-task'>		/**
-</span>		 * Signal emitted when component starts a task.
-		 */
-		&quot;task&quot;: &quot;sig/task&quot;
-	};
+<span id='core-config-signal'>  /**
+</span>   * @class core.config.signal
+   * @enum {String}
+   * @private
+   */
+  var SIGNAL = {
+<span id='core-config-signal-property-setup'>    /**
+</span>     * Signal emitted first time an event handler is added.
+     */
+    &quot;setup&quot;: &quot;sig/setup&quot;,
+<span id='core-config-signal-property-add'>    /**
+</span>     * Signal emitted before each time an event handler is added.
+     */
+    &quot;add&quot;: &quot;sig/add&quot;,
+<span id='core-config-signal-property-added'>    /**
+</span>     * Signal emitted each time an event handler is added.
+     */
+    &quot;added&quot;: &quot;sig/added&quot;,
+<span id='core-config-signal-property-remove'>    /**
+</span>     * Signal emitted before each time an event handler is removed.
+     */
+    &quot;remove&quot;: &quot;sig/remove&quot;,
+<span id='core-config-signal-property-removed'>    /**
+</span>     * Signal emitted each time an event handler is removed.
+     */
+    &quot;removed&quot;: &quot;sig/removed&quot;,
+<span id='core-config-signal-property-teardown'>    /**
+</span>     * Signal emitted last time an event handler is removed.
+     */
+    &quot;teardown&quot;: &quot;sig/teardown&quot;,
+<span id='core-config-signal-property-initialize'>    /**
+</span>     * Signal emitted when component initializes.
+     */
+    &quot;initialize&quot;: &quot;sig/initialize&quot;,
+<span id='core-config-signal-property-start'>    /**
+</span>     * Signal emitted when component starts.
+     */
+    &quot;start&quot;: &quot;sig/start&quot;,
+<span id='core-config-signal-property-stop'>    /**
+</span>     * Signal emitted when component stops.
+     */
+    &quot;stop&quot;: &quot;sig/stop&quot;,
+<span id='core-config-signal-property-finalize'>    /**
+</span>     * Signal emitted when component finalizes.
+     */
+    &quot;finalize&quot;: &quot;sig/finalize&quot;,
+<span id='core-config-signal-property-register'>    /**
+</span>     * Signal emitted during registration.
+     */
+    &quot;register&quot;: &quot;sig/register&quot;,
+<span id='core-config-signal-property-unregister'>    /**
+</span>     * Signal emitted during un-registeration.
+     */
+    &quot;unregister&quot;: &quot;sig/unregister&quot;,
+<span id='core-config-signal-property-task'>    /**
+</span>     * Signal emitted when component starts a task.
+     */
+    &quot;task&quot;: &quot;sig/task&quot;
+  };
 
-<span id='core-config'>	/**
-</span>	 * Component configuration
-	 * @class core.config
-	 * @extends compose.config
-	 * @private
-	 * @alias feature.config
-	 */
+<span id='core-config'>  /**
+</span>   * Component configuration
+   * @class core.config
+   * @extends compose.config
+   * @private
+   * @alias feature.config
+   */
 
-	return merge.call({}, config, {
-<span id='core-config-cfg-signal'>		/**
-</span>		 * Component signals
-		 * @cfg {core.config.signal}
-		 * @protected
-		 */
-		&quot;signal&quot;: SIGNAL,
+  return merge.call({}, config, {
+<span id='core-config-cfg-signal'>    /**
+</span>     * Component signals
+     * @cfg {core.config.signal}
+     * @protected
+     */
+    &quot;signal&quot;: SIGNAL,
 
-<span id='core-config-cfg-phase'>		/**
-</span>		 * Component phases
-		 * @cfg {core.config.phase}
-		 * @protected
-		 */
-		&quot;phase&quot;: PHASE,
+<span id='core-config-cfg-phase'>    /**
+</span>     * Component phases
+     * @cfg {core.config.phase}
+     * @protected
+     */
+    &quot;phase&quot;: PHASE,
 
-<span id='core-config-cfg-emitter'>		/**
-</span>		 * Emitter properties
-		 * @cfg {core.config.emitter}
-		 * @protected
-		 */
-		&quot;emitter&quot;: emitterConfig
-	}, module.config());
-});</pre>
+<span id='core-config-cfg-emitter'>    /**
+</span>     * Emitter properties
+     * @cfg {core.config.emitter}
+     * @protected
+     */
+    &quot;emitter&quot;: emitterConfig
+  }, module.config());
+});
+</pre>
 </body>
 </html>
