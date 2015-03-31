@@ -81,8 +81,7 @@ define(['troopjs/version'], function (version) {\n\
               "mu-getargs/main",
               "mu-jquery-destroy/main",
               "mu-merge/main",
-              "mu-selector-set/main",
-              "mu-unique/main"
+              "mu-selector-set/main"
             ],
             "excludeShallow": [
               "troopjs/main"

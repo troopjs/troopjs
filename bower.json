@@ -37,7 +37,7 @@
 		"docs"
 	],
 	"dependencies": {
-		"troopjs-compose": "4.0.3",
+		"troopjs-compose": "4.0.4",
 		"troopjs-core": "7.1.0",
 		"troopjs-hub": "1.1.2",
 		"troopjs-dom": "8.1.0"
