@@ -4,17 +4,17 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+726cd7f ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-rc+b416a01 ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon, Garry Yao, Eyal Arubas
  */
-define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+726cd7f"; } });
+define('troopjs/version',[], { 'toString': function () { return "3.0.0-rc+b416a01"; } });
 
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator',[],function () {
-  
+  "use strict";
 
   /**
    * Decorator provides customized way to add properties/methods to object created by {@link compose.factory}.
@@ -52,7 +52,7 @@ define('troopjs-compose/decorator',[],function () {
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/after',[ "../decorator" ], function (Decorator) {
-  
+  "use strict";
 
   /**
    * @class compose.decorator.after
@@ -92,7 +92,7 @@ define('troopjs-compose/decorator/after',[ "../decorator" ], function (Decorator
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/around',[ "../decorator" ], function (Decorator) {
-  
+  "use strict";
 
   /**
    * @class compose.decorator.around
@@ -122,7 +122,7 @@ define('troopjs-compose/decorator/around',[ "../decorator" ], function (Decorato
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/before',[ "../decorator" ], function (Decorator) {
-  
+  "use strict";
 
   /**
    * @class compose.decorator.before
@@ -165,7 +165,7 @@ define('troopjs-compose/decorator/extend',[
   "../decorator",
   "mu-merge/main"
 ], function (Decorator, merge) {
-  
+  "use strict";
 
   /**
    * @class compose.decorator.extend
@@ -208,7 +208,7 @@ define('troopjs-compose/decorator/extend',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-compose/decorator/from',[ "../decorator" ], function (Decorator) {
-  
+  "use strict";
 
   /**
    * @class compose.decorator.from
@@ -255,7 +255,7 @@ define('troopjs-compose/config',[
   "module",
   "mu-merge/main"
 ], function (module, merge) {
-  
+  "use strict";
 
   /**
    * Pragma interface.
@@ -307,7 +307,7 @@ define('troopjs-core/config',[
   "mu-emitter/config",
   "mu-merge/main"
 ], function (module, config, emitterConfig, merge) {
-  
+  "use strict";
 
   /**
    * @class core.config.emitter
@@ -500,7 +500,7 @@ define('troopjs-core/component/signal/initialize',[
   "../../config",
   "when/when"
 ], function (config, when) {
-  
+  "use strict";
 
   var UNDEFINED;
   var ARRAY_PUSH = Array.prototype.push;
@@ -563,7 +563,7 @@ define('troopjs-core/component/signal/start',[
   "../../config",
   "when/when"
 ], function (initialize, config, when) {
-  
+  "use strict";
 
   var ARRAY_PUSH = Array.prototype.push;
   var PHASE = "phase";
@@ -626,7 +626,7 @@ define('troopjs-core/component/signal/stop',[
   "../../config",
   "when/when"
 ], function (start, config, when) {
-  
+  "use strict";
 
   var ARRAY_PUSH = Array.prototype.push;
   var PHASE = "phase";
@@ -688,7 +688,7 @@ define('troopjs-core/component/signal/finalize',[
   "../../config",
   "when/when"
 ], function (stop, config, when) {
-  
+  "use strict";
 
   var ARRAY_PUSH = Array.prototype.push;
   var PHASE = "phase";
@@ -750,7 +750,7 @@ define('troopjs-compose/factory',[
   "./decorator",
   "mu-getargs/main"
 ], function (config, Decorator, getargs) {
-  
+  "use strict";
 
   /**
    * The factory module establishes the fundamental object composition in TroopJS:
@@ -1147,7 +1147,7 @@ define('troopjs-compose/factory',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/composition',[ "troopjs-compose/factory" ], function (Factory) {
-  
+  "use strict";
 
   var INSTANCE_COUNTER = 0;
   var INSTANCE_COUNT = "instanceCount";
@@ -1170,7 +1170,7 @@ define('troopjs-core/composition',[ "troopjs-compose/factory" ], function (Facto
    * @static
    * @inheritable
    * @inheritdoc
-   * @return {core.composition} Instance of this class
+   * @return {Object} Instance of this class
    */
 
   /**
@@ -1216,7 +1216,7 @@ define('troopjs-core/emitter/executor',[
   "../config",
   "when/when"
 ], function (config, when) {
-  
+  "use strict";
 
   /**
    * @class core.emitter.executor
@@ -1282,7 +1282,7 @@ define('troopjs-core/emitter/composition',[
   "troopjs-compose/decorator/from",
   "when/when"
 ], function (Emitter, Composition, config, executor, from) {
-  
+  "use strict";
 
   /**
    * This event module is heart of all TroopJS event-based whistles, from the API names it's aligned with Node's events module,
@@ -1330,7 +1330,7 @@ define('troopjs-core/emitter/composition',[
      * @param {Function} callback.callback Callback method.
      * @param {Object} [callback.scope=this] Callback scope.
      * @param {Number} [callback.limit=0] Callback limit.
-     * @param {*} [data] Handler data
+     * @param {...*} [data] Handler data
      * @returns {core.emitter.handler} Handler that was added.
      */
     "on": from(Emitter),
@@ -1367,7 +1367,7 @@ define('troopjs-core/emitter/composition',[
      * @param {String} [event.type] The event type name.
      * @param {Function} [event.runner] The runner function that determinate how the handlers are executed, overrides the
      * default behaviour of the event emitting.
-     * @param {...*} [args] Data params that are passed to the listener function.
+     * @param {...*} [args] Arguments passed to the handler.
      * @return {*} Result returned from runner.
      */
     "emit": from(Emitter)
@@ -1378,7 +1378,7 @@ define('troopjs-core/emitter/composition',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/executor',[ "../config" ], function (config) {
-  
+  "use strict";
 
   /**
    * @class core.component.executor
@@ -1446,7 +1446,7 @@ define('troopjs-core/registry/emitter',[
   "../config",
   "../component/executor"
 ], function (Emitter, config, executor) {
-  
+  "use strict";
 
   /**
    * A light weight implementation to register key/value pairs by key and index
@@ -1585,7 +1585,7 @@ define('troopjs-core/registry/emitter',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/component/registry',[ "../registry/emitter" ], function (Registry) {
-  
+  "use strict";
 
   /**
    * @class core.component.registry
@@ -1619,7 +1619,7 @@ define('troopjs-core/component/registry',[ "../registry/emitter" ], function (Re
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-core/task/registry',[ "../registry/emitter" ], function (Registry) {
-  
+  "use strict";
 
   /**
    * @class core.task.registry
@@ -1656,7 +1656,7 @@ define('troopjs-core/task/factory',[
   "./registry",
   "when/when"
 ], function (registry, when) {
-  
+  "use strict";
 
   /**
    * @class core.task.factory
@@ -1703,7 +1703,7 @@ define('troopjs-core/component/emitter',[
   "mu-merge/main",
   "troopjs-compose/decorator/around"
 ], function (Emitter, config, registry, executor, taskFactory, merge, around) {
-  
+  "use strict";
 
   /**
    * Component emitter
@@ -1727,9 +1727,11 @@ define('troopjs-core/component/emitter',[
   var SIG_TEARDOWN = config.signal.teardown;
   var SIG_TASK = config.signal.task;
   var PHASE = "phase";
+  var ARGS = "args";
   var NAME = "name";
   var TYPE = "type";
   var VALUE = "value";
+  var LENGTH = "length";
   var ON = "on";
   var ONE = "one";
   var SIG = "sig";
@@ -1751,7 +1753,7 @@ define('troopjs-core/component/emitter',[
    * @param {Object} handlers
    * @param {String} type
    * @param {Function} callback
-   * @param {*} [data]
+   * @param {...*} [args] Setup arguments
    */
 
   /**
@@ -1763,7 +1765,7 @@ define('troopjs-core/component/emitter',[
    * @param {Object} handlers
    * @param {String} type
    * @param {Function} callback
-   * @param {*} [data]
+   * @param {...*} [args] Add arguments
    */
 
   /**
@@ -1784,6 +1786,7 @@ define('troopjs-core/component/emitter',[
    * @param {Object} handlers
    * @param {String} type
    * @param {Function} callback
+   * @param {...*} [args] Removed arguments
    */
 
   /**
@@ -1804,6 +1807,7 @@ define('troopjs-core/component/emitter',[
    * @param {Object} handlers
    * @param {String} type
    * @param {Function} callback
+   * @param {...*} [args] Teardown arguments
    */
 
   /**
@@ -1913,7 +1917,14 @@ define('troopjs-core/component/emitter',[
     // Iterate SIG specials
     if (specials.hasOwnProperty(SIG)) {
       specials[SIG].forEach(function (special) {
-        me.on(special[NAME], special[VALUE]);
+        var args;
+
+        if ((args = special[ARGS]) !== UNDEFINED && args[LENGTH] > 0) {
+          me.on.apply(me, [ special[NAME], special[VALUE] ].concat(special[ARGS]));
+        }
+        else {
+          me.on(special[NAME], special[VALUE]);
+        }
       });
     }
   }, {
@@ -1936,14 +1947,28 @@ define('troopjs-core/component/emitter',[
       // Initialize ON specials
       if (specials.hasOwnProperty(ON)) {
         specials[ON].forEach(function (special) {
-          me.on(special[TYPE], special[VALUE]);
+          var args;
+
+          if ((args = special[ARGS]) !== UNDEFINED && args[LENGTH] > 0) {
+            me.on.apply(me, [ special[TYPE], special[VALUE] ].concat(special[ARGS]));
+          }
+          else {
+            me.on(special[TYPE], special[VALUE]);
+          }
         });
       }
 
       // Initialize ONE specials
       if (specials.hasOwnProperty(ONE)) {
         specials[ONE].forEach(function (special) {
-          me.one(special[TYPE], special[VALUE]);
+          var args;
+
+          if ((args = special[ARGS]) !== UNDEFINED && args[LENGTH] > 0) {
+            me.one.apply(me, [ special[TYPE], special[VALUE] ].concat(special[ARGS]));
+          }
+          else {
+            me.one(special[TYPE], special[VALUE]);
+          }
         });
       }
     },
@@ -1978,9 +2003,11 @@ define('troopjs-core/component/emitter',[
      * @fires sig/added
      */
     "on": around(function (fn) {
-      return function (type, callback, data) {
+      return function (type, callback) {
         var me = this;
         var handlers = me[HANDLERS];
+        var length;
+        var args;
         var event;
         var result;
         var _handlers;
@@ -2000,17 +2027,35 @@ define('troopjs-core/component/emitter',[
           event = {};
           event[EXECUTOR] = executor;
 
+          // Get `arguments[LENGTH]`
+          length = arguments[LENGTH];
+
+          // Check if rest arguments was passed
+          if (length > 2) {
+            // Let `args` be `[ event, _handlers ]`
+            args = [ event, _handlers ];
+
+            // Copy values from `arguments`
+            while (length--) {
+              args[length + 2] = arguments[length];
+            }
+          }
+
           // If this is the first handler signal SIG_SETUP
           if (!_handlers.hasOwnProperty(HEAD)) {
             event[TYPE] = SIG_SETUP;
-            result = me.emit(event, _handlers, type, callback, data);
+            result = args !== UNDEFINED
+              ? me.emit.apply(me, args)
+              : me.emit(event, _handlers, type, callback);
           }
 
           // If we were not interrupted
           if (result !== FALSE) {
             // Signal SIG_ADD
             event[TYPE] = SIG_ADD;
-            result = me.emit(event, _handlers, type, callback, data);
+            result = args !== UNDEFINED
+              ? me.emit.apply(me, args)
+              : me.emit(event, _handlers, type, callback);
 
             // If we were not interrupted
             if (result !== FALSE) {
@@ -2020,17 +2065,30 @@ define('troopjs-core/component/emitter',[
               }
 
               // Call `super.on`
-              result = fn.call(me, type, callback, data);
+              result = fn.apply(me, arguments);
 
               // Signal SIG_ADDED
               event[TYPE] = SIG_ADDED;
-              me.emit(event, _handlers, result);
+              if (args !== UNDEFINED) {
+                length = args[LENGTH];
+
+                while (length-- > 2) {
+                  args[length + 1] = args[length];
+                }
+
+                args[2] = result;
+
+                me.emit.apply(me, args);
+              }
+              else {
+                me.emit(event, _handlers, result);
+              }
             }
           }
         }
         // .. just call `super.on`
         else {
-          result = fn.call(me, type, callback, data);
+          result = fn.apply(me, arguments);
         }
 
         // Return `result`
@@ -2050,6 +2108,8 @@ define('troopjs-core/component/emitter',[
       return function (type, callback) {
         var me = this;
         var handlers = me[HANDLERS];
+        var length;
+        var args;
         var event;
         var result;
         var _handlers;
@@ -2068,16 +2128,34 @@ define('troopjs-core/component/emitter',[
           event = {};
           event[EXECUTOR] = executor;
 
+          // Get `arguments[LENGTH]`
+          length = arguments[LENGTH];
+
+          // Check if rest arguments was passed
+          if (length > 2) {
+            // Let `args` be `[ event, _handlers ]`
+            args = [ event, _handlers ];
+
+            // Copy values from `arguments`
+            while (length--) {
+              args[length + 2] = arguments[length];
+            }
+          }
+
           // Signal SIG_REMOVE
           event[TYPE] = SIG_REMOVE;
-          result = me.emit(event, _handlers, type, callback);
+          result = args !== UNDEFINED
+            ? me.emit.apply(me, args)
+            : me.emit(event, _handlers, type, callback);
 
           // If we were not interrupted
           if (result !== FALSE) {
             // If this is the last handler signal SIG_TEARDOWN
             if (_handlers[HEAD] === _handlers[TAIL]) {
               event[TYPE] = SIG_TEARDOWN;
-              result = me.emit(event, _handlers, type, callback);
+              result = args !== UNDEFINED
+                ? me.emit.apply(me, args)
+                : me.emit(event, _handlers, type, callback);
             }
 
             // If we were not interrupted
@@ -2088,19 +2166,34 @@ define('troopjs-core/component/emitter',[
               }
 
               // Call `super.off`
-              result = fn.call(me, type, callback);
+              result = fn.apply(me, arguments);
 
               // Signal SIG_REMOVED
               event[TYPE] = SIG_REMOVED;
-              result.forEach(function (handler) {
-                me.emit(event, _handlers, handler);
-              });
+              if (args !== UNDEFINED) {
+                length = args[LENGTH];
+
+                while (length-- > 2) {
+                  args[length + 1] = args[length];
+                }
+
+                result.forEach(function (handler) {
+                  args[2] = handler;
+
+                  me.emit.apply(me, args);
+                });
+              }
+              else {
+                result.forEach(function (handler) {
+                  me.emit(event, _handlers, handler);
+                });
+              }
             }
           }
         }
         // ... just call `super.off`
         else {
-          result = fn.call(me, type, callback);
+          result = fn.apply(me, arguments);
         }
 
         // Return `result`
@@ -2132,7 +2225,7 @@ define('troopjs-hub/config',[
   "module",
   "mu-merge/main"
 ], function (config, module, merge) {
-  
+  "use strict";
 
   /**
    * @class hub.config.emitter
@@ -2171,7 +2264,7 @@ define('troopjs-hub/executor',[
   "./config",
   "when/when"
 ], function (config, when) {
-  
+  "use strict";
 
   /**
    * @class hub.executor
@@ -2277,7 +2370,7 @@ define('troopjs-hub/emitter',[
   "./config",
   "./executor"
 ], function (Emitter, config, executor) {
-  
+  "use strict";
 
   /**
    * A static version of {@link core.emitter.composition} with memorization.
@@ -2348,7 +2441,7 @@ define('troopjs-hub/component',[
   "./emitter",
   "when/when"
 ], function (Emitter, config, emitter, when) {
-  
+  "use strict";
 
   /**
    * Component that provides hub features.
@@ -2366,6 +2459,7 @@ define('troopjs-hub/component',[
   var NAME = "name";
   var TYPE = "type";
   var VALUE = "value";
+  var LENGTH = "length";
   var HUB = "hub";
   var RE = new RegExp("^" + HUB + "/(.+)");
 
@@ -2401,6 +2495,7 @@ define('troopjs-hub/component',[
       var _matches;
       var _type;
       var _memory;
+      var _data;
 
       // If we've added a HUB handler ...
       if ((_matches = RE.exec(handler[TYPE])) !== NULL) {
@@ -2414,7 +2509,7 @@ define('troopjs-hub/component',[
         emitter.on(_type, handler);
 
         // If re-emit was requested ...
-        if (handler[DATA] === TRUE) {
+        if ((_data = handler[DATA]) !== UNDEFINED && _data[0] === TRUE) {
           // If memorization is "open"
           if (memorized !== UNDEFINED) {
             memorized.push(handler);
@@ -2430,6 +2525,7 @@ define('troopjs-hub/component',[
     // Intercept removed handlers
     me.on("sig/removed", function (handlers, handler) {
       var _matches;
+      var _data;
 
       // If we've removed a HUB callback ...
       if ((_matches = RE.exec(handler[TYPE])) !== NULL) {
@@ -2438,7 +2534,7 @@ define('troopjs-hub/component',[
         emitter.off(_matches[1], handler);
 
         // If re-emit was requested and there are `memorized` callbacks ...
-        if (handler[DATA] === TRUE && memorized !== UNDEFINED) {
+        if ((_data = handler[DATA]) !== UNDEFINED && _data[0] === TRUE && memorized !== UNDEFINED) {
           // TODO in place filtering for performance
           // Filter matching `_handler`
           memorized = memorized.filter(function (_handler) {
@@ -2481,7 +2577,14 @@ define('troopjs-hub/component',[
 
       if (specials.hasOwnProperty(HUB)) {
         specials[HUB].forEach(function (special) {
-          me.on(special[NAME], special[VALUE], special[ARGS][0]);
+          var args;
+
+          if ((args = special[ARGS]) !== UNDEFINED && args[LENGTH] > 0) {
+            me.on.apply(me, [ special[NAME], special[VALUE] ].concat(special[ARGS]));
+          }
+          else {
+            me.on(special[NAME], special[VALUE]);
+          }
         });
       }
     }
@@ -2496,7 +2599,7 @@ define('troopjs-dom/config',[
   "module",
   "mu-merge/main"
 ], function (config, module, merge) {
-  
+  "use strict";
 
   /**
    * @class dom.config.signal
@@ -2535,7 +2638,7 @@ define('troopjs-dom/executor',[
   "mu-selector-set/main",
   "jquery"
 ], function (SelectorSet, $) {
-  
+  "use strict";
 
   /**
    * @class dom.executor
@@ -2636,7 +2739,7 @@ define('troopjs-dom/executor',[
  * @license MIT http://troopjs.mit-license.org/
  */
 define('troopjs-dom/error',[ "mu-error/factory" ], function (Factory) {
-  
+  "use strict";
 
   /**
    * DOM error
@@ -2662,7 +2765,7 @@ define('troopjs-dom/component',[
   "mu-selector-set/main",
   "mu-jquery-destroy/main"
 ], function (Component, config, executor, DOMError, before, $, when, SelectorSet) {
-  
+  "use strict";
 
   /**
    * Component that manages all DOM manipulation and integration.
@@ -2841,7 +2944,6 @@ define('troopjs-dom/component',[
    * @fires sig/render
    */
 
-
   /**
    * Renders content and prepends it to the provided $element
    * @method prependTo
@@ -2915,7 +3017,14 @@ define('troopjs-dom/component',[
 
         if (specials.hasOwnProperty(DOM)) {
           specials[DOM].forEach(function (special) {
-            me.on(special[NAME], special[VALUE], special[ARGS][0]);
+            var args;
+
+            if ((args = special[ARGS]) !== UNDEFINED && args[LENGTH] > 0) {
+              me.on.apply(me, [ special[NAME], special[VALUE] ].concat(special[ARGS]));
+            }
+            else {
+              me.on(special[NAME], special[VALUE]);
+            }
           });
         }
       },
@@ -2967,7 +3076,7 @@ define('troopjs-dom/component',[
           data = handler[DATA];
 
           if (data !== UNDEFINED) {
-            handlers[DELEGATED].add(data, handler);
+            handlers[DELEGATED].add(data[0], handler);
           }
           else {
             handlers[DIRECT].push(handler);
@@ -3004,7 +3113,7 @@ define('troopjs-dom/component',[
           data = handler[DATA];
 
           if (data !== UNDEFINED) {
-            handlers[DELEGATED].remove(data, handler);
+            handlers[DELEGATED].remove(data[0], handler);
           }
           else {
             handlers[DIRECT] = handlers[DIRECT].filter(function (_handler) {

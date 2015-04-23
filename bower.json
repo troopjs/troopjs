@@ -40,7 +40,7 @@
 		"jquery": ">=1.8.1 <4",
 		"mu-error": "^0",
 		"mu-merge": "^0.0.2",
-		"mu-emitter": "^0.1.0",
+		"mu-emitter": "^1",
 		"mu-getargs": "^0",
 		"mu-jquery-destroy": "^0",
 		"mu-selector-set": "^1.1"
