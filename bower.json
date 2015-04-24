@@ -40,7 +40,7 @@
 		"troopjs-compose": "4.0.4",
 		"troopjs-core": "8.0.0",
 		"troopjs-hub": "1.1.3",
-		"troopjs-dom": "8.1.1"
+		"troopjs-dom": "8.1.2"
 	},
 	"devDependencies": {
 		"troopjs-ajax": "1faad55ab0ebe4014fe3526e199a2928208c1a4a",
