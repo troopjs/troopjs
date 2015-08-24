@@ -4,13 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.2+fa7fcdb ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.2+bcbc8eb ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-
-define('troopjs/version',[], "3.0.0-pr.2+fa7fcdb");
+define('troopjs/version',[], "3.0.0-pr.2+bcbc8eb");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2326,7 +2325,7 @@ define('troopjs-core/component/base',[
 
 			// Check PHASE
 			if ((phase = me[PHASE]) !== UNDEFINED && phase !== FINALIZED) {
-				return when.resolve(UNDEFINED);
+				throw new Error("Can't transition phase from '" + phase + "' to '" + INITIALIZE + "'");
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -2359,10 +2358,11 @@ define('troopjs-core/component/base',[
 		"stop" : function stop(args) {
 			var me = this;
 			var signal = me.signal;
+			var phase;
 
 			// Check PHASE
-			if (me[PHASE] !== STARTED) {
-				return when.resolve(UNDEFINED);
+			if ((phase = me[PHASE]) !== STARTED) {
+				throw new Error("Can't transition phase from '" + phase + "' to '" + STOP + "'");
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -3252,15 +3252,10 @@ define('troopjs-dom/loom/weave',[
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
-	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
-			// Re-throw the rejection if it's not canceled.
-			if (d.state === "rejected" && d.reason !== CANCELED) {
-				throw d.reason;
-			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3387,43 +3382,41 @@ define('troopjs-dom/loom/weave',[
 				// Add promise to $warp, make sure this is called synchronously.
 				ARRAY_PUSH.call($warp, promise);
 
-				setTimeout(function() {
-					parentRequire([ module ], function(Widget) {
-						var widget;
-						var startPromise;
+				parentRequire([ module ], function (Widget) {
+					var widget;
+					var startPromise;
 
-						// detect if weaving has been canceled somehow.
-						if ($warp.indexOf(promise) === -1) {
-							resolver.reject(CANCELED);
+					// detect if weaving has been canceled somehow.
+					if ($warp.indexOf(promise) === -1) {
+						resolver.reject("cancel");
+					}
+
+					try {
+						// Create widget instance
+						widget = Widget.apply(Widget, widget_args);
+
+						// Add $WEFT to widget
+						widget[$WEFT] = promise;
+
+						// Add WOVEN to promise
+						promise[WOVEN] = widget.toString();
+
+						// TODO: Detecting TroopJS 1.x widget from *version* property.
+						if (widget.trigger) {
+							deferred = Defer();
+							widget.start(deferred);
+							startPromise = deferred.promise;
+						}
+						else {
+							startPromise = widget.start.apply(widget, start_args);
 						}
 
-						try {
-							// Create widget instance
-							widget = Widget.apply(Widget, widget_args);
-
-							// Add $WEFT to widget
-							widget[$WEFT] = promise;
-
-							// Add WOVEN to promise
-							promise[WOVEN] = widget.toString();
-
-							// TODO: Detecting TroopJS 1.x widget from *version* property.
-							if (widget.trigger) {
-								deferred = Defer();
-								widget.start(deferred);
-								startPromise = deferred.promise;
-							}
-							else {
-								startPromise = widget.start.apply(widget, start_args);
-							}
-
-							resolver.resolve(startPromise.yield(widget));
-						}
-						catch (e) {
-							resolver.reject(e);
-						}
-					}, resolver.reject);
-				}, 0);
+						resolver.resolve(startPromise.yield(widget));
+					}
+					catch (e) {
+						resolver.reject(e);
+					}
+				}, resolver.reject);
 
 				// Return promise
 				return promise;
@@ -3468,15 +3461,10 @@ define('troopjs-dom/loom/unweave',[
 	var ATTR_WOVEN = config[WOVEN];
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
-	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
-			// Re-throw the rejection if it's not canceled.
-			if (d.state === "rejected" && d.reason !== CANCELED) {
-				throw d.reason;
-			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3839,8 +3827,9 @@ define('troopjs-dom/component/widget',[
 
 			if ((matches = RE.exec(type)) !== NULL) {
 				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event) {
-					var args = {};
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
+					// Redefine args
+					args = {};
 					args[TYPE] = type;
 					args[RUNNER] = sequence;
 					args = [ args ];
@@ -4208,6 +4197,7 @@ define('troopjs-log/config',[
 	 * Provides configuration for the logging package
 	 * @class log.config
 	 * @protected
+	 * @static
 	 * @alias feature.config
 	 */
 
@@ -4499,7 +4489,7 @@ define('troopjs-opt/pubsub/proxy/to1x',[
 						ARRAY_PUSH.apply(args, ARRAY_SLICE.call(arguments, 1));
 
 						// If the last argument look like a promise we pop and store as deferred
-						if (when.isPromise(args[args[LENGTH] - 1])) {
+						if (when.isPromiseLike(args[args[LENGTH] - 1])) {
 							deferred = args.pop();
 						}
 
@@ -4816,7 +4806,8 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 	return function sequence(event, handlers, args) {
 		var type = event[TYPE];
 		var path = args.shift(); // Shift path and route of args
-		var data;
+        var normalized;
+        var data;
 		var matched;
 		var candidate;
 		var candidates = [];
@@ -4878,17 +4869,8 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 						tokens = candidate[TOKENS];
 						break;
 
-					case "[object Undefined]":
-					// phantom reported weird [object DOMWindow] for undefined property.
-					case "[object DOMWindow]":
-						// Match anything
-						re = RE_ANY;
-
-						// Empty tokens
-						tokens = [];
-						break;
-
-					default:
+					// compile pattern string into regexp
+					case "[object String]":
 						// Reset tokens
 						tokens = candidate[TOKENS] = [];
 
@@ -4903,13 +4885,31 @@ define('troopjs-opt/route/runner/sequence',[ "poly/array" ], function SequenceMo
 								// Add token
 								tokens.push(token);
 								// Return replacement.
-								return "(?:(\\w+)\/)" + (optional ? "?" : "");
+								return "(?:([^\/]+)\/)" + (optional ? "?" : "");
 							})
 							.replace(RE_ESCAPE_REGEXP, "\\$1") + "$", "i");
+
+						break;
+
+					// route is not specified
+					default:
+						// Match anything
+						re = RE_ANY;
+						// Empty tokens
+						tokens = [];
+						break;
 				}
 
-				// Match path
-				if ((matches = re.exec(path)) !== NULL) {
+				// normalize the path to always start/end with slash.
+				normalized = path;
+				if (normalized[0] !== "/") {
+					normalized = "/" + normalized;
+				}
+				if (normalized[normalized.length - 1] !== "/") {
+					normalized += "/";
+				}
+
+				if ((matches = re.exec(normalized)) !== NULL) {
 					// Capture tokens in data
 					tokens.forEach(function(token, index) {
 
@@ -5087,10 +5087,13 @@ define('troopjs-opt/route/gadget',[
 		 *
 		 * @param {String} pattern The route pattern to construct the new route.
 		 * @param {Object} params The data object contains the parameter values for routing.
+		 * @param {Object} options The options object specifying policies of URL update
+		 * @param {Object} options.silent This URL change shall not trigger any subsequent change event
+		 * @param {Object} options.replace This URL change shall replace instead of append the current page state in session History,
 		 * @return {Promise}
 		 * @fires route/set
 		 */
-		"go": function go(pattern, params) {
+		"go": function go(pattern, params, options) {
 			var me = this;
 			var args = [ "set" ];
 			ARRAY_PUSH.apply(args, arguments);
@@ -5308,76 +5311,46 @@ define('troopjs-opt/store/component',[
 		/**
 		 * Waits for store to be "locked"
 		 * @param {String} key Key
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
 		 * @return {Promise} Promise of ready
 		 */
-		"lock" : function (key, onFulfilled, onRejected, onProgress) {
+		"lock" : function (key) {
 			var locks = this[LOCKS];
-			var result;
 
 			if (OBJECT_TOSTRING.call(key) !== TOSTRING_STRING) {
 				throw new Error("key has to be of type string");
 			}
 
-			result = locks[key] = when(locks[key], onFulfilled, onRejected, onProgress);
-
-			return result;
+			return (locks[key] = when(locks[key]));
 		},
 
 		/**
 		 * Gets state value
 		 * @param {...String} key Key - can be dot separated for sub keys
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
 		 * @return {Promise} Promise of value
 		 */
-		"get" : function (key, onFulfilled, onRejected, onProgress) {
+		"get" : function (key) {
 			/*jshint curly:false*/
 			var me = this;
-			var keys = ARRAY_SLICE.call(arguments);
-			var i;
-			var iMax;
-
-			// Step until we hit the end or keys[i] is not a string
-			for (i = 0, iMax = keys[LENGTH]; i < iMax && OBJECT_TOSTRING.call(keys[i]) === TOSTRING_STRING; i++);
-
-			// Update callbacks
-			onFulfilled = keys[i];
-			onRejected = keys[i+1];
-			onProgress = keys[i+2];
-
-			// Set the new length of keys
-			keys[LENGTH] = i;
-
-			return when
-				.map(keys, function (key) {
+			return when.map(ARRAY_SLICE.call(arguments), function (key) {
 					return when
 						// Map adapters and BEFORE_GET on each adapter
 						.map(me[ADAPTERS], function (adapter) {
 							return when(applyMethod.call(adapter, BEFORE_GET, me, key));
 						})
 						// Get value from STORAGE
-						.then(function () {
+						.then(function() {
 							return get.call(me, key);
 						});
-				})
-				// Add callbacks
-				.then(onFulfilled && when.apply(onFulfilled), onRejected, onProgress);
+				});
 		},
 
 		/**
 		 * Puts state value
 		 * @param {String} key Key - can be dot separated for sub keys
 		 * @param {*} value Value
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
 		 * @return {Promise} Promise of value
 		 */
-		"put" : function (key, value, onFulfilled, onRejected, onProgress) {
+		"put" : function (key, value) {
 			var me = this;
 
 			return when(put.call(me, key, value), function (result) {
@@ -5388,25 +5361,20 @@ define('troopjs-opt/store/component',[
 					})
 					.yield(result);
 			})
-				// Add callbacks
-				.then(onFulfilled, onRejected, onProgress);
 		},
 
 		/**
 		 * Puts state value if key is UNDEFINED
 		 * @param {String} key Key - can be dot separated for sub keys
 		 * @param {*} value Value
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
 		 * @return {Promise} Promise of value
 		 */
-		"putIfNotHas" : function (key, value, onFulfilled, onRejected, onProgress) {
+		"putIfNotHas" : function (key, value) {
 			var me = this;
 
 			return !me.has(key)
-				? me.put(key, value, onFulfilled, onRejected, onProgress)
-				: when(UNDEFINED, onFulfilled, onRejected, onProgress);
+				? me.put(key, value)
+				: when(UNDEFINED);
 		},
 
 		/**
@@ -5420,23 +5388,18 @@ define('troopjs-opt/store/component',[
 
 		/**
 		 * Clears all adapters
-		 * @param {Function} [onFulfilled] onFulfilled callback
-		 * @param {Function} [onRejected] onRejected callback
-		 * @param {Function} [onProgress] onProgress callback
 		 * @return {Promise} Promise of clear
 		 */
-		"clear" : function (onFulfilled, onRejected, onProgress) {
+		"clear" : function () {
 			var me = this;
-
 			return when
 				.map(me[ADAPTERS], function (adapter) {
 					return when(applyMethod.call(adapter, CLEAR, me));
-				})
-				// Add callbacks
-				.then(onFulfilled && when.apply(onFulfilled), onRejected, onProgress);
+				});
 		}
 	});
 });
+
 /**
  * @license MIT http://troopjs.mit-license.org/
  */
@@ -5494,7 +5457,7 @@ define('troopjs-data/cache/component',[
 	/**
 	 * Component for handling effective object caching with cycle references concerned.
 	 * @class data.cache.component
-	 * @extend core.component.base
+	 * @extends core.component.base
 	 */
 
 	var UNDEFINED;
@@ -5524,7 +5487,7 @@ define('troopjs-data/cache/component',[
 	 * @param node Node
 	 * @param _constructor Constructor of value
 	 * @param now Current time (seconds)
-	 * @return Cached node
+	 * @returns Cached node
 	 */
 	function _put(node, _constructor, now) {
 		/*jshint validthis:true, forin:false, curly:false, -W086*/
@@ -5758,7 +5721,7 @@ define('troopjs-data/cache/component',[
 		/**
 		 * Puts a node into the cache
 		 * @param node Node to add (object || array)
-		 * @return Cached node (if it existed in the cache before), otherwise the node sent in
+		 * @returns Cached node (if it existed in the cache before), otherwise the node sent in
 		 */
 		"put" : function put(node) {
 			var me = this;
@@ -5785,7 +5748,7 @@ define('troopjs-data/cache/service',[ "troopjs-core/component/service" ], functi
 	/**
 	 * Service for evicting values from one or more {@link data.cache.component caches}
 	 * @class data.cache.service
-	 * @extend core.component.service
+	 * @extends core.component.service
 	 */
 
 	var UNDEFINED;
@@ -5911,7 +5874,7 @@ define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function Qu
 	/**
 	 * Component who understands the ubiquitous data query string format.
 	 * @class data.query.component
-	 * @extend core.mixin.base
+	 * @extends core.mixin.base
 	 */
 
 	var UNDEFINED;
@@ -6233,7 +6196,7 @@ define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function Qu
 
 		/**
 		 * Retrieve the AST as the parsed result.
-		 * @return {Array} the result AST.
+		 * @returns {Array} the result AST.
 		 */
 		"ast" : function ast() {
 			var me = this;
@@ -6248,7 +6211,7 @@ define('troopjs-data/query/component',[ "troopjs-core/mixin/base" ], function Qu
 
 		/**
 		 * Rebuild the (reduced) query string.
-		 * @return {String} new query string
+		 * @returns {String} new query string
 		 */
 		"rewrite" : function rewrite() {
 			var me = this;
@@ -6301,7 +6264,7 @@ define('troopjs-data/query/service',[
 	/**
 	 * Service that batch processes the query requests send to server and cache the results.
 	 * @class data.query.service
-	 * @extend core.component.service
+	 * @extends core.component.service
 	 * @uses net.ajax.service
 	 */
 
@@ -6469,7 +6432,7 @@ define('troopjs-data/query/service',[
 		 * Handle query request on hub event.
 		 * @handler
 		 * @param {...String} query TroopJS data query
-		 * @return {Promise}
+		 * @returns {Promise}
 		 */
 		"hub/query" : function hubQuery(query) {
 			var me = this;
@@ -6842,7 +6805,7 @@ define('troopjs-dom/hash/widget',[
 		 * @handler
 		 */
 		"dom/hashset": function ($event, hash, silent) {
-			this.publish("route/set", hash, null, silent);
+			this.publish("route/set", hash, silent);
 		},
 
 		/**
@@ -6850,15 +6813,13 @@ define('troopjs-dom/hash/widget',[
 		 * @handler hub/route/set
 		 * @return {Promise}
 		 */
-		"hub/route/set": function (path, data, silent) {
+		"hub/route/set": function (uri, silent) {
 			var me = this;
-
 			// If we are silent we update the local me[HASH] to prevent change detection
 			if (silent === true) {
-				me[HASH] = path;
+				me[HASH] = uri;
 			}
-
-			me[$ELEMENT].get(0).location.hash = path;
+			me[$ELEMENT].get(0).location.hash = uri;
 		}
 	});
 });
@@ -7178,7 +7139,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 			}
 		}
 
-		return "define([" + deps.join(", ") + "], function (" + args.join(", ") + ") {\n"
+		return "define([ " + deps.join(", ") + " ], function (" + args.join(", ") + ") {\n"
 			+ scriptText
 			+ "});";
 	}
@@ -7228,7 +7189,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 						buildMap[name] = content;
 					}
 
-					onLoad.fromText(name, content);
+					onLoad.fromText(name, content);  
 					// On requirejs version below '2.1.0', 
 					// need to manually require the module after the call to onLoad.fromText()
 					if (cmpVersion(REQUIRE_VERSION, "2.1.0") < 0) {
@@ -7243,10 +7204,7 @@ define('troopjs-requirejs/shadow',[ "text" ], function (text) {
 
 			if (moduleName in buildMap) {
 				content = buildMap[moduleName];
-				content = content.replace(/define\(/, function (match) {
-					return match + '"' + [pluginName, moduleName].join('!') + '",';
-				});
-				write(content);
+				write.asModule(pluginName + "!" + moduleName, content);
 			}
 		}
 	};
@@ -7380,8 +7338,9 @@ define('troopjs-requirejs/json',[
 
 		write : function (pluginName, moduleName, write) {
 			if (moduleName in buildMap) {
-				write("define('" + pluginName + "!" + moduleName + "', function(){ return " + JSON.stringify(buildMap[moduleName]) + "});");
+				write.asModule(pluginName + "!" + moduleName, JSON.stringify(buildMap[moduleName]));
 			}
 		}
 	};
 });
+

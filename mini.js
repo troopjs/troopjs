@@ -4,13 +4,12 @@
  *   / ._/  ( . _   \  . /   . /  . _   \_
  * _/    ___/   /____ /  \_ /  \_    ____/
  * \   _/ \____/   \____________/   /
- *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.2+fa7fcdb ]
+ *  \_t:_____r:_______o:____o:___p:/ [ troopjs - 3.0.0-pr.2+bcbc8eb ]
  *
  * @license http://troopjs.mit-license.org/ © Mikael Karon
  */
 
-
-define('troopjs/version',[], "3.0.0-pr.2+fa7fcdb");
+define('troopjs/version',[], "3.0.0-pr.2+bcbc8eb");
 
 /**
  * @license MIT http://troopjs.mit-license.org/
@@ -2326,7 +2325,7 @@ define('troopjs-core/component/base',[
 
 			// Check PHASE
 			if ((phase = me[PHASE]) !== UNDEFINED && phase !== FINALIZED) {
-				return when.resolve(UNDEFINED);
+				throw new Error("Can't transition phase from '" + phase + "' to '" + INITIALIZE + "'");
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -2359,10 +2358,11 @@ define('troopjs-core/component/base',[
 		"stop" : function stop(args) {
 			var me = this;
 			var signal = me.signal;
+			var phase;
 
 			// Check PHASE
-			if (me[PHASE] !== STARTED) {
-				return when.resolve(UNDEFINED);
+			if ((phase = me[PHASE]) !== STARTED) {
+				throw new Error("Can't transition phase from '" + phase + "' to '" + STOP + "'");
 			}
 
 			// Modify args to change signal (and store in PHASE)
@@ -3252,15 +3252,10 @@ define('troopjs-dom/loom/weave',[
 	var ATTR_WEAVE = config[WEAVE];
 	var ATTR_WOVEN = config[WOVEN];
 	var RE_SEPARATOR = /[\s,]+/;
-	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
-			// Re-throw the rejection if it's not canceled.
-			if (d.state === "rejected" && d.reason !== CANCELED) {
-				throw d.reason;
-			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3387,43 +3382,41 @@ define('troopjs-dom/loom/weave',[
 				// Add promise to $warp, make sure this is called synchronously.
 				ARRAY_PUSH.call($warp, promise);
 
-				setTimeout(function() {
-					parentRequire([ module ], function(Widget) {
-						var widget;
-						var startPromise;
+				parentRequire([ module ], function (Widget) {
+					var widget;
+					var startPromise;
 
-						// detect if weaving has been canceled somehow.
-						if ($warp.indexOf(promise) === -1) {
-							resolver.reject(CANCELED);
+					// detect if weaving has been canceled somehow.
+					if ($warp.indexOf(promise) === -1) {
+						resolver.reject("cancel");
+					}
+
+					try {
+						// Create widget instance
+						widget = Widget.apply(Widget, widget_args);
+
+						// Add $WEFT to widget
+						widget[$WEFT] = promise;
+
+						// Add WOVEN to promise
+						promise[WOVEN] = widget.toString();
+
+						// TODO: Detecting TroopJS 1.x widget from *version* property.
+						if (widget.trigger) {
+							deferred = Defer();
+							widget.start(deferred);
+							startPromise = deferred.promise;
+						}
+						else {
+							startPromise = widget.start.apply(widget, start_args);
 						}
 
-						try {
-							// Create widget instance
-							widget = Widget.apply(Widget, widget_args);
-
-							// Add $WEFT to widget
-							widget[$WEFT] = promise;
-
-							// Add WOVEN to promise
-							promise[WOVEN] = widget.toString();
-
-							// TODO: Detecting TroopJS 1.x widget from *version* property.
-							if (widget.trigger) {
-								deferred = Defer();
-								widget.start(deferred);
-								startPromise = deferred.promise;
-							}
-							else {
-								startPromise = widget.start.apply(widget, start_args);
-							}
-
-							resolver.resolve(startPromise.yield(widget));
-						}
-						catch (e) {
-							resolver.reject(e);
-						}
-					}, resolver.reject);
-				}, 0);
+						resolver.resolve(startPromise.yield(widget));
+					}
+					catch (e) {
+						resolver.reject(e);
+					}
+				}, resolver.reject);
 
 				// Return promise
 				return promise;
@@ -3468,15 +3461,10 @@ define('troopjs-dom/loom/unweave',[
 	var ATTR_WOVEN = config[WOVEN];
 	var ATTR_UNWEAVE = config[UNWEAVE];
 	var RE_SEPARATOR = /[\s,]+/;
-	var CANCELED = "cancel";
 
 	// collect the list of fulfilled promise values from a list of descriptors.
 	function fulfilled(descriptors) {
 		return descriptors.filter(function(d) {
-			// Re-throw the rejection if it's not canceled.
-			if (d.state === "rejected" && d.reason !== CANCELED) {
-				throw d.reason;
-			}
 			return d.state === "fulfilled";
 		}).map(function(d) {
 			return d.value;
@@ -3839,8 +3827,9 @@ define('troopjs-dom/component/widget',[
 
 			if ((matches = RE.exec(type)) !== NULL) {
 				// $element.on handlers[PROXY]
-				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event) {
-					var args = {};
+				me[$ELEMENT].on(matches[1], NULL, me, handlers[PROXY] = function dom_proxy($event, args) {
+					// Redefine args
+					args = {};
 					args[TYPE] = type;
 					args[RUNNER] = sequence;
 					args = [ args ];
@@ -4070,3 +4059,4 @@ define('troopjs-dom/application/widget',[
 		}
 	});
 });
+
